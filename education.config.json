@@ -1,0 +1,19 @@
+{
+  "name": "js-edu",
+  "title": "JS-edu",
+  "language": "javascript",
+  "audience": [
+    "other-language-experienced",
+    "working-engineers"
+  ],
+  "languageVersions": [
+    "ES2026"
+  ],
+  "delivery": [
+    "web-textbook"
+  ],
+  "executionMode": "unavailable",
+  "sourcePolicy": "Official language/API/tool documentation; job-post observations recorded separately",
+  "displayName": "JS-edu",
+  "contentRevisionPolicy": "Achievement and drafts must include contentRevision; migration is not implemented."
+}

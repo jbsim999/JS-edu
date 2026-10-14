@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+work/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+Thumbs.db

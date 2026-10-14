@@ -1,0 +1,40 @@
+{
+  "exercises": [
+    {
+      "id": "independent-counter",
+      "lessonId": "bindings-and-closures",
+      "mode": "body",
+      "instructions": [
+        "createCounter(initial = 0) 본문만 편집한다.",
+        "initial은 유한한 number인 정상 입력만 제공된다.",
+        "호출마다 1 증가한 값을 반환하는 함수를 반환한다.",
+        "각 카운터 인스턴스의 상태를 분리한다."
+      ],
+      "template": "export function createCounter(initial = 0) {\n  // TODO: 독립된 상태를 보존하는 함수를 반환하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "create-counter",
+          "path": "starter/create-counter.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "기본값 0에서 1, 2를 반환한다.",
+        "명시한 초기값부터 증가한다.",
+        "다른 인스턴스 호출에 상태가 섞이지 않는다.",
+        "음수와 0 초기값을 처리한다."
+      ],
+      "rubric": [
+        "반환 함수 계약",
+        "상태 독립성",
+        "초기값과 증가 순서"
+      ],
+      "executionVerified": false
+    }
+  ]
+}

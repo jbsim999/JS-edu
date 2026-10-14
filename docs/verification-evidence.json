@@ -1,0 +1,230 @@
+{
+  "kind": "initial-source-verification",
+  "checkedAt": "2026-10-14",
+  "sourceSnapshotSha256": "84c94ff3bd827957f012a7c6c39bb3324273da504ed8fa71c2725734d6fd99e2",
+  "scope": "Source and supporting documents; excludes mutable verification/handoff reports and .git",
+  "excludedReports": [
+    "docs/project-state.md",
+    "docs/verification.md",
+    "docs/verification-evidence.json"
+  ],
+  "files": [
+    {
+      "path": ".editorconfig",
+      "bytes": 188,
+      "sha256": "a6b98ea7cb6d61ed8d430dd0dffa46c87012b5cf859d4ce7207898954951fdcd"
+    },
+    {
+      "path": ".gitattributes",
+      "bytes": 19,
+      "sha256": "d60f352d0db1404c70afb4bb8b2ca3fd1c610572aa40720e8a0b7baa7885418c"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "bytes": 382,
+      "sha256": "ddb633579cf3b547a8dfd3ee5b35b67182fe7282697ffef723b9a7b33f1afdf3"
+    },
+    {
+      "path": ".github/workflows/scaffold-check.yml",
+      "bytes": 547,
+      "sha256": "780097a43b434cff6039c7d22a9b7094447418f91dd55f77db1dacf6e04a56b7"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 107,
+      "sha256": "3307fe96639084e2208ad642cae2efc5774655cdf35321f2b1cb249b16234de9"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 2818,
+      "sha256": "a7cc505170c28d7f90c061e19fb052705e8c21ad2e560e5542c1bcee5289c0e5"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 3002,
+      "sha256": "97de69fab538e28b032a33bd4d41f7cb08ddf1c75b9cecb4ee829e56ba28cdc3"
+    },
+    {
+      "path": "curriculum/catalog.json",
+      "bytes": 204,
+      "sha256": "2738f42cbd5803084d26d2a5ed7d7a3329d353b5b2e098ba246adea8be355f31"
+    },
+    {
+      "path": "curriculum/examples/bindings-and-closures.mjs",
+      "bytes": 242,
+      "sha256": "c23d76ab3637a093e83c8edaa5182b0f8ebc25c2332582ed30d4ecb80527ebad"
+    },
+    {
+      "path": "curriculum/exercises.json",
+      "bytes": 1298,
+      "sha256": "cbf4e744bd7f427e897bacfcf773cec38d2b18eb71c449703e1d388cb393c696"
+    },
+    {
+      "path": "curriculum/lessons/bindings-and-closures.json",
+      "bytes": 2776,
+      "sha256": "440a04adcc80b92248d4b794a45c8e116da077a64ca589f1834c41c2210816fa"
+    },
+    {
+      "path": "desktop/README.md",
+      "bytes": 244,
+      "sha256": "d84702ea853821e60b709b7cc635cf4f9db0a9beba0fea2561ed6c1eab285238"
+    },
+    {
+      "path": "docs/frontend-structure.md",
+      "bytes": 830,
+      "sha256": "8f841085381a2c891247525894ac20df7e6c5e27dea492f52246c4021724b547"
+    },
+    {
+      "path": "docs/packaging.md",
+      "bytes": 904,
+      "sha256": "994c5f0e821d5a443eed7cc06957fd14ea8524afeed0d460fed402dd5351a081"
+    },
+    {
+      "path": "docs/plan.md",
+      "bytes": 1488,
+      "sha256": "a61263200618700fe5d1dee1260c9216fc7c64a6e31e50699af31eaaf52a526a"
+    },
+    {
+      "path": "docs/roadmap.md",
+      "bytes": 3886,
+      "sha256": "473e0dcf790b9c54ffb97c8dd987af87cf84702c3e8b977fa8dd7683b1fbb58e"
+    },
+    {
+      "path": "docs/runtime-design.md",
+      "bytes": 1731,
+      "sha256": "f69c1ad9d68c93e2124a1fd9b2e99cca48854567ea29539d0898471c43656340"
+    },
+    {
+      "path": "education.config.json",
+      "bytes": 512,
+      "sha256": "6889b7667d7b62571452e0da3c936c4fc5712ccb82d1a0ad1ebbc0614afe26ed"
+    },
+    {
+      "path": "grader/README.md",
+      "bytes": 276,
+      "sha256": "e0864f6f0e1cfa384cdce5ee257a6d816c94b09e185e5d2bb7360141ca6becef"
+    },
+    {
+      "path": "package.json",
+      "bytes": 460,
+      "sha256": "30ce03d1d4709df3f03c52b4a45df682244207a39ec69a7761386921d425a921"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3193,
+      "sha256": "afaaa7d57d9c14d4535e8cef76f2fa494cd85eeba3334f63a678e5945e65524e"
+    },
+    {
+      "path": "reference/README.md",
+      "bytes": 201,
+      "sha256": "e974e52e1453b6e4e1109007f67121c100179536d429ec30e1a030a05adc0a70"
+    },
+    {
+      "path": "runtime/profiles.json",
+      "bytes": 752,
+      "sha256": "9fbff9c56f71669ab0fb8b657d35257456514141bcf263ea0eb85757399827e6"
+    },
+    {
+      "path": "scaffold-manifest.json",
+      "bytes": 2073,
+      "sha256": "a6e9ebb3fdfbafb7160437b5d3589c6c585a89486545d8bbf961ccee71b5c78c"
+    },
+    {
+      "path": "scripts/check-syntax.mjs",
+      "bytes": 1036,
+      "sha256": "eed20105dc37720d988f1aecfaf78fee2c81d1e8a85f0c1587c24d851cff7431"
+    },
+    {
+      "path": "scripts/validate-project.mjs",
+      "bytes": 9377,
+      "sha256": "8e01eeae9ee659913bcd00dfd7cb11f0447921a9e207ce1a560e16c1e2dbfe94"
+    },
+    {
+      "path": "starter/create-counter.mjs",
+      "bytes": 118,
+      "sha256": "51634e7f75a78a116e07a4b59d2d2495b3797f8cb6999f33858169e3ca936c3c"
+    },
+    {
+      "path": "tests/adapters.test.mjs",
+      "bytes": 2220,
+      "sha256": "17d5802a8f6ddb46dea2b8c8d2abbc851dbb581d77cdcda517fb6226886ba659"
+    },
+    {
+      "path": "tests/validator.test.mjs",
+      "bytes": 4130,
+      "sha256": "cf003cf2bf786ff5bdb39fdcdc46e8db1afc294645c0370fb547db05d77d7a57"
+    },
+    {
+      "path": "web/adapters/runner.mjs",
+      "bytes": 573,
+      "sha256": "ff09cdf4ee5046df4906276fb1178e6b9754829723a4e5b352ff38235e3e4556"
+    },
+    {
+      "path": "web/adapters/storage.mjs",
+      "bytes": 1265,
+      "sha256": "7ad11540382c4501f486fdb96d29fba602143969dbedd6a998d460d6b496e7b3"
+    },
+    {
+      "path": "web/features/editor/README.md",
+      "bytes": 180,
+      "sha256": "bb5c355947588516e0ff735fa1e0ce2d63ab65c181475c836e83d3516b35043b"
+    },
+    {
+      "path": "web/features/lesson/README.md",
+      "bytes": 170,
+      "sha256": "f5f5fb8bc5c0f40713dee79c4595e86290a41342b81768fd97d51ccd2dee0dca"
+    },
+    {
+      "path": "web/features/navigation/README.md",
+      "bytes": 185,
+      "sha256": "d89219ba51cbf1773738f02d8ed3c8715d6f22e4eae50580a899094be37c260c"
+    },
+    {
+      "path": "web/features/progress/README.md",
+      "bytes": 183,
+      "sha256": "755e71656e788784ddaf05c0377687f2a0f620316517609cb72b41021ee069b9"
+    },
+    {
+      "path": "web/README.md",
+      "bytes": 251,
+      "sha256": "13799f559991a0c4c829605e3330e41f43a05374c9f37c4658f41cb070b6abd1"
+    }
+  ],
+  "actualEnvironment": {
+    "os": "Windows",
+    "node": "22.17.0"
+  },
+  "localChecks": [
+    {
+      "command": "npm run validate",
+      "status": "PASS",
+      "scope": "structure-only",
+      "lessons": 1,
+      "drafts": 1
+    },
+    {
+      "command": "npm run check:syntax",
+      "status": "PASS",
+      "checkedMjsFiles": 8,
+      "scope": "syntax-only"
+    },
+    {
+      "command": "npm test",
+      "status": "PASS",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "scope": "storage-unavailable-runner-and-validator-regressions"
+    }
+  ],
+  "unverified": [
+    "Lesson content approval",
+    "Lesson example runtime output",
+    "Learner submission/grader",
+    "UI and accessibility",
+    "ES2026 feature compatibility",
+    "Desktop packaging and release"
+  ],
+  "scaffoldManifestPolicy": "scaffold-manifest.json describes original generator output only; customized source is recorded here."
+}

@@ -1,0 +1,65 @@
+{
+  "kind": "generated-draft",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "5ceabaa67dbc623e86cc835297f6ce9daa2079b18f3e50e50a7560aeb4268fac"
+    },
+    {
+      "path": "curriculum/catalog.json",
+      "sha256": "44cbefa47336a9883356ddd2c7387454bc0ce34e36b15c9f0c754975a205fc3d"
+    },
+    {
+      "path": "curriculum/exercises.json",
+      "sha256": "f71c4e3a780b6944c939249fd4ae9a342f9fd25722253a71c94bcf2d7d4970a6"
+    },
+    {
+      "path": "curriculum/lessons/first-lesson.json",
+      "sha256": "43f6361f32f4dd40257165c2c5012bff466d3881bf61c2b8b108858dd72a66b1"
+    },
+    {
+      "path": "docs/frontend-structure.md",
+      "sha256": "8f841085381a2c891247525894ac20df7e6c5e27dea492f52246c4021724b547"
+    },
+    {
+      "path": "docs/plan.md",
+      "sha256": "b98ae09a8f8a2ed9a26d4f31324d237b16eacd5921f22563d5ad4bc88282ca67"
+    },
+    {
+      "path": "docs/project-state.md",
+      "sha256": "1e7bdddda8d1f1b021f8b579f58b053616596b11c3499f8d4de4207802a4c069"
+    },
+    {
+      "path": "docs/roadmap.md",
+      "sha256": "3acf3fece2c18cbbcba5813c3d990b6ff3bd0bd1d4f315f82773c8b9934b60a6"
+    },
+    {
+      "path": "docs/verification.md",
+      "sha256": "f47d316f2d4d68e43e3104b208fcfcf4676aae9e113a9e95e98ac3ee0dd2be60"
+    },
+    {
+      "path": "education.config.json",
+      "sha256": "84dc2288332c5bf65f092963e2b4d0738e09fcd4adf9710af36f2d196cf46350"
+    },
+    {
+      "path": "README.md",
+      "sha256": "dda1a7f63197254db62b3e553b7381d92f9e07819dc89a90e87b119f8ed3ae10"
+    },
+    {
+      "path": "runtime/profiles.json",
+      "sha256": "c0d7035af249e3d46c1cce22bce8b35623ba82c56106540f3ca1de154e1b4874"
+    },
+    {
+      "path": "scripts/validate-project.mjs",
+      "sha256": "291682021c486a0e77e3a55bb5b17338b54dda1d778484041ed118a9f6a00998"
+    },
+    {
+      "path": "web/adapters/runner.mjs",
+      "sha256": "ff09cdf4ee5046df4906276fb1178e6b9754829723a4e5b352ff38235e3e4556"
+    },
+    {
+      "path": "web/adapters/storage.mjs",
+      "sha256": "7ad11540382c4501f486fdb96d29fba602143969dbedd6a998d460d6b496e7b3"
+    }
+  ]
+}

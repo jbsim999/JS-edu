@@ -1,0 +1,10 @@
+{
+  "lessons": [
+    {
+      "id": "bindings-and-closures",
+      "file": "curriculum/lessons/bindings-and-closures.json",
+      "prerequisites": [],
+      "exerciseId": "independent-counter"
+    }
+  ]
+}
