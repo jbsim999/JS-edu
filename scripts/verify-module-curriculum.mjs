@@ -17,8 +17,8 @@ const shorten = value => String(value).slice(0, 2000);
 const errorText = error => shorten(`${error?.name ?? 'Error'}: ${error?.message ?? error}`);
 const normalizedLines = value => value.replace(/\r\n/g, '\n');
 // URL-backed workers must not inherit a flag that applies only to the parent's stdin/eval source.
-const workerExecArgv = process.execArgv.filter((argument, index, all) => argument !== '--input-type' &&
-  !argument.startsWith('--input-type=') && all[index - 1] !== '--input-type');
+// Trusted file-backed creator Workers need no parent process or test-runner flags.
+const workerExecArgv = [];
 
 export function validModulePath(value) {
   return typeof value === 'string' && value.length <= moduleWorkspaceLimits.pathLength && value.endsWith('.mjs') &&

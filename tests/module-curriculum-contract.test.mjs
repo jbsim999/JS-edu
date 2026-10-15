@@ -246,7 +246,7 @@ test('module validation retains revision, callback, template, evidence and sourc
 test('creator API invoked from module eval does not pass stdin-only flags to file-backed workers', async context => {
   const { directory } = await projectFixture(context);
   const verifier = new URL('../scripts/verify-curriculum.mjs', import.meta.url).href;
-  const source = `import { verifyCurriculum } from ${JSON.stringify(verifier)}; const result = await verifyCurriculum(${JSON.stringify(directory)}); console.log(JSON.stringify(result));`;
+  const source = `process.execArgv.push('--stack-trace-limit=10', '--v8-pool-size=4'); const { verifyCurriculum } = await import(${JSON.stringify(verifier)}); const result = await verifyCurriculum(${JSON.stringify(directory)}); console.log(JSON.stringify(result));`;
   const { stdout } = await promisify(execFile)(process.execPath, ['--input-type=module', '--eval', source], { timeout: 10000, maxBuffer: 524288 });
   const result = JSON.parse(stdout);
   assert.equal(result.status, 'PASS', JSON.stringify(result));

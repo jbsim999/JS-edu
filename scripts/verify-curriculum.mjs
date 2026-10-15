@@ -11,8 +11,8 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const cloneObservation = globalThis.structuredClone.bind(globalThis);
 const shorten = value => String(value).slice(0, 2000);
 const errorText = error => shorten(`${error?.name ?? 'Error'}: ${error?.message ?? error}`);
-const workerExecArgv = process.execArgv.filter((argument, index, all) => argument !== '--input-type' &&
-  !argument.startsWith('--input-type=') && all[index - 1] !== '--input-type');
+// Trusted file-backed creator Workers need no parent process or test-runner flags.
+const workerExecArgv = [];
 
 // This command is a repository-author check, not a learner-code execution endpoint or an OS sandbox.
 // Its inputs are the checked-in reference, known-incorrect solution, starter and fixed grader only.
@@ -218,13 +218,23 @@ if (!isMainThread && workerData?.kind) {
   await runTrustedWorker();
 } else if (isMainThread && process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   try {
-    const [directory, option, timeout] = process.argv.slice(2);
-    if (!directory || (option && option !== '--timeout-ms') || (option && timeout === undefined) || process.argv.length > 5) {
-      throw new Error('Usage: node scripts/verify-curriculum.mjs <project-directory> [--timeout-ms 5000]');
+    const [directory, ...arguments_] = process.argv.slice(2);
+    const options = {};
+    let allowHostSkips = false;
+    while (arguments_.length) {
+      const option = arguments_.shift();
+      if (option === '--allow-host-skips' && !allowHostSkips) allowHostSkips = true;
+      else if (option === '--timeout-ms' && options.timeoutMs === undefined && arguments_.length) options.timeoutMs = Number(arguments_.shift());
+      else throw new Error('Usage: node scripts/verify-curriculum.mjs <project-directory> [--timeout-ms 5000] [--allow-host-skips]');
     }
-    const result = await verifyCurriculum(directory, option ? { timeoutMs: Number(timeout) } : {});
+    if (!directory) throw new Error('A project directory is required');
+    const result = await verifyCurriculum(directory, options);
+    const onlyHostSkips = result.exercises.filter(item => item.status === 'SKIP').every(item => item.reason.startsWith('Host-specific verification required:'));
+    result.hostSkipsAllowed = allowHostSkips;
+    result.hostExecutionRequired = result.summary.skipped > 0;
     console.log(JSON.stringify(result, null, 2));
-    process.exitCode = result.status === 'PASS' ? 0 : 1;
+    // A partial creator check stays PARTIAL; actual host verification is a separate gate.
+    process.exitCode = result.status === 'PASS' || (allowHostSkips && result.status === 'PARTIAL' && onlyHostSkips) ? 0 : 1;
   } catch (error) {
     console.log(JSON.stringify({ status: 'FAIL', scope: 'trusted-authored-curriculum-only', error: errorText(error) }, null, 2));
     process.exitCode = 1;
