@@ -33,9 +33,15 @@
       <aside id="toc-sidebar" class="toc-sidebar">
         <nav id="toc-panel" aria-labelledby="toc-title">
           <p class="section-eyebrow">차근차근, 원리부터</p>
-          <h2 id="toc-title">JavaScript 핵심</h2>
+          <h2 id="toc-title">강의 로드맵</h2>
+          <div class="catalog-filters">
+            <label for="track-filter">학습 경로</label>
+            <select id="track-filter" disabled><option value="all">전체 로드맵</option><option value="common">공통 언어</option><option value="browser">브라우저</option><option value="node">Node.js</option><option value="capstone">통합 프로젝트</option></select>
+            <label for="version-filter">언어 기준</label>
+            <select id="version-filter" disabled><option>ES2026</option></select>
+          </div>
           <ol id="lesson-list" class="lesson-list"></ol>
-          <div class="index-note"><p>읽고, 생각하고,<br>작은 코드로 이어 보세요.</p><p class="sidebar-caption" id="catalog-status"></p></div>
+          <div class="index-note"><p>읽고, 생각하고,<br>작은 코드로 이어 보세요.</p><p class="sidebar-caption" id="catalog-status"></p><p class="sidebar-caption" id="course-progress"></p></div>
         </nav>
       </aside>
       <main class="lesson-paper" id="lesson-main">
@@ -46,6 +52,9 @@
           <h1 id="lesson-heading" tabindex="-1">학습 공간</h1>
           <p id="lesson-lead" class="lesson-lead"></p>
           <div id="lesson-meta" class="lesson-meta"></div>
+          <div id="learning-achievement" class="learning-achievement" aria-label="현재 강의의 학습 상태"></div>
+          <p id="progress-save-status" class="save-status" role="status"></p>
+          <button id="progress-save-retry" class="plain-button" type="button" hidden>학습 상태 저장 다시 시도</button>
         </header>
         <div class="step-track"><div id="step-tabs" class="step-tabs" role="tablist" aria-label="학습 단계"></div></div>
         <article id="lesson-panel" class="lesson-content" role="tabpanel" tabindex="0"></article>

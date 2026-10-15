@@ -10,7 +10,7 @@ async function visit(directory) {
     if (['.git', 'node_modules', 'work', 'build', 'dist', 'coverage'].includes(entry.name)) continue;
     const filename = path.join(directory, entry.name);
     if (entry.isDirectory()) await visit(filename);
-    else if (entry.isFile() && entry.name.endsWith('.mjs')) {
+    else if (entry.isFile() && ['.mjs', '.js', '.cjs'].includes(path.extname(entry.name))) {
       const result = spawnSync(process.execPath, ['--check', filename], { encoding: 'utf8' });
       checked++;
       if (result.status !== 0) {

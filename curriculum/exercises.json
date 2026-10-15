@@ -3,6 +3,7 @@
     {
       "id": "independent-counter",
       "lessonId": "bindings-and-closures",
+      "contentRevision": "draft-1",
       "mode": "body",
       "instructions": [
         "createCounter(initial = 0) 본문만 편집한다.",
@@ -34,7 +35,30 @@
         "상태 독립성",
         "초기값과 증가 순서"
       ],
-      "executionVerified": false
+      "executionVerified": true,
+      "graderRevision": "counter-v1",
+      "runner": {
+        "kind": "function-body",
+        "exportName": "createCounter",
+        "parameters": [
+          "initial = 0"
+        ],
+        "async": false,
+        "runProbe": "const a = submission.createCounter(); const b = submission.createCounter(10); const result = [a(), a(), b(), a()]; console.log(...result); observe(result);"
+      },
+      "editable": {
+        "prefix": "export function createCounter(initial = 0) {\n",
+        "suffix": "\n}\n",
+        "initialBody": "  // TODO: 독립된 상태를 보존하는 함수를 반환하세요."
+      },
+      "exampleFile": "curriculum/examples/bindings-and-closures.mjs",
+      "exampleExpectedLogs": [
+        "1 2 11 3"
+      ],
+      "graderFile": "curriculum/checks/independent-counter.json",
+      "referenceFile": "reference/independent-counter.mjs",
+      "incorrectFile": "reference/incorrect/independent-counter.mjs",
+      "verificationRecord": "docs/execution/independent-counter.json"
     }
   ]
 }

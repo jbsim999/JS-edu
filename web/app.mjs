@@ -1,5 +1,8 @@
 import { glossary, findTerms, normalizeSearch } from "./glossary-data.mjs";
-import { createUnavailableRunner } from "./adapters/runner.mjs";
+import { createBrowserRunner, fingerprintSource } from "./execution/browser-runner.mjs";
+import { loadLearningData, normalizeRoute, trackLabels, conceptAliases, browserWorkerProfile } from "./features/learning-data.mjs";
+import { createExecutionState } from "./features/execution-state.mjs";
+import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, quizForRevision } from "./features/learning-progress.mjs";
 import { createWorkspaceState, readPreferences, writePreferences } from "./features/workspace-state.mjs";
 
 const steps = [
@@ -10,98 +13,7 @@ const steps = [
   { id: "lab", name: "직접 코딩" },
 ];
 
-const lessons = [
-  {
-    id: "values", name: "데이터 타입", title: "값을 복사할 때,\n무엇이 달라질까.",
-    lead: "값, 바인딩, 객체의 관계를 구분하면 변경의 범위를 예측할 수 있습니다.",
-    question: "복사한 객체를 바꿨는데 왜 원본도 달라질까요?",
-    heading: "값의 재할당과 객체의 변경을 구분합니다",
-    text: "변수에 다른 값을 할당하는 것과 객체의 프로퍼티를 변경하는 것은 다른 동작입니다. 새 객체를 만들었어도 중첩 객체까지 모두 복제된 것은 아닙니다.",
-    code: 'const original = { user: { name: "민" } };\nconst copied = { ...original };\ncopied.user.name = "수";',
-    observation: "original과 copied는 서로 다른 바깥 객체지만, user에는 같은 객체를 담고 있습니다.",
-    prompt: "original.user.name이 달라지는 이유를 설명해 보세요.",
-    answer: "객체 펼침은 얕은 복사입니다. 두 객체의 user가 같은 중첩 객체를 가리키므로 그 객체의 변경이 양쪽에서 관찰됩니다.",
-    practice: "화면에 전달할 데이터를 갱신할 때 원본과 공유하는 중첩 상태를 확인합니다. 구조가 정해진 데이터에서는 변경할 경로만 새로 만드는 방법도 비교합니다.",
-    task: "정해진 장바구니 구조에서 원본의 중첩 상태를 바꾸지 않고 수량을 갱신하는 함수를 설계합니다.",
-    terms: ["reference", "shallow-copy", "immutable"],
-  },
-  {
-    id: "contexts", name: "실행 컨텍스트", title: "코드는 어떤 환경에서\n실행될까.",
-    lead: "실행 중인 코드의 위치와 이름을 찾는 환경을 함께 따라갑니다.",
-    question: "같은 이름이 여러 범위에 있으면 어떤 값을 읽을까요?",
-    heading: "식별자는 정의된 환경을 따라 찾습니다",
-    text: "실행 컨텍스트는 코드 실행을 추적하는 명세상의 장치입니다. LexicalEnvironment와 VariableEnvironment는 환경 레코드에 연결되며, 이를 실제 메모리 상자나 JavaScript 객체로 보지는 않습니다.",
-    code: 'const label = "바깥";\nfunction read() { return label; }\nfunction run() {\n  const label = "안쪽";\n  return read();\n}',
-    observation: "read의 외부 이름 해석은 run 안의 지역 변수가 아니라 read가 정의된 환경과 연결됩니다.",
-    prompt: "run()의 결과를 예측하고, 이름을 찾는 경로를 설명해 보세요.",
-    answer: "이 예에서 결과는 '바깥'입니다. read는 호출한 위치의 label이 아니라 정의된 환경의 label을 읽습니다.",
-    practice: "함수 선언, var, let·const의 생성·초기화 시점을 나눠 초기화 전 접근 오류를 찾습니다. 옛 교재의 환경 도식과 현재 명세 용어를 함께 대응합니다.",
-    task: "중첩 함수와 블록에서 이름이 가려지는 코드를 추적하고 초기화 전 접근 결함을 수정합니다.",
-    terms: ["execution-context", "lexical-environment", "environment-record"],
-  },
-  {
-    id: "this", name: "this", title: "this는 누가\n결정할까.",
-    lead: "함수를 정의한 위치와 함수를 호출하는 형태를 따로 살펴봅니다.",
-    question: "메서드를 꺼내 호출하면 this는 그대로일까요?",
-    heading: "일반 함수의 this는 호출 방식과 연결됩니다",
-    text: "item.read()처럼 부를 때의 receiver와 함수를 변수로 옮겨 호출할 때의 this는 다를 수 있습니다. strict mode, call·apply·bind, 화살표 함수의 규칙을 구분합니다.",
-    code: '"use strict";\nconst item = {\n  count: 1,\n  read() { return this.count; }\n};\nconst read = item.read;',
-    observation: "read를 일반 함수처럼 직접 호출하면 이 strict 코드에서는 this가 undefined이므로 this.count 접근에 실패합니다.",
-    prompt: "read()를 안전하게 호출할 두 가지 방법을 설명해 보세요.",
-    answer: "read.call(item)으로 호출 시 this를 정하거나 item.read.bind(item)으로 this를 묶은 새 함수를 만들 수 있습니다.",
-    practice: "콜백으로 넘길 메서드의 receiver를 명시합니다. API가 받는 thisArg와 bind를 비교하고 화살표 함수의 this는 둘로 바뀌지 않는다는 점을 확인합니다.",
-    task: "메서드 추출과 콜백 전달에서 생긴 this 오류를 고치고 호출 계약을 기록합니다.",
-    terms: ["this", "explicit-this", "arrow"],
-  },
-  {
-    id: "callbacks", name: "콜백 함수", title: "함수를 건네고,\n호출을 맡긴다.",
-    lead: "누가, 언제, 어떤 인자로 호출하는지가 콜백의 사용법을 결정합니다.",
-    question: "함수를 인자로 전달하면 언제 실행될까요?",
-    heading: "콜백은 실행의 계약을 함께 전달합니다",
-    text: "콜백을 받는 쪽이 호출 시점과 인자를 결정합니다. 콜백이라는 이유만으로 비동기인 것은 아닙니다. map처럼 동기적으로 호출하는 API와 이벤트처럼 나중에 호출하는 호스트 API를 나눠 봅니다.",
-    code: "const values = [1, 2, 3];\nconst doubled = values.map((value, index) => {\n  return value * 2;\n});",
-    observation: "map은 각 대상 원소에 대해 콜백을 호출하고 그 반환값을 새 배열의 원소로 사용합니다.",
-    prompt: "콜백이 반환한 값과 콜백을 받는 함수가 반환한 값은 항상 같을까요?",
-    answer: "아닙니다. API마다 콜백 반환값의 사용 규칙이 다릅니다. map은 결과 배열을 만들고, 다른 API는 반환값을 사용하지 않을 수도 있습니다.",
-    practice: "호출 횟수·인자·반환값·오류 전파를 계약으로 남깁니다. 비동기 단계가 중첩될 때는 Promise 연결로 성공과 실패의 경로를 드러내는 방법을 이어서 배웁니다.",
-    task: "콜백을 정해진 순서와 횟수로 호출하고 오류를 삼키지 않는 변환 파이프라인을 만듭니다.",
-    terms: ["callback", "explicit-this", "partial"],
-  },
-  {
-    id: "bindings-and-closures", name: "클로저", title: "호출이 끝나도,\n상태는 이어진다.",
-    lead: "함수가 끝난 뒤에도 count를 읽을 수 있는 이유.\n클로저를 값이 아닌 바인딩의 관점에서 살펴봅니다.",
-    question: "카운터를 만든 함수가 종료된 뒤에도 count는 어떻게 남아 있을까요?",
-    terms: ["closure", "binding", "scope"],
-  },
-  {
-    id: "prototypes", name: "프로토타입", title: "객체는 모르는 이름을\n어디서 찾을까.",
-    lead: "인스턴스의 상태와 여러 객체가 공유하는 동작을 분리해서 봅니다.",
-    question: "직접 정의하지 않은 메서드를 어떻게 호출할 수 있을까요?",
-    heading: "프로퍼티 조회는 연결된 객체로 이어집니다",
-    text: "자체 프로퍼티에 이름이 없으면 프로토타입에서 찾을 수 있습니다. 생성자 함수의 prototype 프로퍼티와 인스턴스의 [[Prototype]]은 서로 연결되지만 같은 개념은 아닙니다.",
-    code: "const shared = {\n  read() { return this.count; }\n};\nconst item = Object.create(shared);\nitem.count = 2;",
-    observation: "read는 shared에서 찾지만 item.read()의 receiver는 item입니다. count는 item에서 읽습니다.",
-    prompt: "item에 read 프로퍼티를 새로 만들면 shared의 read도 바뀔까요?",
-    answer: "item에 자체 프로퍼티를 정의하면 상위의 같은 이름을 가릴 수 있습니다. 이 동작 자체가 shared의 메서드를 변경하지는 않습니다.",
-    practice: "프로토타입에 가변 데이터를 넣어 인스턴스 간에 상태가 섞이는 결함을 점검합니다. constructor 프로퍼티를 고치는 일과 프로토타입 연결을 바꾸는 일을 구분합니다.",
-    task: "공유 메서드와 인스턴스별 가변 상태가 분리된 위임 모델을 만듭니다.",
-    terms: ["prototype", "prototype-chain", "constructor"],
-  },
-  {
-    id: "classes", name: "클래스", title: "동작은 공유하고,\n상태는 분리한다.",
-    lead: "JavaScript의 클래스 문법을 프로토타입 기반 동작과 연결해 이해합니다.",
-    question: "클래스는 어떤 상태와 동작을 한 경계로 묶을까요?",
-    heading: "객체의 불변식을 함께 설계합니다",
-    text: "클래스는 인스턴스의 초기화, 메서드, 비공개 요소 등을 표현합니다. 생성자 함수의 역사적 상속 패턴과 ES2015 이후의 class·extends·super를 비교하며 다른 언어의 규칙을 그대로 대입하지 않습니다.",
-    code: "class Counter {\n  #count = 0;\n  next() {\n    return ++this.#count;\n  }\n}",
-    observation: "각 인스턴스는 자신의 #count를 갖습니다. 이 메서드는 해당 비공개 요소가 있는 receiver를 필요로 합니다.",
-    prompt: "Counter 인스턴스 두 개가 같은 #count를 공유할까요?",
-    answer: "이 예제의 인스턴스 필드 #count는 인스턴스별로 초기화됩니다. 프로토타입이나 별도 외부 객체에 둔 가변 상태와 구분해야 합니다.",
-    practice: "상속의 초기화 순서와 super 접근을 점검합니다. 확장해야 할 동작만 작은 객체로 주입하는 합성 설계도 비교합니다.",
-    task: "비공개 상태를 갖는 모델을 만들고 올바르지 않은 상태 전이와 receiver 오류를 설명합니다.",
-    terms: ["class", "super", "prototype"],
-  },
-];
+let lessons = [];
 
 const byId = id => document.getElementById(id);
 const elements = {
@@ -120,7 +32,11 @@ const elements = {
 
 const wideViewport = matchMedia("(min-width: 1280px)");
 const navigationViewport = matchMedia("(min-width: 768px)");
-const defaultLesson = "bindings-and-closures";
+let executionState;
+let progress;
+let validCode = false;
+let progressGeneration = 0;
+let courseGeneration = 0;
 let route;
 let modalMode = null;
 let modalOpener = null;
@@ -140,48 +56,36 @@ let saveTimer;
 let pendingReset = null;
 let resetOpener = null;
 
-async function loadResource(path, type = "json") {
-  const response = await fetch(path, { cache: "no-cache" });
-  if (!response.ok) throw new Error(`자료를 불러오지 못했습니다 (${response.status}).`);
-  return type === "text" ? response.text() : response.json();
+function currentEntry() { return lessons.find(entry => entry.id === route?.lesson); }
+
+function runnableForVersion(entry, version = route.version) {
+  const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[version] || entry.exercise?.profileId));
+  return Boolean(entry.ready && entry.editable && entry.exercise?.runner?.kind === "function-body"
+    && browserWorkerProfile(profile) && profile.execution?.available === true);
 }
 
-async function loadLearningData() {
-  const [config, catalog, lesson, exerciseCatalog, runtimeCatalog, starter, example] = await Promise.all([
-    loadResource("/education.config.json"), loadResource("/curriculum/catalog.json"),
-    loadResource("/curriculum/lessons/bindings-and-closures.json"), loadResource("/curriculum/exercises.json"),
-    loadResource("/runtime/profiles.json"), loadResource("/starter/create-counter.mjs", "text"),
-    loadResource("/curriculum/examples/bindings-and-closures.mjs", "text"),
-  ]);
-  const catalogEntry = catalog.lessons?.find(item => item.id === defaultLesson);
-  const exercise = exerciseCatalog.exercises?.find(item => item.id === lesson.exerciseId);
-  const profile = runtimeCatalog.profiles?.find(item => item.id === exercise?.profileId);
-  const file = exercise?.files?.find(item => item.id === "create-counter" && item.editable);
-  const bodyMatch = starter.match(/^export function createCounter\(initial = 0\) \{\r?\n([\s\S]*?)\r?\n\}\s*$/u);
-  if (typeof config.name !== "string" || typeof config.displayName !== "string" || !catalogEntry
-    || lesson.id !== defaultLesson || typeof lesson.contentRevision !== "string" || !lesson.contentRevision
-    || !Array.isArray(lesson.supportedVersions) || !lesson.supportedVersions.length
-    || !lesson.supportedVersions.every(value => typeof value === "string")
-    || !steps.every(step => typeof lesson.steps?.[step.id] === "string")
-    || !Array.isArray(lesson.goals) || !Array.isArray(lesson.sources)
-    || !exercise || exercise.lessonId !== lesson.id || catalogEntry.exerciseId !== exercise.id
-    || exercise.mode !== "body" || !Array.isArray(exercise.instructions) || !Array.isArray(exercise.behaviorCriteria)
-    || !profile || !file || file.path !== "starter/create-counter.mjs" || !bodyMatch) {
-    throw new Error("학습 자료의 연결을 확인하지 못했습니다. 자료를 복구한 뒤 다시 불러와 주세요.");
-  }
-  const reason = profile.execution?.available === false && typeof profile.execution.reason === "string"
-    ? profile.execution.reason : "이 학습 화면에는 실제 실행기와 제출 검사를 아직 연결하지 않았습니다.";
-  const runner = createUnavailableRunner(reason);
-  return { config, catalog, lesson, exercise, profile, file, starter, example, initialBody: bodyMatch[1], runner, environment: await runner.getEnvironment() };
+function draftIdentity(kind, entry = currentEntry()) {
+  return { lessonId: entry.id, contentRevision: entry.lesson.contentRevision,
+    exerciseId: entry.exercise?.id || "reading", fileId: kind === "code" ? entry.file.id : "lesson-note" };
 }
 
-function draftIdentity(kind) {
-  return { lessonId: product.lesson.id, contentRevision: product.lesson.contentRevision,
-    exerciseId: product.exercise.id, fileId: kind === "code" ? product.file.id : "lesson-note" };
+function field(kind, entry = currentEntry()) {
+  return workspaceState.load(draftIdentity(kind, entry), kind === "code" ? entry.initialBody : "");
 }
 
-function field(kind) {
-  return workspaceState.load(draftIdentity(kind), kind === "code" ? product.initialBody : "");
+function currentProgress() {
+  const entry = currentEntry();
+  return entry?.ready ? progress.load(progressIdentity(entry, route.version)) : null;
+}
+
+function currentQuiz() {
+  const quiz = currentProgress()?.value.quiz;
+  const lesson = currentEntry()?.lesson;
+  return quizForRevision(quiz, lesson?.quiz?.revision || lesson?.contentRevision);
+}
+
+function textParagraphs(text) {
+  return String(text || "").split(/\n\s*\n/u).filter(Boolean).map(part => `<p>${escapeHtml(part)}</p>`).join("");
 }
 
 function fieldMessage(record) {
@@ -194,9 +98,9 @@ function fieldMessage(record) {
 }
 
 function updateFieldStatus(kind) {
-  const record = field(kind);
   const status = byId(`${kind}-save-status`);
-  if (!status) return;
+  if (!status || !currentEntry()?.ready) return;
+  const record = field(kind);
   status.textContent = fieldMessage(record);
   status.classList.toggle("field-warning", ["corrupt", "read-error", "write-error", "unavailable"].includes(record.status));
   const retry = byId(`${kind}-save-retry`);
@@ -207,6 +111,7 @@ function flushDrafts() {
   clearTimeout(saveTimer);
   if (!workspaceState || !product) return;
   for (const record of workspaceState.records()) workspaceState.save(record.identity);
+  if (progress) for (const record of progress.records()) progress.save(record.identity);
   updateFieldStatus("code");
   updateFieldStatus("note");
 }
@@ -240,7 +145,9 @@ function questionBlock(question) {
 }
 
 function officialSource() {
-  return `<details class="lesson-source"><summary>학습 목표와 공식 자료</summary><ul>${product.lesson.goals.map(goal => `<li>${escapeHtml(goal)}</li>`).join("")}</ul>${product.lesson.sources.map(source => {
+  const entry = currentEntry();
+  const prerequisites = (entry.lesson.prerequisites || []).map(id => lessons.find(item => item.id === id)).filter(Boolean);
+  return `<details class="lesson-source"><summary>학습 목표와 공식 자료</summary><ul>${entry.lesson.goals.map(goal => `<li>${escapeHtml(goal)}</li>`).join("")}</ul>${prerequisites.length ? `<p>먼저 읽을 강의: ${prerequisites.map(item => `<button type="button" class="inline-term" data-lesson="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`).join(" · ")}</p>` : ""}${entry.lesson.sources.map(source => {
     let url;
     try { url = new URL(source.url); } catch { return ""; }
     return url.protocol === "https:" ? `<a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)} ↗ <span class="sr-only">(새 탭)</span></a>` : "";
@@ -248,85 +155,81 @@ function officialSource() {
 }
 
 function notesBlock() {
-  return `<section class="notes-section" aria-labelledby="notes-title"><div class="field-heading"><h3 id="notes-title">생각 메모</h3><button type="button" class="plain-button" data-reset-field="note">메모 비우기</button></div><label for="lesson-note" class="sr-only">이 수업의 생각 메모</label><textarea id="lesson-note" data-draft="note" rows="4" maxlength="200000" placeholder="어떤 바인딩이 바뀌었는지, 다음에 확인할 것은 무엇인지 적어 보세요." aria-describedby="note-save-status"></textarea><p id="note-save-status" class="save-status" role="status"></p><button id="note-save-retry" type="button" class="plain-button" data-save-field="note" hidden>저장 다시 시도</button></section>`;
+  const entry = currentEntry();
+  const rubric = entry.lesson.memoRubric || ["내가 선택한 방법과 이유를 적었습니다.", "다른 방법과의 차이를 비교했습니다.", "실패할 입력과 확인 방법을 적었습니다."];
+  const saved = currentProgress().value;
+  const note = field("note").value;
+  return `<section class="notes-section" aria-labelledby="notes-title"><div class="field-heading"><h3 id="notes-title">설계 메모</h3><button type="button" class="plain-button" data-reset-field="note">메모 비우기</button></div><label for="lesson-note" class="sr-only">이 수업의 설계 메모</label><textarea id="lesson-note" data-draft="note" rows="4" maxlength="200000" placeholder="선택한 방법, 다른 대안, 실패할 수 있는 조건을 적어 보세요." aria-describedby="note-save-status"></textarea><p id="note-save-status" class="save-status" role="status"></p><button id="note-save-retry" type="button" class="plain-button" data-save-field="note" hidden>저장 다시 시도</button><fieldset class="memo-rubric"><legend>내 메모 점검하기</legend>${rubric.map((text, index) => `<label><input type="checkbox" data-rubric="${index}"${saved.reviewedNote === note && saved.rubric[index] ? " checked" : ""}${note.trim() ? "" : " disabled"}><span>${escapeHtml(text)}</span></label>`).join("")}<p class="code-note">작성한 내용을 직접 확인하는 항목입니다. 메모의 의미를 자동 평가하지 않습니다.</p></fieldset></section>`;
+}
+
+function environmentForEntry(entry) {
+  return product.environment.exerciseAvailability?.[entry.exercise?.id] || product.environment;
+}
+
+function executionContent() {
+  const entry = currentEntry();
+  const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[route.version] || entry.profile?.id));
+  const environment = environmentForEntry(entry);
+  const available = runnableForVersion(entry) && environment.available;
+  return `<section class="execution-section" aria-labelledby="execution-title"><h3 id="execution-title">실행과 제출 검사</h3><dl class="runtime-details"><div><dt>언어 기준</dt><dd>${escapeHtml(route.version)}</dd></div><div><dt>실제 런타임</dt><dd>${escapeHtml(environment.actualRuntime || "연결할 수 없음")}</dd></div><div><dt>변환 대상</dt><dd>${escapeHtml(profile?.compilerTarget || "별도 변환 없음")}</dd></div></dl><p class="runtime-note" id="runtime-note">${available ? "현재 브라우저의 전용 Worker에서 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다." : escapeHtml((!environment.available && environment.reason) || entry.runtimeReason || profile?.execution?.reason || "이 과제의 실행 환경을 준비하고 있습니다.")}</p><div class="execution-actions"><button type="button" class="plain-button" data-execute="prepare"${available ? "" : " disabled"}>환경 확인</button><button type="button" class="secondary-button" data-execute="run"${available ? "" : " disabled"}>코드 실행</button><button type="button" class="primary-button" data-execute="submit"${available ? "" : " disabled"}>제출 검사</button><button type="button" class="secondary-button" id="cancel-execution" hidden>중지</button></div><p id="execution-announcement" class="save-status" role="status" aria-live="polite"></p><div id="execution-result"></div><p class="code-note">공개된 행동 검사를 이용하는 자가 학습용 결과입니다. 언어 기준과 현재 브라우저의 전체 기능 지원은 별개입니다.</p></section>`;
 }
 
 function codingContent() {
-  const { exercise, environment, profile, file: sourceFile } = product;
-  return `<span class="section-number">05 / 직접 코딩</span><h2>독립된 카운터를 완성하세요</h2><p>${escapeHtml(product.lesson.steps.lab)}</p><ul class="reading-list">${exercise.instructions.map(text => `<li>${escapeHtml(text)}</li>`).join("")}</ul>
-    <section class="editor-section" aria-labelledby="editor-title"><div class="editor-toolbar"><div><h3 id="editor-title">함수 본문 초안</h3><p>${escapeHtml(sourceFile.path)}</p></div><div class="editor-actions"><button type="button" class="plain-button" id="copy-code">전체 코드 복사</button><button type="button" class="plain-button" data-reset-field="code">초기화</button></div></div>
-    <p class="editor-help" id="editor-help">아래 본문만 편집할 수 있습니다. 일반 텍스트 편집기이며 문법 강조·자동 완성은 제공하지 않습니다. Tab 키는 다음 항목으로 이동합니다.</p>
-    <div class="body-editor"><pre class="editor-fixed" aria-label="읽기 전용 함수 선언">export function createCounter(initial = 0) {</pre><label class="sr-only" for="code-editor">createCounter 함수 본문</label><textarea id="code-editor" data-draft="code" rows="10" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="editor-help code-save-status"></textarea><pre class="editor-fixed" aria-label="읽기 전용 함수 닫기">}</pre></div>
+  const entry = currentEntry();
+  const { exercise, file: sourceFile, editable } = entry;
+  if (!exercise || !editable || !sourceFile) return `<span class="section-number">05 / 직접 코딩</span>${textParagraphs(entry.lesson.steps.lab)}<p class="sample-note">이 강의의 편집 과제를 준비하고 있습니다.</p>`;
+  return `<span class="section-number">05 / 직접 코딩</span><h2>${escapeHtml(exercise.title || "조건을 만족하는 코드를 완성하세요")}</h2>${textParagraphs(entry.lesson.steps.lab)}<ul class="reading-list">${exercise.instructions.map(text => `<li>${escapeHtml(text)}</li>`).join("")}</ul>
+    <section class="editor-section" aria-labelledby="editor-title"><div class="editor-toolbar"><div><h3 id="editor-title">함수 본문</h3><p>${escapeHtml(sourceFile.path)}</p></div><div class="editor-actions"><button type="button" class="plain-button" id="copy-code">전체 코드 복사</button><button type="button" class="plain-button" data-reset-field="code">초기화</button></div></div>
+    <p class="editor-help" id="editor-help">본문만 편집할 수 있습니다. Tab 키는 다음 항목으로 이동합니다. 수정하면 이전 제출 통과가 해제됩니다.</p>
+    <div class="body-editor"><pre class="editor-fixed" aria-label="읽기 전용 함수 선언">${escapeHtml(editable.prefix)}</pre><label class="sr-only" for="code-editor">${escapeHtml(exercise.runner?.exportName || "과제")} 함수 본문</label><textarea id="code-editor" data-draft="code" rows="12" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="editor-help code-save-status"></textarea><pre class="editor-fixed" aria-label="읽기 전용 함수 닫기">${escapeHtml(editable.suffix)}</pre></div>
     <p id="code-save-status" class="save-status" role="status"></p><button id="code-save-retry" type="button" class="plain-button" data-save-field="code" hidden>저장 다시 시도</button><p id="copy-status" class="save-status" role="status"></p></section>
-    <details><summary>구현할 때 확인할 조건</summary><ul class="reading-list">${exercise.behaviorCriteria.map(text => `<li>${escapeHtml(text)}</li>`).join("")}</ul></details>
-    <section class="execution-section" aria-labelledby="execution-title"><h3 id="execution-title">실행 환경</h3><dl class="runtime-details"><div><dt>언어 기준</dt><dd>${escapeHtml(profile.languageVersion)}</dd></div><div><dt>실제 런타임</dt><dd>연결 전</dd></div><div><dt>제출 검사</dt><dd>연결 전 · 성취 기록 없음</dd></div></dl><div class="disabled-actions"><button type="button" disabled aria-describedby="runtime-note">코드 실행</button><button type="button" disabled aria-describedby="runtime-note">제출 검사</button></div><p class="runtime-note" id="runtime-note">${escapeHtml(environment.reason)}. 지금은 코드를 작성하고 저장할 수 있습니다.</p></section>`;
+    <details><summary>구현할 때 확인할 조건</summary><ul class="reading-list">${exercise.behaviorCriteria.map(text => `<li>${escapeHtml(text)}</li>`).join("")}</ul></details>${executionContent()}`;
 }
 
-function closureContent(step) {
-  const content = product.lesson.steps[step];
-  if (step === "lab") return codingContent() + notesBlock();
-  const labels = {
-    theory: ["01 / 이해하기", "함수는 자신이 만들어진 환경과 연결됩니다"],
-    example: ["02 / 코드 따라 읽기", "카운터 두 개, 각각의 상태"],
-    quiz: ["03 / 생각해 보기", "다른 카운터의 호출은 영향을 줄까요?"],
-    practice: ["04 / 실무에 연결하기", "독립된 상태가 필요한 순간"],
-  };
-  const [number, heading] = labels[step];
-  let body;
-  if (step === "quiz") {
-    const [question, explanation = ""] = content.split("정답:");
-    body = `<p>${escapeHtml(question)}</p><details><summary>해설 펼치기</summary><p>${escapeHtml(explanation.replace("퀴즈 UI와 채점은 미구현이다.", ""))}</p></details><p class="sample-note">생각을 메모하고 해설과 비교하는 문제입니다. 답안 채점과 성취 기록은 아직 연결하지 않았습니다.</p>`;
-  } else {
-    body = `<p>${escapeHtml(content)}</p>`;
-  }
-  if (step === "theory") {
-    body += `<aside class="margin-note"><span aria-hidden="true">✳</span><p>핵심 용어를 연결해 보세요.<br>${termButton("closure")} · ${termButton("binding")} · ${termButton("scope")}</p></aside>`;
-  }
-  if (step === "example") body += codeBlock(product.example, "bindings-and-closures.mjs") + '<p class="sample-note">예상 출력: <code>1 2 11 3</code> · 실제 실행 결과가 아닙니다.</p>';
-  return `<span class="section-number">${number}</span><h2>${heading}</h2>${body}${officialSource()}${notesBlock()}`;
+function quizContent() {
+  const questions = currentEntry().lesson.quiz?.questions || [];
+  if (!questions.length) return `${textParagraphs(currentEntry().lesson.steps.quiz)}<p class="sample-note">객관식 판정은 준비 중입니다. 읽기만으로 통과하지 않습니다.</p>`;
+  const saved = currentQuiz();
+  return `<form id="lesson-quiz"><div class="quiz-questions">${questions.map((question, index) => `<fieldset class="quiz-question"><legend>${index + 1}. ${escapeHtml(question.prompt)}</legend>${question.choices.map(choice => `<label class="quiz-choice"><input type="radio" name="question-${escapeHtml(question.id)}" data-question="${escapeHtml(question.id)}" value="${escapeHtml(choice.id)}"${saved?.answers?.[question.id] === choice.id ? " checked" : ""}><span>${escapeHtml(choice.text)}</span></label>`).join("")}</fieldset>`).join("")}</div><button class="primary-button" type="submit">답안 확인</button><div id="quiz-feedback" class="quiz-feedback" role="status"></div></form>`;
 }
-function sampleContent(lesson, step) {
-  const notice = `<p class="sample-note">${escapeHtml(lesson.name)} 개념 미리보기입니다. 이 주제의 교재와 직접 코딩 과제는 준비 중입니다.</p>`;
-  if (step === "theory") return `${questionBlock(lesson.question)}${notice}
-    <span class="section-number">01 / 개념 미리보기</span><h2>${escapeHtml(lesson.heading)}</h2>
-    <p>${escapeHtml(lesson.text)}</p>${codeBlock(lesson.code)}
-    <p>${escapeHtml(lesson.observation)}</p>
-    <h3>함께 읽을 용어</h3><p>${lesson.terms.map(id => termButton(id)).join(" · ")}</p>`;
-  if (step === "example") return `${notice}<span class="section-number">02 / 예시 미리보기</span>
-    <h2>작은 코드로 관계를 확인합니다</h2>${codeBlock(lesson.code)}<p>${escapeHtml(lesson.observation)}</p>`;
-  if (step === "quiz") return `${notice}<span class="section-number">03 / 문제 미리보기</span>
-    <h2>${escapeHtml(lesson.prompt)}</h2>${codeBlock(lesson.code)}
-    <details><summary>해설 펼치기</summary><p>${escapeHtml(lesson.answer)}</p></details>
-    <p class="code-note">해설 열기는 채점이나 학습 완료로 기록되지 않습니다.</p>`;
-  if (step === "practice") return `${notice}<span class="section-number">04 / 적용 미리보기</span>
-    <h2>실제 설계에서 확인할 질문</h2><p>${escapeHtml(lesson.practice)}</p>
-    <h3>용어를 연결해서 읽기</h3><p>${lesson.terms.map(id => termButton(id)).join(" · ")}</p>
-    <aside class="margin-note"><span aria-hidden="true">※</span><p>구현의 편의뿐 아니라 잘못된 입력과 상태 변경, 호출 계약이 드러나는지도 함께 비교합니다.</p></aside>`;
-  return `${notice}<span class="section-number">05 / 과제 방향</span><h2>작성할 결과물</h2>
-    <p>${escapeHtml(lesson.task)}</p><div class="disabled-actions"><button type="button" disabled aria-describedby="runtime-note">코드 실행</button><button type="button" disabled aria-describedby="runtime-note">제출 검사</button></div>
-    <p class="runtime-note" id="runtime-note">이 주제의 starter·편집기·실행기·검사기는 연결 전입니다. 과제 방향을 검토하는 화면입니다.</p>`;
+
+function lessonContent(step) {
+  const entry = currentEntry();
+  if (!entry.ready) return `<span class="section-number">준비 중</span><h2>${escapeHtml(entry.name)}</h2><p>${escapeHtml(entry.reason)}</p><p class="sample-note">계획된 강의이며, 학습 완료나 실행 가능 강의로 집계하지 않습니다.</p>`;
+  const labels = { theory: ["01 / 이해하기", "개념과 동작을 연결합니다"], example: ["02 / 코드 따라 읽기", "입력부터 결과까지 따라갑니다"], quiz: ["03 / 문제풀이", "이해한 내용을 확인하세요"], practice: ["04 / 실무 심화", "선택의 이유와 실패 조건을 살펴봅니다"] };
+  if (step === "lab") return codingContent() + notesBlock();
+  const [number, heading] = labels[step];
+  let body = step === "quiz" ? quizContent() : textParagraphs(entry.lesson.steps[step]);
+  if (step === "example") body += codeBlock(entry.example, entry.exampleFile.split("/").at(-1));
+  if (step === "theory") {
+    const terms = relatedTerms(entry).slice(0, 4);
+    if (terms.length) body += `<aside class="margin-note"><span aria-hidden="true">✳</span><p>함께 읽을 용어<br>${terms.map(term => termButton(term.id)).join(" · ")}</p></aside>`;
+  }
+  return `<span class="section-number">${number}</span><h2>${escapeHtml(entry.lesson.stepHeadings?.[step] || heading)}</h2>${body}${officialSource()}${notesBlock()}`;
+}
+
+function relatedTerms(entry) {
+  const ids = entry.lesson?.terms;
+  if (Array.isArray(ids)) return glossary.filter(term => ids.includes(term.id));
+  return glossary.filter(term => term.lessons.some(id => (conceptAliases[id] || id) === entry.id));
 }
 
 function readRoute() {
-  const params = new URL(location.href).searchParams;
-  return {
-    lesson: lessons.some(item => item.id === params.get("lesson")) ? params.get("lesson") : defaultLesson,
-    step: steps.some(item => item.id === params.get("step")) ? params.get("step") : "theory",
-    term: params.get("term") || null,
-    version: product.lesson.supportedVersions.includes(params.get("version")) ? params.get("version") : product.lesson.supportedVersions[0],
-  };
+  return normalizeRoute(new URL(location.href).searchParams, lessons, product.config.languageVersions);
 }
 
 function writeRoute(next, { replace = false, termEntry = false } = {}) {
-  next = { ...next, version: next.version || route?.version || product.lesson.supportedVersions[0] };
   const url = new URL(location.href);
-  url.searchParams.set("lesson", next.lesson);
-  url.searchParams.set("step", next.step);
-  url.searchParams.set("version", next.version);
-  if (next.term) url.searchParams.set("term", next.term);
+  const requested = { ...route, ...next };
+  for (const key of ["lesson", "step", "version", "track"]) {
+    if (requested[key]) url.searchParams.set(key, requested[key]);
+  }
+  if (requested.term) url.searchParams.set("term", requested.term);
   else url.searchParams.delete("term");
+  const normalized = normalizeRoute(url.searchParams, lessons, product.config.languageVersions);
+  for (const key of ["lesson", "step", "version", "track"]) url.searchParams.set(key, normalized[key]);
   history[replace ? "replaceState" : "pushState"]({ jsEduWorkspace: true, jsEduWorkspaceTerm: termEntry }, "", url);
-  applyRoute(next);
+  applyRoute(normalized);
 }
 
 function ensureActiveTabVisible(target) {
@@ -338,41 +241,178 @@ function ensureActiveTabVisible(target) {
   if (bounds.right > container.right - 4) elements.tabs.scrollLeft += bounds.right - container.right + 4;
 }
 
+function renderNavigation() {
+  const visible = lessons.filter(entry => route.track === "all" || entry.track === route.track);
+  byId("track-filter").value = route.track;
+  const supported = currentEntry().lesson?.supportedVersions || product.config.languageVersions;
+  byId("version-filter").innerHTML = supported.map(version => `<option value="${escapeHtml(version)}">${escapeHtml(version)}</option>`).join("");
+  byId("version-filter").value = route.version;
+  elements.lessonList.innerHTML = visible.map(entry => `<li><button type="button" class="lesson-link" data-lesson="${escapeHtml(entry.id)}"${entry.id === route.lesson ? ' aria-current="page"' : ""}><span class="lesson-number">${escapeHtml(entry.displayNumber || String(entry.order).padStart(2, "0"))}</span><span class="lesson-name">${escapeHtml(entry.name)}${entry.ready ? "" : '<small class="lesson-state">준비 중</small>'}</span></button></li>`).join("");
+  const prepared = lessons.filter(entry => entry.ready).length;
+  const runnable = lessons.filter(entry => entry.runnable).length;
+  byId("catalog-status").textContent = `교재 ${prepared}강 · 실습 연결 ${runnable}강 · 계획 ${lessons.length}강`;
+  const selected = elements.lessonList.querySelector('[aria-current="page"]');
+  const viewport = elements.lessonList.getBoundingClientRect();
+  const bounds = selected?.getBoundingClientRect();
+  if (bounds && elements.lessonList.clientHeight < elements.lessonList.scrollHeight) {
+    if (bounds.top < viewport.top + 4) elements.lessonList.scrollTop -= viewport.top + 4 - bounds.top;
+    if (bounds.bottom > viewport.bottom - 4) elements.lessonList.scrollTop += bounds.bottom - viewport.bottom + 4;
+  }
+}
+
 function renderLesson() {
-  const lesson = lessons.find(item => item.id === route.lesson);
-  const index = lessons.indexOf(lesson);
-  document.title = `${lesson.name} · ${product.config.displayName}`;
-  elements.lessonKicker.textContent = `JavaScript 핵심 / ${String(index + 1).padStart(2, "0")} ${lesson.name}`;
-  elements.lessonHeading.textContent = lesson.name;
-  elements.lessonLead.textContent = lesson.id === defaultLesson ? product.lesson.title : lesson.lead;
-  byId("lesson-meta").innerHTML = lesson.id === defaultLesson
-    ? `<span>교재 초안</span><span>${escapeHtml(route.version)}</span><span>코딩 초안 저장 가능</span>`
-    : '<span>개념 미리보기</span><span>교재·과제 준비 중</span>';
-  byId("lesson-revision").textContent = lesson.id === defaultLesson ? `교재 개정 ${product.lesson.contentRevision}` : "개념 미리보기";
-  elements.lessonList.innerHTML = lessons.map((item, number) => `<li><button type="button" class="lesson-link" data-lesson="${item.id}"${item.id === lesson.id ? ' aria-current="page"' : ""}><span class="lesson-number">${String(number + 1).padStart(2, "0")}</span><span class="lesson-name">${escapeHtml(item.name)}</span></button></li>`).join("");
+  const entry = currentEntry();
+  document.title = `${entry.name} · ${product.config.displayName}`;
+  elements.lessonKicker.textContent = `${trackLabels[entry.track]} / ${entry.displayNumber || String(entry.order).padStart(2, "0")}${entry.unit ? ` · ${entry.unit}` : ""}`;
+  elements.lessonHeading.textContent = entry.name;
+  elements.lessonLead.textContent = entry.ready ? entry.lesson.title : "확정한 로드맵 순서로 준비하는 강의입니다.";
+  byId("lesson-meta").innerHTML = entry.ready
+    ? `<span>${entry.lesson.status === "draft" ? "교재 초안" : "학습 교재"}</span><span>${escapeHtml(route.version)}</span><span>${entry.runnable ? "코드 실행·제출" : "실행 환경 준비 중"}</span>`
+    : '<span>강의 준비 중</span>';
+  byId("lesson-revision").textContent = entry.ready ? `교재 개정 ${entry.lesson.contentRevision}` : "예정 강의";
+  renderNavigation();
   renderPanel();
   renderSearch();
 }
 
 function renderPanel() {
-  const lesson = lessons.find(item => item.id === route.lesson);
+  const entry = currentEntry();
   const currentIndex = steps.findIndex(item => item.id === route.step);
   elements.tabs.innerHTML = steps.map(item => `<button class="step-tab" type="button" role="tab" id="step-${item.id}" aria-controls="lesson-panel" aria-selected="${item.id === route.step}" tabindex="${item.id === route.step ? 0 : -1}" data-step="${item.id}">${item.name}</button>`).join("");
   elements.panel.setAttribute("aria-labelledby", `step-${route.step}`);
-  elements.panel.innerHTML = lesson.id === defaultLesson ? closureContent(route.step) : sampleContent(lesson, route.step);
+  elements.panel.innerHTML = lessonContent(route.step);
   elements.panel.querySelectorAll("[data-draft]").forEach(input => {
     input.value = field(input.dataset.draft).value;
     updateFieldStatus(input.dataset.draft);
   });
   const next = steps[(currentIndex + 1) % steps.length];
-  elements.footer.innerHTML = `<span>학습 단계 ${currentIndex + 1} / ${steps.length}</span><button type="button" class="next-step" data-step="${next.id}">${currentIndex === steps.length - 1 ? "이론으로 돌아가기" : `다음: ${next.name}`}<span aria-hidden="true">→</span></button>`;
+  const following = lessons[lessons.indexOf(entry) + 1];
+  elements.footer.innerHTML = `<span>학습 단계 ${currentIndex + 1} / ${steps.length}</span>${currentIndex === steps.length - 1 && following ? `<button type="button" class="next-step" data-lesson="${escapeHtml(following.id)}">다음 강의<span aria-hidden="true">→</span></button>` : `<button type="button" class="next-step" data-step="${next.id}">${currentIndex === steps.length - 1 ? "이론으로 돌아가기" : `다음: ${next.name}`}<span aria-hidden="true">→</span></button>`}`;
+  renderQuizFeedback();
+  renderExecution();
+  void refreshAchievement();
   ensureActiveTabVisible();
+}
+
+function formatValue(value) {
+  if (value === undefined) return "undefined";
+  try { return typeof value === "string" ? value : JSON.stringify(value, null, 2); }
+  catch { return String(value); }
+}
+
+function renderExecution() {
+  const output = byId("execution-result");
+  if (!output || !executionState) return;
+  const state = executionState.snapshot();
+  const entry = currentEntry();
+  const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[route.version] || entry.profile?.id));
+  const busy = executionState.busy();
+  const available = runnableForVersion(entry) && environmentForEntry(entry).available;
+  document.querySelectorAll("[data-execute]").forEach(button => { button.disabled = busy || !available; });
+  byId("cancel-execution").hidden = !busy;
+  byId("execution-announcement").textContent = state.reason;
+  output.setAttribute("aria-busy", String(busy));
+  const result = state.result;
+  if (!result) { output.replaceChildren(); return; }
+  const messages = {
+    ready: "환경 확인 완료 · 아직 코드를 실행하지 않았습니다",
+    success: state.kind === "submit" ? "제출 검사 결과" : "코드 실행 완료 · 제출 통과와는 별도입니다",
+    "checks-failed": "일부 행동 조건을 만족하지 못했습니다",
+    "compilation-error": "코드 문법을 확인해 주세요", "runtime-error": "실행 중 오류가 발생했습니다",
+    timeout: "실행 시간 제한에 도달했습니다", cancelled: "작업을 중지했습니다",
+    "infrastructure-error": "실행 환경에서 문제가 발생했습니다 · 오답으로 판정하지 않습니다",
+  };
+  const checks = Array.isArray(result.checks) ? result.checks : [];
+  const passed = checks.filter(check => check.passed === true).length;
+  const checkSummary = state.kind === "submit" && result.status !== "ready"
+    ? `<p class="check-summary">${checks.length ? `${checks.length}개 중 ${passed}개 통과${passed === checks.length && result.status === "success" ? " · 현재 코드 통과" : ""}` : "완료된 검사 없음 · 통과로 기록하지 않습니다"}</p>` : "";
+  const streams = [["stdout · 표준 출력", result.stdout], ["stderr · 오류 출력", result.stderr], ["문법 진단", result.compilerOutput]]
+    .filter(([, text]) => text).map(([name, text]) => `<details class="output-detail" open><summary>${name}</summary><pre tabindex="0"><code>${escapeHtml(text)}</code></pre></details>`).join("");
+  output.innerHTML = `<div class="execution-outcome" data-status="${escapeHtml(result.status)}"><h4>${escapeHtml(messages[result.status] || "실행 결과를 확인해 주세요")}</h4>${checkSummary}${state.kind === "run" && Object.hasOwn(result, "runValue") ? `<p class="code-note">호출 결과</p><pre tabindex="0"><code>${escapeHtml(formatValue(result.runValue))}</code></pre>` : ""}${checks.length ? `<ol class="behavior-checks">${checks.map(check => `<li data-passed="${check.passed === true}"><div><strong>${check.passed === true ? "통과" : "확인 필요"}</strong><span>${escapeHtml(check.label || check.id)}</span></div>${check.passed !== true ? `<details><summary>기대값과 실제값 보기</summary><p class="code-note">기대값</p><pre tabindex="0">${escapeHtml(formatValue(check.expected))}</pre><p class="code-note">실제값</p><pre tabindex="0">${escapeHtml(formatValue(check.actual))}</pre>${check.error ? `<p>${escapeHtml(check.error)}</p>` : ""}</details>` : ""}</li>`).join("")}</ol>` : ""}${streams}${result.outputTruncated ? '<p class="field-warning">출력 한도에 도달해 나머지 출력을 생략했습니다.</p>' : ""}${Number.isFinite(result.durationMs) ? `<p class="code-note">실행 시간 ${Math.round(result.durationMs)}ms</p>` : ""}</div>`;
+  byId("execution-announcement").textContent = `${messages[result.status] || "실행 결과 수신"}${checks.length ? `, ${checks.length}개 중 ${passed}개 통과` : ""}`;
+}
+
+function renderQuizFeedback() {
+  const output = byId("quiz-feedback");
+  if (!output) return;
+  const questions = currentEntry().lesson.quiz?.questions || [];
+  const quiz = currentQuiz();
+  if (!quiz?.assessed) { output.textContent = "답안을 선택한 뒤 확인해 주세요."; return; }
+  const assessment = assessQuiz(questions, quiz.answers);
+  output.innerHTML = `<p><strong>${assessment.passed ? "퀴즈 통과" : "해설을 읽고 다시 생각해 보세요"}</strong> · ${assessment.checks.filter(check => check.passed).length} / ${questions.length}</p><ol>${questions.map(question => {
+    const choice = question.choices.find(item => item.id === quiz.answers[question.id]);
+    const correct = question.choices.find(item => item.id === question.correctChoiceId);
+    return `<li>${choice ? escapeHtml(choice.explanation || (choice.id === question.correctChoiceId ? "올바른 답입니다." : "다른 선택을 검토해 보세요.")) : "선택하지 않은 문제입니다."}${choice?.id !== question.correctChoiceId && correct ? `<p>정답: ${escapeHtml(correct.text)}<br>${escapeHtml(correct.explanation || "")}</p>` : ""}</li>`;
+  }).join("")}</ol>`;
+}
+
+function renderAchievement() {
+  const entry = currentEntry();
+  const container = byId("learning-achievement");
+  void refreshCourseProgress();
+  if (!entry?.ready) { container.replaceChildren(); byId("progress-save-status").textContent = ""; byId("progress-save-retry").hidden = true; return; }
+  const record = currentProgress();
+  const questions = entry.lesson.quiz?.questions || [];
+  const quiz = currentQuiz();
+  const quizPassed = Boolean(quiz?.assessed && assessQuiz(questions, quiz.answers).passed);
+  const rubric = entry.lesson.memoRubric || [1, 2, 3];
+  const note = field("note").value;
+  const reviewed = Boolean(note.trim() && rubric.length && record.value.reviewedNote === note
+    && rubric.every((_, index) => record.value.rubric[index] === true));
+  container.innerHTML = `<span data-complete="${quizPassed}">퀴즈 ${quizPassed ? "통과" : "미확인"}</span><span data-complete="${validCode}">코딩 ${validCode ? "통과" : "미확인"}</span><span data-complete="${reviewed}">메모 ${reviewed ? "자가 확인" : "미확인"}</span>${quizPassed && validCode && reviewed ? '<strong class="self-study-complete">자가 학습 과정 완료</strong>' : ""}`;
+  const messages = { corrupt: "저장된 학습 상태가 손상되어 자동 저장을 멈췄습니다. 현재 화면의 새 결과만 유지됩니다.",
+    "read-error": "학습 상태를 읽지 못해 기존 데이터를 보존했습니다. 현재 결과는 이 화면에서만 유지됩니다.",
+    "write-error": "학습 상태를 저장하지 못했습니다. 현재 결과는 화면에 유지됩니다.", unavailable: "학습 상태 저장 공간을 사용할 수 없습니다. 현재 결과는 이 화면에서만 유지됩니다." };
+  byId("progress-save-status").textContent = messages[record.status] || "";
+  byId("progress-save-status").classList.toggle("field-warning", Boolean(messages[record.status]));
+  byId("progress-save-retry").hidden = !record.dirty || record.blocked;
+}
+
+async function refreshAchievement() {
+  const generation = ++progressGeneration;
+  const entry = currentEntry();
+  validCode = false;
+  renderAchievement();
+  if (!entry?.ready || !runnableForVersion(entry) || !entry.editable || !entry.file) return;
+  const identity = progressIdentity(entry, route.version);
+  const saved = progress.load(identity).value.submission;
+  if (!saved) return;
+  try {
+    const [sourceFingerprint, environment] = await Promise.all([fingerprintSource(field("code").value), product.runner.getEnvironment({ exerciseId: entry.exercise.id })]);
+    if (generation !== progressGeneration) return;
+    validCode = environment.available && validSubmission(saved, identity, sourceFingerprint, environment.environmentFingerprint);
+    renderAchievement();
+  } catch { /* Unverifiable saved results are not marked as current achievement. */ }
+}
+
+async function refreshCourseProgress() {
+  const generation = ++courseGeneration;
+  const version = route.version;
+  const eligible = lessons.filter(entry => runnableForVersion(entry, version) && entry.lesson.supportedVersions.includes(version));
+  try {
+    const completion = await Promise.all(eligible.map(async entry => {
+      const environment = await product.runner.getEnvironment({ exerciseId: entry.exercise.id });
+      if (!environment.available) return false;
+      const identity = progressIdentity(entry, version);
+      const saved = progress.load(identity).value;
+      const quiz = saved.quiz;
+      if (!quiz?.assessed || quiz.revision !== (entry.lesson.quiz?.revision || entry.lesson.contentRevision)
+        || !assessQuiz(entry.lesson.quiz?.questions || [], quiz.answers).passed || !saved.submission) return false;
+      const note = field("note", entry).value;
+      const rubric = entry.lesson.memoRubric || [1, 2, 3];
+      if (!note.trim() || saved.reviewedNote !== note || !rubric.length || !rubric.every((_, index) => saved.rubric[index] === true)) return false;
+      return validSubmission(saved.submission, identity, await fingerprintSource(field("code", entry).value), environment.environmentFingerprint);
+    }));
+    if (generation === courseGeneration) byId("course-progress").textContent = `자가 학습 완료 ${completion.filter(Boolean).length} / ${eligible.length}강`;
+  } catch {
+    if (generation === courseGeneration) byId("course-progress").textContent = "학습 상태를 확인하지 못했습니다.";
+  }
 }
 
 function renderSearch() {
   if (composing) return;
   const query = elements.search.value;
-  const results = findTerms(query, route.lesson);
+  const results = normalizeSearch(query) ? findTerms(query, route.lesson) : relatedTerms(currentEntry());
   elements.clear.hidden = query.length === 0;
   elements.summary.textContent = normalizeSearch(query) ? `검색 결과 ${results.length}개` : `이 주제와 연결된 용어 ${results.length}개`;
   clearTimeout(announcementTimer);
@@ -452,7 +492,15 @@ function setDialogMode(mode, { returning = false } = {}) {
   }
   elements.dialogScroll.scrollTop = 0;
   if (mode === "term") focusIfVisible(byId("term-title"));
-  if (mode === "toc") focusIfVisible(elements.lessonList.querySelector('[aria-current="page"]'));
+  if (mode === "toc") {
+    const selected = elements.lessonList.querySelector('[aria-current="page"]');
+    focusIfVisible(selected);
+    if (selected) {
+      const bounds = selected.getBoundingClientRect();
+      const viewport = elements.dialogScroll.getBoundingClientRect();
+      if (bounds.bottom > viewport.bottom - 12) elements.dialogScroll.scrollTop += bounds.bottom - viewport.bottom + 12;
+    }
+  }
   if (mode === "glossary") {
     if (returning) {
       const target = elements.results.querySelector(`[data-term="${searchTermId}"]`);
@@ -470,22 +518,28 @@ function renderTerm(id) {
     return;
   }
   elements.termView.innerHTML = `<section class="term-detail"><p class="section-eyebrow">GLOSSARY / 용어 설명</p><h2 id="term-title" tabindex="-1">${escapeHtml(entry.name)}</h2><p class="term-english" lang="en">${escapeHtml(entry.english)}</p><p class="term-definition">${escapeHtml(entry.definition)}</p><h3>짧은 코드로 읽기</h3><pre tabindex="0" aria-label="${escapeHtml(entry.name)} 설명용 코드"><code>${escapeHtml(entry.example)}</code></pre><p class="code-note">직접 작성한 설명용 예제 · 실행 결과 아님</p><h3>이렇게 오해하기 쉬워요</h3><p class="term-misconception">${escapeHtml(entry.misconception)}</p><h3>연결된 개념으로 이동</h3><ul class="related-lessons">${entry.lessons.map(lessonId => {
-    const lesson = lessons.find(item => item.id === lessonId);
-    return `<li><button type="button" class="plain-button" data-lesson="${lessonId}">${escapeHtml(lesson.name)} <span aria-hidden="true">↗</span></button></li>`;
-  }).join("")}</ul><p class="code-note">클로저는 교재 초안, 다른 주제는 개념 미리보기로 연결됩니다.</p><div class="term-source"><p>개념의 근거와 더 읽을 자료</p><a href="${escapeHtml(entry.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.source.title)} ↗ <span class="sr-only">(새 탭)</span></a><p>이 설명은 원문을 그대로 옮긴 것이 아닌 학습용 요약입니다.</p></div></section>`;
+    const lesson = lessons.find(item => item.id === (conceptAliases[lessonId] || lessonId));
+    return lesson ? `<li><button type="button" class="plain-button" data-lesson="${escapeHtml(lesson.id)}">${escapeHtml(lesson.name)} <span aria-hidden="true">↗</span></button></li>` : "";
+  }).join("")}</ul><div class="term-source"><p>개념의 근거와 더 읽을 자료</p><a href="${escapeHtml(entry.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.source.title)} ↗ <span class="sr-only">(새 탭)</span></a><p>이 설명은 원문을 그대로 옮긴 것이 아닌 학습용 요약입니다.</p></div></section>`;
   setDialogMode("term");
 }
 
 function applyRoute(next) {
   const lessonChanged = !route || route.lesson !== next.lesson;
   const stepChanged = !route || route.step !== next.step;
-  if (lessonChanged || stepChanged) {
+  const versionChanged = !route || route.version !== next.version;
+  const filterChanged = !route || route.track !== next.track;
+  if (lessonChanged || stepChanged || versionChanged) {
     flushDrafts();
+    executionState?.invalidate();
+    progressGeneration += 1;
+    validCode = false;
     if (byId("reset-dialog").open) byId("reset-dialog").close("cancel");
   }
   route = next;
-  if (lessonChanged) renderLesson();
+  if (lessonChanged || versionChanged) renderLesson();
   else if (stepChanged) renderPanel();
+  else if (filterChanged) renderNavigation();
   if (next.term) {
     renderTerm(next.term);
   } else if (modalMode === "term") {
@@ -537,6 +591,7 @@ function openGlossary() {
 }
 
 function selectLesson(id) {
+  id = conceptAliases[id] || id;
   if (!lessons.some(item => item.id === id)) return;
   returnToSearch = false;
   if (elements.dialog.open) closeDialogNow({ restoreFocus: false });
@@ -674,9 +729,81 @@ document.addEventListener("input", event => {
   const input = event.target;
   if (!(input instanceof HTMLTextAreaElement) || !input.dataset.draft || !product) return;
   workspaceState.update(draftIdentity(input.dataset.draft), input.value);
+  if (input.dataset.draft === "code") {
+    executionState.invalidate("코드가 바뀌었습니다. 다시 제출하면 현재 코드를 검사합니다.");
+    progress.update(progressIdentity(currentEntry(), route.version), { submission: null });
+    progressGeneration += 1;
+    validCode = false;
+  } else {
+    progress.update(progressIdentity(currentEntry(), route.version), { rubric: [], reviewedNote: "" });
+    document.querySelectorAll("[data-rubric]").forEach(control => { control.checked = false; control.disabled = !input.value.trim(); });
+  }
+  renderAchievement();
   updateFieldStatus(input.dataset.draft);
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flushDrafts, 500);
+});
+
+byId("track-filter").addEventListener("change", event => {
+  const track = event.target.value;
+  const entry = currentEntry();
+  const selected = track === "all" || entry.track === track ? entry : lessons.find(item => item.track === track);
+  if (selected) writeRoute({ ...route, track, lesson: selected.id, step: selected.id === entry.id ? route.step : "theory", term: null });
+});
+byId("version-filter").addEventListener("change", event => writeRoute({ ...route, version: event.target.value, term: null }));
+byId("progress-save-retry").addEventListener("click", () => {
+  progress.save(progressIdentity(currentEntry(), route.version));
+  renderAchievement();
+});
+
+document.addEventListener("change", event => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || !currentEntry()?.ready) return;
+  if (input.dataset.question) {
+    const record = currentProgress();
+    progress.update(record.identity, { quiz: { answers: { ...currentQuiz()?.answers, [input.dataset.question]: input.value }, assessed: false,
+      revision: currentEntry().lesson.quiz?.revision || currentEntry().lesson.contentRevision } });
+    renderQuizFeedback();
+    renderAchievement();
+  }
+  if (input.dataset.rubric !== undefined) {
+    const record = currentProgress();
+    const rubric = [...record.value.rubric];
+    rubric[Number(input.dataset.rubric)] = input.checked;
+    progress.update(record.identity, { rubric: Array.from(rubric, Boolean), reviewedNote: field("note").value });
+    renderAchievement();
+  }
+});
+
+document.addEventListener("submit", event => {
+  if (event.target.id !== "lesson-quiz") return;
+  event.preventDefault();
+  const record = currentProgress();
+  progress.update(record.identity, { quiz: { answers: { ...currentQuiz()?.answers }, assessed: true,
+    revision: currentEntry().lesson.quiz?.revision || currentEntry().lesson.contentRevision } });
+  renderQuizFeedback();
+  renderAchievement();
+});
+
+document.addEventListener("click", event => {
+  const target = event.target instanceof Element ? event.target : null;
+  if (target?.closest("#cancel-execution")) {
+    executionState.cancel();
+    byId("code-editor")?.focus({ preventScroll: true });
+    return;
+  }
+  const button = target?.closest("[data-execute]");
+  if (!button || button.disabled || !runnableForVersion(currentEntry()) || executionState.busy()) return;
+  const kind = button.dataset.execute;
+  const identity = progressIdentity(currentEntry(), route.version);
+  flushDrafts();
+  if (kind === "submit") {
+    progress.update(identity, { submission: null });
+    validCode = false;
+    progressGeneration += 1;
+    renderAchievement();
+  }
+  void executionState.start(kind, identity, field("code").value);
 });
 
 document.addEventListener("click", async event => {
@@ -703,7 +830,8 @@ document.addEventListener("click", async event => {
   }
   if (target?.closest("#copy-code")) {
     const status = byId("copy-status");
-    const code = `export function createCounter(initial = 0) {\n${field("code").value}\n}\n`;
+    const { editable } = currentEntry();
+    const code = `${editable.prefix}\n${field("code").value}\n${editable.suffix}\n`;
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(code);
@@ -727,6 +855,16 @@ byId("reset-dialog").querySelector("form").addEventListener("submit", event => {
   }
   const input = byId(pendingReset === "code" ? "code-editor" : "lesson-note");
   if (input) input.value = result.record.value;
+  if (pendingReset === "code") {
+    executionState.invalidate("처음 코드로 돌아왔습니다. 현재 코드의 제출 검사를 다시 실행해 주세요.");
+    progress.update(progressIdentity(currentEntry(), route.version), { submission: null });
+    progressGeneration += 1;
+    validCode = false;
+  } else {
+    progress.update(progressIdentity(currentEntry(), route.version), { rubric: [], reviewedNote: "" });
+    document.querySelectorAll("[data-rubric]").forEach(control => { control.checked = false; control.disabled = true; });
+  }
+  renderAchievement();
   updateFieldStatus(pendingReset);
   byId("reset-dialog").close("reset");
 });
@@ -746,11 +884,11 @@ for (const control of ["theme-toggle", "effects-toggle"]) {
     elements.status.textContent = `${preferences.theme === "dark" ? "다크" : "라이트"} 모드 · 효과 ${preferences.effects ? "켜짐" : "꺼짐"}`;
   });
 }
-window.addEventListener("pagehide", flushDrafts);
+window.addEventListener("pagehide", () => { flushDrafts(); executionState?.invalidate(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushDrafts(); });
 window.addEventListener("beforeunload", event => {
   flushDrafts();
-  if (workspaceState?.records().some(record => record.dirty)) {
+  if (workspaceState?.records().some(record => record.dirty) || progress?.records().some(record => record.dirty)) {
     event.preventDefault();
     event.returnValue = "";
   }
@@ -758,8 +896,19 @@ window.addEventListener("beforeunload", event => {
 
 try {
   product = await loadLearningData();
+  lessons = product.entries;
+  product.runner = createBrowserRunner({ exercises: product.exercises.filter(exercise => exercise.runner?.kind === "function-body"
+    && product.profiles.some(profile => profile.id === exercise.profileId && browserWorkerProfile(profile))) });
+  product.environment = await product.runner.getEnvironment();
   try { browserStorage = window.localStorage; } catch { /* Storage access can be blocked. */ }
   workspaceState = createWorkspaceState(browserStorage, product.config.name);
+  progress = createLearningProgress(browserStorage, product.config.name);
+  executionState = createExecutionState({ runner: product.runner, fingerprintSource, onChange: renderExecution,
+    onResult: ({ kind, context, result }) => {
+      if (kind !== "submit") return;
+      progress.update(context, { submission: { identity: { ...context }, result } });
+      void refreshAchievement();
+    } });
   const restored = readPreferences(browserStorage, product.config.name);
   preferences = restored.value;
   applyPreferences();
@@ -770,11 +919,12 @@ try {
     byId("preference-notice").hidden = false;
   }
   document.querySelector(".wordmark-name").textContent = product.config.displayName;
-  byId("catalog-status").textContent = `교재 초안 ${product.catalog.lessons.length}개 · 개념 미리보기 ${lessons.length - 1}개`;
-  byId("course-label").textContent = `${product.lesson.supportedVersions.join(" · ")} · 공통 과정`;
+  byId("course-label").textContent = `${product.config.languageVersions.join(" · ")} · JavaScript 과정`;
   byId("glossary-count").textContent = glossary.length;
   byId("header-actions").inert = false;
   elements.search.disabled = false;
+  byId("track-filter").disabled = false;
+  byId("version-filter").disabled = false;
   writeRoute(readRoute(), { replace: true });
   byId("boot-note").remove();
 } catch (error) {

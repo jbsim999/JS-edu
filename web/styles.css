@@ -28,13 +28,13 @@
 html { scrollbar-gutter: stable; }
 body { margin: 0; }
 body.modal-open { overflow: hidden; }
-button, input, textarea { font: inherit; }
+button, input, textarea, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; cursor: pointer; touch-action: manipulation; }
 button:disabled { cursor: not-allowed; }
-input, textarea { min-width: 0; color: var(--ink); }
+input, textarea, select { min-width: 0; color: var(--ink); }
 a { color: var(--accent); text-underline-offset: 4px; }
-button, a, input, textarea, summary, [tabindex] { outline-offset: 4px; }
+button, a, input, textarea, select, summary, [tabindex] { outline-offset: 4px; }
 :focus-visible { outline: 2px solid var(--focus); }
 [hidden] { display: none !important; }
 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.4; flex-shrink: 0; }
@@ -60,7 +60,12 @@ ul, ol { padding-left: 1.25rem; }
 .preference-notice { max-width: 1428px; margin: 0 auto 16px; padding: 12px 18px; background: var(--soft); border-radius: 12px; font-size: 13px; color: var(--warning); }
 
 .workspace { display: grid; grid-template-columns: 186px minmax(0,1fr) 270px; align-items: start; gap: 30px; max-width: 1500px; padding: 0 36px; margin: 10px auto 70px; }
-.toc-sidebar { position: sticky; top: 26px; max-height: calc(100dvh - 52px); overflow-y: auto; padding: 20px 4px 24px 0; scrollbar-width: thin; }
+.toc-sidebar { position: sticky; top: 26px; max-height: calc(100dvh - 52px); padding: 20px 4px 0 0; }
+.toc-sidebar #toc-panel { display: flex; flex-direction: column; max-height: calc(100dvh - 72px); }
+.toc-sidebar #toc-panel > :not(.lesson-list) { flex: 0 0 auto; }
+.toc-sidebar .lesson-list { overflow-y: auto; min-height: 0; scrollbar-width: thin; padding: 3px 4px 5px 3px; margin-inline: -3px; }
+.toc-sidebar .index-note { margin: 16px 4px 0; padding-top: 13px; }
+.toc-sidebar .index-note > p:first-child { display: none; }
 .section-eyebrow { color: var(--muted); font-size: 11px; letter-spacing: .6px; margin: 0 0 7px; }
 #toc-title { font-size: 16px; font-weight: 750; letter-spacing: -.3px; margin: 0 0 21px; }
 .sidebar-caption { font-size: 12px; line-height: 1.8; color: var(--muted); margin: 0; }
@@ -68,6 +73,11 @@ ul, ol { padding-left: 1.25rem; }
 .lesson-link { display: flex; align-items: center; gap: 11px; min-height: 51px; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid transparent; border-radius: 14px; background: transparent; font-size: 13px; color: var(--muted); }
 .lesson-link:hover { background: var(--soft); color: var(--ink); }
 .lesson-number { flex: 0 0 27px; width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; font: 11px var(--mono); }
+.lesson-name { min-width: 0; line-height: 1.7; overflow-wrap: anywhere; word-break: keep-all; }
+.lesson-state { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+.catalog-filters { display: grid; gap: 5px; margin-bottom: 22px; }
+.catalog-filters label { color: var(--muted); font-size: 11px; margin-top: 5px; }
+.catalog-filters select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 8px; background: var(--paper); font-size: 12px; }
 .lesson-link[aria-current="page"] { color: var(--green-ink); font-weight: 700; }
 .index-note { margin: 29px 10px 0; padding-top: 20px; border-top: 1px solid var(--line); }
 .index-note > p:first-child { font-size: 13px; line-height: 1.9; color: var(--muted); margin-bottom: 10px; }
@@ -79,6 +89,11 @@ ul, ol { padding-left: 1.25rem; }
 .lesson-lead { color: var(--muted); font-size: 14px; line-height: 1.85; margin-bottom: 13px; }
 .lesson-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; color: var(--muted); font-size: 11px; }
 .lesson-meta > span + span { padding-left: 12px; border-left: 1px solid var(--line); }
+.learning-achievement { display: flex; flex-wrap: wrap; gap: 6px 15px; margin-top: 17px; font-size: 11px; color: var(--muted); }
+.learning-achievement > span::before { content: "○"; margin-right: 5px; }
+.learning-achievement > span[data-complete="true"] { color: var(--accent); }
+.learning-achievement > span[data-complete="true"]::before { content: "✓"; }
+.self-study-complete { flex-basis: 100%; font-size: 12px; color: var(--accent); font-weight: 600; }
 .step-track { padding: 0 0 22px; border-bottom: 1px solid var(--line); }
 .step-tabs { display: flex; flex-wrap: wrap; gap: 7px; padding: 3px; margin: -3px; }
 .step-tab { min-height: 42px; padding: 7px 12px; white-space: nowrap; border: 1px solid transparent; background: transparent; border-radius: 12px; color: var(--muted); font-size: 13px; }
@@ -176,6 +191,33 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .runtime-details > div { display: grid; grid-template-columns: 92px minmax(0,1fr); gap: 10px; margin: 7px 0; }
 .runtime-details dt { color: var(--muted); }
 .runtime-details dd { margin: 0; }
+.runtime-details dd { overflow-wrap: anywhere; word-break: break-word; }
+.execution-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 18px; }
+.execution-actions button { max-width: 100%; }
+.execution-actions button:disabled { opacity: .6; transform: none; }
+.execution-outcome { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.execution-outcome h4 { font-size: 14px; line-height: 1.8; margin: 0 0 12px; overflow-wrap: anywhere; }
+.check-summary { font-size: 13px; color: var(--accent); }
+.behavior-checks { padding: 0; list-style: none; margin-bottom: 18px; }
+.behavior-checks > li { padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.behavior-checks > li > div { display: flex; gap: 10px; align-items: baseline; }
+.behavior-checks strong { flex-shrink: 0; font-size: 10px; color: var(--warning); font-weight: 600; }
+.behavior-checks [data-passed="true"] strong { color: var(--accent); }
+.behavior-checks details { margin: 8px 0 0; border: 0; }
+.behavior-checks pre, .execution-outcome pre { font-size: 12px; }
+.output-detail { margin: 12px 0 !important; }
+.quiz-question, .memo-rubric { margin: 0 0 22px; padding: 0; min-width: 0; border: 0; }
+.quiz-question legend { font-size: 15px; font-weight: 650; line-height: 1.9; margin-bottom: 13px; }
+.quiz-choice { display: flex; gap: 11px; align-items: flex-start; min-height: 44px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; margin-bottom: 8px; font-size: 13px; line-height: 1.85; cursor: pointer; }
+.quiz-choice:has(input:checked) { background: var(--soft); border-color: var(--nav-marker); }
+.quiz-choice input, .memo-rubric input { flex: 0 0 auto; width: 16px; height: 16px; margin: 4px 0 0; accent-color: var(--accent); }
+.quiz-feedback { margin: 20px 0 0; font-size: 13px; }
+.quiz-feedback li { margin-bottom: 13px; }
+.quiz-feedback li p { margin: 6px 0 0; }
+.memo-rubric { margin-top: 18px; }
+.memo-rubric legend { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.memo-rubric label { display: flex; gap: 9px; min-height: 44px; align-items: flex-start; padding-block: 8px; font-size: 12px; cursor: pointer; }
+.memo-rubric .code-note { margin-top: 9px; }
 .disabled-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 19px 0 0; }
 .disabled-actions button { min-height: 44px; padding: 9px 17px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: var(--paper); font-size: 13px; }
 .runtime-note { color: var(--muted); font-size: 11px; margin: 12px 0 0 !important; }
@@ -292,6 +334,10 @@ dialog::backdrop { background: rgba(12,24,17,.65); backdrop-filter: blur(4px); }
 }
 @media (max-height: 500px) and (min-width: 768px) {
   .toc-sidebar { top: 12px; max-height: calc(100dvh - 24px); }
+  .toc-sidebar #toc-panel { max-height: calc(100dvh - 44px); }
+  .toc-sidebar .section-eyebrow, .toc-sidebar .index-note { display: none; }
+  .toc-sidebar #toc-title { margin-bottom: 8px; }
+  .toc-sidebar .catalog-filters { margin-bottom: 12px; }
   .glossary-sidebar { top: 12px; }
   .glossary-panel { max-height: calc(100dvh - 24px); }
   .dialog-toolbar { min-height: 54px; padding-block: 5px; }

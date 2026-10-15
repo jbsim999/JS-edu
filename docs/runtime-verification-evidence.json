@@ -1,0 +1,200 @@
+{
+  "milestone": "M1",
+  "status": "passed",
+  "sourceFormat": "Git index bytes (LF); excludes reports, old prototypes, and untracked next-milestone files",
+  "sourceSnapshot": {
+    "files": [
+      {
+        "file": ".github/workflows/scaffold-check.yml",
+        "sha256": "0bfc28eb9b885f3d5b343c39b3f481d355c91d758e72ac6b062987de680f7d08"
+      },
+      {
+        "file": "curriculum/catalog.json",
+        "sha256": "d60c598c86a2573f11b174d09f1840941d941cfef25baa7eae300f33764b02d8"
+      },
+      {
+        "file": "curriculum/checks/independent-counter.json",
+        "sha256": "843d01f39e3eb2f5f3e51bb942af607729e6b75e3b3146c35c4f325ebea7c485"
+      },
+      {
+        "file": "curriculum/examples/bindings-and-closures.mjs",
+        "sha256": "c23d76ab3637a093e83c8edaa5182b0f8ebc25c2332582ed30d4ecb80527ebad"
+      },
+      {
+        "file": "curriculum/exercises.json",
+        "sha256": "3548bf60a75b7e1539b962cdf3f3abce7f512834999a311da91c8ac3422c7275"
+      },
+      {
+        "file": "curriculum/lessons/bindings-and-closures.json",
+        "sha256": "973e5136929216cde9730944ccd63d8535347f863afd47067785c53199d1e80c"
+      },
+      {
+        "file": "education.config.json",
+        "sha256": "cfe78a62e67c31528720ced150b5dbcb0be345ffaa94e1bd873434d3ec2f9106"
+      },
+      {
+        "file": "package.json",
+        "sha256": "4109fd17f37114a12658c26cea19ca73ad6c5d14e3edaee13f9fc659f9cd6cf3"
+      },
+      {
+        "file": "reference/incorrect/independent-counter.mjs",
+        "sha256": "49366e592a56b9743fa450a0e7a2242b254c05a8bb99202bf7ec2fdb29d520cb"
+      },
+      {
+        "file": "reference/independent-counter.mjs",
+        "sha256": "c03b910c36c49efdb1fa3533ec1f2ff27c0ae53f9230cef4e20c2d4c8ea1536d"
+      },
+      {
+        "file": "runtime/profiles.json",
+        "sha256": "f160f8fe97b9e193a732909704c6adf52d4203b6d5d1f52810c7a91c6208ac08"
+      },
+      {
+        "file": "scaffold-manifest.json",
+        "sha256": "a6e9ebb3fdfbafb7160437b5d3589c6c585a89486545d8bbf961ccee71b5c78c"
+      },
+      {
+        "file": "scripts/check-syntax.mjs",
+        "sha256": "e37abd6f6eefb4654fef10ff2d4757772443d1b862f3243325662a9828127e45"
+      },
+      {
+        "file": "scripts/validate-project.mjs",
+        "sha256": "62aeef9c3481a65f24ae7aefb1dbe6a9de78a985c9b03e35c7954ad5d70d1f88"
+      },
+      {
+        "file": "scripts/verify-curriculum.mjs",
+        "sha256": "f6e00fb7a36fedc6c602ec8a4f4978df4d0c80c0522d14e92f611bd4349f7109"
+      },
+      {
+        "file": "starter/create-counter.mjs",
+        "sha256": "51634e7f75a78a116e07a4b59d2d2495b3797f8cb6999f33858169e3ca936c3c"
+      },
+      {
+        "file": "tests/adapters.test.mjs",
+        "sha256": "17d5802a8f6ddb46dea2b8c8d2abbc851dbb581d77cdcda517fb6226886ba659"
+      },
+      {
+        "file": "tests/curriculum-contract.test.mjs",
+        "sha256": "08fbda5353ac4de4abbaaf823e043e88332b1e8ae70c108337393b2170e78885"
+      },
+      {
+        "file": "tests/learning-server.test.mjs",
+        "sha256": "32947c563fbd48a6019f967fb269356ccd9955316bd347c4c0ae75501699911a"
+      },
+      {
+        "file": "tests/learning-ui-state.test.mjs",
+        "sha256": "d805deb8b109952f4448d3ee079e6525d4842a24a897af285f8e9d058dcedffb"
+      },
+      {
+        "file": "tests/runtime-worker.test.mjs",
+        "sha256": "2e5b7925ad5d57431aef649ce6f3e1295b41c74402d5283615a347118cb4ec43"
+      },
+      {
+        "file": "tests/validator.test.mjs",
+        "sha256": "c0480afe9fbb0e1929e155f9f83523c62b02f473813670f15dd734deb51188ff"
+      },
+      {
+        "file": "tests/workspace-state.test.mjs",
+        "sha256": "3d4fb98bdf768bd5cdc4e7acaa19efd806276d6ee5b0cce8e2a732c544973b27"
+      },
+      {
+        "file": "web/adapters/runner.mjs",
+        "sha256": "ff09cdf4ee5046df4906276fb1178e6b9754829723a4e5b352ff38235e3e4556"
+      },
+      {
+        "file": "web/adapters/storage.mjs",
+        "sha256": "7ad11540382c4501f486fdb96d29fba602143969dbedd6a998d460d6b496e7b3"
+      },
+      {
+        "file": "web/app.mjs",
+        "sha256": "df45e0360b1563c7eb0a69eb1509b33e6a23423f43611b17400305b8c3cbaa8a"
+      },
+      {
+        "file": "web/execution/browser-runner.mjs",
+        "sha256": "44184a517475d6dac6796ef3c72978c327a58526d39266d874ff94b6b7269d53"
+      },
+      {
+        "file": "web/execution/protocol.mjs",
+        "sha256": "558d87ad4939f6e0e0d31600dce811b32f72cc706d7338162d3f4ba7f6b626cc"
+      },
+      {
+        "file": "web/execution/qualification.html",
+        "sha256": "6abfbf89f6161eca2d7a04d9477e16f18b9cc02061cb9b69d79eea68d0fa1b30"
+      },
+      {
+        "file": "web/execution/qualification.mjs",
+        "sha256": "ce381a56310bbe32cc26717b9e1e57b0dd6f5d53068149a973cb27c1bafd43b0"
+      },
+      {
+        "file": "web/execution/worker.js",
+        "sha256": "edad0ba4e0527fb9de2df2f25e360b588d621843ba6b924fab138d753ba8c4e8"
+      },
+      {
+        "file": "web/features/execution-state.mjs",
+        "sha256": "0b4c1ee7007e7d2a3c3ecaacb76af3c6d9317768e8a06cdd2e77cb75560c09f3"
+      },
+      {
+        "file": "web/features/learning-data.mjs",
+        "sha256": "e6a831cdc6d23d39a756423563978d1824b204d3ced710a3be25fc4e01c1fb3a"
+      },
+      {
+        "file": "web/features/learning-progress.mjs",
+        "sha256": "f387c1b9bbad49f2d9676425859acf4e109ec72c067ee9fac11b3d49233edbbe"
+      },
+      {
+        "file": "web/features/workspace-state.mjs",
+        "sha256": "e0234293e5c710c40b3d3c31359903e1443faeb78194a0343acaa751e7cb24ac"
+      },
+      {
+        "file": "web/glossary-data.mjs",
+        "sha256": "26378d433ec271a4d95751a9b749f1a01c8922648b923ff121277d7f051f0532"
+      },
+      {
+        "file": "web/index.html",
+        "sha256": "a1e490a98f972af15eb57d2198a96dec1e560836cc4658aa9ce47c7b03a0dba9"
+      },
+      {
+        "file": "web/serve.mjs",
+        "sha256": "741934cf2234f722d8e0869164c5d76abbfd1c208d59d36bcaa2bac605ef49a8"
+      },
+      {
+        "file": "web/styles.css",
+        "sha256": "a3f1760f6ba7a0681709346cda8b4d0074a9e65f27ed076ea71b43e18e8a2bb3"
+      }
+    ],
+    "aggregateSha256": "a1b2d5d5cadf915462eb45b95d5a4aeee3a698b5e0a7c29e8ddf09f33e96a725",
+    "aggregateFormat": "SHA256 of UTF-8 concatenation of file + NUL + sha256 + LF for each files item in order"
+  },
+  "actualBrowser": {
+    "checkedAt": "2026-10-15T08:46:25.573Z",
+    "runtime": "Chrome155 / Windows / Dedicated Worker",
+    "exerciseCount": 1,
+    "referenceChecks": 7,
+    "starterRejected": true,
+    "incorrectRejected": true,
+    "limitsAndCspCases": 6,
+    "allPassed": true
+  },
+  "nativeChecks": {
+    "runtime": "Node22.17.0 / Windows",
+    "command": "npm --prefix work/m1-review run check",
+    "stagedTreeOnly": true,
+    "syntaxFiles": 30,
+    "testCount": 80,
+    "passed": 80,
+    "failed": 0,
+    "skipped": 0,
+    "creatorChecks": 7,
+    "creatorNegativeFixtures": 2,
+    "exampleOutputCompared": true
+  },
+  "reviews": {
+    "code": "independent static review PASS; no independent execution claimed",
+    "functionality": "independent actual browser QA PASS",
+    "visual": "independent visual director PASS on 12 actual composed screenshots; 320–1440 and 640x360"
+  },
+  "limitations": [
+    "No native mobile device or screen reader verification.",
+    "Actual 200% browser zoom unavailable through the IAB; 640x360 is an alternative space check only.",
+    "No absolute RAM cap, same-origin storage removal, or OS sandbox."
+  ]
+}

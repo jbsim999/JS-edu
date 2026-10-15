@@ -1,0 +1,15 @@
+{
+  "exerciseId": "independent-counter",
+  "contentRevision": "draft-1",
+  "graderRevision": "counter-v1",
+  "observationMode": "callback",
+  "cases": [
+    { "id": "returns-function", "label": "호출 가능한 카운터 반환", "probe": "observe(typeof submission.createCounter());", "expected": "function" },
+    { "id": "default-increments", "label": "기본 초기값과 반복 증가", "probe": "const counter = submission.createCounter(); observe([counter(), counter(), counter()]);", "expected": [1, 2, 3] },
+    { "id": "explicit-zero", "label": "명시한 0 초기값", "probe": "const counter = submission.createCounter(0); observe([counter(), counter()]);", "expected": [1, 2] },
+    { "id": "positive-initial", "label": "양수 초기값", "probe": "const counter = submission.createCounter(10); observe([counter(), counter()]);", "expected": [11, 12] },
+    { "id": "negative-initial", "label": "음수 초기값", "probe": "const counter = submission.createCounter(-3); observe([counter(), counter(), counter()]);", "expected": [-2, -1, 0] },
+    { "id": "fractional-initial", "label": "유한한 소수 초기값", "probe": "const counter = submission.createCounter(1.5); observe([counter(), counter()]);", "expected": [2.5, 3.5] },
+    { "id": "interleaved-instances", "label": "세 인스턴스의 독립 상태", "probe": "const a = submission.createCounter(); const b = submission.createCounter(10); const c = submission.createCounter(-2); observe([a(), b(), c(), a(), b(), c()]);", "expected": [1, 11, -1, 2, 12, 0] }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "exerciseId": "independent-counter",
+  "contentRevision": "draft-1",
+  "graderRevision": "counter-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-15T08:46:25.573Z",
+  "method": "Actual browser UI qualification via /execution/qualification.html on a loopback developer server",
+  "actualRuntime": "Chrome/155.0.0.0, Windows NT 10.0, Dedicated Worker",
+  "referenceSourceFingerprint": "sha256:fb07b5fb5183c8d37dec56acf65ec77811c71026037dd6f806af1716b367774f",
+  "referenceChecks": [
+    "returns-function",
+    "default-increments",
+    "explicit-zero",
+    "positive-initial",
+    "negative-initial",
+    "fractional-initial",
+    "interleaved-instances"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRun": {
+    "status": "success",
+    "stdout": "1 2 11 3"
+  },
+  "starterStatus": "checks-failed",
+  "incorrectStatus": "checks-failed",
+  "incorrectFailedCase": "interleaved-instances",
+  "runtimeCases": {
+    "timeout": "passed",
+    "cancel": "passed",
+    "outputLimit": "passed",
+    "recovery": "passed",
+    "workerCspHeader": "passed",
+    "fetchBlocked": true,
+    "dynamicImportBlocked": true,
+    "importScriptsBlocked": true,
+    "childWorkerBlocked": true
+  },
+  "limits": [
+    "Public self-study behavior checks, not certified grades.",
+    "No absolute Worker memory limit or OS security sandbox.",
+    "Same-origin storage capabilities may remain.",
+    "Browser emulation is not actual device testing."
+  ],
+  "startedAt": "2026-10-15T08:46:22.846Z"
+}

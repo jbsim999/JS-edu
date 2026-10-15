@@ -4,7 +4,481 @@
       "id": "bindings-and-closures",
       "file": "curriculum/lessons/bindings-and-closures.json",
       "prerequisites": [],
-      "exerciseId": "independent-counter"
+      "exerciseId": "independent-counter",
+      "order": 7,
+      "title": "바인딩과 클로저",
+      "track": "common",
+      "unit": "함수와 상태 캡슐화"
+    }
+  ],
+  "roadmap": [
+    {
+      "id": "language-host-boundaries",
+      "order": 1,
+      "displayNumber": "01",
+      "title": "언어·엔진·호스트·Script/Module·strict mode",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "언어와 실행 환경"
+    },
+    {
+      "id": "values-and-types",
+      "order": 2,
+      "displayNumber": "02",
+      "title": "원시값·객체·typeof·null/undefined·Symbol·BigInt",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "값과 타입"
+    },
+    {
+      "id": "coercion-and-equality",
+      "order": 3,
+      "displayNumber": "03",
+      "title": "명시/암묵 변환·===·Object.is·SameValueZero",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "변환과 동등성"
+    },
+    {
+      "id": "numbers-and-precision",
+      "order": 4,
+      "displayNumber": "04",
+      "title": "부동소수·안전 정수·BigInt·반올림",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "숫자와 정밀도"
+    },
+    {
+      "id": "control-flow-and-operators",
+      "order": 5,
+      "displayNumber": "05",
+      "title": "truthiness·단락·??/?.·평가 순서·ASI",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "분기와 연산자"
+    },
+    {
+      "id": "scope-tdz-and-declarations",
+      "order": 6,
+      "displayNumber": "06",
+      "title": "let/const/var·스코프·TDZ·호이스팅·실행 컨텍스트·환경 레코드",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "스코프와 선언"
+    },
+    {
+      "id": "bindings-and-closures",
+      "order": 7,
+      "displayNumber": "07",
+      "title": "클로저·바인딩·독립 환경·도달 가능성·정보 은닉",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "바인딩과 클로저"
+    },
+    {
+      "id": "function-parameters-and-contracts",
+      "order": 8,
+      "displayNumber": "08",
+      "title": "함수 형태·기본값·rest·destructuring·반환 계약",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "함수 인자와 계약"
+    },
+    {
+      "id": "this-and-arrow-functions",
+      "order": 9,
+      "displayNumber": "09",
+      "title": "호스트/strict/module별 this·일반/메서드/콜백/new·call/apply/bind·thisArg·화살표",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "this와 화살표 함수"
+    },
+    {
+      "id": "higher-order-functions",
+      "order": 10,
+      "displayNumber": "10",
+      "title": "콜백의 제어권·합성·부분 적용·커링·부수 효과",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "콜백과 함수 합성"
+    },
+    {
+      "id": "call-stack-and-completion",
+      "order": 11,
+      "displayNumber": "11",
+      "title": "스택·return/throw·finally·재귀와 종료 조건",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "호출 스택과 정리"
+    },
+    {
+      "id": "references-mutation-and-copy",
+      "order": 12,
+      "displayNumber": "12",
+      "title": "원시 불변값·공유 참조·얕은/깊은 복사·비변경 갱신·clone 한계",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "참조·변경·복사"
+    },
+    {
+      "id": "properties-and-descriptors",
+      "order": 13,
+      "displayNumber": "13",
+      "title": "own/inherited·열거·descriptor·getter/setter",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "프로퍼티와 기술자"
+    },
+    {
+      "id": "prototype-delegation",
+      "order": 14,
+      "displayNumber": "14",
+      "title": "constructor/prototype/instance·constructor 프로퍼티·override·다단계 체인",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "프로토타입 위임"
+    },
+    {
+      "id": "classes-and-private-state",
+      "order": 15,
+      "displayNumber": "15",
+      "title": "ES6 class·필드/private/static·extends/super·함수 기반 상속 비교",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "클래스와 비공개 상태"
+    },
+    {
+      "id": "composition-and-domain-contracts",
+      "order": 16,
+      "displayNumber": "16",
+      "title": "팩터리·클로저·클래스·합성·의존성 주입",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "합성과 도메인 계약"
+    },
+    {
+      "id": "array-pipelines-and-sorting",
+      "order": 17,
+      "displayNumber": "17",
+      "title": "map/filter/reduce·sparse·sort·비변경 대안",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "배열 처리와 정렬"
+    },
+    {
+      "id": "keyed-collections-and-grouping",
+      "order": 18,
+      "displayNumber": "18",
+      "title": "Map/Set·키 동등성·groupBy·집합 연산",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "Map·Set과 그룹화"
+    },
+    {
+      "id": "iterators-and-generators",
+      "order": 19,
+      "displayNumber": "19",
+      "title": "iterable/iterator·generator·helpers·지연 처리",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "이터레이터와 제너레이터"
+    },
+    {
+      "id": "strings-unicode-and-regexp",
+      "order": 20,
+      "displayNumber": "20",
+      "title": "코드 단위/포인트/사용자 문자·정규화·이스케이프",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "문자열·유니코드·정규식"
+    },
+    {
+      "id": "json-and-serialization",
+      "order": 21,
+      "displayNumber": "21",
+      "title": "parse/stringify·손실·순환·스키마·복원",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "JSON과 직렬화"
+    },
+    {
+      "id": "date-time-and-internationalization",
+      "order": 22,
+      "displayNumber": "22",
+      "title": "Date·timestamp·시간대·Intl",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "날짜·시간·국제화"
+    },
+    {
+      "id": "esm-and-live-bindings",
+      "order": 23,
+      "displayNumber": "23",
+      "title": "import/export·live binding·초기화·순환·부수 효과",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "ESM과 라이브 바인딩"
+    },
+    {
+      "id": "module-and-dependency-boundaries",
+      "order": 24,
+      "displayNumber": "24",
+      "title": "공개 API·내부 모듈·어댑터·의존성",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "모듈과 의존 경계"
+    },
+    {
+      "id": "errors-and-failure-contracts",
+      "order": 25,
+      "displayNumber": "25",
+      "title": "검증/운영 실패·arbitrary throw·cause·복구/전파",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "오류와 실패 계약"
+    },
+    {
+      "id": "behavior-tests-and-debugging",
+      "order": 26,
+      "displayNumber": "26",
+      "title": "assert·테이블 검사·대역·상태 추적·회귀",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "행동 검사와 디버깅"
+    },
+    {
+      "id": "promise-chains-and-errors",
+      "order": 27,
+      "displayNumber": "27",
+      "title": "콜백 지옥→Promise·상태/resolution·then 반환·reaction jobs",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "Promise와 오류"
+    },
+    {
+      "id": "async-await-and-iteration",
+      "order": 28,
+      "displayNumber": "28",
+      "title": "async/await·정리·async iterator·for-await·import()/top-level await",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "async·await와 순회"
+    },
+    {
+      "id": "promise-combinators",
+      "order": 29,
+      "displayNumber": "29",
+      "title": "all/allSettled/any/race·병행과 CPU 병렬",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "Promise 조합"
+    },
+    {
+      "id": "host-scheduling-and-event-loops",
+      "order": 30,
+      "displayNumber": "30",
+      "title": "Promise 작업·HTML task/microtask·Node phases/nextTick",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "호스트와 이벤트 루프"
+    },
+    {
+      "id": "cancellation-and-stale-results",
+      "order": 31,
+      "displayNumber": "31",
+      "title": "취소 계약·작업 ID·응답 역전·AbortSignal",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "취소와 오래된 결과"
+    },
+    {
+      "id": "bounded-concurrency-and-retries",
+      "order": 32,
+      "displayNumber": "32",
+      "title": "대기열·동시성 상한·backoff·재시도/멱등성",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "동시성 제한과 재시도"
+    },
+    {
+      "id": "browser-dom-and-rendering",
+      "order": 33,
+      "displayNumber": "B01",
+      "title": "DOM·안전한 텍스트·상태→렌더링",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "DOM과 안전한 렌더링"
+    },
+    {
+      "id": "browser-events-and-lifecycle",
+      "order": 34,
+      "displayNumber": "B02",
+      "title": "전파·위임·기본 동작·등록/해제",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "이벤트와 수명"
+    },
+    {
+      "id": "browser-forms-and-input",
+      "order": 35,
+      "displayNumber": "B03",
+      "title": "폼·focus·한글 조합·debounce·렌더링 기회",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "폼과 입력"
+    },
+    {
+      "id": "browser-fetch-and-http",
+      "order": 36,
+      "displayNumber": "B04",
+      "title": "Fetch·status·본문·스키마·CORS/credentials",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "Fetch와 HTTP"
+    },
+    {
+      "id": "browser-storage-and-migrations",
+      "order": 37,
+      "displayNumber": "B05",
+      "title": "localStorage·IndexedDB 선택·개정·충돌·실패",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "저장과 마이그레이션"
+    },
+    {
+      "id": "browser-url-and-navigation",
+      "order": 38,
+      "displayNumber": "B06",
+      "title": "URL·query·History·뒤로 가기",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "URL과 탐색"
+    },
+    {
+      "id": "browser-workers-and-performance",
+      "order": 39,
+      "displayNumber": "B07",
+      "title": "Worker·clone/transfer·메시지·종료·측정",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "Worker와 성능"
+    },
+    {
+      "id": "browser-behavior-and-accessibility",
+      "order": 40,
+      "displayNumber": "B08",
+      "title": "실제 DOM 검사·접근성·반응형·회귀",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "브라우저 인수 검사"
+    },
+    {
+      "id": "node-esm-packages-and-cli",
+      "order": 41,
+      "displayNumber": "N01",
+      "title": "Node resolve·Packages·CJS 경계·argv/env/cwd",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Node 패키지와 CLI"
+    },
+    {
+      "id": "node-files-and-paths",
+      "order": 42,
+      "displayNumber": "N02",
+      "title": "fs/promises·URL/path·핸들·쓰기 순서",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "파일과 경로"
+    },
+    {
+      "id": "node-buffers-and-streams",
+      "order": 43,
+      "displayNumber": "N03",
+      "title": "Buffer·encoding·pipeline·backpressure",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Buffer와 스트림"
+    },
+    {
+      "id": "node-http-and-validation",
+      "order": 44,
+      "displayNumber": "N04",
+      "title": "method/status·URL/본문·byte 상한",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "HTTP 서버와 검증"
+    },
+    {
+      "id": "node-outbound-requests-and-cancellation",
+      "order": 45,
+      "displayNumber": "N05",
+      "title": "Fetch·deadline·AbortSignal·재시도",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "외부 요청과 취소"
+    },
+    {
+      "id": "node-events-and-lifecycle",
+      "order": 46,
+      "displayNumber": "N06",
+      "title": "phases·EventEmitter·timer·signal·shutdown",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "이벤트와 종료"
+    },
+    {
+      "id": "node-workers-and-resource-limits",
+      "order": 47,
+      "displayNumber": "N07",
+      "title": "CPU Worker·pool·대기열·프로세스 경계",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Worker와 자원 제한"
+    },
+    {
+      "id": "node-testing-and-delivery",
+      "order": 48,
+      "displayNumber": "N08",
+      "title": "node:test·대역·실제 임시 파일/loopback·환경·의존성",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Node 검사와 전달"
+    },
+    {
+      "id": "capstone-domain-core",
+      "order": 49,
+      "displayNumber": "C01",
+      "title": "정규화·필터·집계·정렬·직렬화의 공유 패키지",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "공유 도메인 코어"
+    },
+    {
+      "id": "capstone-host-product",
+      "order": 50,
+      "displayNumber": "C02",
+      "title": "선택 호스트 조회 제품",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "호스트 제품 통합"
+    },
+    {
+      "id": "capstone-failure-and-scale",
+      "order": 51,
+      "displayNumber": "C03",
+      "title": "장애·큰 입력·관측 정보 보강",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "장애와 규모"
+    },
+    {
+      "id": "capstone-acceptance-review",
+      "order": 52,
+      "displayNumber": "C04",
+      "title": "인수 검사·설계 메모·사용 설명",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "최종 인수 검토"
     }
   ]
 }

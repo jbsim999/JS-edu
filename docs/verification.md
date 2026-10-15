@@ -1,5 +1,17 @@
 # 검증 기록
 
+M1 최종 검증: 커밋할 Git index만 work/m1-review로 분리해 Windows Node22.17.0 npm run check PASS(구문30·테스트80/80·skip0·제작자 정답7/7/오답·TODO거부/예제일치). 독립 코드·기능·12장 실제 합성 시각 검수 PASS. docs/runtime-verification-evidence.json의 Git index39파일 SHA256과 작업파일(LF정규화)·분리검사본 39/39를 독립 대조했다. aggregate a1b2d5d5cadf915462eb45b95d5a4aeee3a698b5e0a7c29e8ddf09f33e96a725. 후속 미연결 파일은 이 검증 대상에서 제외했다.
+
+## 2026-10-15 M1 실행·자동 채점
+
+실제 Dedicated Worker/비공개 MessagePort/부모 기대값 비교를 연결했다. 실행 준비·대표 호출·코딩 제출·퀴즈·메모 자가 확인과 원문 저장은 각각 별도 상태다. 코드 수정·수업 전환·취소·늦은 해시/응답은 이전 통과를 현재 코드에 붙이지 못한다. requiredFeatures는 부모/Worker에서 확인하며 없는 기능은 오답 대신 환경 오류다. main CSP는self,Worker 전용 CSP만unsafe-eval/네트워크none을 적용한다. 기본서버의 정답 경로는404이고 --qualification 서버만 제작자 답안경로를 제공한다.
+
+독립 코드 검토 PASS: 반환배열의 then 변조로 오답이 PASS되던 P1을 실제 재현하고 observe 즉시 스냅숏+undefined완료계약으로 수정했다. graderRevision검증 P2도 보완했다. validator는 표시 함수선언/runner일치와 generator문법을 확인한다. creator는 신뢰하는 저장소 작성물만 별도Node Worker로 검사하며 학습 제출의 서버 실행이 아니다.
+
+실제 Chrome155/Windows IAB qualification 최종08:46:25.573Z PASS. 정답실행 stdout1 2 11 3,정답제출7/7,TODO와전역상태대표오답거부. 무한반복2.5초종료·명시취소·200줄출력제한·종료뒤복구·CSPheader/fetch/dynamicimport/importScripts/하위Worker차단 PASS. docs/execution/independent-counter.json은해당실제검사근거다.
+
+독립 기능QA PASS:환경확인/실행성공이코딩통과를만들지않음,정답7/7·99반환오답1/7·수정즉시해제,timeout2513ms·취소후코드보존·이동중오염없음,퀴즈변경/메모수정무효화·저장/복원. 실제합성화면320/360/390/768/1280/1440 및640×360가로공간·용어팝업·키보드확인. 총괄도1440실제채점화면과320header합성을직접확인했다. 피스타치오/노랑·반사광·그림자·반투명효과유지. 실제기기·OS IME·스크린리더·진짜200%는미확인이다(Ctrl+plus전후IAB유효폭변화없음,640×360은대체공간검사). WorkerhardRAM/같은출처저장권한제거/OS보안격리는미제공.
+
 ## 2026-10-15 승인 스타일 제품 화면 통합
 
 수행: 승인한 피스타치오 프리미엄 디자인을 web/에 적용했다. 다크/라이트·효과 설정, 7개 개념 탐색·5단계, 28개 용어 검색/상세, 실제 교재 초안·예제 연결, 읽기 전용 함수 선언+본문 편집, 개정/과제/파일별 코드·메모 저장, 초기화 확인과 실패 보호를 구현했다. 기존 prototype/스타일 후보와 교재·과제 ID/개정·실행 불가 계약은 보존했다. 서버는 로컬 공개 파일 allowlist, GET/HEAD, Host 검사, CSP를 적용했다.

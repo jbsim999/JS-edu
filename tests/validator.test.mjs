@@ -11,11 +11,24 @@ async function fixture(context) {
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'js-edu-validator-'));
   context.after(() => rm(temporaryRoot, { recursive: true, force: true }));
   const directory = path.join(temporaryRoot, 'project');
-  for (const name of ['education.config.json', 'curriculum/catalog.json', 'curriculum/exercises.json',
-    'curriculum/lessons/bindings-and-closures.json', 'runtime/profiles.json', 'starter/create-counter.mjs']) {
+  const catalog = JSON.parse(await readFile(path.join(projectRoot, 'curriculum/catalog.json'), 'utf8'));
+  const exerciseData = JSON.parse(await readFile(path.join(projectRoot, 'curriculum/exercises.json'), 'utf8'));
+  const names = new Set(['education.config.json', 'curriculum/catalog.json', 'curriculum/exercises.json', 'runtime/profiles.json']);
+  for (const lesson of catalog.lessons) names.add(lesson.file);
+  for (const exercise of exerciseData.exercises) {
+    for (const reference of [...exercise.files, ...exercise.testFiles]) names.add(typeof reference === 'string' ? reference : reference.path);
+    for (const field of ['graderFile', 'referenceFile', 'incorrectFile', 'exampleFile', 'verificationRecord']) {
+      if (exercise[field]) names.add(exercise[field]);
+    }
+  }
+  // Follow the current connected curriculum, not planned roadmap metadata or a frozen starter list.
+  for (const name of names) {
+    assert.equal(typeof name, 'string');
+    const source = path.resolve(projectRoot, name);
+    assert.ok(!path.isAbsolute(name) && source.startsWith(projectRoot), `Unsafe fixture path: ${name}`);
     const destination = path.join(directory, name);
     await mkdir(path.dirname(destination), { recursive: true });
-    await copyFile(path.join(projectRoot, name), destination);
+    await copyFile(source, destination);
   }
   return { directory, temporaryRoot };
 }

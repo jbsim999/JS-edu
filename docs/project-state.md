@@ -1,5 +1,15 @@
 # 현재 상태
 
+M1 최종 검증: 커밋할 Git index만 work/m1-review로 분리해 Windows Node22.17.0 npm run check PASS(구문30·테스트80/80·skip0·제작자 정답7/7/오답·TODO거부/예제일치). 독립 코드·기능·12장 실제 합성 시각 검수 PASS. docs/runtime-verification-evidence.json의 Git index39파일 SHA256과 작업파일(LF정규화)·분리검사본 39/39를 독립 대조했다. aggregate a1b2d5d5cadf915462eb45b95d5a4aeee3a698b5e0a7c29e8ddf09f33e96a725. 후속 미연결 파일은 이 검증 대상에서 제외했다.
+
+## 2026-10-15 M1 실제 실행·채점 검증
+
+클로저 draft-1의 실제 브라우저 Worker 실행·7개 행동 검사·환경 확인·중지·시간/출력 제한을 연결했다. 52강 계획과 현재 제공 강의를 구분하는 목차, 고정 정답 퀴즈·개정/코드/환경/검사개정에 결속된 코딩 통과·메모 자가 확인을 제공한다. profile browser-worker available:true, 검증한 independent-counter만 executionVerified:true다. 문서 예상 출력을 실제 출력으로 사용하지 않는다.
+
+실제 Chrome155/Windows 브라우저 qualification 최종 08:46:25.573Z PASS:정답7/7,starter/대표오답 거부,timeout·cancel·출력상한·종료후복구·Worker CSP의fetch/importScripts/dynamicimport/childWorker차단. 독립 코드 검토에서 Promise then 변조에 의한 거짓 통과와 grader개정누락을 발견·재현·수정했다. 후속 필수API 사전검사도 정적 재검토 PASS다. 코드·기능·합성 화면 검수 결과와 정확한 소스 범위는 verification.md를 따른다.
+
+승인 기준선은 1bdb04dcf6d7fd89c5af2452577aaca6843674ef로 feat/runtime-and-curriculum에 push했고 원격SHA일치를 확인했다. M1은 독립 검수 뒤 같은 브랜치에 후속 커밋한다. main 병합/외부배포/패키징은 아직 하지 않았다. 현재 미연결 교재 파일은 후속 마일스톤 작업이며 M1 완료 범위에 포함하지 않는다. 다음은 공통01–11 연결과 전수 실행 검증이다.
+
 ## 2026-10-15 실행·전체 교재 구현 착수
 
 새 승인: 실제 코드 실행·자동 채점을 연결하고 확정 로드맵 순서로 나머지 강의를 구현한다. 마일스톤마다 커밋·푸시하며 패키징은 마지막 한 번으로 미룬다. docs/implementation-milestones.md의 순서/수용 조건을 따른다. 아래 첫 제품 UI는 승인 기준선이며 실행/전체 교재의 완료가 아니다. 원격 main 기준 d9047786540dced4c3d1baf0a02ec033395596a1을 확인했고 feat/runtime-and-curriculum 작업 브랜치에서 진행한다. 브랜치별 원격 반영 결과는 각 마일스톤 완료 후 기록한다.
