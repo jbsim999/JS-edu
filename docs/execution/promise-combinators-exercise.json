@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "exerciseId": "promise-combinators-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "promise-combinators-checks-v1",
+  "executedTests": 10,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:a00633b6fdd7cd647f7d5190f23a5559700c773469c8c95b35b427dfbf3d2a9d",
+  "referenceChecks": [
+    "all-input-order",
+    "all-rejection-identity",
+    "settled-mixed",
+    "first-success",
+    "first-all-fail",
+    "race-first-settle",
+    "empty-policy",
+    "race-keeps-loser",
+    "validate-before-start",
+    "dense-task-validation"
+  ],
+  "referenceChecksPassed": 10,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

@@ -1,0 +1,119 @@
+{
+  "exerciseId": "promise-chains-and-errors-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "promise-chains-and-errors-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "ordered-chain",
+      "label": "읽기·변환·저장의 순서와 최종 값",
+      "probe": "const events=[]; const result=await submission.runCallbackPipeline(cb=>{events.push('read');cb(null,4);}, value=>{events.push('transform:'+value);return Promise.resolve(value*3);}, value=>{events.push('save:'+value);return {stored:value};}); observe({events,result});",
+      "expected": {
+        "events": [
+          "read",
+          "transform:4",
+          "save:12"
+        ],
+        "result": {
+          "stored": 12
+        }
+      }
+    },
+    {
+      "id": "deferred-callback",
+      "label": "콜백의 비동기 완료를 기다린다",
+      "probe": "const events=[]; const result=await submission.runCallbackPipeline(cb=>{events.push('registered');Promise.resolve().then(()=>{events.push('callback');cb(undefined,0);});}, value=>{events.push('transform');return value+1;}, value=>{events.push('save');return value;}); observe({events,result});",
+      "expected": {
+        "events": [
+          "registered",
+          "callback",
+          "transform",
+          "save"
+        ],
+        "result": 1
+      }
+    },
+    {
+      "id": "reader-failure",
+      "label": "read의 throw와 콜백 오류를 원인 그대로 전파",
+      "probe": "const outcomes=[]; for(const reason of [new Error('read'),0,false,'']){let transforms=0;let saves=0;try{await submission.runCallbackPipeline(cb=>cb(reason,9),()=>{transforms++;},()=>{saves++;});outcomes.push({rejected:false});}catch(error){outcomes.push({same:error===reason,transforms,saves});}} const thrown=new Error('sync');try{await submission.runCallbackPipeline(()=>{throw thrown;},()=>1,()=>2);outcomes.push({rejected:false});}catch(error){outcomes.push({same:error===thrown});} observe(outcomes);",
+      "expected": [
+        {
+          "same": true,
+          "transforms": 0,
+          "saves": 0
+        },
+        {
+          "same": true,
+          "transforms": 0,
+          "saves": 0
+        },
+        {
+          "same": true,
+          "transforms": 0,
+          "saves": 0
+        },
+        {
+          "same": true,
+          "transforms": 0,
+          "saves": 0
+        },
+        {
+          "same": true
+        }
+      ]
+    },
+    {
+      "id": "transform-failure",
+      "label": "변환의 throw/rejection 뒤에는 저장하지 않는다",
+      "probe": "const outcomes=[];for(const asynchronous of [false,true]){const reason=new Error('transform');let saves=0;try{await submission.runCallbackPipeline(cb=>cb(null,5),()=>{if(asynchronous)return Promise.reject(reason);throw reason;},()=>{saves++;});outcomes.push({rejected:false});}catch(error){outcomes.push({same:error===reason,saves});}}observe(outcomes);",
+      "expected": [
+        {
+          "same": true,
+          "saves": 0
+        },
+        {
+          "same": true,
+          "saves": 0
+        }
+      ]
+    },
+    {
+      "id": "save-failure",
+      "label": "저장의 실패를 성공으로 숨기지 않는다",
+      "probe": "const outcomes=[];for(const asynchronous of [false,true]){const reason={code:'WRITE'};try{await submission.runCallbackPipeline(cb=>cb(null,2),value=>value*2,()=>{if(asynchronous)return Promise.reject(reason);throw reason;});outcomes.push(false);}catch(error){outcomes.push(error===reason);}}observe(outcomes);",
+      "expected": [
+        true,
+        true
+      ]
+    },
+    {
+      "id": "first-settle",
+      "label": "중복 콜백과 뒤늦은 throw는 최초 완료를 덮지 않는다",
+      "probe": "let transforms=0;let saves=0;const result=await submission.runCallbackPipeline(cb=>{cb(null,2);cb(new Error('late'));cb(null,99);throw new Error('after');},value=>{transforms++;return value+1;},value=>{saves++;return value*2;});const reason=new Error('first');let same=false;try{await submission.runCallbackPipeline(cb=>{cb(reason);cb(null,8);},value=>value,value=>value);}catch(error){same=error===reason;}observe({result,transforms,saves,firstRejection:same});",
+      "expected": {
+        "result": 6,
+        "transforms": 1,
+        "saves": 1,
+        "firstRejection": true
+      }
+    },
+    {
+      "id": "thenable-adoption",
+      "label": "resolve가 thenable의 이후 상태를 채택한다",
+      "probe": "const result=await submission.runCallbackPipeline(cb=>{cb(null,{then(resolve){Promise.resolve().then(()=>resolve(7));}});cb(null,99);},value=>({then(resolve){resolve(value+2);}}),value=>Promise.resolve(value*2));observe(result);",
+      "expected": 18
+    },
+    {
+      "id": "reaction-after-stack",
+      "label": "동기 콜백이어도 변환은 현재 호출 스택 뒤에 실행",
+      "probe": "const events=[];const pending=submission.runCallbackPipeline(cb=>{events.push('read');cb(null,1);},value=>{events.push('transform');return value;},value=>{events.push('save');return value;});events.push('caller');await pending;observe(events);",
+      "expected": [
+        "read",
+        "caller",
+        "transform",
+        "save"
+      ]
+    }
+  ]
+}

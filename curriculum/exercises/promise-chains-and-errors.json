@@ -1,0 +1,72 @@
+{
+  "id": "promise-chains-and-errors-exercise",
+  "lessonId": "promise-chains-and-errors",
+  "contentRevision": "draft-1",
+  "graderRevision": "promise-chains-and-errors-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "read(callback)은 error-first 콜백을 받습니다. error가 null 또는 undefined이면 성공이며 그 외 값은 거부 이유입니다. 0·false·빈 문자열도 오류 이유가 될 수 있습니다.",
+    "read를 한 번 호출해 얻은 값을 transform에 전달하고, 그 결과를 기다린 뒤 save에 한 번 전달합니다. 최종 Promise는 save의 완료 값으로 이행합니다.",
+    "transform/save는 값·Promise·thenable을 반환하거나 throw할 수 있습니다. 실패 이유를 그대로 전파하고 이후 단계는 실행하지 않습니다.",
+    "read의 동기 throw도 거부로 전파합니다. 최초 resolve/reject 이후 중복 콜백과 뒤늦은 throw는 결과를 덮어쓰지 못합니다. 완료하지 않는 read의 타임아웃 정책은 이 과제 범위 밖입니다."
+  ],
+  "template": "export async function runCallbackPipeline(read, transform, save) {\n  // TODO: 수업의 입력·완료·실패 계약을 구현하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/promise-chains-and-errors.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "읽기·변환·저장의 순서와 최종 값",
+    "콜백의 비동기 완료를 기다린다",
+    "read의 throw와 콜백 오류를 원인 그대로 전파",
+    "변환의 throw/rejection 뒤에는 저장하지 않는다",
+    "저장의 실패를 성공으로 숨기지 않는다",
+    "중복 콜백과 뒤늦은 throw는 최초 완료를 덮지 않는다",
+    "resolve가 thenable의 이후 상태를 채택한다",
+    "동기 콜백이어도 변환은 현재 호출 스택 뒤에 실행"
+  ],
+  "rubric": [
+    "최초 완료와 단계별 한 번 호출",
+    "반환된 비동기 작업 연결",
+    "오류 이유·정상 값 보존"
+  ],
+  "executionVerified": true,
+  "requiredFeatures": [
+    "Promise"
+  ],
+  "runner": {
+    "kind": "function-body",
+    "exportName": "runCallbackPipeline",
+    "parameters": [
+      "read",
+      "transform",
+      "save"
+    ],
+    "async": true
+  },
+  "editable": {
+    "prefix": "export async function runCallbackPipeline(read, transform, save) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 수업의 입력·완료·실패 계약을 구현하세요."
+  },
+  "graderFile": "curriculum/checks/promise-chains-and-errors.json",
+  "referenceFile": "reference/promise-chains-and-errors.mjs",
+  "incorrectFile": "reference/incorrect/promise-chains-and-errors.mjs",
+  "exampleFile": "curriculum/examples/promise-chains-and-errors.mjs",
+  "exampleExpectedLogs": [
+    "read > caller",
+    "result 12",
+    "read > caller > transform:4 > save:12",
+    "same-error true saved false",
+    "first 7"
+  ],
+  "verificationRecord": "docs/execution/promise-chains-and-errors-exercise.json"
+}

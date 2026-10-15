@@ -1,0 +1,165 @@
+{
+  "exerciseId": "keyed-collections-and-grouping-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "keyed-collections-and-grouping-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "first-wins-and-groups",
+      "label": "최초 ID만 보존하고 그룹을 최초 등장 순서로 만든다",
+      "probe": "const result=submission.indexEvents([{id:'a',category:'second',value:'A'},{id:'b',category:'first',value:'B'},{id:'a',category:'ignored',value:'replace'},{id:'c',category:'second',value:'C'}]);observe({byId:[...result.byId],groups:[...result.groups]});",
+      "expected": {
+        "byId": [
+          [
+            "a",
+            "A"
+          ],
+          [
+            "b",
+            "B"
+          ],
+          [
+            "c",
+            "C"
+          ]
+        ],
+        "groups": [
+          [
+            "second",
+            [
+              {
+                "id": "a",
+                "value": "A"
+              },
+              {
+                "id": "c",
+                "value": "C"
+              }
+            ]
+          ],
+          [
+            "first",
+            [
+              {
+                "id": "b",
+                "value": "B"
+              }
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "stored-undefined",
+      "label": "undefined 저장값을 없는 ID와 혼동하지 않는다",
+      "probe": "const result=submission.indexEvents([{id:'u',category:'g',value:undefined},{id:'u',category:'wrong',value:'later'}]);observe({size:result.byId.size,present:result.byId.has('u'),missing:result.byId.has('none'),valueType:typeof result.byId.get('u'),groupKeys:[...result.groups.keys()],ids:result.groups.get('g').map(item=>item.id)});",
+      "expected": {
+        "size": 1,
+        "present": true,
+        "missing": false,
+        "valueType": "undefined",
+        "groupKeys": [
+          "g"
+        ],
+        "ids": [
+          "u"
+        ]
+      }
+    },
+    {
+      "id": "same-value-zero",
+      "label": "NaN과 부호가 다른 0의 키 동등성을 적용한다",
+      "probe": "const result=submission.indexEvents([{id:NaN,category:'g',value:'nan-first'},{id:NaN,category:'g',value:'nan-later'},{id:-0,category:'g',value:'zero-first'},{id:0,category:'g',value:'zero-later'}]);observe({size:result.byId.size,nan:result.byId.get(NaN),zero:result.byId.get(0),values:result.groups.get('g').map(item=>item.value)});",
+      "expected": {
+        "size": 2,
+        "nan": "nan-first",
+        "zero": "zero-first",
+        "values": [
+          "nan-first",
+          "zero-first"
+        ]
+      }
+    },
+    {
+      "id": "object-key-identity",
+      "label": "서로 다른 객체 키를 문자열로 합치지 않는다",
+      "probe": "const a={name:'same'},b={name:'same'},groupA={},groupB={};const result=submission.indexEvents([{id:a,category:groupA,value:'A'},{id:b,category:groupB,value:'B'},{id:a,category:groupB,value:'ignored'}]);observe({ids:result.byId.size,groups:result.groups.size,a:result.byId.get(a),b:result.byId.get(b),groupA:result.groups.get(groupA).map(item=>item.value),groupB:result.groups.get(groupB).map(item=>item.value)});",
+      "expected": {
+        "ids": 2,
+        "groups": 2,
+        "a": "A",
+        "b": "B",
+        "groupA": [
+          "A"
+        ],
+        "groupB": [
+          "B"
+        ]
+      }
+    },
+    {
+      "id": "special-string-keys",
+      "label": "일반 객체의 프로토타입 이름도 독립 키로 저장한다",
+      "probe": "const result=submission.indexEvents([{id:'__proto__',category:'constructor',value:'P'},{id:'constructor',category:'__proto__',value:'C'},{id:1,category:'numbers',value:'N'},{id:'1',category:'strings',value:'S'}]);observe({byId:[...result.byId],groupKeys:[...result.groups.keys()]});",
+      "expected": {
+        "byId": [
+          [
+            "__proto__",
+            "P"
+          ],
+          [
+            "constructor",
+            "C"
+          ],
+          [
+            1,
+            "N"
+          ],
+          [
+            "1",
+            "S"
+          ]
+        ],
+        "groupKeys": [
+          "constructor",
+          "__proto__",
+          "numbers",
+          "strings"
+        ]
+      }
+    },
+    {
+      "id": "empty",
+      "label": "빈 입력은 두 개의 빈 Map이다",
+      "probe": "const result=submission.indexEvents([]);observe({byIdSize:result.byId.size,groupSize:result.groups.size,entries:[...result.groups]});",
+      "expected": {
+        "byIdSize": 0,
+        "groupSize": 0,
+        "entries": []
+      }
+    },
+    {
+      "id": "immutable-records",
+      "label": "원본을 변경하지 않고 그룹에 새 레코드를 둔다",
+      "probe": "const events=Object.freeze([Object.freeze({id:'a',category:'g',value:'A'})]);const result=submission.indexEvents(events);const fresh=result.groups.get('g')[0]!==events[0];try{result.groups.get('g')[0].value='edited';}catch{}result.byId.set('a','replaced');observe({fresh,source:events[0]});",
+      "expected": {
+        "fresh": true,
+        "source": {
+          "id": "a",
+          "category": "g",
+          "value": "A"
+        }
+      }
+    },
+    {
+      "id": "independent-calls",
+      "label": "여러 실행의 인덱스를 공유하지 않는다",
+      "probe": "const first=submission.indexEvents([{id:'a',category:'g',value:'first'}]);const second=submission.indexEvents([{id:'a',category:'g',value:'second'}]);observe([first.byId.get('a'),second.byId.get('a'),first.groups.get('g')[0].value]);",
+      "expected": [
+        "first",
+        "second",
+        "first"
+      ]
+    }
+  ]
+}

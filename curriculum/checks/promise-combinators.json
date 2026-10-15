@@ -1,0 +1,139 @@
+{
+  "exerciseId": "promise-combinators-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "promise-combinators-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "all-input-order",
+      "label": "모두 시작하되 완료 역전에도 입력 순서로 집계",
+      "probe": "let releaseA,releaseB;const a=new Promise(resolve=>{releaseA=resolve;});const b=new Promise(resolve=>{releaseB=resolve;});const starts=[];let startedA,startedB;const signalA=new Promise(resolve=>{startedA=resolve;});const signalB=new Promise(resolve=>{startedB=resolve;});const pending=Promise.resolve(submission.aggregateQueries([()=>{starts.push('a');startedA();return a;},()=>{starts.push('b');startedB();return b;}]));await Promise.race([Promise.all([signalA,signalB]),pending.then(()=>false,()=>false)]);const started=starts.slice();releaseB('B');await Promise.resolve();releaseA('A');observe({started,result:await pending});",
+      "expected": {
+        "started": [
+          "a",
+          "b"
+        ],
+        "result": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    {
+      "id": "all-rejection-identity",
+      "label": "all은 최초 거부 이유를 보존",
+      "probe": "const reason={code:'FAIL'};const starts=[];let same=false;try{await submission.aggregateQueries([()=>{starts.push(0);throw reason;},()=>{starts.push(1);return 2;}],'all');}catch(error){same=error===reason;}observe({same,starts});",
+      "expected": {
+        "same": true,
+        "starts": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "settled-mixed",
+      "label": "settled는 부분 실패를 입력 순서로 보존",
+      "probe": "const reason={code:'NO'};const result=await submission.aggregateQueries([()=>Promise.resolve(3),()=>{throw reason;},()=>({then(resolve){resolve(5);}})],'settled');observe({result:result?.map(item=>item.status==='fulfilled'?{status:item.status,value:item.value}:{status:item.status,same:item.reason===reason})});",
+      "expected": {
+        "result": [
+          {
+            "status": "fulfilled",
+            "value": 3
+          },
+          {
+            "status": "rejected",
+            "same": true
+          },
+          {
+            "status": "fulfilled",
+            "value": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "first-success",
+      "label": "first는 먼저 거부된 작업 뒤에도 성공을 기다린다",
+      "probe": "let result;try{result={value:await submission.aggregateQueries([()=>Promise.reject('early'),()=>Promise.resolve('usable')],'first')};}catch(error){result={rejected:error};}observe(result);",
+      "expected": {
+        "value": "usable"
+      }
+    },
+    {
+      "id": "first-all-fail",
+      "label": "전부 실패하면 AggregateError.errors는 입력 순서",
+      "probe": "let rejectA,rejectB;const a=new Promise((_,reject)=>{rejectA=reject;});const b=new Promise((_,reject)=>{rejectB=reject;});void a.catch(()=>{});void b.catch(()=>{});const pending=submission.aggregateQueries([()=>a,()=>b],'first');const observed=pending.then(value=>({value}),error=>({isAggregate:error instanceof AggregateError,name:error.name,errors:error.errors}));await Promise.resolve();await Promise.resolve();rejectB('B');await Promise.resolve();rejectA('A');observe(await observed);",
+      "expected": {
+        "name": "AggregateError",
+        "errors": [
+          "A",
+          "B"
+        ],
+        "isAggregate": true
+      }
+    },
+    {
+      "id": "race-first-settle",
+      "label": "race는 최초 완료의 성공 또는 실패를 전달",
+      "probe": "const outcomes=[];try{await submission.aggregateQueries([()=>Promise.reject('first'),()=>Promise.resolve('second')],'race');outcomes.push('fulfilled');}catch(error){outcomes.push(error);}outcomes.push(await submission.aggregateQueries([()=>0,()=>1],'race'));observe(outcomes);",
+      "expected": [
+        "first",
+        0
+      ]
+    },
+    {
+      "id": "empty-policy",
+      "label": "빈 입력의 세 표준 동작과 래퍼 race 정책",
+      "probe": "const result={all:await submission.aggregateQueries([],'all'),settled:await submission.aggregateQueries([],'settled')};try{await submission.aggregateQueries([],'first');result.first='accepted';}catch(error){result.first={isAggregate:error instanceof AggregateError,name:error.name,errors:error.errors};}try{await submission.aggregateQueries([],'race');result.race='accepted';}catch(error){result.race=error.name;}observe(result);",
+      "expected": {
+        "all": [],
+        "settled": [],
+        "first": {
+          "name": "AggregateError",
+          "errors": [],
+          "isAggregate": true
+        },
+        "race": "RangeError"
+      }
+    },
+    {
+      "id": "race-keeps-loser",
+      "label": "race 완료 후에도 나머지 작업은 계속될 수 있다",
+      "probe": "let finish;const late=new Promise(resolve=>{finish=resolve;});const events=[];const winner=await submission.aggregateQueries([()=>{events.push('fast-start');return 'fast';},()=>{events.push('slow-start');return late.then(value=>{events.push('slow-done');return value;});}],'race');finish('slow');await late;await Promise.resolve();observe({winner,events});",
+      "expected": {
+        "winner": "fast",
+        "events": [
+          "fast-start",
+          "slow-start",
+          "slow-done"
+        ]
+      }
+    },
+    {
+      "id": "validate-before-start",
+      "label": "잘못된 정책·입력에서는 작업을 시작하지 않는다",
+      "probe": "let starts=0;const task=()=>{starts++;return 1;};const errors=[];for(const [tasks,policy] of [[[task],'unknown'],[[task,null],'all'],[null,'all']]){try{await submission.aggregateQueries(tasks,policy);errors.push('accepted');}catch(error){errors.push(error.name);}}observe({errors,starts});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "starts": 0
+      }
+    },
+    {
+      "id": "dense-task-validation",
+      "label": "빈 슬롯과 상속 요소는 실행 전에 거부",
+      "probe": "let calls=0;const task=()=>{calls++;return 1;};const sparse=[task,,task];const inherited=[task,,task];const prototype=Object.create(Array.prototype);prototype[1]=task;Object.setPrototypeOf(inherited,prototype);const errors=[];for(const tasks of [sparse,inherited]){try{await submission.aggregateQueries(tasks);errors.push(false);}catch(error){errors.push(error instanceof TypeError);}}observe({calls,errors});",
+      "expected": {
+        "calls": 0,
+        "errors": [
+          true,
+          true
+        ]
+      }
+    }
+  ]
+}

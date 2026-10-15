@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "exerciseId": "behavior-tests-and-debugging-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "behavior-tests-and-debugging-checks-v1",
+  "executedTests": 9,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:bbb317202e2583d45101d45f0ca025dd7ac87a72fb9962d99af5e0135145f763",
+  "referenceChecks": [
+    "correct-factory-passes",
+    "shared-state-fails",
+    "falsy-default-fails",
+    "wrong-reset-fails",
+    "return-contract-fails",
+    "failure-does-not-abort-suite",
+    "unfinished-factory-fails",
+    "invalid-factory",
+    "fresh-reports"
+  ],
+  "referenceChecksPassed": 9,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

@@ -4,6 +4,19 @@ export const executionLimits = Object.freeze({ sourceBytes: 102400, timeoutMs: 2
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const featurePathPattern = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/;
+const getFeatureDescriptor = Object.getOwnPropertyDescriptor;
+const getFeaturePrototype = Object.getPrototypeOf;
+
+function featureDataProperty(value, key) {
+  // Web IDL APIs may live on a host prototype. Accessors are a stopping point,
+  // including when they shadow a data property farther up the prototype chain.
+  for (let depth = 0; depth < 16 && value !== null && value !== undefined; depth++) {
+    const descriptor = getFeatureDescriptor(value, key);
+    if (descriptor) return getFeatureDescriptor(descriptor, 'value') ? descriptor.value : undefined;
+    value = getFeaturePrototype(value);
+  }
+  return undefined;
+}
 
 // Required feature paths identify callable platform APIs, not executable expressions.
 export function missingRequiredFeatures(paths = [], realm = globalThis) {
@@ -11,10 +24,7 @@ export function missingRequiredFeatures(paths = [], realm = globalThis) {
     try {
       let value = realm;
       for (const segment of path.split('.')) {
-        if (value === null || value === undefined) return true;
-        const descriptor = Object.getOwnPropertyDescriptor(value, segment);
-        if (!descriptor || !own(descriptor, 'value')) return true;
-        value = descriptor.value;
+        value = featureDataProperty(value, segment);
       }
       return typeof value !== 'function';
     } catch { return true; }

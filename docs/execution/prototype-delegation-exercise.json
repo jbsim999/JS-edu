@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "prototype-delegation-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "prototype-delegation-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:a8c5fc58921b8a9bb046478688dbd3017d284212d2487659c4c4b5ba3cc43c41",
+  "referenceChecks": [
+    "override-and-parent-call",
+    "instance-state-isolated",
+    "chain-and-null-end",
+    "constructor-descriptor",
+    "prototype-has-no-instance-state",
+    "constructor-not-construction",
+    "borrowed-and-shadowed-method",
+    "shared-method-distinct-state"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

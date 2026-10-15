@@ -1,0 +1,132 @@
+{
+  "exerciseId": "host-scheduling-and-event-loops-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "host-scheduling-and-event-loops-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "observed-completion",
+      "label": "실제 기록과 완료 값의 전체 순서",
+      "probe": "const recorded=[];const result=await submission.traceScheduling(label=>recorded.push(label));observe({result,recorded});",
+      "expected": {
+        "result": [
+          "sync:start",
+          "sync:end",
+          "promise",
+          "queued",
+          "nested",
+          "timer",
+          "timer:microtask"
+        ],
+        "recorded": [
+          "sync:start",
+          "sync:end",
+          "promise",
+          "queued",
+          "nested",
+          "timer",
+          "timer:microtask"
+        ]
+      }
+    },
+    {
+      "id": "caller-stack-boundary",
+      "label": "호출자의 동기 코드가 모든 비동기 기록보다 먼저",
+      "probe": "const events=[];const pending=submission.traceScheduling(label=>events.push(label));events.push('caller');await pending;observe(events);",
+      "expected": [
+        "sync:start",
+        "sync:end",
+        "caller",
+        "promise",
+        "queued",
+        "nested",
+        "timer",
+        "timer:microtask"
+      ]
+    },
+    {
+      "id": "microtask-frontier",
+      "label": "중첩 microtask는 이미 등록된 microtask 뒤에 추가",
+      "probe": "const events=[];const pending=submission.traceScheduling(label=>events.push(label));const synchronous=events.slice();await Promise.resolve();const firstCheckpoint=events.slice();await pending;observe({synchronous,firstCheckpoint,complete:events});",
+      "expected": {
+        "synchronous": [
+          "sync:start",
+          "sync:end"
+        ],
+        "firstCheckpoint": [
+          "sync:start",
+          "sync:end",
+          "promise",
+          "queued"
+        ],
+        "complete": [
+          "sync:start",
+          "sync:end",
+          "promise",
+          "queued",
+          "nested",
+          "timer",
+          "timer:microtask"
+        ]
+      }
+    },
+    {
+      "id": "isolated-calls",
+      "label": "반복 호출 사이에 기록 배열을 공유하지 않는다",
+      "probe": "const first=await submission.traceScheduling();const second=await submission.traceScheduling();observe({same:first===second,first,second});",
+      "expected": {
+        "same": false,
+        "first": [
+          "sync:start",
+          "sync:end",
+          "promise",
+          "queued",
+          "nested",
+          "timer",
+          "timer:microtask"
+        ],
+        "second": [
+          "sync:start",
+          "sync:end",
+          "promise",
+          "queued",
+          "nested",
+          "timer",
+          "timer:microtask"
+        ]
+      }
+    },
+    {
+      "id": "completion-boundary",
+      "label": "마지막 timer 내부 microtask 뒤에만 완료",
+      "probe": "let timerSeen=false;let finalSeen=false;const counts={};const pending=submission.traceScheduling(label=>{counts[label]=(counts[label]??0)+1;if(label==='timer')timerSeen=true;if(label==='timer:microtask')finalSeen=true;});const before={timerSeen,finalSeen};await pending;observe({before,after:{timerSeen,finalSeen},counts});",
+      "expected": {
+        "before": {
+          "timerSeen": false,
+          "finalSeen": false
+        },
+        "after": {
+          "timerSeen": true,
+          "finalSeen": true
+        },
+        "counts": {
+          "sync:start": 1,
+          "sync:end": 1,
+          "promise": 1,
+          "queued": 1,
+          "nested": 1,
+          "timer": 1,
+          "timer:microtask": 1
+        }
+      }
+    },
+    {
+      "id": "actual-timer-task-boundary",
+      "label": "먼저 등록한 timer task 이후 실제 timer 기록",
+      "probe": "let prior=false;const priorDone=new Promise(resolve=>setTimeout(()=>{prior=true;resolve();},0));let priorAtTimer=false;await submission.traceScheduling(label=>{if(label==='timer')priorAtTimer=prior;});await priorDone;observe({priorAtTimer});",
+      "expected": {
+        "priorAtTimer": true
+      }
+    }
+  ]
+}

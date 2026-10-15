@@ -1,0 +1,746 @@
+{
+  "snapshot": "Git index after M3 source staging; reports excluded",
+  "algorithm": "SHA256 of file + NUL + sha256 + LF in sorted path order",
+  "aggregateSha256": "c43a4e45ff11d24762e80f033ebfa02c3d466e51c13de9dfd3eb0a3bf4fbc8cb",
+  "sourceCount": 181,
+  "files": [
+    {
+      "file": "curriculum/catalog.json",
+      "sha256": "8f3719a32ddaa9622120728f6eccebdcc4f3032b8230792c1c010cdefd23e9c1"
+    },
+    {
+      "file": "curriculum/checks/array-pipelines-and-sorting.json",
+      "sha256": "5827d59da2df2b247c2a7187c090387ffa92dac716e908d42364db0f5455790f"
+    },
+    {
+      "file": "curriculum/checks/async-await-and-iteration.json",
+      "sha256": "640f0d68ea2764dc65e481679aa306b1ee36099fc344f40dcb5881b74b470513"
+    },
+    {
+      "file": "curriculum/checks/behavior-tests-and-debugging.json",
+      "sha256": "e1ab9a6487dedeeb8bda082683c5d01d269968a4d632ff62d1d3ad316937130b"
+    },
+    {
+      "file": "curriculum/checks/bounded-concurrency-and-retries.json",
+      "sha256": "ccd6b9cc6311693efe6de06865b37aab4e6f8497723061b62334a6d632abcc52"
+    },
+    {
+      "file": "curriculum/checks/cancellation-and-stale-results.json",
+      "sha256": "be40f730c307864c1cf9f37ab19a68e4ce0753ef8d031dc5e71d36c86f00de67"
+    },
+    {
+      "file": "curriculum/checks/classes-and-private-state.json",
+      "sha256": "e25fc53d9010e22da1eb9578dfd661d7b48f8083aa7464fc4e63c125914832ad"
+    },
+    {
+      "file": "curriculum/checks/composition-and-domain-contracts.json",
+      "sha256": "b7d28c3319cb90e81deaf23039a29e41c64d199bda1726543903385aee3e0c1a"
+    },
+    {
+      "file": "curriculum/checks/date-time-and-internationalization.json",
+      "sha256": "31eb5823aaa59d08414f654de43ea41f1f510ca27d53f96f17082adde536fd67"
+    },
+    {
+      "file": "curriculum/checks/errors-and-failure-contracts.json",
+      "sha256": "a9cc0a2ed17c73627d47419a043c353fd2f172f8ffc20ffababfd4a86714bcc5"
+    },
+    {
+      "file": "curriculum/checks/esm-and-live-bindings.json",
+      "sha256": "ff745f475eace0fdaef4077dc6fc5b69082e9aa1c002e11db0a2ad84e6fd64e0"
+    },
+    {
+      "file": "curriculum/checks/host-scheduling-and-event-loops.json",
+      "sha256": "a3adb72a23d36de4f38a2f23ac3fc509275f1acd13ebce41384f4bbaccbbc8a5"
+    },
+    {
+      "file": "curriculum/checks/iterators-and-generators.json",
+      "sha256": "9f018c7daf537855659903dbfce3168b936869c5e026f845a74a30530c631edc"
+    },
+    {
+      "file": "curriculum/checks/json-and-serialization.json",
+      "sha256": "c0278b820cc106c4c0665ea9804751c29e7cf4a56bb182d531ccd121173940eb"
+    },
+    {
+      "file": "curriculum/checks/keyed-collections-and-grouping.json",
+      "sha256": "e032c8cda72dc5079cb64784f981cf717eb4b0ccba5c531405b49f90f3ef134b"
+    },
+    {
+      "file": "curriculum/checks/module-and-dependency-boundaries.json",
+      "sha256": "c7fe6bf3abdcbb9f0b12969bb2937e0eb672b1b3180c6a1172bc7429422e84f4"
+    },
+    {
+      "file": "curriculum/checks/promise-chains-and-errors.json",
+      "sha256": "cf836352c17d8c8a52ba35c9cf03a99c427398759958755cedafe2456dcaba3a"
+    },
+    {
+      "file": "curriculum/checks/promise-combinators.json",
+      "sha256": "32594ef8b9cb73af7ea1a977fc25135e65673ab53c96d6070b66b8d615235762"
+    },
+    {
+      "file": "curriculum/checks/properties-and-descriptors.json",
+      "sha256": "d755ce20e0f023756d1f82310c959a1d955ba8dc5b276a8413c2d7675f567928"
+    },
+    {
+      "file": "curriculum/checks/prototype-delegation.json",
+      "sha256": "413bb0055363d28cd27ec71fe306df9d898f111b1899b8af649c9d99e8f1fbd1"
+    },
+    {
+      "file": "curriculum/checks/references-mutation-and-copy.json",
+      "sha256": "d96898f72eef2179d3983986651436d33373ed7e84d571bf4128af1500675587"
+    },
+    {
+      "file": "curriculum/checks/strings-unicode-and-regexp.json",
+      "sha256": "ae6121895361777e413485a7b397db1a902816610bc57dc5db7d0578e3c71d01"
+    },
+    {
+      "file": "curriculum/examples/array-pipelines-and-sorting.mjs",
+      "sha256": "b47ea23b84c8384a89192211fd7ee807cc313a5dcc114335fe2b90ed6df5fd0f"
+    },
+    {
+      "file": "curriculum/examples/async-await-and-iteration.mjs",
+      "sha256": "7b44b129688d83c6ffbf0e4b0afa4785815c5365c7b37654e5a6a1b32eb11e53"
+    },
+    {
+      "file": "curriculum/examples/behavior-tests-and-debugging.mjs",
+      "sha256": "72d74393c45d84ad90b6ce10a324d86690bc0b3609e7d3b55a025086b9ac549a"
+    },
+    {
+      "file": "curriculum/examples/bounded-concurrency-and-retries.mjs",
+      "sha256": "a211b961006a79e9dbd843802db18b804db22a7ae3a9d9f6c641f187e917c962"
+    },
+    {
+      "file": "curriculum/examples/cancellation-and-stale-results.mjs",
+      "sha256": "38a27212c57885f4ac3fe85015a028ef891b5b150cfecb55c09953dcb34dfcd2"
+    },
+    {
+      "file": "curriculum/examples/classes-and-private-state.mjs",
+      "sha256": "0ad23d8f80e1f5e280a3f5c77b8a07823d041050069ce727d16650265965fe98"
+    },
+    {
+      "file": "curriculum/examples/composition-and-domain-contracts.mjs",
+      "sha256": "1734043890c41c4f2533e0466bbb37fec33439219f5518781dbaa5b2d8c2ca95"
+    },
+    {
+      "file": "curriculum/examples/date-time-and-internationalization.mjs",
+      "sha256": "1966e6b3495dbf1d9b1efe09402d9e491e542cc52824a93d520bd2f08b96ea81"
+    },
+    {
+      "file": "curriculum/examples/errors-and-failure-contracts.mjs",
+      "sha256": "2d089bd2339eecb44ff72018ad0ae94aa2737f1e733c84a97e540a2ab5d2ccdc"
+    },
+    {
+      "file": "curriculum/examples/esm-and-live-bindings.mjs",
+      "sha256": "bfe5eca02c853d35037e71664c2b6c33109524b0a912702abeff2077598508b6"
+    },
+    {
+      "file": "curriculum/examples/esm-and-live-bindings/early-a.mjs",
+      "sha256": "d1a58f48e74199363430a4203cc530cd9ac3d8ee013637f7fd40c655cab286ed"
+    },
+    {
+      "file": "curriculum/examples/esm-and-live-bindings/early-b.mjs",
+      "sha256": "c905aa69b1183c9e4f2df209047f6a418f77c363a2583e9c9c60ac8be648aa28"
+    },
+    {
+      "file": "curriculum/examples/esm-and-live-bindings/main.mjs",
+      "sha256": "d9601a06f041a8d28c4e9bccdce4ad5002d4341b9666c2318735c99f9d6e2a45"
+    },
+    {
+      "file": "curriculum/examples/esm-and-live-bindings/reader.mjs",
+      "sha256": "c0a7461dee792529b124a7100c27f6072090631de2970b50d47002968619bda2"
+    },
+    {
+      "file": "curriculum/examples/host-scheduling-and-event-loops.mjs",
+      "sha256": "75872264ec7b9f411ad48037df4808c2fb866d2ea608250fc21d53f054be214e"
+    },
+    {
+      "file": "curriculum/examples/iterators-and-generators.mjs",
+      "sha256": "2f774b05952539d8725bf13d4849124fbe736d8e61a96e72f15159e0c1bd370b"
+    },
+    {
+      "file": "curriculum/examples/json-and-serialization.mjs",
+      "sha256": "43af0c7622da9175a453c89fb4af5a58b39f7122bad060e610661daf4feb66f6"
+    },
+    {
+      "file": "curriculum/examples/keyed-collections-and-grouping.mjs",
+      "sha256": "f47963835829d4ae74a97b279ea8e23c7aa4cf4ae9e097e5564334448d98b61f"
+    },
+    {
+      "file": "curriculum/examples/module-and-dependency-boundaries.mjs",
+      "sha256": "d7346b47d1f848be812c50cef2586c09531acee4e6acfb57cfa13decb07db192"
+    },
+    {
+      "file": "curriculum/examples/module-and-dependency-boundaries/main.mjs",
+      "sha256": "d4b0cb32b6fbddb937ec7129f3f9eaa2d9b8907e7c26ce56b516f7f741f06344"
+    },
+    {
+      "file": "curriculum/examples/module-and-dependency-boundaries/reader.mjs",
+      "sha256": "756282a9aa9b059acee3e453733fea771191217d6cfbd193bf58d7d736c0d8e6"
+    },
+    {
+      "file": "curriculum/examples/promise-chains-and-errors.mjs",
+      "sha256": "41e8d703d3113d99fddf4a38d82a0a4fef5b8b0cb2f07c411e8f83c598bc15cd"
+    },
+    {
+      "file": "curriculum/examples/promise-combinators.mjs",
+      "sha256": "ed6272c7f3844cec20ee6a6748da927322b14bc014125cdf944f643a281208be"
+    },
+    {
+      "file": "curriculum/examples/properties-and-descriptors.mjs",
+      "sha256": "80c56f8c5991d4fce3e77dd71d463ccab2d1f118ca2dce9dd446bbe4747b11bb"
+    },
+    {
+      "file": "curriculum/examples/prototype-delegation.mjs",
+      "sha256": "7b842a0a96f47147ca4702995f000b6b7e910cac0cb8c82a614540e8d867a7f8"
+    },
+    {
+      "file": "curriculum/examples/references-mutation-and-copy.mjs",
+      "sha256": "6b3724e966b25e28ae9a6a5120a566d15487890b9468d1f70cdbd40e8085b23f"
+    },
+    {
+      "file": "curriculum/examples/strings-unicode-and-regexp.mjs",
+      "sha256": "cc4c320f8d823f3b3a618e5aaef9b437553e8c07a6a81b1d161eed5390d36c6e"
+    },
+    {
+      "file": "curriculum/exercises.json",
+      "sha256": "5365a3ab94ff797e89ad6b815eda60b7e6bf8b0f18e3035a1ba6ed95542d014e"
+    },
+    {
+      "file": "curriculum/exercises/array-pipelines-and-sorting.json",
+      "sha256": "a1a2a4de3fc2445e019a64dfa27cb040cbee0ce2134fa551d881a319c11132a7"
+    },
+    {
+      "file": "curriculum/exercises/async-await-and-iteration.json",
+      "sha256": "ea78c0c1181962758dbc4697c1a5a66975ab641ae5291d5312185c1db406acb8"
+    },
+    {
+      "file": "curriculum/exercises/behavior-tests-and-debugging.json",
+      "sha256": "9c40024bbd45ddf5ce34a78ffa98e910771fc2bba379184f3c74b9ccc5457327"
+    },
+    {
+      "file": "curriculum/exercises/bounded-concurrency-and-retries.json",
+      "sha256": "c8f57f209040ccaa7c8612c69050c79c5e575177439206a92782824280a8d17e"
+    },
+    {
+      "file": "curriculum/exercises/cancellation-and-stale-results.json",
+      "sha256": "c5bbc52f325ba331f907229d31d3450a9fc31970bc3c3fc3d049e69b290bd78c"
+    },
+    {
+      "file": "curriculum/exercises/classes-and-private-state.json",
+      "sha256": "88acca791f389f6c7ca7bbe22c67cc6525ff57012e77b840dc3bf42385187fb0"
+    },
+    {
+      "file": "curriculum/exercises/composition-and-domain-contracts.json",
+      "sha256": "ca1737fe2fbcd4736cf0836e2f9aee01e507d96c426c31d40eca133da67b1ed5"
+    },
+    {
+      "file": "curriculum/exercises/date-time-and-internationalization.json",
+      "sha256": "637584932cf7b543e8c40c9a1b5821b94f4a8f0d02610074733b48e8d7fe00c6"
+    },
+    {
+      "file": "curriculum/exercises/errors-and-failure-contracts.json",
+      "sha256": "f7909e4135d1d93fd2ec7d74de45725de3d340ef87c9472d728005686f0179a5"
+    },
+    {
+      "file": "curriculum/exercises/esm-and-live-bindings.json",
+      "sha256": "c8881497fbcf583823e6626805dfdbfc3e45734dffc2ad57daa13a1e0998c9c5"
+    },
+    {
+      "file": "curriculum/exercises/host-scheduling-and-event-loops.json",
+      "sha256": "8de992060d743e73b7571100722836e0adbb640cb1f543442c7dd65e053bcb82"
+    },
+    {
+      "file": "curriculum/exercises/iterators-and-generators.json",
+      "sha256": "c71cc5c97de5c32dfa25b964146f6c4846ddd86bb00753ceb16dbffc43544b80"
+    },
+    {
+      "file": "curriculum/exercises/json-and-serialization.json",
+      "sha256": "9ac31e789168a20cc1ffe6b1aca1728af8b0bbedfd2d1d444bfea51ae76a1929"
+    },
+    {
+      "file": "curriculum/exercises/keyed-collections-and-grouping.json",
+      "sha256": "d2fbe668525753f2b771e1356ebe4faf177d4fa41b70ed6c0c83eea7b10ad301"
+    },
+    {
+      "file": "curriculum/exercises/module-and-dependency-boundaries.json",
+      "sha256": "6fb6941f983f29e449999fd9e57f6991eddef2044cde7afb0cd5655d992893d5"
+    },
+    {
+      "file": "curriculum/exercises/promise-chains-and-errors.json",
+      "sha256": "3ea3835b1d6ca3a76112ab93520096a0d379b5ec1263230fa21c7b3018f51155"
+    },
+    {
+      "file": "curriculum/exercises/promise-combinators.json",
+      "sha256": "4de181e9abd7de6ba13ecfc550418033eb0dc9501e12ff7d157e1fe7ae5d6220"
+    },
+    {
+      "file": "curriculum/exercises/properties-and-descriptors.json",
+      "sha256": "28055651942377d5b7096f405beb8fa1e8dad183489b94fabdf9ec027994144c"
+    },
+    {
+      "file": "curriculum/exercises/prototype-delegation.json",
+      "sha256": "a822593e8a412ac0c6a4ec844e1d00b980a1b9a4f667a28a1d4ed4da0c9fed69"
+    },
+    {
+      "file": "curriculum/exercises/references-mutation-and-copy.json",
+      "sha256": "15bcf5c0f33b5afc8a63760058dc2fb312c6f25752f0da6b6525bbed68a4c75e"
+    },
+    {
+      "file": "curriculum/exercises/strings-unicode-and-regexp.json",
+      "sha256": "a01e7e8bc5a844730228d0e6db2ad4622a98620f91d9c2267489eb8c922da9df"
+    },
+    {
+      "file": "curriculum/lessons/array-pipelines-and-sorting.json",
+      "sha256": "9422f78d46679a1db90d8a9a905c35aaf2bca8109f1ec6e61cce8dee72bba8b8"
+    },
+    {
+      "file": "curriculum/lessons/async-await-and-iteration.json",
+      "sha256": "c52f0b4dc046a2337c917cc1775ef1130383327ef678ea91c4a7fd88de1ab4e6"
+    },
+    {
+      "file": "curriculum/lessons/behavior-tests-and-debugging.json",
+      "sha256": "bc50f39a1a3ed48c70dbf16203065cde86e5e86bd8bedf0c3337eb71ec78a1c1"
+    },
+    {
+      "file": "curriculum/lessons/bindings-and-closures.json",
+      "sha256": "18dd2c67068b7d97064417235af2eec68971abe1263c5c11bb8c4daf52de4737"
+    },
+    {
+      "file": "curriculum/lessons/bounded-concurrency-and-retries.json",
+      "sha256": "73207c39259e137235a517719e4f96180b6bf1aeaa233f14a100f288e7b9aebf"
+    },
+    {
+      "file": "curriculum/lessons/cancellation-and-stale-results.json",
+      "sha256": "a092b61f479b29ff62a7c6d6b59dc138bbcae42036b7c12f4a897a19273e11d5"
+    },
+    {
+      "file": "curriculum/lessons/classes-and-private-state.json",
+      "sha256": "56d323641b927cd9454b6b7cbef27f44f3c6d4f777072cb9b0a63afeeb4ce0d2"
+    },
+    {
+      "file": "curriculum/lessons/composition-and-domain-contracts.json",
+      "sha256": "d1631db553c1f86370364435889a4abeaefc31579f2a7a0ba708600bd0d521ac"
+    },
+    {
+      "file": "curriculum/lessons/date-time-and-internationalization.json",
+      "sha256": "af2bb2189496dfb2c3154e16b65f0d91519338a673a2bd0c96a4e0729775dc1f"
+    },
+    {
+      "file": "curriculum/lessons/errors-and-failure-contracts.json",
+      "sha256": "4aa6ddeb78a17501dd72934f908483d8ed9f0ae0c07b564da5108a8bccde7897"
+    },
+    {
+      "file": "curriculum/lessons/esm-and-live-bindings.json",
+      "sha256": "8650fb61e1759e0668754016ef5ff4b6f54f8560c8443b420977994641e7c568"
+    },
+    {
+      "file": "curriculum/lessons/host-scheduling-and-event-loops.json",
+      "sha256": "7a8d99b7a0df4e3f3f9fb493eff0e72d291be6617f5c877b5d3985d64a6a21c9"
+    },
+    {
+      "file": "curriculum/lessons/iterators-and-generators.json",
+      "sha256": "88b9fcfa428c853e1360288f2048311f92ec4e9e803a5313479ee3eba3ce8552"
+    },
+    {
+      "file": "curriculum/lessons/json-and-serialization.json",
+      "sha256": "8d1eef95cde09beb72cf60bac70b9b9278b971d49777e2194f29a853b12f9e35"
+    },
+    {
+      "file": "curriculum/lessons/keyed-collections-and-grouping.json",
+      "sha256": "75ccd8e88163db384eeadc2f3e5546637baa869669c9085fb5d16b89a0885783"
+    },
+    {
+      "file": "curriculum/lessons/module-and-dependency-boundaries.json",
+      "sha256": "8ed36dc97b9039c6d59ee0eb4045b5d61020e1dfb1daa2d0a78a5e65bdf31388"
+    },
+    {
+      "file": "curriculum/lessons/promise-chains-and-errors.json",
+      "sha256": "9d87f1d2abbca0038e133a29cb39d5f97f2750937ec58bacd96d951ced092489"
+    },
+    {
+      "file": "curriculum/lessons/promise-combinators.json",
+      "sha256": "9d694823bf9ce1c1d0967b28dd58c9d4abadc8d40bbf6d85681e8ecbef2cbce2"
+    },
+    {
+      "file": "curriculum/lessons/properties-and-descriptors.json",
+      "sha256": "561fe69ff33696ad7380693302390047db11a71b353eddba9cc73bd59b562936"
+    },
+    {
+      "file": "curriculum/lessons/prototype-delegation.json",
+      "sha256": "95181d59ec2a587d6afb8c304fb56181d9ef74974fee46e97bc61eb2afdd0522"
+    },
+    {
+      "file": "curriculum/lessons/references-mutation-and-copy.json",
+      "sha256": "af6ca7cd8f11c0f8805425fc4bd03e6f68e3ef3a142f15ecc1a28ac9580908ca"
+    },
+    {
+      "file": "curriculum/lessons/strings-unicode-and-regexp.json",
+      "sha256": "0dd6ea65fe349c7ec2c566975d571cde23c20c13a3b3580d3f83fd30b29a1bdf"
+    },
+    {
+      "file": "package.json",
+      "sha256": "259948562dcd9afa080f9f542b4b73dbf02fa7591e7463b03b829f5a9a709d8b"
+    },
+    {
+      "file": "reference/array-pipelines-and-sorting.mjs",
+      "sha256": "9d21a23131ece76eb9f7a44e835ac48797fde2fcb19def967507c81a9fa62093"
+    },
+    {
+      "file": "reference/async-await-and-iteration.mjs",
+      "sha256": "6e6509119569929a05eb719226b4bed2d4fa7114160f73870830b8a761fa4835"
+    },
+    {
+      "file": "reference/behavior-tests-and-debugging.mjs",
+      "sha256": "80f5c5f359b2dd3d1a4028fe573143ee549d5c4cdec2c7f5405b6a8cbff4b082"
+    },
+    {
+      "file": "reference/bounded-concurrency-and-retries.mjs",
+      "sha256": "99bdb73ac29a87041fef59f48057034f7aa80b1c0567bfbbf0ef8e96f83d06ee"
+    },
+    {
+      "file": "reference/cancellation-and-stale-results.mjs",
+      "sha256": "f2ba66cc8e221ae9bb8fab2f39fd1a560a88d3b6981ebfcd582ece857c870c73"
+    },
+    {
+      "file": "reference/classes-and-private-state.mjs",
+      "sha256": "2ceaba721b1bd625af704d6c518206aaea7c09c0bf5295a023b024d9746d4489"
+    },
+    {
+      "file": "reference/composition-and-domain-contracts.mjs",
+      "sha256": "33d4562f873ddbcc1839b502d9a9b65667266fc10acd805a1509f11cf4582db2"
+    },
+    {
+      "file": "reference/date-time-and-internationalization.mjs",
+      "sha256": "393043270dc7ef2b91448bf70884832067752236449ae4fd46791c94daf733e4"
+    },
+    {
+      "file": "reference/errors-and-failure-contracts.mjs",
+      "sha256": "606533a4bb08dc630a3a9c2104acea890e399a8470e9bbf8c2940462941ef1b0"
+    },
+    {
+      "file": "reference/esm-and-live-bindings.mjs",
+      "sha256": "d9601a06f041a8d28c4e9bccdce4ad5002d4341b9666c2318735c99f9d6e2a45"
+    },
+    {
+      "file": "reference/host-scheduling-and-event-loops.mjs",
+      "sha256": "13ddc16a8dc2da78b770c86cf32b5c6b66cf0e1ed8f7b7e84648477f1059fb6d"
+    },
+    {
+      "file": "reference/incorrect/array-pipelines-and-sorting.mjs",
+      "sha256": "386c4bfa2921c78370445f8b643c12cbe37de203e87a5163f70f764e9f8e6942"
+    },
+    {
+      "file": "reference/incorrect/async-await-and-iteration.mjs",
+      "sha256": "d76bf567cc27d4ae932b070b0accc746df7a8cedab8449d583af1975b74d7599"
+    },
+    {
+      "file": "reference/incorrect/behavior-tests-and-debugging.mjs",
+      "sha256": "644a7387a7c730bb9e7376d923bdcd55332b1bf999e28c166622fe302e3b25f2"
+    },
+    {
+      "file": "reference/incorrect/bounded-concurrency-and-retries.mjs",
+      "sha256": "2c73c1cb51e20d4eec45ee275671c306875ad765627de64deb8778247051e9ea"
+    },
+    {
+      "file": "reference/incorrect/cancellation-and-stale-results.mjs",
+      "sha256": "b571e52f1a0895c6a3dc4abb1e7e881e6a167050f3943bb6ea9ad4185e5bce1b"
+    },
+    {
+      "file": "reference/incorrect/classes-and-private-state.mjs",
+      "sha256": "706a5e130bb5c58b0f36567f12a63f556e6ec2ad97cc049d7ae811c58842bb99"
+    },
+    {
+      "file": "reference/incorrect/composition-and-domain-contracts.mjs",
+      "sha256": "e0a461736bb6b75f63e3002f30fbddbbcaea41cecfff5f8ce9868eb16ece5207"
+    },
+    {
+      "file": "reference/incorrect/date-time-and-internationalization.mjs",
+      "sha256": "431414210568aaea7b9ce4ba0c6a276060bb78c77f1436b356204bbbcc733f60"
+    },
+    {
+      "file": "reference/incorrect/errors-and-failure-contracts.mjs",
+      "sha256": "09ba082b4221e8c6142807b64f75472c276541c6460dd5889f6901d092e0a313"
+    },
+    {
+      "file": "reference/incorrect/esm-and-live-bindings.mjs",
+      "sha256": "5a685acbd16f3d75df9cee44d1b6899bf31eca6d129f9df788ce9d3c61df1e47"
+    },
+    {
+      "file": "reference/incorrect/host-scheduling-and-event-loops.mjs",
+      "sha256": "edadac81e7d4e8f65abaf457b4150fb8fea6ab6bf46e81ab516e6b33895c757d"
+    },
+    {
+      "file": "reference/incorrect/iterators-and-generators.mjs",
+      "sha256": "75c0d6816416926877e015fce80475bbe4786832f7f8b334c4db4e3da0234e6f"
+    },
+    {
+      "file": "reference/incorrect/json-and-serialization.mjs",
+      "sha256": "67b3b51b388360dfcf90f9fd41adcf6e8a0a74312b7c7b20059c39cede1d735d"
+    },
+    {
+      "file": "reference/incorrect/keyed-collections-and-grouping.mjs",
+      "sha256": "5f8279925b7ec848914b306ff4c684cebf1e7b6614002d673d18361ddeac9fe3"
+    },
+    {
+      "file": "reference/incorrect/module-and-dependency-boundaries.mjs",
+      "sha256": "0f7ac753ecb864a348850f8c593a2decad5e06e05ae07de271bf2bd2367150cb"
+    },
+    {
+      "file": "reference/incorrect/promise-chains-and-errors.mjs",
+      "sha256": "0b11b36faa3379522acdbe6cc778f25f0ec0907e4678699a96881b19b6206551"
+    },
+    {
+      "file": "reference/incorrect/promise-combinators.mjs",
+      "sha256": "de5c60745f729107c8c8c1f242ca5c3e493d5c8271892b44ad69ee3c2fcb63b1"
+    },
+    {
+      "file": "reference/incorrect/properties-and-descriptors.mjs",
+      "sha256": "9b99e7cef8419a84776d4cbf2b7a128b39941551288e7f02469e7e9cfdf25727"
+    },
+    {
+      "file": "reference/incorrect/prototype-delegation.mjs",
+      "sha256": "ac371e7dc51397dec3b8e27796a45f876b5e20fe52b0fec0a566117e4a3ffa4e"
+    },
+    {
+      "file": "reference/incorrect/references-mutation-and-copy.mjs",
+      "sha256": "f729a5b0fb1a06f172ce9fb9cf8d22786f1f562a316127391931fe1ff6ff5919"
+    },
+    {
+      "file": "reference/incorrect/strings-unicode-and-regexp.mjs",
+      "sha256": "fce89d46bd83967051e547be9a61a2890afdc983bc84213ae42c4fc175b04ebc"
+    },
+    {
+      "file": "reference/iterators-and-generators.mjs",
+      "sha256": "d756a49a43500b75aa148ced475103dcec6be4689d7dfec5a63efaa4631b2f99"
+    },
+    {
+      "file": "reference/json-and-serialization.mjs",
+      "sha256": "3e233d4e82c5fa8222e99e7e0c6d448d8a97eca829bc0238635c667e7372f1ac"
+    },
+    {
+      "file": "reference/keyed-collections-and-grouping.mjs",
+      "sha256": "1d49f8f43511cde78dbcae1beece5f4ef44a91723c8f3aaac3905cd3bd68f318"
+    },
+    {
+      "file": "reference/module-and-dependency-boundaries.mjs",
+      "sha256": "d4b0cb32b6fbddb937ec7129f3f9eaa2d9b8907e7c26ce56b516f7f741f06344"
+    },
+    {
+      "file": "reference/promise-chains-and-errors.mjs",
+      "sha256": "6a672da6f3206bbb25cbba24fc067f158fa8f801be8fa6e81fb50faeae92b25e"
+    },
+    {
+      "file": "reference/promise-combinators.mjs",
+      "sha256": "41cb58cf0110cdc3d86e10ffc6d618c6b5b225ed6239f1bb85368dc8611c35d3"
+    },
+    {
+      "file": "reference/properties-and-descriptors.mjs",
+      "sha256": "91a9e5592ae171c74eeb01af53a0243d01c24875afb6a2fb2490c137374c5d5c"
+    },
+    {
+      "file": "reference/prototype-delegation.mjs",
+      "sha256": "d3ea5354b6b76987ab5748b48b3ca9d7975ba70b5be007dee92bb87a0fd49b99"
+    },
+    {
+      "file": "reference/references-mutation-and-copy.mjs",
+      "sha256": "78c499eb8a02cf13868e107da1fd796a2bc5e2e0ccdbfeac922de2f072ff3a8a"
+    },
+    {
+      "file": "reference/strings-unicode-and-regexp.mjs",
+      "sha256": "2fd5e5b1a4de94c0e0909b0b1615f4fba8b149422664b6c62e144888bf399794"
+    },
+    {
+      "file": "runtime/profiles.json",
+      "sha256": "b03f63ca47fe33d0b1fc879f4632f9b0278e35177f181e42d1522e960cc2afe5"
+    },
+    {
+      "file": "scripts/validate-project.mjs",
+      "sha256": "7ee0e803d070c79bec29bc938a1ff0150bc4719db0810a5f798dba2027511796"
+    },
+    {
+      "file": "scripts/verify-curriculum.mjs",
+      "sha256": "9774a8e2585b8479848ef413a92e3870e8405b41e2a67305fbf4989253c1207c"
+    },
+    {
+      "file": "scripts/verify-module-curriculum.mjs",
+      "sha256": "b1344a21ad61499ba44bc87a9665535c8e1a7f9ac9bbcef34de9188b6da9f83b"
+    },
+    {
+      "file": "starter/array-pipelines-and-sorting.mjs",
+      "sha256": "0f32e323b2f6e49590c8b28b9209d8e06e8985db6e3749a202212442ceb66ee8"
+    },
+    {
+      "file": "starter/async-await-and-iteration.mjs",
+      "sha256": "23b67374ff7eb7c2227af384bf9d64a82ab28d1a6951ad2ea027b2af05807947"
+    },
+    {
+      "file": "starter/behavior-tests-and-debugging.mjs",
+      "sha256": "6f3123fbe86a01274b282a12937bc65a33a552ae0bef0db38c429cc53dafcca3"
+    },
+    {
+      "file": "starter/bounded-concurrency-and-retries.mjs",
+      "sha256": "cc33e59d5cc4b4f8cc571227c2c12dab1cbb655e4e9740bc8ac01696138c4b39"
+    },
+    {
+      "file": "starter/cancellation-and-stale-results.mjs",
+      "sha256": "106fa0830fd4179f39089c8f4283eb952807c2459c667ca641d618cd62068b28"
+    },
+    {
+      "file": "starter/classes-and-private-state.mjs",
+      "sha256": "730010e62f2437fd43724322d0ffc14f021b58faf8dbd90e8ab5dc20647a46ac"
+    },
+    {
+      "file": "starter/composition-and-domain-contracts.mjs",
+      "sha256": "a20505cd078193372c2618f7d3d4d092c986400a47ae8a1369a44418c040b425"
+    },
+    {
+      "file": "starter/date-time-and-internationalization.mjs",
+      "sha256": "edde5ecb705b9fd2a6ef72e37afbe2795431fdae400a710c7da4dd88c343b32f"
+    },
+    {
+      "file": "starter/errors-and-failure-contracts.mjs",
+      "sha256": "2fd1c3be6c717612e049a0d416e64ab6bc9ca64d624f125e721a826cc344960d"
+    },
+    {
+      "file": "starter/esm-and-live-bindings.mjs",
+      "sha256": "aa561efe2a038de79a64bb137c755acc7a8f353390bdf55b3cbc6ea24fd44ebe"
+    },
+    {
+      "file": "starter/host-scheduling-and-event-loops.mjs",
+      "sha256": "1417d8d6a8c54f1139d56ace707bc0ca57bd38cf2d2fd94d7e9de9d7a17cd737"
+    },
+    {
+      "file": "starter/iterators-and-generators.mjs",
+      "sha256": "da94e5627e0419d0379e1934a04fac7d2ac4f8bab2078731fa1e103bdd47253d"
+    },
+    {
+      "file": "starter/json-and-serialization.mjs",
+      "sha256": "7cc78c89de70bee40466b48272c042d97ccd12eef19c3164cc35c652dd268530"
+    },
+    {
+      "file": "starter/keyed-collections-and-grouping.mjs",
+      "sha256": "e4d6391a837ecf99acc1321e0820e049fbb95517cc0e8a6ea03593a367b265ed"
+    },
+    {
+      "file": "starter/module-and-dependency-boundaries.mjs",
+      "sha256": "3b4d266e9b4df58841211da817a134d2ae284004b97aa69132275a2cc00be9dd"
+    },
+    {
+      "file": "starter/promise-chains-and-errors.mjs",
+      "sha256": "a721c7df8a060b6ec8f1e2772e08a5016ee4e8d9bdb9b3a1d54bf8dfca17d696"
+    },
+    {
+      "file": "starter/promise-combinators.mjs",
+      "sha256": "248829528760827c39706cd7dbcc6364a1af9959b9b1acd0f9a9c07d87ec8232"
+    },
+    {
+      "file": "starter/properties-and-descriptors.mjs",
+      "sha256": "addf181deddb7f5ba86d06b34e881daccb0953774cf18e82674047ef329c31e7"
+    },
+    {
+      "file": "starter/prototype-delegation.mjs",
+      "sha256": "b8c4c4e2b6ab70c391cbc9627ca2e5448e3a0a950cf604824002f16aaac8f3d4"
+    },
+    {
+      "file": "starter/references-mutation-and-copy.mjs",
+      "sha256": "8faab66fcfa612bb4e50fc9af78b530d319d6014428f7b209872d7c3afeb95f4"
+    },
+    {
+      "file": "starter/strings-unicode-and-regexp.mjs",
+      "sha256": "8fb13b4396ed8523a4bba2ad48e1ec80eeb17131889b478a64927f5a840552d7"
+    },
+    {
+      "file": "tests/learning-ui-state.test.mjs",
+      "sha256": "228e64d103f20fc2e910b0dbb955cacf76ab8365fc0db00ae022da4a2f973da3"
+    },
+    {
+      "file": "tests/module-curriculum-contract.test.mjs",
+      "sha256": "21d89176dfd7b9d880cf34f9239a1201b6f5d8c6e6c827ed19334c79859d3098"
+    },
+    {
+      "file": "tests/module-runtime.test.mjs",
+      "sha256": "a9e43870d193f420819594742b6235d745b1ce78336c4baa3c13096d81b8af54"
+    },
+    {
+      "file": "tests/module-server-integration.test.mjs",
+      "sha256": "21ab0735df23412dc93a830fbdce3c2439c3c936996b38295bbcc909a01a6b59"
+    },
+    {
+      "file": "tests/module-workspace-state.test.mjs",
+      "sha256": "dcf06a96f08a2360bc408da6edb29dc118d30a1c897a90b8bcbaf753b1c330bf"
+    },
+    {
+      "file": "tests/module-workspace.test.mjs",
+      "sha256": "2f47b35863c646fd88b84c9c306aa25cb09ab6a922c2254ad4c2b6bd51b860b0"
+    },
+    {
+      "file": "tests/runtime-worker.test.mjs",
+      "sha256": "3f231d5258d3cca7b5f8451b680832f8f935502b8bc2da97f630a00c3218ba3c"
+    },
+    {
+      "file": "web/app.mjs",
+      "sha256": "59c632fae0b0e0b0cd565158fc27e6bfa5c82a54ff37134d09f369afd3d0cf84"
+    },
+    {
+      "file": "web/execution/module-bootstrap.mjs",
+      "sha256": "4dca880bc9abab445b32a62074be1ccbacd41efd64e0f96aa27af0f58b4d22d5"
+    },
+    {
+      "file": "web/execution/module-runner.mjs",
+      "sha256": "4b46c612a278ec59b5f96ce1a21791d2c45256e7076de7535f645df0d7ea8de3"
+    },
+    {
+      "file": "web/execution/protocol.mjs",
+      "sha256": "bbebf83d36d942f736502e4cf83890042d39e5b77bd787c11df20a6bc986ec8e"
+    },
+    {
+      "file": "web/execution/qualification.html",
+      "sha256": "4d567404734ebb142c7e1ecedafb604ef6eeba7544b887e13fa2e6a0ecb61dc6"
+    },
+    {
+      "file": "web/execution/qualification.mjs",
+      "sha256": "96e5739700ce2e8c255a5ee4798f8dd1f072ce8b6f2fd8043ca0dff4f5b8bf40"
+    },
+    {
+      "file": "web/execution/worker.js",
+      "sha256": "2c6b5b872b3fdf1f0ff01db7d81b9c828f3a77c9c6506b9880415cea96339727"
+    },
+    {
+      "file": "web/features/execution-state.mjs",
+      "sha256": "650e23ec42e7190b47111d883f9ddf835cb6c2e4f8028fe6f5d4300957a0272e"
+    },
+    {
+      "file": "web/features/learning-data.mjs",
+      "sha256": "cacadf0f36e9b3d0b22d84cb9259e9dc15c316d7a040d8156c8b0b0994a7a145"
+    },
+    {
+      "file": "web/features/module-workspace-state.mjs",
+      "sha256": "8d3b8a8995e042d02137c7c2e44ba6237853ca7802d93f7f6f2f59094b854060"
+    },
+    {
+      "file": "web/serve.mjs",
+      "sha256": "5a61ed87ce25cb509c693eeeb54c96140ec7fc51bf8edc08e026ed2f7ebe5fc9"
+    },
+    {
+      "file": "web/server/module-workspace.mjs",
+      "sha256": "471ee973752749f9f8fcccac12c731d4d259948bc9022a53d4d5ab9575444f7e"
+    },
+    {
+      "file": "web/styles.css",
+      "sha256": "f62ce4e77635c62973b924e70ceacd25a989cdcbd6132e4a10c6f161743d356d"
+    }
+  ],
+  "actualChecks": {
+    "native": "Windows Node22.17.0 / staged tree npm run check",
+    "browser": "Chrome155 Windows / 2026-10-15T10:01:53.409Z–10:02:09.060Z",
+    "exercises": 32,
+    "referenceChecks": 264,
+    "negativeSubmissions": 64,
+    "runtimeConditions": 14
+  },
+  "limitations": [
+    "Public self-study checks, not certification",
+    "No hard RAM cap or complete OS isolation",
+    "Actual devices, 200% text scaling, OS IME and screen reader unverified",
+    "DOM/Node-specific curriculum excluded"
+  ]
+}

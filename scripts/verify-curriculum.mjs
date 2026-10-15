@@ -5,11 +5,14 @@ import { inspect } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
 import { validateProject } from './validate-project.mjs';
+import { verifyModuleVariant } from './verify-module-curriculum.mjs';
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const cloneObservation = globalThis.structuredClone.bind(globalThis);
 const shorten = value => String(value).slice(0, 2000);
 const errorText = error => shorten(`${error?.name ?? 'Error'}: ${error?.message ?? error}`);
+const workerExecArgv = process.execArgv.filter((argument, index, all) => argument !== '--input-type' &&
+  !argument.startsWith('--input-type=') && all[index - 1] !== '--input-type');
 
 // This command is a repository-author check, not a learner-code execution endpoint or an OS sandbox.
 // Its inputs are the checked-in reference, known-incorrect solution, starter and fixed grader only.
@@ -83,6 +86,7 @@ function isolatedRun(data, { timeoutMs, maxOutputBytes }) {
     try {
       worker = new Worker(new URL(import.meta.url), {
         workerData: data, stdout: true, stderr: true,
+        execArgv: workerExecArgv,
         resourceLimits: { maxOldGenerationSizeMb: 64, maxYoungGenerationSizeMb: 16, stackSizeMb: 4 },
       });
     } catch (error) { void finish({ status: 'ERROR', reason: 'worker-start-error', error: errorText(error) }); return; }
@@ -157,15 +161,29 @@ export async function verifyCurriculum(directory, options = {}) {
     const identity = { exerciseId: exercise.id, contentRevision: exercise.contentRevision ?? lessons.get(exercise.lessonId)?.contentRevision, graderRevision: exercise.graderRevision ?? null };
     const requirements = [...new Set([...(exercise.hostRequirements ?? []), ...(exercise.runner?.hostRequirements ?? [])])];
     if (!exercise.runner || requirements.length) {
-      report.exercises.push({ ...identity, status: 'SKIP', reason: !exercise.runner ? 'No authored function-body runner' : `Host-specific verification required: ${requirements.join(', ')}` });
+      report.exercises.push({ ...identity, status: 'SKIP', reason: !exercise.runner ? 'No authored execution runner' : `Host-specific verification required: ${requirements.join(', ')}` });
       report.summary.skipped++;
       continue;
     }
     const grader = await json(exercise.graderFile);
-    const shared = { runner: exercise.runner, cases: grader.cases.map(({ id, probe }) => ({ id, probe })) };
-    const reference = compareObservations(await isolatedRun({ ...shared, kind: 'reference', modulePath: await sourcePath(exercise.referenceFile) }, limits), grader.cases);
-    const incorrect = compareObservations(await isolatedRun({ ...shared, kind: 'incorrect', modulePath: await sourcePath(exercise.incorrectFile) }, limits), grader.cases);
-    const starter = compareObservations(await isolatedRun({ ...shared, kind: 'starter', body: exercise.editable.initialBody }, limits), grader.cases);
+    let reference;
+    let incorrect;
+    let starter;
+    if (exercise.runner.kind === 'module-files') {
+      // Read only the authored repository entries after rechecking their real paths. Fixed helper
+      // sources come from the validated manifest, never a learner request or an HTTP workspace.
+      const authoredVariant = async filename => verifyModuleVariant({ exercise, cases: grader.cases,
+        entrySource: await readFile(await sourcePath(filename), 'utf8') }, limits);
+      reference = await authoredVariant(exercise.referenceFile);
+      incorrect = await authoredVariant(exercise.incorrectFile);
+      starter = await verifyModuleVariant({ exercise, cases: grader.cases,
+        entrySource: exercise.workspace.files.find(file => file.path === exercise.workspace.entry).source }, limits);
+    } else {
+      const shared = { runner: exercise.runner, cases: grader.cases.map(({ id, probe }) => ({ id, probe })) };
+      reference = compareObservations(await isolatedRun({ ...shared, kind: 'reference', modulePath: await sourcePath(exercise.referenceFile) }, limits), grader.cases);
+      incorrect = compareObservations(await isolatedRun({ ...shared, kind: 'incorrect', modulePath: await sourcePath(exercise.incorrectFile) }, limits), grader.cases);
+      starter = compareObservations(await isolatedRun({ ...shared, kind: 'starter', body: exercise.editable.initialBody }, limits), grader.cases);
+    }
     const completeChecks = result => result.status === 'completed' && result.checks?.length === grader.cases.length && result.checks.length > 0 &&
       result.checks.every(check => !['invalid-probe', 'invalid-case-response'].includes(check.reason));
     const referencePasses = completeChecks(reference) && reference.checks.every(check => check.status === 'PASS');

@@ -1,0 +1,177 @@
+{
+  "id": "promise-chains-and-errors",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "Promise 체인: 콜백의 완료와 실패를 한 경로로 연결하기",
+  "track": "async-model",
+  "level": "advanced",
+  "goals": [
+    "콜백의 제어권을 Promise로 옮기고 최초 resolve/reject와 후속 reaction의 시점을 추적한다.",
+    "then의 반환·throw·rejection을 연결해 값과 실패 이유를 보존한다.",
+    "중복 콜백·thenable·반환 누락을 구분하고 소비자에게 하나의 완료를 제공한다."
+  ],
+  "prerequisites": [
+    "behavior-tests-and-debugging"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2017",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 제17판 — Promise Objects (§27.2), Async Functions (§27.7), 반복문 (§14.7.5)",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN — Promise.prototype.then()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then",
+      "edition": "JavaScript reference / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "promise-chains-and-errors-exercise",
+  "steps": {
+    "theory": "파일 읽기 뒤 가공하고 저장하는 코드가 세 겹의 콜백으로 중첩됐다. 성공 순서는 보여도 중간 오류를 어디로 보내야 하는지 흩어지기 쉽다. Promise는 미래의 단일 완료를 표현하는 객체다. pending에서 fulfilled 또는 rejected로 정해진 뒤 결과가 다시 바뀌지 않는다. 다만 resolve(다른 Promise)를 호출했다는 사실과 지금 fulfilled라는 사실은 다르다. 다른 Promise의 결과를 따르도록 잠긴 채 아직 pending일 수 있다.\n\nnew Promise(executor)의 executor는 생성 중 동기적으로 호출된다. then에 붙인 반응은 지금 실행 중인 자바스크립트를 끼어들어 실행하지 않는다. const p = new Promise(resolve => { console.log('read'); resolve(4); }); p.then(x => console.log(x)); console.log('caller');에서는 read → caller → 4 순서를 관찰한다. Promise의 작업을 실제로 언제 처리하는지는 호스트 연결과 함께 이해해야 하며, 뒤 수업에서 HTML 이벤트 루프와 연결한다.\n\np.then(x => transform(x)).then(save)에서 첫 then은 새 Promise를 반환한다. transform이 값 12를 반환하면 다음 단계가 12를 받고, Promise/thenable을 반환하면 그 완료를 따른다. throw하면 다음 거부 경로로 간다. x => { transform(x); }에는 return이 없어서 다음 단계가 undefined를 받는다. 작업이 시작됐다는 사실과 체인에 연결됐다는 사실은 다르다.\n\ncatch는 오류를 읽기만 하는 표시가 아니다. catch(() => 'fallback')은 정상 값으로 복구하며 catch(error => { throw error; })는 실패를 이어 보낸다. finally의 정상 완료는 이전 결과를 유지하지만 그 안에서 throw하거나 거부하면 기존 결과를 가릴 수 있다. 이번 API는 복구를 강요하지 않고 원래 실패 이유를 그대로 호출자에게 보낸다. 오류가 Error 객체라는 가정도 하지 않는다.\n\n오래된 read(callback)의 완료를 한 번만 받는 경계에서 new Promise를 사용한다. error-first는 이 교육 API가 정한 규약이며 ECMAScript 자체의 콜백 형식은 아니다. error가 null/undefined일 때만 성공이다. Promise가 첫 완료를 유지해도 잘못 만든 콜백 제공자의 외부 부수 효과까지 취소하지는 않는다.",
+    "example": "독립 예제는 read → caller → transform:4 → save:12의 진행과 최종 값 12를 출력한다. read의 콜백이 동기여도 then의 가공은 caller 표시 뒤에 실행된다. 두 번째 흐름은 동일 오류 객체가 최종 catch까지 도달하며 save가 호출되지 않음을 확인한다. 세 번째는 resolve에 thenable을 넘기고 다시 값을 보내도 최초 채택한 결과가 유지됨을 보여 준다. 예상 로그는 설명용 기준이며 제품의 실행 결과와 구분한다.",
+    "quiz": "반환 누락, resolve와 fulfill의 차이, catch의 복구, 최초 settle의 범위를 코드로 추적한다. 타이머 시간을 추측하지 말고 각 단계가 반환한 값·Promise·throw를 먼저 적는다. 중복 콜백을 무시한다는 말이 제공자의 모든 부수 효과를 되돌린다는 뜻인지도 구분한다.",
+    "practice": "교육용 업로드 흐름을 read → transform → save로 분리한다. Promise를 반환하는 기존 API를 다시 new Promise로 감싸기보다 이미 받은 Promise를 반환해 연결하는 편이 완료·오류 경로를 줄인다. 반면 콜백 API를 경계에서 한 번 감싸는 것은 호출 규약을 통일하는 데 유용하다.\n\n실제 요청에서는 read가 콜백을 영원히 부르지 않을 수 있다. 그 경우 체인은 계속 pending이며 타임아웃·취소·자원 정리를 별도로 설계해야 한다. 이번 고정 검사에는 완료하는 read만 제공한다. 장애를 catch로 로그만 남긴 후 undefined로 바꾸면 후속 저장이 잘못 실행될 수 있으므로 복구 가능성과 재시도 소유권을 메모한다.",
+    "lab": "runCallbackPipeline(read, transform, save)의 본문을 구현한다. read는 딱 한 번 호출한다. error가 null/undefined이면 받은 값을 transform으로, 그 완료 값을 save로 보낸다. 최종 Promise는 save의 완료 값을 전달하며 모든 단계의 실패 이유를 그대로 거부한다. 실패 뒤 단계는 시작하지 않는다.\n\ntransform과 save는 값·Promise·thenable 또는 throw를 제공할 수 있다. read의 동기 throw, 중복 성공, 성공 뒤 오류, 오류 뒤 성공도 검사한다. 정해진 시간 동안 기다렸다가 답을 추측하지 말고 실제 완료를 체인에 연결한다."
+  },
+  "quiz": {
+    "revision": "promise-chains-and-errors-quiz-v1",
+    "questions": [
+      {
+        "id": "q1-missing-return",
+        "prompt": "p.then(x => { transform(x); }).then(save)에서 transform이 Promise를 반환한다. 첫 then의 반환에 대한 설명은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "자동으로 transform의 완료를 기다려 결과를 save로 보낸다.",
+            "explanation": "블록에 return이 없으면 변환 Promise가 체인에 연결되지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "콜백의 반환값 undefined로 다음 단계가 진행할 수 있다.",
+            "explanation": "return transform(x) 또는 표현식 본문을 사용해야 변환 완료가 연결된다."
+          },
+          {
+            "id": "c",
+            "text": "중괄호를 사용하면 SyntaxError다.",
+            "explanation": "문법은 유효하다. 문제는 반환 계약이다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-resolve-pending",
+        "prompt": "resolve(아직 pending인 p)를 호출하고 곧바로 reject(error)를 호출했다. 외부 Promise의 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "p의 결과를 따르도록 정해지고 뒤 reject는 결과를 바꾸지 못한다.",
+            "explanation": "최초 resolve가 thenable/Promise를 채택하면 아직 pending일 수 있지만 뒤 settle 호출로 바뀌지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "항상 즉시 fulfilled가 된다.",
+            "explanation": "resolve와 fulfilled는 같은 상태를 가리키는 표현이 아니다."
+          },
+          {
+            "id": "c",
+            "text": "마지막 reject가 우선한다.",
+            "explanation": "최초 resolve/reject 이후 중복 완료가 결과를 덮어쓰지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-catch-recovery",
+        "prompt": "Promise.reject('offline').catch(() => 0).then(save)에서 save는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "호출되지 않는다.",
+            "explanation": "catch가 정상 값을 반환해 체인을 복구했다."
+          },
+          {
+            "id": "b",
+            "text": "'offline'을 받는다.",
+            "explanation": "거부 이유는 catch가 반환한 값으로 대체됐다."
+          },
+          {
+            "id": "c",
+            "text": "0을 받는다.",
+            "explanation": "복구 후 정상 이행 경로가 0으로 진행한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q4-side-effects",
+        "prompt": "read가 콜백을 두 번 호출했지만 Promise가 첫 완료를 유지했다. 무엇까지 보장되는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "read가 일으킨 모든 외부 부수 효과가 한 번만 발생한다.",
+            "explanation": "Promise는 제공자의 부수 효과를 되돌리거나 횟수를 제한하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "이 Promise의 완료 결과가 뒤 콜백으로 바뀌지 않는다.",
+            "explanation": "한 번의 완료 계약과 외부 작업의 멱등성은 별도다."
+          },
+          {
+            "id": "c",
+            "text": "두 번째 콜백은 자바스크립트에서 실행될 수 없다.",
+            "explanation": "콜백은 호출될 수 있지만 resolve/reject가 이미 정해진 결과를 바꾸지 못한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q2-resolve-pending"
+      ],
+      "caseIds": [
+        "ordered-chain",
+        "reaction-after-stack",
+        "deferred-callback"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q1-missing-return",
+        "q3-catch-recovery"
+      ],
+      "caseIds": [
+        "transform-failure",
+        "save-failure",
+        "reader-failure"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q2-resolve-pending",
+        "q4-side-effects"
+      ],
+      "caseIds": [
+        "first-settle",
+        "thenable-adoption"
+      ]
+    }
+  ],
+  "memoRubric": [
+    "콜백을 Promise로 감싸는 경계와 각 단계의 소유권을 설명했다.",
+    "catch로 복구할 경우와 다시 던질 경우를 구분했다.",
+    "콜백이 영원히 완료하지 않는 경우의 시간 제한·취소 대안을 적었다."
+  ]
+}

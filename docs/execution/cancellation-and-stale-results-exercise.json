@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "cancellation-and-stale-results-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "cancellation-and-stale-results-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:24f36a993275ce41f079bd4a3f619e7a0eb4ac63fc36f39e9a500ebe829d4fba",
+  "referenceChecks": [
+    "initial-and-success",
+    "inverted-success",
+    "stale-error",
+    "cancel-and-restart",
+    "current-error",
+    "cooperative-abort",
+    "snapshot-isolation",
+    "reentrant-abort-listener"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

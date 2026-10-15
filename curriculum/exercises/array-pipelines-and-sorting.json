@@ -1,0 +1,67 @@
+{
+  "id": "array-pipelines-and-sorting-exercise",
+  "lessonId": "array-pipelines-and-sorting",
+  "contentRevision": "draft-1",
+  "graderRevision": "array-pipelines-and-sorting-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "summarizeOrders(orders,minimum=0)를 구현한다. minimum은 유한한 0 이상 숫자다. orders의 own 인덱스만 검사하고, null/undefined/비객체 또는 id가 문자열이 아니거나 status가 paid가 아닌 레코드를 제외한다. amount는 유한한 0 이상 number이고 minimum 이상이어야 한다. 누락·문자열 숫자는 보정하지 않는다.\n\n새 {id,amount} 레코드 목록을 amount 내림차순으로 정렬하고 동액은 원래 순서를 유지한다. 중복 ID를 제거하지 않는다. {items,count,total}을 반환하며 빈 합계는 0이다. 입력 배열·원소를 변경하지 않고 출력 레코드를 수정해도 입력이 바뀌지 않아야 한다."
+  ],
+  "template": "export function summarizeOrders(orders, minimum = 0) {\n  // TODO: 유효 주문만 새 목록으로 모아 숫자 정렬과 합계를 계산하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/array-pipelines-and-sorting.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "유효한 결제 주문을 금액 내림차순으로 집계한다",
+    "빈 목록과 0원 주문을 구분한다",
+    "최소 금액 경계를 포함한다",
+    "동액 순서와 중복 ID를 유지한다",
+    "구멍과 상속 인덱스를 주문으로 세지 않는다",
+    "누락·잘못된 타입·비유한 금액을 제외한다",
+    "원본 순서와 레코드를 변경하지 않는다",
+    "출력 레코드 수정이 입력을 바꾸지 않는다"
+  ],
+  "rubric": [
+    "map/filter/reduce의 값·순서·빈 입력과 sparse 배열 동작을 구분한다.",
+    "숫자 비교 함수와 동액 순서 정책으로 원본을 보존해 정렬한다.",
+    "불량 레코드·중복·출력 소유권을 명시한 집계 함수를 구현한다."
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "summarizeOrders",
+    "parameters": [
+      "orders",
+      "minimum = 0"
+    ],
+    "async": false,
+    "runProbe": "observe(submission.summarizeOrders([{id:'a',amount:2,status:'paid'},{id:'b',amount:10,status:'paid'},{id:'c',amount:99,status:'cancelled'},{id:'d',amount:3,status:'paid'}]));"
+  },
+  "editable": {
+    "prefix": "export function summarizeOrders(orders, minimum = 0) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 유효 주문만 새 목록으로 모아 숫자 정렬과 합계를 계산하세요."
+  },
+  "graderFile": "curriculum/checks/array-pipelines-and-sorting.json",
+  "referenceFile": "reference/array-pipelines-and-sorting.mjs",
+  "incorrectFile": "reference/incorrect/array-pipelines-and-sorting.mjs",
+  "exampleFile": "curriculum/examples/array-pipelines-and-sorting.mjs",
+  "exampleExpectedLogs": [
+    "[{\"id\":\"large\",\"amount\":10},{\"id\":\"small\",\"amount\":2}]",
+    "12",
+    "[\"small\",\"large\",\"cancelled\"]",
+    "{\"length\":3,\"keys\":[\"0\",\"2\"],\"dense\":[1,null,3]}",
+    "[10,2,3]",
+    "[2,3,10]"
+  ],
+  "verificationRecord": "docs/execution/array-pipelines-and-sorting-exercise.json"
+}

@@ -1,0 +1,10 @@
+const orders = [{id:'small',amount:2,status:'paid'},{id:'large',amount:10,status:'paid'},{id:'cancelled',amount:30,status:'cancelled'}];
+const selected = orders.filter(order => order.status === 'paid').map(order => ({id:order.id,amount:order.amount}));
+selected.sort((a,b) => b.amount-a.amount);
+console.log(JSON.stringify(selected));
+console.log(String(selected.reduce((sum,item) => sum+item.amount,0)));
+console.log(JSON.stringify(orders.map(order => order.id)));
+const sparse = [1,,3];
+console.log(JSON.stringify({length:sparse.map(x=>x*2).length,keys:Object.keys(sparse.map(x=>x*2)),dense:[...sparse]}));
+console.log(JSON.stringify([2,10,3].sort()));
+console.log(JSON.stringify([2,10,3].sort((a,b)=>a-b)));

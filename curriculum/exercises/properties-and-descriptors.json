@@ -1,0 +1,68 @@
+{
+  "id": "properties-and-descriptors-exercise",
+  "lessonId": "properties-and-descriptors",
+  "contentRevision": "draft-1",
+  "graderRevision": "properties-and-descriptors-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "입력은 Proxy가 아닌 일반 객체와 중복 없는 문자열 허용 키 배열이다.",
+    "{values,missing,undefinedKeys,rejected}를 반환하며 values는 null 원형의 새 객체다.",
+    "순서: 자체 필드 없음→missing, 접근자→accessor 거부, 비열거 데이터→non-enumerable 거부, 나머지→복사.",
+    "선택한 undefined 필드는 values에 실제로 유지하고 undefinedKeys에도 기록한다. 각 목록은 허용 키 순서다.",
+    "getter/setter와 원본 descriptor를 건드리지 않는다. 복사는 얕으며 결과 필드는 쓰기 가능하다."
+  ],
+  "template": "export function selectOwnData(source, allowedKeys) {\n  // TODO: descriptor를 검사해 getter를 실행하지 않고 허용 필드를 선택하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/properties-and-descriptors.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "허용된 자체 데이터 필드만 순서대로 선택한다",
+    "누락과 존재하는 undefined를 분리한다",
+    "상속 데이터와 상속 getter를 읽지 않는다",
+    "자체 getter/setter를 호출하지 않고 거부한다",
+    "비열거 데이터는 거부하고 비열거 접근자는 accessor로 분류한다",
+    "__proto__·constructor·hasOwnProperty를 평범한 데이터 키로 보존한다",
+    "readonly 원본 descriptor를 바꾸지 않고 새 결과를 만든다",
+    "빈 허용 목록과 객체 값의 얕은 전달 계약을 지킨다"
+  ],
+  "rubric": [
+    "자체·상속·열거 구분",
+    "접근자 효과 통제",
+    "누락/undefined 보존과 안전한 키"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "selectOwnData",
+    "parameters": [
+      "source",
+      "allowedKeys"
+    ],
+    "async": false,
+    "runProbe": "const result=submission.selectOwnData({name:'A',count:0,extra:9},['count','name']);observe({entries:Object.entries(result.values),missing:result.missing,rejected:result.rejected});"
+  },
+  "editable": {
+    "prefix": "export function selectOwnData(source, allowedKeys) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: descriptor를 검사해 getter를 실행하지 않고 허용 필드를 선택하세요.\n"
+  },
+  "graderFile": "curriculum/checks/properties-and-descriptors.json",
+  "referenceFile": "reference/properties-and-descriptors.mjs",
+  "incorrectFile": "reference/incorrect/properties-and-descriptors.mjs",
+  "exampleFile": "curriculum/examples/properties-and-descriptors.mjs",
+  "exampleExpectedLogs": [
+    "{\"keys\":[\"name\",\"unset\"],\"missing\":[\"inherited\",\"missing\"],\"undefinedKeys\":[\"unset\"],\"rejected\":[{\"key\":\"secret\",\"reason\":\"non-enumerable\"},{\"key\":\"computed\",\"reason\":\"accessor\"}],\"reads\":0}",
+    "function 0",
+    "계산 1"
+  ],
+  "verificationRecord": "docs/execution/properties-and-descriptors-exercise.json"
+}

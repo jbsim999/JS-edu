@@ -1,0 +1,75 @@
+{
+  "id": "date-time-and-internationalization-exercise",
+  "lessonId": "date-time-and-internationalization",
+  "contentRevision": "draft-1",
+  "graderRevision": "date-time-and-internationalization-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "formatSnapshot(timestamp,amount,clock,options={})를 구현한다. timestamp는 정수 epoch 밀리초이며 Date가 표현 가능한 범위여야 한다. 문자열·비유한 값·소수·범위 밖 값이면 RangeError, amount가 유한 number가 아니면 TypeError다. clock은 인자 없이 현재 epoch 밀리초를 반환하는 함수다. 정상 요청마다 정확히 한 번 호출하고, 반환값도 유효한 정수 Date timestamp인지 확인한다. 시계의 반환값 또는 elapsedMs의 안전 정수 범위가 잘못되면 RangeError이며, 시계가 던진 값은 그대로 전파한다.\n\noptions는 locale·timeZone 문자열을 선택적으로 가진 객체다. 기본값은 en-US와 UTC다. 잘못된 locale·timeZone에 대한 Intl 오류는 그대로 전파하며 시계를 호출하지 않는다. 날짜는 gregory 달력·latn 숫자·h23 주기와 year:numeric, month/day/hour/minute/second:2-digit로 구성한다. formatToParts에서 year,month,day,hour,minute,second만 추출해 date 객체로 반환한다. 구분 기호와 locale별 순서는 채점 대상이 아니다.\n\n숫자는 같은 locale, latn, 그룹 구분 없음, 소수 정확히 2자리, signDisplay:auto로 표시한다. number는 {negative,integer,fraction}이며 negative는 minusSign 부분 존재 여부, integer는 integer 부분을 이어 붙인 문자열, fraction은 fraction 부분이다. 음수 0의 부호도 보존한다. 최종 결과는 {iso,date,number,elapsedMs}; iso는 원래 timestamp의 UTC ISO 문자열, elapsedMs는 clock()−timestamp다. 미래 시각의 음수 경과값을 0으로 바꾸지 않고 입력 options를 변경하지 않는다. 시스템 시계나 실행 환경의 기본 locale·시간대에 기대지 않는다."
+  ],
+  "template": "export function formatSnapshot(timestamp, amount, clock, options = {}) {\n  // TODO: 고정 시계와 명시적인 locale·시간대를 사용하는 표시 계층을 구현하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/date-time-and-internationalization.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "고정 시각·기본 locale·UTC로 같은 표시를 만든다",
+    "같은 instant를 명시한 시간대로 표시하고 ISO는 보존한다",
+    "UTC 날짜와 표시 시간대의 날짜가 다를 수 있다",
+    "고정된 과거 DST 경계에서 시간대 규칙을 적용한다",
+    "음수 0·음수·두 자리 표시 반올림을 분리한다",
+    "잘못된 날짜와 금액은 시계를 호출하기 전에 거부한다",
+    "시계를 한 번 읽고 미래 시각의 음수 차이를 유지한다",
+    "잘못된 locale·시간대는 Intl 오류로 전파하고 시계를 읽지 않는다",
+    "잘못된 시계 값은 거부하고 시계 예외의 정체성을 보존한다",
+    "epoch 0과 Date 범위 안이지만 안전 정수 밖인 차이를 구분한다"
+  ],
+  "rubric": [
+    "Date의 timestamp·유효성·시간대 표시와 달력 연산을 구분한다.",
+    "명시적인 locale·시간대·달력·숫자 체계로 시각과 숫자의 표시 계층을 만든다.",
+    "시계를 주입하고 오류 전파·호출 횟수·경계값을 재현 가능하게 검사한다."
+  ],
+  "executionVerified": true,
+  "requiredFeatures": [
+    "Intl.DateTimeFormat.prototype.formatToParts",
+    "Intl.NumberFormat.prototype.formatToParts"
+  ],
+  "runner": {
+    "kind": "function-body",
+    "exportName": "formatSnapshot",
+    "parameters": [
+      "timestamp",
+      "amount",
+      "clock",
+      "options = {}"
+    ],
+    "async": false,
+    "runProbe": "const timestamp=Date.UTC(2026,9,15);observe(submission.formatSnapshot(timestamp,1234.5,()=>timestamp+60000));"
+  },
+  "editable": {
+    "prefix": "export function formatSnapshot(timestamp, amount, clock, options = {}) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 고정 시계와 명시적인 locale·시간대를 사용하는 표시 계층을 구현하세요."
+  },
+  "graderFile": "curriculum/checks/date-time-and-internationalization.json",
+  "referenceFile": "reference/date-time-and-internationalization.mjs",
+  "incorrectFile": "reference/incorrect/date-time-and-internationalization.mjs",
+  "exampleFile": "curriculum/examples/date-time-and-internationalization.mjs",
+  "exampleExpectedLogs": [
+    "2026-10-15T00:00:00.000Z",
+    "{\"UTC\":\"00\",\"Asia/Seoul\":\"09\"}",
+    "{\"integer\":\"1234\",\"fraction\":\"50\"}",
+    "true",
+    "RangeError",
+    "{\"elapsedMs\":60000,\"calls\":1}"
+  ],
+  "verificationRecord": "docs/execution/date-time-and-internationalization-exercise.json"
+}

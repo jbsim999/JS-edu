@@ -1,0 +1,70 @@
+{
+  "id": "async-await-and-iteration-exercise",
+  "lessonId": "async-await-and-iteration",
+  "contentRevision": "draft-1",
+  "graderRevision": "async-await-and-iteration-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "source는 유효한 async iterable이며 각 값이 한 페이지입니다. 페이지의 구조는 mapper가 정합니다. 반환 배열은 페이지별 변환 결과를 하나씩 담으며 평탄화하지 않습니다.",
+    "limit는 1~100의 정수입니다. 잘못된 limit는 RangeError, 함수가 아닌 mapPage는 TypeError로 거부하며 source를 읽기 전에 검사합니다.",
+    "for await...of로 source를 순서대로 읽고 mapPage(page, index)의 완료를 기다린 뒤 결과를 추가합니다. 기본 mapper는 페이지 자체를 반환합니다.",
+    "limit개를 처리하면 다음 페이지를 읽지 않고 종료합니다. 빈 source는 []입니다. source와 페이지를 직접 변경하지 않습니다.",
+    "mapper의 throw/rejection을 그대로 전파하고 소비 중인 iterator의 정리를 기다립니다. source 자체의 실패도 원인 그대로 전파합니다. 임의 next() 거부마다 소비자가 return()을 호출한다는 추가 보장은 하지 않습니다."
+  ],
+  "template": "export async function collectPages(source, limit, mapPage = page => page) {\n  // TODO: 수업의 입력·완료·실패 계약을 구현하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/async-await-and-iteration.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "페이지 소비와 비동기 변환의 순서를 보존",
+    "상한 뒤에 추가로 읽지 않고 async finally를 기다린다",
+    "빈 입력과 기본 mapper의 페이지 경계",
+    "mapper throw/rejection에서 원인과 생산자 정리를 유지",
+    "async generator의 실패와 자체 finally를 보존",
+    "잘못된 상한·mapper를 읽기 전에 거부",
+    "첫 페이지가 falsy여도 상한을 하나로 센다"
+  ],
+  "rubric": [
+    "순차 소비와 유한한 상한",
+    "비동기 변환·오류 전달",
+    "생산자/소비자 정리 경계"
+  ],
+  "executionVerified": true,
+  "requiredFeatures": [
+    "Promise"
+  ],
+  "runner": {
+    "kind": "function-body",
+    "exportName": "collectPages",
+    "parameters": [
+      "source",
+      "limit",
+      "mapPage = page => page"
+    ],
+    "async": true
+  },
+  "editable": {
+    "prefix": "export async function collectPages(source, limit, mapPage = page => page) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 수업의 입력·완료·실패 계약을 구현하세요."
+  },
+  "graderFile": "curriculum/checks/async-await-and-iteration.json",
+  "referenceFile": "reference/async-await-and-iteration.mjs",
+  "incorrectFile": "reference/incorrect/async-await-and-iteration.mjs",
+  "exampleFile": "curriculum/examples/async-await-and-iteration.mjs",
+  "exampleExpectedLogs": [
+    "[10,20]",
+    "pull:1 > map:0 > pull:2 > map:1 > closed",
+    "same-error true closed true"
+  ],
+  "verificationRecord": "docs/execution/async-await-and-iteration-exercise.json"
+}

@@ -1,0 +1,177 @@
+{
+  "id": "module-and-dependency-boundaries",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "모듈과 의존성 경계: 호스트와 독립적인 영수증 서비스",
+  "track": "modules-and-failure",
+  "level": "intermediate",
+  "goals": [
+    "공개 진입점과 내부 모듈을 나누고 불필요한 import 부수 효과를 피한다.",
+    "도메인 계산과 호스트 시계·저장을 어댑터로 분리하여 주입한다.",
+    "검증·호출 순서·입력 소유권·실패 전파를 행동으로 검사한다."
+  ],
+  "prerequisites": [
+    "esm-and-live-bindings"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2015 modules",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §16.2 Modules · Imports · Exports · Module Evaluation",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=406",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Packages — package entry points and exports (호스트 계약·보안 경계와 구분)",
+      "url": "https://nodejs.org/download/release/v22.23.3/docs/api/packages.html",
+      "edition": "Node.js v22.23.3 fixed document; reference for host rules, not product runtime selection",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Test runner — mocking and dependency replacement (호스트 도구)",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/test.html",
+      "edition": "Node.js v24.22.0 document when checked; not ECMAScript API",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "module-and-dependency-boundaries-exercise",
+  "steps": {
+    "theory": "계산 함수만 검사하려고 import했는데 저장소 연결이 시작되고 컴퓨터의 현재 시각에 따라 결과가 달라진다. 파일이 나뉘어 있어도 의존성 경계가 분리된 것은 아니다. 도메인은 주문 금액과 유효성 같은 규칙을 담당하고, 어댑터는 호스트의 시계·저장·화면 같은 외부 기능을 같은 호출 약속에 맞춰 제공한다. 이번 서비스의 약속은 now()가 유한한 timestamp를 반환하고 persist(receipt)가 동기적으로 저장하거나 실패를 던진다는 것이다.\n\nmain.mjs는 createReceiptService만 공개하고 reader.mjs의 readOrder는 내부 계산에 사용한다. export *를 편리하다는 이유로 사용하면 소비자가 구현 세부 함수에 의존할 수 있다. 공개 표면은 이름뿐 아니라 입력·출력·변경·실패·호출 시점까지 포함한다. 내부 파일을 공개 entry에서 재수출하지 않는 선택은 API 설계이며 파일 접근 권한 자체를 보장하지 않는다. Node package.json의 exports는 또 다른 호스트 패키지 계약이다.\n\n팩터리는 의존성을 보관하고 issue 호출까지 효과를 미룬다. issue는 주문을 먼저 읽고 검증한 다음 now를 호출한다. 시각을 검증해 완성된 영수증을 만든 뒤 persist에 한 번 전달하고 같은 객체를 반환한다. 서비스 생성 때 now를 읽으면 여러 영수증이 잘못된 시각을 공유한다. module-level 배열이나 저장소 변수를 쓰면 서로 다른 서비스도 상태를 공유하기 쉽다.\n\n불변 영수증은 호출자가 준 주문과 별도의 객체·배열로 만든다. Object.freeze는 한 단계만 동결하므로 이번 평평한 항목 객체·항목 배열·영수증을 각각 동결한다. 입력의 추가 필드는 그대로 보존하되 영수증에는 정한 공개 필드만 넣는다. 이는 이 교육용 도메인의 정책이며 모든 API가 무조건 객체를 동결해야 한다는 언어 규칙은 아니다.",
+    "example": "예제의 now는 100, 101을 차례로 반환하고 persist는 메모리 배열에 기록한다. 실제 시간·디스크·네트워크를 사용하지 않는다. 팩터리 생성 직후 calls는 []다. book 두 권을 발행하면 total=2400, createdAt=100이며, 빈 주문의 total은 0, createdAt은 101이다. 호출 기록은 now → persist → now → persist다.\n\n저장된 영수증이 동결되었음을 확인하고 원본 단가 1200이 유지되는지도 출력한다. main/reader 두 파일을 실제 ESM으로 연결하며 내부 계산은 reader에 있다. 이 출력은 어댑터 계약을 설명하는 예시다. 도메인 코드가 DOM/fs를 참조하지 않고 import 때 I/O를 하지 않는지는 실제 실행 관찰과 소스 경계 검토를 함께 해야 한다.",
+    "quiz": "모듈 import, 서비스 생성, issue 실행의 세 시점을 분리해 효과가 어디서 발생하는지 답한다. export 목록으로 줄일 수 있는 API 결합과 호스트가 제공하는 파일·패키지 접근 통제를 혼동하지 않는다. 의존성 주입은 테스트 도구의 전역 교체 없이 고정 시계와 저장 대역을 쓰게 하는 설계 선택이다.",
+    "practice": "웹 미리보기와 Node 내보내기가 같은 주문 규칙을 사용한다고 가정한다. 도메인에서 document·localStorage·node:fs를 직접 호출하면 재사용과 검사에 호스트가 따라온다. 공통 계층에는 순수 주문 검사와 영수증 생성 계약을 두고 화면·파일 저장은 외곽에서 연결한다. 현재 실습의 persist는 동기 함수이며, Promise를 반환하는 저장 어댑터는 비동기 실패·대기 계약까지 다시 설계해야 한다.\n\n경계 테스트에는 성공 값뿐 아니라 호출 순서·횟수·유효하지 않은 입력에서 효과가 없는지·서로 다른 서비스의 저장소가 분리되는지도 포함한다. now가 실패하면 persist를 호출하지 않고, persist가 실패하면 성공 영수증을 반환하지 않는다. 예외를 그대로 전파하는 현재 정책을 다음 수업의 문맥 있는 오류 경계와 비교한다. 설계 메모에는 공개할 최소 API, 어댑터가 보장할 동기성, 중복 저장과 원자성을 누가 담당할지 적는다.",
+    "lab": "main.mjs 전체를 편집해 createReceiptService(adapters) 하나만 export한다. adapters는 배열이 아닌 객체이며 now·persist는 함수여야 하고, 아니면 TypeError다. 서비스 생성은 두 함수를 호출하지 않는다. 반환된 서비스는 issue(order)를 제공한다. reader.mjs의 readOrder는 주문 ID·항목·안전한 정수 금액을 검증하고 {id,items,total} 새 값을 반환하는 읽기 전용 내부 함수다.\n\nissue는 readOrder → now → 시각 검증 → 영수증 동결 → persist 순서로 실행한다. now는 유한한 number만 허용한다. 영수증은 {id,items,total,createdAt}이며 항목 객체·items 배열·영수증을 각각 동결한다. persist에는 이 완성된 객체를 정확히 한 번 전달하고 같은 객체를 반환한다. 시계·저장 실패는 던져진 값을 그대로 전파한다. 입력을 바꾸거나 공유하지 않고 호출마다 시각을 읽는다. DOM/fs/네트워크/전역 시계의 직접 참조와 최상위 I/O를 추가하지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-import-effects",
+        "prompt": "도메인 모듈 최상위에서 Date.now()를 읽고 저장소에 접속한다. 가장 직접적인 문제는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "함수를 호출하지 않은 import도 시점·외부 상태에 의존한다.",
+            "explanation": "모듈 평가 중 실행되는 일은 공개 함수를 쓰기 전부터 테스트와 시작 흐름에 영향을 준다."
+          },
+          {
+            "id": "b",
+            "text": "ESM은 최상위 함수를 실행하지 않는다.",
+            "explanation": "함수 호출이 최상위 문장에 있으면 모듈 평가 시 실행된다."
+          },
+          {
+            "id": "c",
+            "text": "export를 default로 바꾸면 부수 효과가 사라진다.",
+            "explanation": "공개 이름의 문법과 실행되는 최상위 문장은 별개다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-injection",
+        "prompt": "같은 영수증 도메인을 브라우저와 Node에서 검증하려면 시계·저장 의존성을 어디에 두는 것이 적절한가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "도메인에서 document와 fs를 둘 다 직접 호출한다.",
+            "explanation": "호스트별 API가 도메인에 결합되어 다른 환경에서 import·검증하기 어려워진다."
+          },
+          {
+            "id": "b",
+            "text": "외곽 어댑터를 now/persist 함수로 주입하고 호출 계약을 검증한다.",
+            "explanation": "도메인은 공통 계산을 수행하고 외곽은 호스트의 시간·저장 정책을 담당한다."
+          },
+          {
+            "id": "c",
+            "text": "모든 실패를 undefined로 바꾸면 호스트 차이가 없어진다.",
+            "explanation": "의존성을 분리하지 못하며 실제 실패의 의미까지 잃는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-public-surface",
+        "prompt": "내부 readOrder를 공개 entry에서 export *로 내보내면 어떤 비용이 생기는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "실행 속도가 항상 두 배 느려진다.",
+            "explanation": "공개 범위 확장만으로 특정 성능 비율을 말할 근거는 없다."
+          },
+          {
+            "id": "b",
+            "text": "소비자가 내부 함수에 의존하여 추후 내부 변경이 호환성 문제가 될 수 있다.",
+            "explanation": "필요한 createReceiptService만 명시적으로 export하면 약속한 경계를 작게 유지할 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "내부 파일의 직접 접근을 모든 환경에서 보안상 차단한다.",
+            "explanation": "export 목록은 해당 모듈의 공개 이름이다. 파일 접근 통제나 모든 호스트의 패키지 경계와 같지 않다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-validate-before-io",
+        "prompt": "잘못된 주문이 들어왔을 때 now와 persist가 호출되지 않아야 한다. 올바른 순서는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "시각 읽기 → 저장 → 주문 검증",
+            "explanation": "검증 실패가 이미 일어난 외부 효과를 되돌려 주지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "주문 검증 → 시각 읽기·검증 → 완성된 영수증 저장",
+            "explanation": "불필요한 의존성 호출을 줄이고 저장소가 완성된 값만 받도록 한다."
+          },
+          {
+            "id": "c",
+            "text": "팩터리를 생성할 때 시각을 한 번 읽어 모든 영수증에 재사용",
+            "explanation": "생성 시각과 각 발행 시각이 같아져 시간 계약을 위반한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-import-effects",
+        "q3-public-surface"
+      ],
+      "caseIds": [
+        "public-surface",
+        "construction-without-effects"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-injection",
+        "q4-validate-before-io"
+      ],
+      "caseIds": [
+        "independent-adapters-and-fresh-clock",
+        "issue-order-and-value"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-validate-before-io"
+      ],
+      "caseIds": [
+        "input-copy-and-no-mutation",
+        "validation-before-effects",
+        "invalid-clock-and-adapters",
+        "dependency-failure-propagation"
+      ]
+    }
+  ]
+}

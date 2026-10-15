@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "array-pipelines-and-sorting-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "array-pipelines-and-sorting-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:b16c438beb162ea365bef49dae86d26ca68c210fb2f187afad9193eb7a0fe32c",
+  "referenceChecks": [
+    "filter-sort-sum",
+    "empty-and-zero",
+    "threshold",
+    "stable-duplicates",
+    "sparse-own-indices",
+    "invalid-records",
+    "immutable-input",
+    "result-owned"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

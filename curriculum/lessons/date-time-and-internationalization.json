@@ -1,0 +1,182 @@
+{
+  "id": "date-time-and-internationalization",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "날짜·시간과 국제화: 저장 시각과 표시 계층을 분리하기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "Date의 timestamp·유효성·시간대 표시와 달력 연산을 구분한다.",
+    "명시적인 locale·시간대·달력·숫자 체계로 시각과 숫자의 표시 계층을 만든다.",
+    "시계를 주입하고 오류 전파·호출 횟수·경계값을 재현 가능하게 검사한다."
+  ],
+  "prerequisites": [
+    "json-and-serialization",
+    "strings-unicode-and-regexp"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §21.4 Date · §21.4.1.31 TimeClip · §21.4.3.2 Date.parse",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=518",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-402 §11.3.6 Intl.DateTimeFormat.prototype.formatToParts",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-402_13th_edition_june_2026.pdf#page=57",
+      "edition": "13th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-402 §16.3.6 Intl.NumberFormat.prototype.formatToParts · §4.4 Implementation Dependencies",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-402_13th_edition_june_2026.pdf#page=110",
+      "edition": "13th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "date-time-and-internationalization-exercise",
+  "steps": {
+    "theory": "같은 학습 완료 시각이 개발 PC에서는 오늘, 다른 나라 사용자의 화면에서는 어제로 보였다. Date는 시간대 이름을 담는 업무 일정 객체가 아니라 기본적으로 1970-01-01T00:00:00Z부터의 밀리초 값으로 시각을 표현한다. UTC ISO 문자열이나 epoch 값으로 저장한 instant와 사용자가 보는 시간대의 달력 날짜·시각을 분리한다. Date.UTC의 month와 getUTCMonth의 결과는 0부터 시작하므로 10월은 9다. getHours와 getUTCHours처럼 지역 기준과 UTC 기준 메서드도 구분한다.\n\nDate 객체가 만들어졌다는 사실만으로 유효한 시각은 아니다. invalid Date의 getTime은 NaN이고 toISOString은 RangeError를 던진다. 표준 날짜 시간 문자열에 맞지 않는 입력 파싱에는 구현별 처리가 개입할 수 있다. 오프셋 없는 날짜-시간 입력과 날짜만 있는 입력을 혼동하지 말고, API 경계에서 epoch 또는 명시적 Z/오프셋이 있는 형식과 허용 범위를 정한다. 이번 과제는 문자열 파싱을 표시 함수에 섞지 않고 정수 timestamp만 받는다.\n\nIntl.DateTimeFormat과 NumberFormat은 ECMA-402의 국제화 API다. locale은 표시 관례, timeZone은 시각을 읽을 지역 규칙이며 각각 지정해야 한다. calendar:gregory, numberingSystem:latn, hourCycle:h23를 고정하면 과제의 출력 의미가 분명해진다. 전체 표시 문장의 공백·구분 기호·순서는 locale 데이터에 따라 달라질 수 있으므로 formatToParts에서 의미별 부분을 꺼낸다. 숫자의 표시 반올림은 원래 금액을 정밀하게 계산하는 알고리즘을 대신하지 않는다.\n\n경과 시간은 두 timestamp의 차이이고 달력상 하루 이동과 항상 같지는 않다. DST 전환 지역의 다음 날 같은 시각까지는 23시간이나 25시간일 수 있다. 마감일 계산은 업무 규칙과 시간대가 별도로 필요하다. 현재 시각은 clock 함수를 주입해 한 번 읽으면 자정이나 초 경계의 불일치와 검사 흔들림을 줄일 수 있다. 이 수업은 지원 환경에서 Date·Intl로 표시 계층을 구현하며, 더 넓은 날짜 도메인 모델은 별도 API의 표준판과 런타임 지원을 확인한 뒤 선택한다.",
+    "example": "예제의 2026-10-15T00:00:00.000Z는 UTC에서 00시, Asia/Seoul에서 09시다. 두 표시는 같은 timestamp에서 나온다. 숫자 1234.5의 integer 부분은 1234, fraction 부분은 50이며 구분 기호를 다시 파싱하지 않는다. invalid Date의 NaN 검사와 ISO 변환 예외를 별도로 관찰한다. 마지막 출력은 주입한 시계가 한 번 호출되고 정확히 60,000ms의 차이가 계산됐음을 보여 준다.",
+    "quiz": "시각 저장 값과 시간대 표시, invalid Date와 epoch 0, 달력상 하루와 밀리초 차이, 시계 의존성과 표시 문장 의존성을 각각 구분한다.",
+    "practice": "학습 기록 목록의 완료 시각과 진행 숫자를 표시하는 계층을 설계한다. 도메인은 timestamp·숫자를 유지하고 화면 어댑터가 사용자 locale·시간대를 받는다. 포맷터를 재사용할 때는 locale·시간대·옵션이 캐시 키에 포함돼야 한다. 캐시가 실제로 필요한지는 생성 횟수와 비용을 측정한 뒤 결정한다.\n\n저장용 값으로 로컬 표시 문자열을 사용하지 않는다. 검사에서는 고정 시계, UTC·Asia/Seoul·확정된 과거 DST 경계, invalid Date, 미래 timestamp와 음수 0을 다룬다. Intl 메서드나 필요한 locale·시간대 데이터가 없는 실행 환경은 학습자 오답과 분리해야 한다. 설계 메모에는 서버·사용자 시간대 기준, 잘못된 시각의 안내, 시계 실패 전파와 달력상 마감 계산의 별도 책임을 적는다.",
+    "lab": "formatSnapshot(timestamp,amount,clock,options={})를 구현한다. timestamp는 정수 epoch 밀리초이며 Date가 표현 가능한 범위여야 한다. 문자열·비유한 값·소수·범위 밖 값이면 RangeError, amount가 유한 number가 아니면 TypeError다. clock은 인자 없이 현재 epoch 밀리초를 반환하는 함수다. 정상 요청마다 정확히 한 번 호출하고, 반환값도 유효한 정수 Date timestamp인지 확인한다. 시계의 반환값 또는 elapsedMs의 안전 정수 범위가 잘못되면 RangeError이며, 시계가 던진 값은 그대로 전파한다.\n\noptions는 locale·timeZone 문자열을 선택적으로 가진 객체다. 기본값은 en-US와 UTC다. 잘못된 locale·timeZone에 대한 Intl 오류는 그대로 전파하며 시계를 호출하지 않는다. 날짜는 gregory 달력·latn 숫자·h23 주기와 year:numeric, month/day/hour/minute/second:2-digit로 구성한다. formatToParts에서 year,month,day,hour,minute,second만 추출해 date 객체로 반환한다. 구분 기호와 locale별 순서는 채점 대상이 아니다.\n\n숫자는 같은 locale, latn, 그룹 구분 없음, 소수 정확히 2자리, signDisplay:auto로 표시한다. number는 {negative,integer,fraction}이며 negative는 minusSign 부분 존재 여부, integer는 integer 부분을 이어 붙인 문자열, fraction은 fraction 부분이다. 음수 0의 부호도 보존한다. 최종 결과는 {iso,date,number,elapsedMs}; iso는 원래 timestamp의 UTC ISO 문자열, elapsedMs는 clock()−timestamp다. 미래 시각의 음수 경과값을 0으로 바꾸지 않고 입력 options를 변경하지 않는다. 시스템 시계나 실행 환경의 기본 locale·시간대에 기대지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-instant-zone",
+        "prompt": "같은 timestamp를 UTC와 Asia/Seoul로 표시했다. 무엇이 달라지는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "저장된 instant 자체가 9시간 이동한다.",
+            "explanation": "시간대 표시는 같은 instant를 다른 달력 시각으로 표현한다."
+          },
+          {
+            "id": "b",
+            "text": "달력의 시·날짜 표시가 달라질 수 있지만 timestamp와 UTC ISO는 같다.",
+            "explanation": "저장 값과 사용자 표시 시간대를 분리한다."
+          },
+          {
+            "id": "c",
+            "text": "Date 객체는 생성 당시의 시간대 이름을 반드시 저장한다.",
+            "explanation": "Date의 핵심 저장 값은 epoch 밀리초이며 시간대 이름을 함께 보관하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-invalid-date",
+        "prompt": "const date=new Date(\"not-a-date\") 뒤 date.getTime()과 date.toISOString()의 동작은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "getTime은 NaN이고 toISOString은 RangeError를 던진다.",
+            "explanation": "Date 객체가 존재해도 유효한 시각이라는 보장은 없다."
+          },
+          {
+            "id": "b",
+            "text": "둘 다 무조건 현재 시각으로 보정한다.",
+            "explanation": "유효하지 않은 문자열을 현재 시각으로 대체하는 정책은 표준 동작이 아니다."
+          },
+          {
+            "id": "c",
+            "text": "getTime은 0이며 ISO는 epoch를 반환한다.",
+            "explanation": "epoch 0과 invalid Date를 구분해야 한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-calendar-duration",
+        "prompt": "DST 전환을 포함하는 지역에서 달력상 다음 날의 같은 시각까지 항상 24시간인가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그렇다. 모든 날짜 간격은 86,400,000ms다.",
+            "explanation": "달력 날짜 이동과 고정 시간 간격은 시간대 전환에서 다를 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "아니다. 달력 연산과 경과 밀리초 계산의 계약을 따로 정해야 한다.",
+            "explanation": "일광 절약 시간 전환 등으로 지역 하루의 경과 시간이 달라질 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "Intl은 자동으로 모든 업무 마감 정책을 결정한다.",
+            "explanation": "표시 도구가 업무의 기간·마감 정책을 대신 정의하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-deterministic-display",
+        "prompt": "표시 함수를 재현 가능하게 검사하는 설계는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Date.now와 기본 locale·시간대를 그대로 사용해 전체 문장만 비교한다.",
+            "explanation": "실행 시각과 환경·locale 데이터에 따라 결과가 바뀔 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "시계를 주입하고 locale·시간대를 고정한 뒤 formatToParts의 의미 있는 부분을 검사한다.",
+            "explanation": "현재 시각 의존성과 구분 기호 같은 표시 차이를 분리한다."
+          },
+          {
+            "id": "c",
+            "text": "표시 문자열을 다시 parse해 원래 시간대 이름을 복원한다.",
+            "explanation": "로컬 표시 문자열은 저장·왕복 형식으로 보장되지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-instant-zone",
+        "q2-invalid-date",
+        "q3-calendar-duration"
+      ],
+      "caseIds": [
+        "fixed-utc",
+        "same-instant-seoul",
+        "calendar-rollover",
+        "daylight-saving-boundary",
+        "epoch-and-safe-difference"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q4-deterministic-display"
+      ],
+      "caseIds": [
+        "fixed-utc",
+        "negative-and-rounding",
+        "intl-errors-before-clock"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-deterministic-display",
+        "q2-invalid-date"
+      ],
+      "caseIds": [
+        "invalid-input-before-clock",
+        "one-clock-and-future",
+        "clock-failure-contract"
+      ]
+    }
+  ]
+}

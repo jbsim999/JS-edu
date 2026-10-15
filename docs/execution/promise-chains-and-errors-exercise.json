@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "promise-chains-and-errors-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "promise-chains-and-errors-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:fd780d521bfd863948ed2f1debf15dba466fe401ebde82ea1a71f4fd19bd0378",
+  "referenceChecks": [
+    "ordered-chain",
+    "deferred-callback",
+    "reader-failure",
+    "transform-failure",
+    "save-failure",
+    "first-settle",
+    "thenable-adoption",
+    "reaction-after-stack"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

@@ -1,0 +1,176 @@
+{
+  "id": "json-and-serialization",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "JSON과 직렬화: 파싱 성공 이후에 지켜야 할 데이터 계약",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "JSON 문법 파싱과 버전·필드 검증을 별도 실패로 처리한다.",
+    "큰 ID와 undefined·비유한 수·함수·Date·순환의 직렬화 손실을 통제한다.",
+    "명시적 wire 스키마와 복원 기본값으로 재현 가능한 codec을 구현한다."
+  ],
+  "prerequisites": [
+    "strings-unicode-and-regexp"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §25.5.2 JSON.parse · §25.5.4 JSON.stringify",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=735",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §25.5.2.4 InternalizeJSONProperty source context · §25.5.3 JSON.rawJSON",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=737",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "json-and-serialization-exercise",
+  "steps": {
+    "theory": "JSON.parse가 성공했으니 화면에 넣어도 안전하다고 판단했는데 필수 필드가 없거나 ID가 반올림돼 있었다. parse는 문법에 맞는 문자열을 JavaScript 값으로 만드는 단계다. null·배열·문자열도 유효한 JSON이므로 업무 레코드라는 보장은 없다. 스키마는 허용한 버전, 필드 타입, 범위, 기본값과 알 수 없는 필드 정책을 별도로 정한다.\n\nJSON 숫자를 Number로 읽으면 안전 정수 범위를 넘는 정수의 정보가 손실될 수 있다. 9007199254740993은 이미 파싱 중 다른 Number가 될 수 있어 이후 String(value)로 원문을 복원할 수 없다. 식별자는 계산 대상이 아니라면 처음부터 십진 문자열로 전달하는 방식이 명확하다. ES2026의 parse reviver source 문맥은 원시 값의 원문을 다루는 선택지이고 rawJSON은 별도의 검증된 원시 JSON 삽입 기능이다. 둘 다 실제 지원을 확인해야 하며 이번 codec은 문자열 ID 방식으로 새 API 의존성을 피한다.\n\nstringify는 일반 객체 복사기가 아니다. 객체의 undefined·함수·Symbol 값은 빠질 수 있고 배열에서는 null로 보일 수 있다. NaN·Infinity는 null로, Date는 기본적으로 ISO 문자열로 바뀐다. BigInt와 순환 참조는 별도 정책 없이 처리하면 예외가 난다. 프로토타입·메서드·객체 참조 공유도 JSON 왕복으로 유지되지 않는다. 음수 0은 JSON 숫자 0으로 정규화된다.\n\n이번 codec은 JSON 데이터 트리만 허용하고 위험한 손실을 실패로 표시한다. 같은 객체가 두 위치에 있어도 현재 경로의 조상이 아니면 순환은 아니며 값 복제로 인코딩할 수 있다. JSON.parse의 '__proto__'는 own 데이터 프로퍼티일 수 있다. 이를 무분별하게 다른 객체에 대입·병합하는 일과 파싱 자체를 구분한다. JSON 중복 키의 이전 값은 parse 단계에서 사라지므로 중복 키 거부가 필요하면 별도 파서 정책이 필요하다.\n\n선택 심화 — JSON.parse의 reviver(key, value, context)는 파싱 원문과 대응하는 원시 값에 context.source를 제공한다. 객체·배열에는 source가 없다. 정수 ID 필드의 원문을 확인해 BigInt(context.source)로 복원하는 방식은 이미 반올림된 value를 변환하는 방식과 다르다. JSON.rawJSON(\"9007199254740993\")를 stringify의 값으로 넣으면 따옴표 없는 숫자 토큰을 보존한다. rawJSON은 유효한 원시 JSON만 받으며 객체·배열 조각은 거부한다. 수신자가 일반 Number로 읽으면 정밀도 문제는 다시 생긴다. 문자열 ID 계약과 비교할 선택지이며 업무 스키마 검증을 대체하지 않는다.",
+    "example": "예제의 {missing:undefined,nan:NaN,date:Date(...)}는 missing 필드가 빠지고 nan:null, date:ISO 문자열을 가진 JSON이 된다. [undefined,NaN]은 [null,null]이다. 순환 객체와 BigInt의 기본 stringify는 각각 TypeError다. 큰 숫자 ID를 parse한 출력은 9007199254740992이고 문자열 ID 출력은 9007199254740993 그대로다. 마지막 version:2는 파싱에 성공해도 애플리케이션의 지원 개정이 아니라는 판정을 따로 보여 준다.",
+    "quiz": "문법적으로 유효한 JSON, 업무 스키마에 맞는 값, 정보 손실 없이 저장할 수 있는 값을 세 단계로 판단한다. 예외를 전부 parse 오류라고 부르면 복구 지점이 흐려진다.",
+    "practice": "교육용 학습 기록을 내보내고 가져오는 codec을 만든다. 버전 1의 의미를 고정한 뒤 새 버전은 이행 함수를 설계한다. 알 수 없는 필드를 무조건 현재 객체에 병합하지 않고, 성공한 정상화 결과에서 허용한 필드만 새로 구성한다. 날짜가 필요하면 ISO 문자열 또는 epoch 정수 중 하나와 시간대 의미를 wire 계약에 명시한다.\n\n현재 data 정책은 plain 객체·조밀 배열·유한 number·문자열·boolean·null이며 getter, Symbol 키, 비열거 필드, 장식 배열, 깊이 20 초과를 거부한다. 이는 일반 JavaScript 객체를 자동으로 완벽 복원하는 정책이 아니다. 설계 메모에는 큰 ID를 문자열로 둔 이유, 오류 코드별 사용자 안내, 이전 개정 데이터를 다루는 방식과 JSON으로 보존하지 않을 값을 적는다.\n\n위 선택 API는 ES2026 정식판 근거를 읽는 비교 항목이며 이 수업의 예제·제출 검사에서는 실행하지 않는다. JSON.rawJSON의 존재와 reviver context.source 지원은 대상 런타임에서 각각 확인해야 한다. 핵심 codec 검사는 문자열 ID·손실 거부·스키마 계약을 다루므로 그 통과를 선택 API의 실행 검증으로 기록하지 않는다.",
+    "lab": "createRecordCodec()는 {decode,encode}를 반환한다. decode(text)는 문자열이 아니면 {ok:false,error:'input-type'}, JSON 문법 실패면 parse, 스키마 실패면 schema, 정수 version이 1이 아니면 version 오류를 반환한다. 성공은 {ok:true,record}다. encode(record)는 같은 정상화·검증 뒤 {ok:true,text}를 반환한다.\n\n레코드는 plain 객체이며 허용 필드는 version,id,count,labels,data뿐이고 own 열거 가능 데이터 프로퍼티여야 한다. version은 정수 1, id는 0 또는 0으로 시작하지 않는 양의 십진 정수 문자열, count는 0 이상의 안전 정수다. labels는 생략 시 [], 아니면 문자열만 가진 조밀 배열이다. data는 생략 시 null이다. 결과 필드 순서는 version,id,count,labels,data로 고정한다.\n\ndata는 깊이 20 이하의 JSON 데이터 트리만 허용한다. 순환·undefined·함수·Symbol·BigInt·비유한 number·Date 등 다른 객체·접근자·Symbol 키·비열거 프로퍼티·sparse/장식 배열이면 serialization 오류다. data의 루트 깊이는 0이며 중첩 값마다 1 증가한다. 비순환 공유 참조는 복제하고 음수 0은 0으로 정규화한다. 입력은 변경하지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-parse-schema",
+        "prompt": "JSON.parse(\"null\")이 성공했다. 버전 있는 레코드 검증도 통과한 것일까?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그렇다. JSON이면 항상 객체 레코드다.",
+            "explanation": "JSON은 null·배열·원시 값도 표현한다."
+          },
+          {
+            "id": "b",
+            "text": "아니다. 레코드 모양·버전·필드 검증이 따로 필요하다.",
+            "explanation": "파싱과 애플리케이션 스키마는 서로 다른 단계다."
+          },
+          {
+            "id": "c",
+            "text": "JSON.parse는 null 문자열을 항상 거부한다.",
+            "explanation": "null은 유효한 JSON 값이다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-large-id",
+        "prompt": "안전 정수 범위를 넘는 ID를 그대로 보존하려면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "먼저 Number로 파싱한 뒤 String으로 바꾼다.",
+            "explanation": "이미 반올림된 정보는 일반 변환으로 복원할 수 없다."
+          },
+          {
+            "id": "b",
+            "text": "wire 스키마에서 십진 문자열 ID로 정한다.",
+            "explanation": "계산할 숫자와 식별자를 구분하여 원문 정밀도를 보존한다."
+          },
+          {
+            "id": "c",
+            "text": "JSON.stringify는 모든 큰 숫자의 원문을 기억한다.",
+            "explanation": "Number 값이 잃어버린 원문을 저장하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-loss",
+        "prompt": "JSON.stringify([undefined,NaN])의 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "[null,null]이라는 JSON 텍스트",
+            "explanation": "배열 위치는 유지되지만 원래 값 구별은 사라진다."
+          },
+          {
+            "id": "b",
+            "text": "[undefined,NaN]이라는 JSON 텍스트",
+            "explanation": "이 두 표기는 JSON 값 문법에 포함되지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "항상 TypeError",
+            "explanation": "순환·BigInt와 달리 이 값들은 기본 stringify에서 null로 표현된다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-cycle",
+        "prompt": "동일 객체를 a와 b가 가리키지만 자기 자신이나 조상을 가리키지 않는다. 이것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "반드시 순환 참조다.",
+            "explanation": "공유 참조와 현재 경로로 돌아오는 순환을 구분한다."
+          },
+          {
+            "id": "b",
+            "text": "비순환 공유이며 JSON에서는 값이 두 번 기록되고 참조 동일성은 보존되지 않는다.",
+            "explanation": "JSON 데이터 트리는 객체 정체성을 표현하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "JSON이 자동으로 참조 ID를 붙여 복원한다.",
+            "explanation": "그런 프로토콜은 별도로 설계해야 한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-parse-schema"
+      ],
+      "caseIds": [
+        "parse-and-schema",
+        "version-and-types"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-large-id",
+        "q3-loss",
+        "q4-cycle"
+      ],
+      "caseIds": [
+        "decode-large-id",
+        "numeric-boundaries",
+        "serialization-loss",
+        "shared-data-and-negative-zero",
+        "accessors-symbols-and-decoration"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q1-parse-schema"
+      ],
+      "caseIds": [
+        "defaults",
+        "encode-roundtrip",
+        "unknown-root-and-safe-data-key",
+        "depth-limit",
+        "null-prototype-record",
+        "labels-own-dense-strings"
+      ]
+    }
+  ]
+}

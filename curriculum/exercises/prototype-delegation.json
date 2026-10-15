@@ -1,0 +1,67 @@
+{
+  "id": "prototype-delegation-exercise",
+  "lessonId": "prototype-delegation",
+  "contentRevision": "draft-1",
+  "graderRevision": "prototype-delegation-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createDelegationTypes()는 {BaseRecord,NamedRecord} 생성자를 반환한다. 매 팩터리 호출마다 새 생성자다.",
+    "BaseRecord(name): 자체 name/events=[]; prototype record(message)는 push 후 길이, describe()는 \"record:\"+name.",
+    "NamedRecord(name,tag): 부모 초기화를 각 인스턴스에 수행하고 자체 tag를 둔다.",
+    "Object.create로 자식 prototype→부모 prototype을 연결한다. 자식 constructor는 own, writable/configurable:true, enumerable:false.",
+    "자식 describe는 부모 설명+\"#\"+tag다. prototype에는 name/tag/events를 두지 않는다. 메서드와 데이터의 공유 범위를 분리한다."
+  ],
+  "template": "export function createDelegationTypes() {\n  // TODO: 데이터는 인스턴스에 두고 부모 prototype으로 동작을 연결하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/prototype-delegation.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "자식 설명에 부모 동작과 태그를 결합한다",
+    "각 인스턴스가 자기 이벤트 배열을 가진다",
+    "단일 프로토타입 체인의 각 연결과 null 종단을 유지한다",
+    "자식 constructor 프로퍼티를 비열거 데이터로 복구한다",
+    "prototype에 이름·태그·이벤트 데이터를 저장하지 않는다",
+    "constructor 프로퍼티 변경과 실제 생성 동작을 구분한다",
+    "receiver를 지정한 빌려쓰기와 자체 메서드 가림을 처리한다",
+    "상속 메서드는 공유하고 팩터리 호출은 독립된다"
+  ],
+  "rubric": [
+    "연결·lookup·override",
+    "인스턴스 상태 독립성",
+    "constructor·receiver 계약"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createDelegationTypes",
+    "parameters": [],
+    "async": false,
+    "runProbe": "const {BaseRecord,NamedRecord}=submission.createDelegationTypes();const base=new BaseRecord('A');const child=new NamedRecord('B','tag');observe([base.describe(),child.describe(),child.record('saved'),child.record('again')]);"
+  },
+  "editable": {
+    "prefix": "export function createDelegationTypes() {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 데이터는 인스턴스에 두고 부모 prototype으로 동작을 연결하세요.\n"
+  },
+  "graderFile": "curriculum/checks/prototype-delegation.json",
+  "referenceFile": "reference/prototype-delegation.mjs",
+  "incorrectFile": "reference/incorrect/prototype-delegation.mjs",
+  "exampleFile": "curriculum/examples/prototype-delegation.mjs",
+  "exampleExpectedLogs": [
+    "{\"a\":\"record:A#one\",\"b\":\"record:B#two\",\"aEvents\":[\"saved\"],\"bEvents\":[]}",
+    "true true",
+    "true record:C#three",
+    "record:borrowed",
+    "TypeError"
+  ],
+  "verificationRecord": "docs/execution/prototype-delegation-exercise.json"
+}

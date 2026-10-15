@@ -1,0 +1,103 @@
+{
+  "exerciseId": "prototype-delegation-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "prototype-delegation-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "override-and-parent-call",
+      "label": "자식 설명에 부모 동작과 태그를 결합한다",
+      "probe": "const {BaseRecord,NamedRecord}=submission.createDelegationTypes();const base=new BaseRecord('A');const child=new NamedRecord('B','tag');observe([base.describe(),child.describe(),child.record('saved'),child.record('again')]);",
+      "expected": [
+        "record:A",
+        "record:B#tag",
+        1,
+        2
+      ]
+    },
+    {
+      "id": "instance-state-isolated",
+      "label": "각 인스턴스가 자기 이벤트 배열을 가진다",
+      "probe": "const {NamedRecord}=submission.createDelegationTypes();const a=new NamedRecord('A','a');const b=new NamedRecord('B','b');a.record('one');observe({a:a.events,b:b.events,separate:a.events!==b.events,ownA:Object.hasOwn(a,'events'),ownB:Object.hasOwn(b,'events')});",
+      "expected": {
+        "a": [
+          "one"
+        ],
+        "b": [],
+        "separate": true,
+        "ownA": true,
+        "ownB": true
+      }
+    },
+    {
+      "id": "chain-and-null-end",
+      "label": "단일 프로토타입 체인의 각 연결과 null 종단을 유지한다",
+      "probe": "const {BaseRecord,NamedRecord}=submission.createDelegationTypes();const child=new NamedRecord('A','t');observe([Object.getPrototypeOf(child)===NamedRecord.prototype,Object.getPrototypeOf(NamedRecord.prototype)===BaseRecord.prototype,Object.getPrototypeOf(BaseRecord.prototype)===Object.prototype,Object.getPrototypeOf(Object.prototype)===null,child instanceof BaseRecord,child instanceof NamedRecord]);",
+      "expected": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "id": "constructor-descriptor",
+      "label": "자식 constructor 프로퍼티를 비열거 데이터로 복구한다",
+      "probe": "const {NamedRecord}=submission.createDelegationTypes();const descriptor=Object.getOwnPropertyDescriptor(NamedRecord.prototype,'constructor');observe({own:descriptor!==undefined,correct:descriptor?.value===NamedRecord,writable:descriptor?.writable,configurable:descriptor?.configurable,enumerable:descriptor?.enumerable});",
+      "expected": {
+        "own": true,
+        "correct": true,
+        "writable": true,
+        "configurable": true,
+        "enumerable": false
+      }
+    },
+    {
+      "id": "prototype-has-no-instance-state",
+      "label": "prototype에 이름·태그·이벤트 데이터를 저장하지 않는다",
+      "probe": "const {BaseRecord,NamedRecord}=submission.createDelegationTypes();observe([BaseRecord.prototype,NamedRecord.prototype].map(proto=>['name','tag','events'].filter(key=>Object.hasOwn(proto,key))));",
+      "expected": [
+        [],
+        []
+      ]
+    },
+    {
+      "id": "constructor-not-construction",
+      "label": "constructor 프로퍼티 변경과 실제 생성 동작을 구분한다",
+      "probe": "const {NamedRecord}=submission.createDelegationTypes();let calls=0;NamedRecord.prototype.constructor=function Fake(){calls++;};const item=new NamedRecord('A','tag');observe({calls,description:item.describe(),prototype:Object.getPrototypeOf(item)===NamedRecord.prototype,eventsOwn:Object.hasOwn(item,'events')});",
+      "expected": {
+        "calls": 0,
+        "description": "record:A#tag",
+        "prototype": true,
+        "eventsOwn": true
+      }
+    },
+    {
+      "id": "borrowed-and-shadowed-method",
+      "label": "receiver를 지정한 빌려쓰기와 자체 메서드 가림을 처리한다",
+      "probe": "const {BaseRecord,NamedRecord}=submission.createDelegationTypes();const a=new NamedRecord('A','a');const b=new NamedRecord('B','b');a.describe=()=> 'local';const record={name:'plain',events:[]};const length=BaseRecord.prototype.record.call(record,'x');observe({a:a.describe(),b:b.describe(),borrowed:BaseRecord.prototype.describe.call(record),length,events:record.events});",
+      "expected": {
+        "a": "local",
+        "b": "record:B#b",
+        "borrowed": "record:plain",
+        "length": 1,
+        "events": [
+          "x"
+        ]
+      }
+    },
+    {
+      "id": "shared-method-distinct-state",
+      "label": "상속 메서드는 공유하고 팩터리 호출은 독립된다",
+      "probe": "const first=submission.createDelegationTypes();const second=submission.createDelegationTypes();const a=new first.NamedRecord('A','x');const b=new first.NamedRecord('B','y');observe({sameRecordMethod:a.record===b.record,ownRecord:Object.hasOwn(a,'record'),freshConstructor:first.NamedRecord!==second.NamedRecord,other:new second.NamedRecord('C','z').describe()});",
+      "expected": {
+        "sameRecordMethod": true,
+        "ownRecord": false,
+        "freshConstructor": true,
+        "other": "record:C#z"
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "errors-and-failure-contracts-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "errors-and-failure-contracts-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:af8d846308b464a37815177978140a13d3996f3c23489303f08a94686cf4365b",
+  "referenceChecks": [
+    "success-and-order",
+    "callback-validation",
+    "operation-cause",
+    "arbitrary-thrown-values",
+    "cleanup-failure",
+    "both-failures",
+    "falsy-dual-failure",
+    "undefined-success-is-not-throw"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

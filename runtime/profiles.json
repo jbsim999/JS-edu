@@ -9,13 +9,58 @@
       "runtimeRequirementReason": "ES2026은 교재 기준이다. 실제 엔진과 기능 지원은 실행 환경에서 확인하며 ES2026 전체 구현을 보증하지 않는다. Node.js·DOM 실행은 별도 제공자다.",
       "dependencies": [],
       "resources": [],
-      "capabilities": ["function-body", "run", "behavior-checks", "cancel", "timeout", "bounded-output"],
+      "capabilities": [
+        "function-body",
+        "run",
+        "behavior-checks",
+        "cancel",
+        "timeout",
+        "bounded-output"
+      ],
       "execution": {
         "available": true,
         "provider": "browser-worker",
         "reason": "브라우저 Dedicated Worker에서 함수 본문을 실행하고 부모 화면이 관찰값을 비교한다. 환경 준비와 개별 기능 지원은 실행 시 확인한다.",
-        "limits": { "timeoutMs": 2500, "maxOutputBytes": 65536, "maxOutputLines": 200, "hardMemoryLimit": false },
+        "limits": {
+          "timeoutMs": 2500,
+          "maxOutputBytes": 65536,
+          "maxOutputLines": 200,
+          "hardMemoryLimit": false
+        },
         "isolation": "자가 학습용 Worker다. 네트워크·외부 스크립트·하위 Worker는 CSP로 제한하지만 같은 출처의 저장소 권한 제거와 OS 격리는 보장하지 않는다."
+      },
+      "publication": "draft"
+    },
+    {
+      "id": "browser-esm",
+      "languageVersion": "ES2026",
+      "compilerTarget": null,
+      "compilerTargetReason": "Native ES module source is not transpiled.",
+      "runtimeRequirement": "Browser module Worker and loopback workspace server",
+      "runtimeRequirementReason": "Lesson language edition and actual browser engine support are separate.",
+      "dependencies": [],
+      "resources": [],
+      "capabilities": [
+        "module-files",
+        "native-import",
+        "run",
+        "behavior-checks",
+        "cancel",
+        "timeout",
+        "bounded-output"
+      ],
+      "execution": {
+        "available": true,
+        "provider": "browser-module-worker",
+        "reason": "실제 브라우저의 native module·live binding·순환·TLA·전용 namespace CSP와 취소/복구를 검증했다. 과제별 기능과 환경은 실행 시 확인한다.",
+        "limits": {
+          "caseTimeoutMs": 2500,
+          "totalTimeoutMs": 15000,
+          "sourceFiles": 16,
+          "totalSourceBytes": 524288,
+          "hardMemoryLimit": false
+        },
+        "isolation": "실행별 임시 메모리 파일과 전용 Worker. OS 격리/절대 RAM 상한/같은 출처 저장 권한 제거는 보장하지 않는다."
       },
       "publication": "draft"
     }

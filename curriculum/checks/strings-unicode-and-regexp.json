@@ -1,0 +1,179 @@
+{
+  "exerciseId": "strings-unicode-and-regexp-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "strings-unicode-and-regexp-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "hangul-normalization",
+      "label": "분해된 한글과 완성형을 같은 NFC 검색으로 처리한다",
+      "probe": "observe(submission.analyzeSearch('한글 한글','한'));",
+      "expected": {
+        "normalizedText": "한글 한글",
+        "normalizedQuery": "한",
+        "codeUnits": 5,
+        "codePoints": 5,
+        "graphemes": 5,
+        "matches": [
+          {
+            "index": 0,
+            "text": "한"
+          },
+          {
+            "index": 3,
+            "text": "한"
+          }
+        ]
+      }
+    },
+    {
+      "id": "combining-and-emoji",
+      "label": "코드 단위·코드 포인트·사용자 문자를 구분한다",
+      "probe": "observe(submission.analyzeSearch('가😀e\\u0301👩‍💻','e\\u0301'));",
+      "expected": {
+        "normalizedText": "가😀é👩‍💻",
+        "normalizedQuery": "é",
+        "codeUnits": 9,
+        "codePoints": 6,
+        "graphemes": 4,
+        "matches": [
+          {
+            "index": 3,
+            "text": "é"
+          }
+        ]
+      }
+    },
+    {
+      "id": "flag-and-zwj",
+      "label": "국기와 ZWJ 이모지를 grapheme 단위로 센다",
+      "probe": "observe(submission.analyzeSearch('🇰🇷👩‍💻','👩‍💻'));",
+      "expected": {
+        "normalizedText": "🇰🇷👩‍💻",
+        "normalizedQuery": "👩‍💻",
+        "codeUnits": 9,
+        "codePoints": 5,
+        "graphemes": 2,
+        "matches": [
+          {
+            "index": 4,
+            "text": "👩‍💻"
+          }
+        ]
+      }
+    },
+    {
+      "id": "literal-dot",
+      "label": "검색어의 점을 정규식 와일드카드로 해석하지 않는다",
+      "probe": "observe(submission.analyzeSearch('a.b aXb a.b','a.b'));",
+      "expected": {
+        "normalizedText": "a.b aXb a.b",
+        "normalizedQuery": "a.b",
+        "codeUnits": 11,
+        "codePoints": 11,
+        "graphemes": 11,
+        "matches": [
+          {
+            "index": 0,
+            "text": "a.b"
+          },
+          {
+            "index": 8,
+            "text": "a.b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "literal-metacharacters",
+      "label": "괄호·반복기호·앵커·역슬래시를 문자 그대로 찾는다",
+      "probe": "const pairs=[['[x] x','[x]'],['a+b aab','a+b'],['^$ .*','^$'],['a\\\\b ab','a\\\\b'],['(hi) hi','(hi)']];observe(pairs.map(([text,query])=>submission.analyzeSearch(text,query).matches));",
+      "expected": [
+        [
+          {
+            "index": 0,
+            "text": "[x]"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "text": "a+b"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "text": "^$"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "text": "a\\b"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "text": "(hi)"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "nonoverlapping",
+      "label": "겹치지 않는 매치를 왼쪽부터 모은다",
+      "probe": "observe(submission.analyzeSearch('aaaa','aa'));",
+      "expected": {
+        "normalizedText": "aaaa",
+        "normalizedQuery": "aa",
+        "codeUnits": 4,
+        "codePoints": 4,
+        "graphemes": 4,
+        "matches": [
+          {
+            "index": 0,
+            "text": "aa"
+          },
+          {
+            "index": 2,
+            "text": "aa"
+          }
+        ]
+      }
+    },
+    {
+      "id": "empty-query",
+      "label": "공백뿐인 검색어는 무한한 빈 매치로 만들지 않는다",
+      "probe": "observe(submission.analyzeSearch(' abc ',' \\t '));",
+      "expected": {
+        "normalizedText": " abc ",
+        "normalizedQuery": "",
+        "codeUnits": 5,
+        "codePoints": 5,
+        "graphemes": 5,
+        "matches": []
+      }
+    },
+    {
+      "id": "case-and-repeat",
+      "label": "대소문자 정책과 실행 간 검색 상태를 보존한다",
+      "probe": "const a=submission.analyzeSearch('Ab aB ab',' ab ');const b=submission.analyzeSearch('Ab aB ab',' ab ');observe([a.matches,b.matches]);",
+      "expected": [
+        [
+          {
+            "index": 6,
+            "text": "ab"
+          }
+        ],
+        [
+          {
+            "index": 6,
+            "text": "ab"
+          }
+        ]
+      ]
+    }
+  ]
+}

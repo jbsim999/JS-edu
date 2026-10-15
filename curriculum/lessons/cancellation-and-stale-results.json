@@ -1,0 +1,183 @@
+{
+  "id": "cancellation-and-stale-results",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "취소와 응답 역전: 최신 작업만 화면 상태에 반영하기",
+  "track": "async-model",
+  "level": "advanced",
+  "goals": [
+    "AbortSignal의 협력적 취소와 Promise 완료를 구분한다.",
+    "작업 generation으로 오래된 성공·실패를 차단하고 최신 결과만 반영한다.",
+    "취소·재시작·현재 실패에서 상태와 콜백 횟수를 일관되게 유지한다."
+  ],
+  "prerequisites": [
+    "host-scheduling-and-event-loops",
+    "promise-combinators"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2017",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 제17판 — Promise Objects (§27.2), Async Functions (§27.7), 반복문 (§14.7.5)",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM — Aborting ongoing activities",
+      "url": "https://dom.spec.whatwg.org/#aborting-ongoing-activities",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN — AbortController",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController",
+      "edition": "Web API reference / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "cancellation-and-stale-results-exercise",
+  "steps": {
+    "theory": "검색어 A를 보낸 뒤 B로 바꿨다. B 응답이 먼저 왔는데 늦은 A가 화면을 덮으면 현재 입력과 결과가 어긋난다. 작업을 중단하도록 요청하는 것과 끝난 결과를 지금 상태에 반영해도 되는지 확인하는 것은 두 책임이다. AbortController의 signal은 협력적 취소를 전달한다. signal을 무시하는 loader까지 강제로 멈추는 장치는 아니다.\n\ngeneration은 이 컨트롤러가 새 작업이나 취소를 받아들일 때 증가하는 번호다. start A는 1을 캡처하고 start B는 2를 캡처한다. A가 나중에 완료돼도 캡처한 1이 현재 2와 다르면 stale이다. 성공만 검사하면 오래된 오류가 최신 화면의 오류 표시를 덮을 수 있으므로 catch에서도 같은 판별을 한다.\n\nstart는 이전 활성 controller를 abort하고 새 signal을 loader(query,signal)에 전달한다. 실제 AbortSignal을 사용해야 협력하는 작업의 abort 이벤트와 reason을 연결할 수 있다. 이 DOM API는 브라우저 Worker와 지원하는 Node 호스트에서도 제공될 수 있지만 ECMAScript Promise 자체에 내장된 취소 기능은 아니다. API가 없으면 환경 지원 상태를 확인해야 한다.\n\nfinally는 자신의 작업이 아직 최신일 때만 현재 pending을 지운다. A의 finally가 아무 조건 없이 active=null을 수행하면 아직 실행 중인 B가 사라져 취소·진행 표시가 깨진다. cancel 역시 번호를 증가시켜 늦은 성공과 오류 모두를 무효화하고 현재 pending을 바로 false로 만든다. 물리적으로 진행 중인 작업이 남아 있을 수 있다는 점과 화면이 더 이상 기다리지 않는다는 정책을 구분한다.\n\n이 과제의 start 결과는 committed·failed·stale 문자열이다. 원래 오류는 onError에 그대로 전달한다. 모든 rejection을 내부에서 소비해 오래된 실패가 처리되지 않은 거부로 떠돌지 않게 한다. getState는 스냅샷 객체를 반환해 외부에서 내부 번호를 바꾸지 못하게 한다.\n\nabort 리스너는 동기 실행되며 그 안에서 start가 재호출될 수 있습니다. 새 controller를 먼저 현재 작업으로 게시하고 이전 controller를 abort합니다. 재진입한 최신 작업의 상태를 오래된 호출이 덮어쓰지 않으며 최신 완료 뒤 pending=false가 됩니다.",
+    "example": "예제는 A/B의 완료를 직접 제어한다. B를 먼저 완료시켜 commit:B:new만 기록한 뒤 A를 완료시키면 A는 stale이 된다. A에 전달했던 signal.aborted는 true다. 어떤 네트워크가 실제로 중단됐다고 가정하지 않고, 취소를 무시해 완료하는 작업에서도 최신 상태를 지키는지 관찰한다.",
+    "quiz": "abort의 의미, 오래된 실패, finally의 소유권, cancel 이후 재시작을 구분한다. Promise.race로 타임아웃을 만들었다고 원래 작업이 취소됐다고 결론 내리지 않는다. 상태 객체의 복사와 내부 바인딩 접근도 앞선 클로저·복사 수업과 연결한다.",
+    "practice": "교육용 검색 화면은 입력 변경·탭 전환·페이지 이동마다 이전 요청 결과를 무효화할 수 있다. 실제 fetch는 signal을 받을 수 있지만 후속 데이터 변환·캐시 읽기·서드파티 SDK는 취소를 지원하지 않을 수 있다. 끝나는 모든 경로에서 작업 ID를 확인하면 이 차이에도 현재 화면의 일관성을 유지할 수 있다.\n\n오래된 요청의 로깅과 사용자 오류 표시는 같은 정책이 아닐 수 있다. 디버깅 기록을 남기더라도 최신 사용자 오류 영역을 덮지 않게 한다. 이 과제의 콜백은 throw하지 않는 전제이며 실제 제품에서 표시 콜백도 실패할 수 있다면 그 실패를 loader 오류와 분리해 처리한다. 네트워크 중단 여부·수신된 바이트 수는 이번 고정 fixture로 측정하지 않는다.",
+    "lab": "await createLatestController(loader,onCommit,onError)로 얻는 객체에 start/cancel/getState를 구현한다. initial generation은 0이다. start와 cancel마다 1 증가시키고 실제 AbortController로 활성 작업에 신호를 전달한다. loader는 값·Promise·throw를 제공할 수 있다.\n\n최신이고 취소되지 않은 작업만 성공 또는 오류 콜백을 호출한다. 오래된 작업은 둘 다 호출하지 않고 stale로 완료한다. 자신의 finally가 다른 작업을 지우지 않게 한다. 취소 뒤 새 작업을 시작할 수 있고 상태 조회 결과를 수정해도 내부 상태는 유지되어야 한다."
+  },
+  "quiz": {
+    "revision": "cancellation-and-stale-results-quiz-v1",
+    "questions": [
+      {
+        "id": "q1-abort",
+        "prompt": "controller.abort()를 호출했지만 loader가 signal을 무시한다. 안전한 결과 처리 방법은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "abort가 호출됐으니 더는 결과가 오지 않는다고 가정한다.",
+            "explanation": "지원하지 않는 작업의 물리적 중단을 강제하지 못한다."
+          },
+          {
+            "id": "b",
+            "text": "generation과 signal 상태를 완료 시점에 확인한다.",
+            "explanation": "중단 요청과 늦은 결과의 반영 여부를 각각 다룬다."
+          },
+          {
+            "id": "c",
+            "text": "Promise.race가 남은 작업을 자동 제거하게 한다.",
+            "explanation": "race도 원래 작업의 취소 수단을 호출하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-stale-error",
+        "prompt": "B가 최신 요청인데 이전 A가 오류로 완료됐다. 사용자 오류 화면은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "A 오류가 늦게 왔으므로 무조건 A로 덮는다.",
+            "explanation": "완료 시점이 최신 요청 순서를 의미하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "B의 상태를 유지하고 A 오류를 stale로 처리한다.",
+            "explanation": "성공과 오류 모두 같은 요청 정합성 검사가 필요하다."
+          },
+          {
+            "id": "c",
+            "text": "모든 미래 오류를 무시한다.",
+            "explanation": "현재 B의 오류까지 숨기라는 뜻은 아니다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-finally",
+        "prompt": "A finally에서 무조건 active=null을 실행하면 어떤 문제가 가능한가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이미 시작한 B의 활성 상태를 지울 수 있다.",
+            "explanation": "자신이 아직 최신 작업인지 확인하고 자기 상태만 정리해야 한다."
+          },
+          {
+            "id": "b",
+            "text": "finally는 항상 B보다 먼저 실행돼 문제가 없다.",
+            "explanation": "비동기 완료는 요청 순서와 달라질 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "A의 Promise가 두 번 이행된다.",
+            "explanation": "핵심 문제는 컨트롤러의 공유 상태를 잘못 지우는 것이다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-cancel",
+        "prompt": "cancel 후 기존 작업이 성공하고 이어 새 start를 호출했다. 계약에 맞는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "기존 성공은 stale, 새 start는 새 generation으로 실행한다.",
+            "explanation": "취소는 이전 결과를 무효화하며 컨트롤러 자체를 영구 폐기하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "기존 성공은 취소를 덮고 새 결과로 반영한다.",
+            "explanation": "cancel에서 generation을 올려 해당 결과를 무효화해야 한다."
+          },
+          {
+            "id": "c",
+            "text": "새 start는 항상 실패해야 한다.",
+            "explanation": "이 API는 취소 후 재사용을 허용한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-abort"
+      ],
+      "caseIds": [
+        "initial-and-success",
+        "cooperative-abort"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-stale-error"
+      ],
+      "caseIds": [
+        "inverted-success",
+        "stale-error"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-finally",
+        "q4-cancel"
+      ],
+      "caseIds": [
+        "cancel-and-restart",
+        "current-error",
+        "snapshot-isolation",
+        "reentrant-abort-listener"
+      ]
+    }
+  ],
+  "memoRubric": [
+    "취소 신호와 오래된 결과 차단이 각각 해결하는 문제를 설명했다.",
+    "성공뿐 아니라 오래된 실패도 화면에 반영하지 않는 이유를 적었다.",
+    "물리적 중단을 지원하지 않는 loader와 현재 오류의 표시 정책을 구분했다."
+  ]
+}

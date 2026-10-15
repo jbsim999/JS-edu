@@ -1,0 +1,170 @@
+{
+  "id": "keyed-collections-and-grouping",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "Map·Set과 그룹화: 키의 정체성과 첫 등장 순서",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "Map/Set의 SameValueZero와 객체 키의 참조 정체성을 설명한다.",
+    "없는 키와 undefined 저장값을 구분하고 중복 처리·그룹 순서를 보존한다.",
+    "Object/Map groupBy와 집합 연산의 선택 기준 및 지원 조건을 구분한다."
+  ],
+  "prerequisites": [
+    "array-pipelines-and-sorting"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2015",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §24.1 Map · §24.2 Set · §24.1.2.1 Map.groupBy",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=676",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §24.1.3.7–8 getOrInsert / getOrInsertComputed",
+      "url": "https://262.ecma-international.org/17.0/#sec-map.prototype.getorinsert",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "keyed-collections-and-grouping-exercise",
+  "steps": {
+    "theory": "이벤트 인덱스에 ID를 저장했지만 다음 같은 ID가 새 데이터처럼 처리됐다. 첫 값이 undefined였는데 map.get(id)로 존재 여부를 판단했기 때문이다. Map은 키와 값을 연결하는 컬렉션이고 Set은 중복 없는 값 집합이다. has는 존재를, get은 저장된 값을 조회한다. 값 undefined도 실제 저장값이므로 has 없이 누락과 구별할 수 없다.\n\nMap과 Set은 SameValueZero를 사용한다. NaN은 다른 NaN과 같은 키이며 +0과 -0도 같은 키다. 숫자 1과 문자열 '1'은 다른 키다. 객체는 모양이 같아도 참조가 다르면 다른 키다. 객체를 String으로 바꿔 [object Object]라는 키로 저장하면 구분이 사라진다. 일반 객체의 프로퍼티 키 강제 변환과 Map의 키 저장은 같은 계약이 아니다.\n\n삽입 순서는 처음 등장한 키의 순서다. 기존 키 값을 set으로 바꾸는 것은 그 키를 뒤로 보내지 않는다. 삭제한 뒤 다시 삽입하는 것은 새 삽입이므로 순서가 달라진다. 이번 인덱스는 최초 이벤트를 유지하고 뒤 중복을 무시한다. 중복인지 판단한 뒤에 그룹을 만들어야 버려진 이벤트만 가진 빈 그룹이 생기지 않는다.\n\nObject.groupBy는 프로퍼티 키로 분류한 null 프로토타입 객체를, Map.groupBy는 키 자체로 분류한 Map을 만든다. 두 함수 모두 그룹 안 원소를 깊게 복제하지 않는다. Set의 교집합·합집합·차집합은 중복 없는 정책 목록에 유용하지만 배열의 중복 횟수와 순서는 같은 문제로 다룰 수 없다. 새 API 도입 시 실제 지원을 확인한다. ES2026의 getOrInsert와 getOrInsertComputed도 기존 키가 undefined 값을 가진 경우를 존재하는 키로 취급하며, 후자는 없는 키에서만 계산 콜백을 쓴다. 이 과제는 has/get/set으로 같은 기본 정책을 구현하므로 새 API에 의존하지 않는다.",
+    "example": "예제의 a는 undefined 값을 가진 최초 이벤트로 유지된다. size는 2, present는 true, missing은 false, valueType은 undefined다. 그룹 x에는 a,b가 들어가고 뒤 중복 a의 그룹 y는 만들어지지 않는다. Set([NaN,NaN,-0,0])의 크기는 2이고 이름 프로퍼티가 같은 두 객체를 키로 둔 Map의 크기도 2다. 마지막 허용 권한 교집합은 write 하나다. 이 예제의 filter+has는 신규 Set 교집합 메서드에 의존하지 않는 구현이다.",
+    "quiz": "값 조회와 존재 검사를 먼저 구분한다. 객체의 표시 문자열이 같다는 사실을 키 동등성으로 바꾸지 않는다. groupBy와 Set 연산은 새 API 이름 외우기보다 키·중복·순서·복사 범위를 판단하는 문제다.",
+    "practice": "교육용 활동 로그에서 ID가 같은 재전송을 중복으로 간주하되 최초 기록을 감사 기준으로 유지한다고 가정한다. 여기서는 전역 ID가 중복 기준이다. 카테고리마다 ID가 독립이면 복합 키나 중첩 Map이 필요하다. 마지막 값 우선 정책으로 바꾸려면 그룹 이동과 순서까지 다시 정해야 한다.\n\n오래 살아 있는 Map은 객체 키를 강하게 참조한다. 캐시라는 이유로 용량·삭제 정책을 생략하지 않는다. WeakMap은 키 제약과 열거 불가라는 차이가 있어 순서 있는 이벤트 목록의 대체품이 아니다. 설계 메모에는 동일 키의 정의, 최초/최종 우선 정책, 삭제 시점, 알 수 없는 카테고리의 처리 방법을 적는다.",
+    "lab": "indexEvents(events)는 {byId,groups}를 반환한다. byId는 event.id를 키로 event.value를 저장하는 Map, groups는 event.category를 키로 새 {id,value} 레코드 배열을 저장하는 Map이다. events는 조밀한 레코드 배열이고 id/category는 Map 키로 사용 가능한 값, value는 문자열 또는 undefined다.\n\n같은 ID는 SameValueZero/객체 참조 정체성에 따라 최초 한 건만 처리한다. byId와 groups의 키 순서, 각 그룹 원소 순서는 최초 등장 순서다. 값 undefined를 저장한 ID도 이미 처리한 것으로 본다. 원본 이벤트와 배열을 변경하지 않고 각 호출은 독립된 Map·그룹 배열을 만든다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-map-key",
+        "prompt": "new Set([NaN,NaN,-0,0,1,\"1\"]).size는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "4",
+            "explanation": "NaN끼리와 ±0끼리는 각각 하나이며 숫자 1과 문자열 1은 별개다."
+          },
+          {
+            "id": "b",
+            "text": "6",
+            "explanation": "Set은 SameValueZero로 중복을 제거한다."
+          },
+          {
+            "id": "c",
+            "text": "3",
+            "explanation": "숫자 키를 문자열로 강제 변환하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-undefined",
+        "prompt": "map.set(\"x\",undefined) 뒤 x가 저장됐는지 확인하려면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Boolean(map.get(\"x\"))",
+            "explanation": "저장된 undefined가 false처럼 평가되어 존재를 놓친다."
+          },
+          {
+            "id": "b",
+            "text": "map.has(\"x\")",
+            "explanation": "존재 여부와 저장된 값 조회를 분리한다."
+          },
+          {
+            "id": "c",
+            "text": "map.get(\"x\") !== undefined",
+            "explanation": "누락과 명시적으로 저장한 undefined를 구분하지 못한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-object-key",
+        "prompt": "{id:1} 객체 두 개를 각각 Map 키로 넣으면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "두 객체 참조가 다르면 서로 다른 키다.",
+            "explanation": "구조적 동일성이나 JSON 문자열 비교를 자동 수행하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "모양이 같아 하나가 된다.",
+            "explanation": "Map은 객체 키를 참조 정체성으로 구분한다."
+          },
+          {
+            "id": "c",
+            "text": "객체 키는 TypeError다.",
+            "explanation": "Map은 객체 키를 허용한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-groupby",
+        "prompt": "객체 자체를 분류 키로 보존해야 할 때 적절한 선택은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "키를 무조건 String으로 바꾼 일반 객체",
+            "explanation": "서로 다른 객체가 같은 문자열로 합쳐질 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "지원 환경의 Map.groupBy 또는 Map 기반 직접 그룹화",
+            "explanation": "키 정체성을 유지할 수 있다. 그룹 원소 복사는 별도다."
+          },
+          {
+            "id": "c",
+            "text": "Set으로 바꾸면 그룹별 원소 목록도 자동 생성된다.",
+            "explanation": "Set은 중복 없는 값 집합이며 그룹별 목록을 만들지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-map-key",
+        "q3-object-key"
+      ],
+      "caseIds": [
+        "same-value-zero",
+        "object-key-identity",
+        "special-string-keys"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-undefined"
+      ],
+      "caseIds": [
+        "first-wins-and-groups",
+        "stored-undefined",
+        "empty",
+        "independent-calls"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-groupby"
+      ],
+      "caseIds": [
+        "immutable-records"
+      ]
+    }
+  ]
+}

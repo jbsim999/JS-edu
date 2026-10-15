@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "classes-and-private-state-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "classes-and-private-state-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:4052120cd50a2a71a60653d69af97982569a349076edcd400f9e15cd18935a14",
+  "referenceChecks": [
+    "valid-state-transitions",
+    "invalid-adjust-no-mutation",
+    "construction-validation",
+    "tracked-success-only",
+    "history-isolation",
+    "readonly-and-private-brand",
+    "inherited-static-factory",
+    "class-and-shared-methods"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

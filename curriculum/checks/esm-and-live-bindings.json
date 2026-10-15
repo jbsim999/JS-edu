@@ -1,0 +1,117 @@
+{
+  "exerciseId": "esm-and-live-bindings-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "esm-and-live-bindings-checks-v1",
+  "cases": [
+    {
+      "id": "tla-initialization",
+      "label": "모듈 평가 완료 뒤 초기화 값과 순서를 관찰한다",
+      "probe": "observe({count:submission.count,ready:submission.ready,snapshot:submission.snapshot()});",
+      "expected": {
+        "count": 4,
+        "ready": "ready",
+        "snapshot": {
+          "count": 4,
+          "imported": 4,
+          "ready": "ready",
+          "trace": [
+            "reader:evaluated",
+            "main:before-await",
+            "reader:initial-resolved",
+            "main:after-await"
+          ]
+        }
+      }
+    },
+    {
+      "id": "live-binding-through-cycle",
+      "label": "갱신한 바인딩을 순환 모듈의 함수가 읽는다",
+      "probe": "const before=submission.snapshot(); const result=submission.add(3); observe({before:before.count,result,exported:submission.count,snapshot:submission.snapshot()});",
+      "expected": {
+        "before": 4,
+        "result": 7,
+        "exported": 7,
+        "snapshot": {
+          "count": 7,
+          "imported": 7,
+          "ready": "ready",
+          "trace": [
+            "reader:evaluated",
+            "main:before-await",
+            "reader:initial-resolved",
+            "main:after-await"
+          ]
+        }
+      }
+    },
+    {
+      "id": "default-zero-and-negative",
+      "label": "기본 증가·0·음수에도 같은 바인딩을 유지한다",
+      "probe": "const results=[submission.add(),submission.add(0),submission.add(-2)]; observe({results,exported:submission.count,imported:submission.snapshot().imported});",
+      "expected": {
+        "results": [
+          5,
+          5,
+          3
+        ],
+        "exported": 3,
+        "imported": 3
+      }
+    },
+    {
+      "id": "invalid-delta-atomic",
+      "label": "유효하지 않은 증가량을 거부하고 상태를 보존한다",
+      "probe": "const errors=[]; for(const delta of [null,'2',NaN,Infinity,-Infinity]) { try{submission.add(delta);errors.push('returned');}catch(error){errors.push(error.name);} } observe({errors,count:submission.count,imported:submission.snapshot().imported});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "count": 4,
+        "imported": 4
+      }
+    },
+    {
+      "id": "overflow-atomic",
+      "label": "합계가 무한대가 되면 갱신하지 않는다",
+      "probe": "submission.add(Number.MAX_VALUE); let name='returned'; try{submission.add(Number.MAX_VALUE);}catch(error){name=error.name;} observe({name,same:submission.count===Number.MAX_VALUE,readerSame:submission.snapshot().imported===Number.MAX_VALUE});",
+      "expected": {
+        "name": "RangeError",
+        "same": true,
+        "readerSame": true
+      }
+    },
+    {
+      "id": "namespace-read-only",
+      "label": "가져온 네임스페이스의 바인딩은 재할당할 수 없다",
+      "probe": "let name='returned'; try{submission.count=99;}catch(error){name=error.name;} observe({name,count:submission.count});",
+      "expected": {
+        "name": "TypeError",
+        "count": 4
+      }
+    },
+    {
+      "id": "snapshot-and-evaluation-effects",
+      "label": "스냅샷 변경과 함수 재호출이 초기화 기록을 바꾸지 않는다",
+      "probe": "const first=submission.snapshot();const second=submission.snapshot();const fresh=first!==second&&first.trace!==second.trace;try{first.trace.push('caller');}catch{}try{first.count=99;}catch{}submission.add(1);observe({fresh,snapshot:submission.snapshot()});",
+      "expected": {
+        "fresh": true,
+        "snapshot": {
+          "count": 5,
+          "imported": 5,
+          "ready": "ready",
+          "trace": [
+            "reader:evaluated",
+            "main:before-await",
+            "reader:initial-resolved",
+            "main:after-await"
+          ]
+        }
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

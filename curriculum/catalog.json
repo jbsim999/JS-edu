@@ -151,6 +151,318 @@
         "higher-order-functions"
       ],
       "exerciseId": "call-stack-and-completion-exercise"
+    },
+    {
+      "id": "references-mutation-and-copy",
+      "order": 12,
+      "displayNumber": "12",
+      "title": "원시 불변값·공유 참조·얕은/깊은 복사·비변경 갱신·clone 한계",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "참조·변경·복사",
+      "file": "curriculum/lessons/references-mutation-and-copy.json",
+      "prerequisites": [
+        "call-stack-and-completion",
+        "bindings-and-closures",
+        "higher-order-functions"
+      ],
+      "exerciseId": "references-mutation-and-copy-exercise"
+    },
+    {
+      "id": "properties-and-descriptors",
+      "order": 13,
+      "displayNumber": "13",
+      "title": "own/inherited·열거·descriptor·getter/setter",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "프로퍼티와 기술자",
+      "file": "curriculum/lessons/properties-and-descriptors.json",
+      "prerequisites": [
+        "references-mutation-and-copy"
+      ],
+      "exerciseId": "properties-and-descriptors-exercise"
+    },
+    {
+      "id": "prototype-delegation",
+      "order": 14,
+      "displayNumber": "14",
+      "title": "constructor/prototype/instance·constructor 프로퍼티·override·다단계 체인",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "프로토타입 위임",
+      "file": "curriculum/lessons/prototype-delegation.json",
+      "prerequisites": [
+        "properties-and-descriptors"
+      ],
+      "exerciseId": "prototype-delegation-exercise"
+    },
+    {
+      "id": "classes-and-private-state",
+      "order": 15,
+      "displayNumber": "15",
+      "title": "ES6 class·필드/private/static·extends/super·함수 기반 상속 비교",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "클래스와 비공개 상태",
+      "file": "curriculum/lessons/classes-and-private-state.json",
+      "prerequisites": [
+        "prototype-delegation"
+      ],
+      "exerciseId": "classes-and-private-state-exercise"
+    },
+    {
+      "id": "composition-and-domain-contracts",
+      "order": 16,
+      "displayNumber": "16",
+      "title": "팩터리·클로저·클래스·합성·의존성 주입",
+      "track": "common",
+      "unit": "3단원 객체와 설계 5강",
+      "shortTitle": "합성과 도메인 계약",
+      "file": "curriculum/lessons/composition-and-domain-contracts.json",
+      "prerequisites": [
+        "classes-and-private-state",
+        "prototype-delegation"
+      ],
+      "exerciseId": "composition-and-domain-contracts-exercise"
+    },
+    {
+      "id": "array-pipelines-and-sorting",
+      "order": 17,
+      "displayNumber": "17",
+      "title": "map/filter/reduce·sparse·sort·비변경 대안",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "배열 처리와 정렬",
+      "file": "curriculum/lessons/array-pipelines-and-sorting.json",
+      "prerequisites": [
+        "composition-and-domain-contracts"
+      ],
+      "exerciseId": "array-pipelines-and-sorting-exercise"
+    },
+    {
+      "id": "keyed-collections-and-grouping",
+      "order": 18,
+      "displayNumber": "18",
+      "title": "Map/Set·키 동등성·groupBy·집합 연산",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "Map·Set과 그룹화",
+      "file": "curriculum/lessons/keyed-collections-and-grouping.json",
+      "prerequisites": [
+        "array-pipelines-and-sorting"
+      ],
+      "exerciseId": "keyed-collections-and-grouping-exercise"
+    },
+    {
+      "id": "iterators-and-generators",
+      "order": 19,
+      "displayNumber": "19",
+      "title": "iterable/iterator·generator·helpers·지연 처리",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "이터레이터와 제너레이터",
+      "file": "curriculum/lessons/iterators-and-generators.json",
+      "prerequisites": [
+        "keyed-collections-and-grouping",
+        "higher-order-functions",
+        "call-stack-and-completion",
+        "array-pipelines-and-sorting"
+      ],
+      "exerciseId": "iterators-and-generators-exercise"
+    },
+    {
+      "id": "strings-unicode-and-regexp",
+      "order": 20,
+      "displayNumber": "20",
+      "title": "코드 단위/포인트/사용자 문자·정규화·이스케이프",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "문자열·유니코드·정규식",
+      "file": "curriculum/lessons/strings-unicode-and-regexp.json",
+      "prerequisites": [
+        "iterators-and-generators"
+      ],
+      "exerciseId": "strings-unicode-and-regexp-exercise"
+    },
+    {
+      "id": "json-and-serialization",
+      "order": 21,
+      "displayNumber": "21",
+      "title": "parse/stringify·손실·순환·스키마·복원",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "JSON과 직렬화",
+      "file": "curriculum/lessons/json-and-serialization.json",
+      "prerequisites": [
+        "strings-unicode-and-regexp"
+      ],
+      "exerciseId": "json-and-serialization-exercise"
+    },
+    {
+      "id": "date-time-and-internationalization",
+      "order": 22,
+      "displayNumber": "22",
+      "title": "Date·timestamp·시간대·Intl",
+      "track": "common",
+      "unit": "4단원 데이터 처리와 표준 API 6강",
+      "shortTitle": "날짜·시간·국제화",
+      "file": "curriculum/lessons/date-time-and-internationalization.json",
+      "prerequisites": [
+        "json-and-serialization",
+        "strings-unicode-and-regexp"
+      ],
+      "exerciseId": "date-time-and-internationalization-exercise"
+    },
+    {
+      "id": "esm-and-live-bindings",
+      "order": 23,
+      "displayNumber": "23",
+      "title": "import/export·live binding·초기화·순환·부수 효과",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "ESM과 라이브 바인딩",
+      "file": "curriculum/lessons/esm-and-live-bindings.json",
+      "prerequisites": [
+        "date-time-and-internationalization",
+        "scope-tdz-and-declarations",
+        "function-parameters-and-contracts",
+        "composition-and-domain-contracts"
+      ],
+      "exerciseId": "esm-and-live-bindings-exercise"
+    },
+    {
+      "id": "module-and-dependency-boundaries",
+      "order": 24,
+      "displayNumber": "24",
+      "title": "공개 API·내부 모듈·어댑터·의존성",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "모듈과 의존 경계",
+      "file": "curriculum/lessons/module-and-dependency-boundaries.json",
+      "prerequisites": [
+        "esm-and-live-bindings"
+      ],
+      "exerciseId": "module-and-dependency-boundaries-exercise"
+    },
+    {
+      "id": "errors-and-failure-contracts",
+      "order": 25,
+      "displayNumber": "25",
+      "title": "검증/운영 실패·arbitrary throw·cause·복구/전파",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "오류와 실패 계약",
+      "file": "curriculum/lessons/errors-and-failure-contracts.json",
+      "prerequisites": [
+        "module-and-dependency-boundaries"
+      ],
+      "exerciseId": "errors-and-failure-contracts-exercise"
+    },
+    {
+      "id": "behavior-tests-and-debugging",
+      "order": 26,
+      "displayNumber": "26",
+      "title": "assert·테이블 검사·대역·상태 추적·회귀",
+      "track": "common",
+      "unit": "5단원 모듈과 실패 계약 4강",
+      "shortTitle": "행동 검사와 디버깅",
+      "file": "curriculum/lessons/behavior-tests-and-debugging.json",
+      "prerequisites": [
+        "errors-and-failure-contracts",
+        "module-and-dependency-boundaries"
+      ],
+      "exerciseId": "behavior-tests-and-debugging-exercise"
+    },
+    {
+      "id": "promise-chains-and-errors",
+      "order": 27,
+      "displayNumber": "27",
+      "title": "콜백 지옥→Promise·상태/resolution·then 반환·reaction jobs",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "Promise와 오류",
+      "file": "curriculum/lessons/promise-chains-and-errors.json",
+      "prerequisites": [
+        "behavior-tests-and-debugging"
+      ],
+      "exerciseId": "promise-chains-and-errors-exercise"
+    },
+    {
+      "id": "async-await-and-iteration",
+      "order": 28,
+      "displayNumber": "28",
+      "title": "async/await·정리·async iterator·for-await·import()/top-level await",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "async·await와 순회",
+      "file": "curriculum/lessons/async-await-and-iteration.json",
+      "prerequisites": [
+        "promise-chains-and-errors",
+        "iterators-and-generators",
+        "esm-and-live-bindings",
+        "errors-and-failure-contracts"
+      ],
+      "exerciseId": "async-await-and-iteration-exercise"
+    },
+    {
+      "id": "promise-combinators",
+      "order": 29,
+      "displayNumber": "29",
+      "title": "all/allSettled/any/race·병행과 CPU 병렬",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "Promise 조합",
+      "file": "curriculum/lessons/promise-combinators.json",
+      "prerequisites": [
+        "async-await-and-iteration",
+        "promise-chains-and-errors"
+      ],
+      "exerciseId": "promise-combinators-exercise"
+    },
+    {
+      "id": "host-scheduling-and-event-loops",
+      "order": 30,
+      "displayNumber": "30",
+      "title": "Promise 작업·HTML task/microtask·Node phases/nextTick",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "호스트와 이벤트 루프",
+      "file": "curriculum/lessons/host-scheduling-and-event-loops.json",
+      "prerequisites": [
+        "promise-combinators"
+      ],
+      "exerciseId": "host-scheduling-and-event-loops-exercise"
+    },
+    {
+      "id": "cancellation-and-stale-results",
+      "order": 31,
+      "displayNumber": "31",
+      "title": "취소 계약·작업 ID·응답 역전·AbortSignal",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "취소와 오래된 결과",
+      "file": "curriculum/lessons/cancellation-and-stale-results.json",
+      "prerequisites": [
+        "host-scheduling-and-event-loops",
+        "promise-combinators"
+      ],
+      "exerciseId": "cancellation-and-stale-results-exercise"
+    },
+    {
+      "id": "bounded-concurrency-and-retries",
+      "order": 32,
+      "displayNumber": "32",
+      "title": "대기열·동시성 상한·backoff·재시도/멱등성",
+      "track": "common",
+      "unit": "6단원 비동기와 동시성 6강",
+      "shortTitle": "동시성 제한과 재시도",
+      "file": "curriculum/lessons/bounded-concurrency-and-retries.json",
+      "prerequisites": [
+        "cancellation-and-stale-results",
+        "behavior-tests-and-debugging",
+        "promise-combinators"
+      ],
+      "exerciseId": "bounded-concurrency-and-retries-exercise"
     }
   ],
   "roadmap": [

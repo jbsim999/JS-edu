@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "module-and-dependency-boundaries-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "module-and-dependency-boundaries-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / native ES module Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:002d5994ad6f148e0d51ce400ec998d0ea65478c5e06d41f0403e8b97437a907",
+  "referenceChecks": [
+    "public-surface",
+    "construction-without-effects",
+    "issue-order-and-value",
+    "independent-adapters-and-fresh-clock",
+    "input-copy-and-no-mutation",
+    "validation-before-effects",
+    "invalid-clock-and-adapters",
+    "dependency-failure-propagation"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

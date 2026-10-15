@@ -1,0 +1,199 @@
+{
+  "id": "errors-and-failure-contracts",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "실패 계약과 오류 경계: cause·임의 throw·정리 실패 보존",
+  "track": "modules-and-failure",
+  "level": "intermediate",
+  "goals": [
+    "입력 검증·작업 실패·복구 가능성을 구분하고 임의 throw 값을 안전하게 다룬다.",
+    "cause로 문맥과 원인을 보존하고 정상 반환과 실패 전파를 분리한다.",
+    "정리 실행과 이중 실패의 완료 정책을 구현하고 회귀로 검사한다."
+  ],
+  "prerequisites": [
+    "module-and-dependency-boundaries"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2021 AggregateError; ES2022 Error cause",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §14.14 throw · §14.15 try/finally · Completion Records",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=352",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §20.5 Error · §20.5.7 AggregateError · §20.5.8.1 InstallErrorCause",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=482",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §20.5.2.1 Error.isError",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=483",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "errors-and-failure-contracts-exercise",
+  "steps": {
+    "theory": "저장 작업은 실패했는데 finally의 정리 코드가 다른 오류를 던져 처음 원인이 사라졌다. 오류 경계는 실패를 어디서 어떤 형태로 처리해 호출자에게 전달할지 정한 자리다. 인수 타입 검증은 작업 시작 전 계약 위반을 잡고, 운영 중 실패는 올바른 입력에서도 저장소·외부 의존성 등의 조건으로 발생한다. 둘을 모두 '실패했으니 undefined'로 숨기면 정상 undefined 반환과 구분할 수 없다.\n\nJavaScript의 throw는 Error만 던지지 않는다. throw undefined, null, false, 숫자, 문자열, 일반 객체도 가능하다. catch에서 곧바로 reason.message를 읽거나 if(reason)만으로 실패 여부를 판단하면 두 번째 오류를 만들거나 실패를 놓친다. 원인 값 자체와 작업이 던졌다는 boolean을 따로 기록한다. 임의 값을 문자열로 강제 변환하는 일도 사용자 정의 변환을 실행할 수 있으므로 오류 경계에서 항상 무해하다고 가정하지 않는다.\n\nnew Error('작업 실패', {cause: reason})는 서비스 문맥과 원래 원인을 함께 남긴다. cause가 Error 객체여야 한다는 제한은 없다. 이 과제는 OperationError/OPERATION_FAILED, CleanupError/CLEANUP_FAILED라는 name/code를 정책으로 붙인다. 표준 내장 오류 이름이 아니라 우리가 정한 API 이름이다. message 문자열을 분기 조건으로 쓰는 대신 합의한 code와 형태를 사용한다. 엔진별 stack 표시를 고정 계약이나 검사값으로 만들지 않는다.\n\nfinally는 앞선 try/catch가 끝난 뒤 실행되지만, finally의 return이나 throw는 기존 반환·예외를 대체할 수 있다. 작업과 정리의 실패를 둘 다 남기려면 명시적으로 수집해야 한다. 이번 정책은 둘 다 실패하면 AggregateError([작업 원인, 정리 원인], 메시지, {cause:작업 원인})다. AggregateError가 원인을 자동 발견하는 것이 아니라 호출자가 배열을 채운다. 강제 프로세스 종료 같은 호스트 중단까지 finally가 반드시 실행된다고 주장하지 않는다.\n\n선택 심화 — ES2026 Error.isError(value)는 내부 [[ErrorData]]를 확인한다. 다른 realm의 실제 Error도 식별하며, 현재 realm의 Error.prototype 연결을 보는 instanceof Error와 구분된다. Object.create(Error.prototype)이나 {name:\"Error\",message:\"x\"}는 실제 Error가 아니다. 이 판정으로 복구 가능성이나 신뢰성을 판단할 수 없으며 임의 throw 원인 보존도 여전히 필요하다.",
+    "example": "정상 예제는 operation → cleanup을 각각 한 번 호출하고 42를 반환한다. 작업이 Error를 던지면 OperationError의 cause가 처음 객체와 같고, throw undefined도 cause 프로퍼티가 존재하는 작업 실패로 남는다. 두 오류가 함께 발생하면 AggregateError.errors의 첫 항목은 작업 원인, 둘째는 정리 원인이다. 작업이 성공하고 cleanup만 실패하면 CleanupError가 전파된다.\n\n마지막 replaced 함수는 try의 'work' 반환을 finally의 'cleanup' 반환이 덮어쓰는 반례다. 이 동작은 언어 규칙이며 올바른 서비스 정책이라는 뜻은 아니다. 예제는 name과 원인 동일성을 출력하고 엔진별 stack 문자열을 비교하지 않는다.",
+    "quiz": "실패의 발생 여부, 실패 값, 문맥 있는 래퍼, 정리 중 실패를 각각 구분한다. finally가 있다는 사실만으로 원인이 보존된다고 생각하지 않는다. 검증 실패에서는 아직 작업이 시작되지 않았다는 조건도 호출 횟수 계약에 포함한다.",
+    "practice": "교육용 저장 서비스에서 요청을 검증한 뒤 자원을 사용하는 작업을 수행한다고 가정한다. 호출자가 교정할 수 있는 입력 오류와 재시도 가능한 일시적 의존성 오류를 분류한다. 재시도는 횟수·중복 효과·멱등성 조건이 있을 때만 설계하고 모든 예외를 무조건 재시도하지 않는다. 복구를 선택했다면 그 대체값이 호출자의 성공 계약을 만족하는지 명시한다.\n\n내부 진단에는 cause 사슬을 보존하되 외부 응답에 전체 오류·stack·토큰을 그대로 직렬화하지 않는다. 이 수업의 서비스는 동기 콜백을 전제로 한다. Promise를 반환하는 콜백은 비동기 완료를 기다리는 별도 계약이 필요하며 뒤 단원에서 다룬다. 설계 메모에는 입력 검증을 작업 전에 두는 이유, cleanup만 실패했을 때 성공을 반환하면 생기는 문제, 두 원인을 어떤 순서로 조사할지 적는다.\n\nError.isError는 공식 정식판을 비교하는 선택 항목이다. 사용 전 typeof Error.isError === \"function\"으로 런타임 지원을 확인한다. 미지원 시 instanceof를 같은 의미의 대체라고 표현하지 않는다. 현재 핵심 검사는 작업·정리 호출과 cause·이중 실패 보존을 다룬다. Error.isError 및 다른 realm 객체의 실제 실행은 이 과제에서 검사하지 않으므로 핵심 과제의 통과와 구분한다.",
+    "lab": "runWithCleanup(operation, cleanup)의 본문만 편집한다. 두 인수가 함수인지 먼저 확인하고 아니면 TypeError를 던지며 어떤 콜백도 호출하지 않는다. 유효한 인수라면 operation을 정확히 한 번 실행하고 정상/예외와 무관하게 cleanup도 한 번 실행한다. 정상일 때 operation의 반환값을 동일한 값으로 돌려주고 cleanup의 반환값은 무시한다.\n\noperation만 실패하면 new Error에 원래 cause를 보존해 name='OperationError', code='OPERATION_FAILED'를 붙인다. cleanup만 실패하면 name='CleanupError', code='CLEANUP_FAILED'와 원래 cause를 사용한다. 둘 다 실패하면 errors=[operationReason,cleanupReason], cause=operationReason인 실제 AggregateError를 던진다. 메시지 문구는 자유다. throw undefined와 정상 undefined 반환을 구분하고 원인을 문자열로 바꾸지 않는다. 도우미가 필요하면 편집 가능한 본문 안에 둔다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-arbitrary-throw",
+        "prompt": "catch(reason)에서 실패 여부를 if (reason)으로 판단하면 어떤 입력을 놓치는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "throw undefined, throw null, throw false, throw 0 같은 실패",
+            "explanation": "throw는 Error 객체만 허용하지 않는다. 실패 발생 여부와 던져진 값은 별도로 기록해야 한다."
+          },
+          {
+            "id": "b",
+            "text": "Error 객체만 놓친다.",
+            "explanation": "일반 Error 객체는 truthy다. 문제는 임의 값과 실패 플래그를 섞는 데 있다."
+          },
+          {
+            "id": "c",
+            "text": "throw는 falsy 값을 금지하므로 놓치는 값이 없다.",
+            "explanation": "throw 표현식은 임의의 언어 값을 던질 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-finally",
+        "prompt": "try { throw original; } finally { return 'ok'; }의 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "original이 반드시 호출자에게 전파된다.",
+            "explanation": "finally의 return은 앞선 throw 완료를 덮어쓸 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "'ok'를 반환하고 원래 실패를 숨긴다.",
+            "explanation": "정리 구간의 return/throw는 이전 완료 결과를 대체할 수 있으므로 의도한 정책인지 확인해야 한다."
+          },
+          {
+            "id": "c",
+            "text": "문법 오류여서 실행되지 않는다.",
+            "explanation": "문법상 가능하지만 오류 경계에 부적절한 결과를 만들 수 있다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-cause",
+        "prompt": "new Error('주문 저장 실패', {cause: reason})로 감싸는 이유는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "호출 문맥을 추가하면서 원래 던져진 값을 보존하기 위해서다.",
+            "explanation": "cause는 문자열에 합치는 대신 원래 값/동일성을 남긴다. Error가 아닌 값도 원인이 될 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "원래 오류를 자동 재시도하기 위해서다.",
+            "explanation": "cause는 원인 정보이며 재시도 동작을 수행하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "모든 Error 속성이 JSON에 자동으로 포함되도록 하기 위해서다.",
+            "explanation": "cause와 message 등의 열거 여부와 직렬화 정책은 별도다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-two-failures",
+        "prompt": "작업도 정리도 실패했다. 이 과제의 계약에 맞는 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "정리 오류만 던지고 원래 작업 오류를 버린다.",
+            "explanation": "진짜 최초 원인과 정리 실패를 동시에 조사할 수 없게 된다."
+          },
+          {
+            "id": "b",
+            "text": "AggregateError.errors에 작업·정리 원인을 순서대로 넣고 cause에는 작업 원인을 둔다.",
+            "explanation": "둘을 보존하는 것은 이 서비스가 정한 명시적 정책이며 단순 finally throw가 자동으로 해 주지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "두 번의 throw를 연속 실행하면 두 오류가 전달된다.",
+            "explanation": "첫 throw가 흐름을 종료하므로 그 방식으로 두 원인을 전달할 수 없다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q5-validation-recovery",
+        "prompt": "operation 인수가 함수가 아니어서 검증에 실패했다. cleanup을 호출해야 하는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "아직 작업을 시작하지 않았으므로 이 계약에서는 호출하지 않고 TypeError를 던진다.",
+            "explanation": "인수 검증 단계와 작업 시작 후 정리 의무를 분리한다."
+          },
+          {
+            "id": "b",
+            "text": "모든 오류는 무조건 cleanup으로 복구해야 한다.",
+            "explanation": "무효한 인수는 운영 중 자원 정리와 다르며 복구 정책도 오류별로 정해야 한다."
+          },
+          {
+            "id": "c",
+            "text": "undefined를 반환해 성공과 동일하게 처리한다.",
+            "explanation": "정상 undefined 반환과 검증 실패가 구분되지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-arbitrary-throw",
+        "q5-validation-recovery"
+      ],
+      "caseIds": [
+        "callback-validation",
+        "arbitrary-thrown-values",
+        "undefined-success-is-not-throw"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q3-cause"
+      ],
+      "caseIds": [
+        "operation-cause",
+        "cleanup-failure"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q2-finally",
+        "q4-two-failures"
+      ],
+      "caseIds": [
+        "success-and-order",
+        "both-failures",
+        "falsy-dual-failure"
+      ]
+    }
+  ]
+}

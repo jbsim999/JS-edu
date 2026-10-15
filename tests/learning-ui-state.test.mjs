@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createExecutionState, resultMatches, submissionPassed } from "../web/features/execution-state.mjs";
+import { createExecutionRouter, createExecutionState, resultMatches, submissionPassed } from "../web/features/execution-state.mjs";
 import { createLearningProgress, assessQuiz, validSubmission, quizForRevision } from "../web/features/learning-progress.mjs";
-import { loadLearningData, normalizeRoute, browserWorkerProfile } from "../web/features/learning-data.mjs";
+import { loadLearningData, normalizeRoute, browserWorkerProfile, browserModuleProfile, supportsExerciseProvider } from "../web/features/learning-data.mjs";
 
 const identity = { lessonId: "counter", exerciseId: "counter-task", contentRevision: "r1", targetVersion: "ES2026", profileId: "worker-1", graderRevision: "g1" };
 const environment = { available: true, actualRuntime: "test worker", environmentFingerprint: "environment-1" };
@@ -163,4 +163,91 @@ test("only dedicated browser-worker profiles are passed to the Worker provider",
   assert.equal(browserWorkerProfile({ id: "node", execution: { available: true, provider: "node-process" } }), false);
   assert.equal(browserWorkerProfile({ id: "ecmascript-2026", execution: { provider: "dom-iframe" } }), false);
   assert.equal(browserWorkerProfile(undefined), false);
+  const moduleProfile = { execution: { available: true, provider: "browser-module-worker" } };
+  assert.equal(browserModuleProfile(moduleProfile), true);
+  assert.equal(browserWorkerProfile(moduleProfile), false);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, moduleProfile), true);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "function-body" } }, moduleProfile), false);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, { execution: { provider: "browser-worker" } }), false);
+});
+
+test("provider routing preserves each exercise environment and keeps unavailable feature reasons", async () => {
+  const envCalls = [];
+  const moduleEnvironment = { available: false, actualRuntime: "module worker", environmentFingerprint: "native-module-1",
+    reason: "feature missing", missingFeatures: ["Intl.Segmenter"] };
+  const body = fakeRunner();
+  const module = fakeRunner({ getEnvironment: async context => { envCalls.push(context); return moduleEnvironment; },
+    prepare: async request => ({ ...answer(request, "infrastructure-error", []), ...moduleEnvironment }) });
+  const router = createExecutionRouter([{ runner: body, exerciseIds: [identity.exerciseId] }, { runner: module, exerciseIds: ["module-task"] }]);
+  assert.equal((await router.getEnvironment({ exerciseId: identity.exerciseId })).environmentFingerprint, environment.environmentFingerprint);
+  const selected = await router.getEnvironment({ exerciseId: "module-task" });
+  assert.equal(selected.environmentFingerprint, "native-module-1");
+  assert.equal(selected.available, false);
+  assert.deepEqual(selected.missingFeatures, ["Intl.Segmenter"]);
+  const all = await router.getEnvironment();
+  assert.equal(all.exerciseAvailability[identity.exerciseId].available, true);
+  assert.equal(all.exerciseAvailability["module-task"].reason, "feature missing");
+  assert.ok(envCalls.every(context => context.exerciseId === "module-task"));
+  const request = { ...identity, exerciseId: "module-task", requestId: "module-request", sourceFingerprint: "snapshot", source: "complete snapshot" };
+  assert.equal((await router.prepare(request)).status, "infrastructure-error");
+  assert.deepEqual(body.calls, []);
+  assert.equal((await router.getEnvironment({ exerciseId: "unknown" })).available, false);
+  assert.deepEqual((await router.submit({ ...request, exerciseId: "unknown" })).checks, []);
+  await router.cancel("module-request");
+  assert.deepEqual(module.calls.at(-1), ["cancel", "module-request"]);
+  assert.throws(() => createExecutionRouter([{ runner: body, exerciseIds: ["duplicate"] }, { runner: module, exerciseIds: ["duplicate"] }]), /중복/);
+});
+
+test("switching from a pending module submission to a function exercise rejects the late module result", async () => {
+  const delayed = deferred();
+  const moduleEnvironment = { ...environment, environmentFingerprint: "module-env", actualRuntime: "native module worker" };
+  let moduleRequest;
+  const module = fakeRunner({ getEnvironment: async () => moduleEnvironment,
+    prepare: async request => ({ ...answer(request, "ready", []), ...moduleEnvironment }),
+    submit: async request => { moduleRequest = request; return delayed.promise; } });
+  const body = fakeRunner();
+  const router = createExecutionRouter([{ runner: body, exerciseIds: [identity.exerciseId] }, { runner: module, exerciseIds: ["module-task"] }]);
+  const completed = [];
+  const state = createExecutionState({ runner: router, fingerprintSource: async source => source, onResult: value => completed.push(value) });
+  const pending = state.start("submit", { ...identity, exerciseId: "module-task" }, "whole module snapshot");
+  await checkpoint();
+  state.invalidate("lesson changed");
+  const current = await state.start("submit", identity, "function body");
+  delayed.resolve({ ...answer(moduleRequest), ...moduleEnvironment });
+  assert.equal(await pending, null);
+  assert.equal(current.environmentFingerprint, environment.environmentFingerprint);
+  assert.equal(state.snapshot().result.exerciseId, identity.exerciseId);
+  assert.equal(completed.length, 1);
+  assert.ok(module.calls.some(([kind, id]) => kind === "cancel" && id === moduleRequest.requestId));
+});
+
+test("module catalog loads fixed embedded files without fetching virtual source paths", async () => {
+  const exercise = { id: "modules-task", lessonId: "modules", contentRevision: "r1", graderRevision: "g1", profileId: "browser-esm",
+    instructions: [], behaviorCriteria: [], files: [{ id: "main", path: "starter/legacy.mjs", editable: true }],
+    runner: { kind: "module-files", entry: "main.mjs" }, workspace: { entry: "main.mjs", files: [
+      { path: "main.mjs", source: "export { value } from './fixed.mjs';", editable: true },
+      { path: "fixed.mjs", source: "export const value = 3;", editable: false },
+    ] } };
+  const data = {
+    "/education.config.json": { name: "test", displayName: "Test", languageVersions: ["ES2026"] },
+    "/curriculum/catalog.json": { lessons: [{ id: "modules", file: "curriculum/lessons/modules.json" }] },
+    "/curriculum/exercises.json": { exercises: [exercise] },
+    "/runtime/profiles.json": { profiles: [{ id: "browser-esm", execution: { provider: "browser-module-worker", available: true } }] },
+    "/curriculum/lessons/modules.json": { id: "modules", title: "모듈", contentRevision: "r1", exerciseId: "modules-task",
+      supportedVersions: ["ES2026"], goals: [], sources: [], steps: { theory: "이론", example: "예시", quiz: "퀴즈", practice: "심화", lab: "실습" } },
+    "/curriculum/examples/modules.mjs": "export const value = 3;",
+  };
+  const requested = [];
+  const fetcher = async path => { requested.push(path); return { ok: Object.hasOwn(data, path), status: 404, json: async () => data[path], text: async () => data[path] }; };
+  const loaded = (await loadLearningData(fetcher)).entries[0];
+  assert.equal(loaded.ready, true);
+  assert.equal(loaded.runnable, true);
+  assert.equal(loaded.editable, null);
+  assert.equal(loaded.file, null);
+  assert.equal(loaded.moduleWorkspace.files[1].source, "export const value = 3;");
+  assert.equal(requested.some(path => path.includes("starter/") || path === "/main.mjs"), false);
+  data["/runtime/profiles.json"].profiles[0].execution.available = false;
+  assert.equal((await loadLearningData(fetcher)).entries[0].runnable, false);
+  exercise.workspace.files[1].path = "../fixed.mjs";
+  assert.equal((await loadLearningData(fetcher)).entries[0].ready, false);
 });

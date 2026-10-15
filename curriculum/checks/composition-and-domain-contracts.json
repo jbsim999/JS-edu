@@ -1,0 +1,150 @@
+{
+  "exerciseId": "composition-and-domain-contracts-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "composition-and-domain-contracts-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "replaceable-policy",
+      "label": "정책 교체 후 같은 견적 계약을 유지한다",
+      "probe": "const checkout=submission.createCheckout(amount=>Math.floor(amount/10));const before=checkout.quote(125);checkout.setPolicy(amount=>Math.min(20,amount));observe({before,after:checkout.quote(125)});",
+      "expected": {
+        "before": {
+          "amount": 125,
+          "discount": 12,
+          "total": 113
+        },
+        "after": {
+          "amount": 125,
+          "discount": 20,
+          "total": 105
+        }
+      }
+    },
+    {
+      "id": "separate-checkouts",
+      "label": "서로 다른 checkout의 정책 상태가 섞이지 않는다",
+      "probe": "const a=submission.createCheckout(()=>10);const b=submission.createCheckout(()=>20);a.setPolicy(()=>5);observe([a.quote(100),b.quote(100)]);",
+      "expected": [
+        {
+          "amount": 100,
+          "discount": 5,
+          "total": 95
+        },
+        {
+          "amount": 100,
+          "discount": 20,
+          "total": 80
+        }
+      ]
+    },
+    {
+      "id": "one-call-unbound-receiver",
+      "label": "정책을 한 번 호출하고 임의의 receiver를 바인딩하지 않는다",
+      "probe": "let calls=0,receiver;const checkout=submission.createCheckout(function(amount){calls++;receiver=this;return 1;});const result=checkout.quote(10);observe({result,calls,receiverUndefined:receiver===undefined});",
+      "expected": {
+        "result": {
+          "amount": 10,
+          "discount": 1,
+          "total": 9
+        },
+        "calls": 1,
+        "receiverUndefined": true
+      }
+    },
+    {
+      "id": "invalid-amount-before-policy",
+      "label": "불량 금액은 정책 호출 전에 거부한다",
+      "probe": "let calls=0;const checkout=submission.createCheckout(()=>{calls++;return 0;});const errors=[-1,1.5,NaN,Infinity,'10',9007199254740992].map(amount=>{try{checkout.quote(amount);return 'none';}catch(error){return error.name;}});observe({errors,calls});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "calls": 0
+      }
+    },
+    {
+      "id": "discount-output-contract",
+      "label": "정책의 타입·범위·동기 반환 계약을 검사한다",
+      "probe": "const values=['1',1n,null,Promise.resolve(1),-1,11,0.5,NaN];const errors=values.map(discount=>{const checkout=submission.createCheckout(()=>discount);try{checkout.quote(10);return 'none';}catch(error){return error.name;}});observe(errors);",
+      "expected": [
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "RangeError",
+        "RangeError",
+        "RangeError",
+        "RangeError"
+      ]
+    },
+    {
+      "id": "invalid-replacement-preserves-policy",
+      "label": "잘못된 정책 교체는 기존 정책을 보존한다",
+      "probe": "const checkout=submission.createCheckout(()=>2);let replacement='none',construction='none';try{checkout.setPolicy(null);}catch(error){replacement=error.name;}try{submission.createCheckout(3);}catch(error){construction=error.name;}observe({replacement,construction,result:checkout.quote(10)});",
+      "expected": {
+        "replacement": "TypeError",
+        "construction": "TypeError",
+        "result": {
+          "amount": 10,
+          "discount": 2,
+          "total": 8
+        }
+      }
+    },
+    {
+      "id": "original-failure-propagates",
+      "label": "정책이 던진 원래 실패를 한 번 전파하고 이후 교체가 가능하다",
+      "probe": "const failure={code:'fixture-policy'};let calls=0,caught=false;const checkout=submission.createCheckout(()=>{calls++;throw failure;});try{checkout.quote(10);}catch(error){caught=error===failure;}checkout.setPolicy(()=>1);observe({caught,calls,recovered:checkout.quote(10)});",
+      "expected": {
+        "caught": true,
+        "calls": 1,
+        "recovered": {
+          "amount": 10,
+          "discount": 1,
+          "total": 9
+        }
+      }
+    },
+    {
+      "id": "detached-and-fresh-results",
+      "label": "분리 호출과 결과 수정이 다음 견적에 영향을 주지 않는다",
+      "probe": "const {quote,setPolicy}=submission.createCheckout(()=>0);const first=quote(10),same=quote(10);try{first.total=999;}catch{}setPolicy(amount=>amount);const full=quote(10),zero=quote(0);observe({full,zero,fresh:first!==same&&first!==full&&full!==zero});",
+      "expected": {
+        "full": {
+          "amount": 10,
+          "discount": 10,
+          "total": 0
+        },
+        "zero": {
+          "amount": 0,
+          "discount": 0,
+          "total": 0
+        },
+        "fresh": true
+      }
+    },
+    {
+      "id": "reentrant-policy-change",
+      "label": "계산 중 교체는 다음 견적부터 적용한다",
+      "probe": "let checkout;checkout=submission.createCheckout(()=>{checkout.setPolicy(()=>2);return 1;});observe([checkout.quote(10),checkout.quote(10)]);",
+      "expected": [
+        {
+          "amount": 10,
+          "discount": 1,
+          "total": 9
+        },
+        {
+          "amount": 10,
+          "discount": 2,
+          "total": 8
+        }
+      ]
+    }
+  ]
+}

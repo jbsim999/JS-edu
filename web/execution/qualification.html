@@ -12,7 +12,7 @@
     <p>개발 검증 전용 화면입니다. 공개 과제의 고정 정답·대표 오답을 실제 Dedicated Worker로 순서대로 실행합니다. 제품 초안과 진도 저장은 사용하지 않습니다.</p>
     <p>자가 학습 행동 검증이며 성적 인증이나 악성 코드용 OS 보안 격리가 아닙니다. Worker에는 메모리의 절대 상한이 없고, 같은 출처의 IndexedDB·OPFS 권한이 남을 수 있습니다.</p>
     <form id="qualification-form">
-      <p><label for="exercise-filter">과제 ID (쉼표로 구분, 비우면 모든 function-body 과제)</label><br><input id="exercise-filter" name="exercise-filter" size="70" autocomplete="off"></p>
+      <p><label for="exercise-filter">과제 ID (쉼표로 구분, 비우면 모든 브라우저 Worker 과제)</label><br><input id="exercise-filter" name="exercise-filter" size="70" autocomplete="off"></p>
       <p><button id="qualification-run" type="submit">검증 실행</button> <button id="qualification-cancel" type="button" disabled>중지</button></p>
     </form>
     <p id="qualification-status" role="status" aria-live="polite">idle</p>

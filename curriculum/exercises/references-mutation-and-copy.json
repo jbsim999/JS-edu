@@ -1,0 +1,68 @@
+{
+  "id": "references-mutation-and-copy-exercise",
+  "lessonId": "references-mutation-and-copy",
+  "contentRevision": "draft-1",
+  "graderRevision": "references-mutation-and-copy-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createCopyTools()는 cloneData(value), reviseCart(cart,itemId,quantity), deepFreezeCopy(value)를 반환한다.",
+    "cloneData: Symbol/함수 외 원시값, 일반/null 원형 객체, 표준 배열(하위 클래스 제외), 추가 자체 필드 없는 Date를 지원한다. 순환과 별칭을 보존한다.",
+    "자체 열거 가능한 문자열 데이터 필드만 복사한다(배열 length 제외). 접근자·비열거·Symbol 키·기타 객체는 TypeError. 복사본 필드는 쓰기 가능하다.",
+    "cart는 items 배열과 고유 문자열 id를 가진 정상 스키마다. 수량은 0 이상 안전 정수이며 불량 수량/없는 id는 RangeError. 원본을 변경하지 않는다.",
+    "deepFreezeCopy는 독립 복사본의 중첩 일반 객체·배열까지 동결한다. Date는 TypeError로 거부한다. Proxy와 호스트 객체는 입력 범위 밖이다."
+  ],
+  "template": "export function createCopyTools() {\n  // TODO: 복사 지원 범위를 제한하고 원본을 보존하는 세 함수를 반환하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/references-mutation-and-copy.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "수량과 중첩 상세 변경이 원본에 번지지 않는다",
+    "순환과 공유된 하위 객체의 관계를 복사본 안에서 보존한다",
+    "Date는 독립 시간값으로 복사하고 반복 참조도 보존한다",
+    "함수·Symbol·Map·사용자 인스턴스는 TypeError로 거부한다",
+    "접근자를 실행하지 않고 지원 불가로 거부한다",
+    "중첩·순환 복사본을 동결하고 원본은 동결하지 않는다",
+    "Date를 포함한 깊은 불변 복사 요청은 명시적으로 거부한다",
+    "0은 허용하고 잘못된 수량·없는 항목은 원본 보존 후 거부한다",
+    "원시 특수값과 원형 없는 객체의 데이터 키를 보존한다",
+    "비열거·Symbol 키와 추가 필드가 있는 Date를 거부한다"
+  ],
+  "rubric": [
+    "중첩 원본 보존",
+    "순환·별칭·타입별 복사",
+    "명시적 거부와 freeze 범위"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createCopyTools",
+    "parameters": [],
+    "async": false,
+    "runProbe": "const tools=submission.createCopyTools(); const cart={items:[{id:'p',quantity:1,detail:{title:'연필'}}]}; const result=tools.reviseCart(cart,'p',3); result.items[0].detail.title='펜'; observe({original:cart.items[0],updated:result.items[0],newRoot:result!==cart,newItems:result.items!==cart.items});"
+  },
+  "editable": {
+    "prefix": "export function createCopyTools() {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 복사 지원 범위를 제한하고 원본을 보존하는 세 함수를 반환하세요.\n"
+  },
+  "graderFile": "curriculum/checks/references-mutation-and-copy.json",
+  "referenceFile": "reference/references-mutation-and-copy.mjs",
+  "incorrectFile": "reference/incorrect/references-mutation-and-copy.mjs",
+  "exampleFile": "curriculum/examples/references-mutation-and-copy.mjs",
+  "exampleExpectedLogs": [
+    "[{\"id\":\"p\",\"quantity\":1,\"detail\":{\"title\":\"연필\"}},{\"id\":\"p\",\"quantity\":3,\"detail\":{\"title\":\"펜\"}}]",
+    "true true",
+    "true true",
+    "1000"
+  ],
+  "verificationRecord": "docs/execution/references-mutation-and-copy-exercise.json"
+}

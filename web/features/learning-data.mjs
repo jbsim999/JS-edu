@@ -1,3 +1,5 @@
+import { serializeModuleSource, validateModuleSnapshot } from "../execution/module-runner.mjs";
+
 const stepIds = ["theory", "example", "quiz", "practice", "lab"];
 
 export const trackLabels = Object.freeze({ all: "전체 로드맵", common: "공통 언어", browser: "브라우저", node: "Node.js", capstone: "통합 프로젝트" });
@@ -17,6 +19,15 @@ export function normalizeTrack(value) {
 export function browserWorkerProfile(profile) {
   return profile?.execution?.provider === "browser-worker"
     || (profile?.id === "ecmascript-2026" && !profile.execution?.provider);
+}
+
+export function browserModuleProfile(profile) {
+  return profile?.execution?.provider === "browser-module-worker";
+}
+
+export function supportsExerciseProvider(exercise, profile) {
+  return (exercise?.runner?.kind === "function-body" && browserWorkerProfile(profile))
+    || (exercise?.runner?.kind === "module-files" && browserModuleProfile(profile));
 }
 
 async function resource(path, type = "json", fetchResource = fetch) {
@@ -87,18 +98,25 @@ export async function loadLearningData(fetchResource = fetch) {
         && typeof question.prompt === "string" && Array.isArray(question.choices) && question.choices.length > 1
         && question.choices.every(choice => typeof choice.id === "string" && typeof choice.text === "string")
         && question.choices.some(choice => choice.id === question.correctChoiceId)))) throw new Error("퀴즈 문항과 해설의 연결을 확인해 주세요.");
-      const file = exercise?.files?.find(item => item.editable);
+      let moduleWorkspace = null;
+      if (exercise?.runner?.kind === "module-files") {
+        const source = serializeModuleSource({ entry: exercise.workspace?.entry,
+          files: Object.fromEntries((exercise.workspace?.files || []).map(item => [item.path, item.source])) });
+        validateModuleSnapshot(exercise, source);
+        moduleWorkspace = structuredClone(exercise.workspace);
+      }
+      const file = moduleWorkspace ? null : exercise?.files?.find(item => item.editable);
       const profile = runtimeCatalog.profiles.find(item => item.id === exercise?.profileId);
       const exampleFile = lesson.exampleFile || exercise?.exampleFile || `curriculum/examples/${lesson.id}.mjs`;
       const [example, starter] = await Promise.all([
         resource(exampleFile, "text", fetchResource),
         file ? resource(file.path, "text", fetchResource) : Promise.resolve(""),
       ]);
-      const editable = editableDefinition(exercise, starter);
+      const editable = moduleWorkspace ? null : editableDefinition(exercise, starter);
       return { ...base, name: entry.shortTitle || lesson.shortTitle || entry.title || lesson.title, track: normalizeTrack(entry.track || lesson.track),
-        ready: true, lesson, exercise, file, profile, example, exampleFile, editable,
-        reason: "", runnable: Boolean(exercise?.runner?.kind === "function-body" && editable && browserWorkerProfile(profile) && profile?.execution?.available === true),
-        runtimeReason: exercise?.runner?.kind !== "function-body" || !browserWorkerProfile(profile) ? "이 과제에 필요한 전용 실행 환경을 준비하고 있습니다."
+        ready: true, lesson, exercise, file, profile, example, exampleFile, editable, moduleWorkspace,
+        reason: "", runnable: Boolean((moduleWorkspace || (editable && file)) && supportsExerciseProvider(exercise, profile) && profile?.execution?.available === true),
+        runtimeReason: !supportsExerciseProvider(exercise, profile) ? "이 과제에 필요한 전용 실행 환경을 준비하고 있습니다."
           : profile?.execution?.reason || "실행 환경을 준비하고 있습니다.",
         initialBody: editable?.initialBody || "" };
     } catch (error) {

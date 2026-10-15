@@ -1,0 +1,273 @@
+{
+  "exerciseId": "behavior-tests-and-debugging-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "behavior-tests-and-debugging-checks-v1",
+  "cases": [
+    {
+      "id": "correct-factory-passes",
+      "label": "정상 구현의 다섯 행동을 모두 통과시킨다",
+      "probe": "function good(start){let count=start;return{value:()=>count,increment(delta=1){count+=delta;return count;},reset(){count=start;return count;}}} observe(submission.auditCounterFactory(good));",
+      "expected": [
+        {
+          "id": "initial-value",
+          "passed": true
+        },
+        {
+          "id": "increment-and-default",
+          "passed": true
+        },
+        {
+          "id": "zero-and-negative",
+          "passed": true
+        },
+        {
+          "id": "reset-origin",
+          "passed": true
+        },
+        {
+          "id": "independent-instances",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "shared-state-fails",
+      "label": "인스턴스 간 공유 상태 오답을 찾아낸다",
+      "probe": "let count; function shared(start){count=start;return{value:()=>count,increment(delta=1){count+=delta;return count;},reset(){count=start;return count;}}} observe(submission.auditCounterFactory(shared));",
+      "expected": [
+        {
+          "id": "initial-value",
+          "passed": true
+        },
+        {
+          "id": "increment-and-default",
+          "passed": true
+        },
+        {
+          "id": "zero-and-negative",
+          "passed": true
+        },
+        {
+          "id": "reset-origin",
+          "passed": true
+        },
+        {
+          "id": "independent-instances",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "falsy-default-fails",
+      "label": "0을 기본값으로 바꾸는 오답을 경계값으로 찾는다",
+      "probe": "function wrongDefault(start){let count=start;return{value:()=>count,increment(delta){count+=(delta||1);return count;},reset(){count=start;return count;}}} observe(submission.auditCounterFactory(wrongDefault));",
+      "expected": [
+        {
+          "id": "initial-value",
+          "passed": true
+        },
+        {
+          "id": "increment-and-default",
+          "passed": true
+        },
+        {
+          "id": "zero-and-negative",
+          "passed": false
+        },
+        {
+          "id": "reset-origin",
+          "passed": true
+        },
+        {
+          "id": "independent-instances",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wrong-reset-fails",
+      "label": "시작값 대신 0으로 초기화하는 회귀를 찾는다",
+      "probe": "function wrongReset(start){let count=start;return{value:()=>count,increment(delta=1){count+=delta;return count;},reset(){count=0;return count;}}} observe(submission.auditCounterFactory(wrongReset));",
+      "expected": [
+        {
+          "id": "initial-value",
+          "passed": true
+        },
+        {
+          "id": "increment-and-default",
+          "passed": true
+        },
+        {
+          "id": "zero-and-negative",
+          "passed": true
+        },
+        {
+          "id": "reset-origin",
+          "passed": false
+        },
+        {
+          "id": "independent-instances",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "return-contract-fails",
+      "label": "상태 변경만 맞고 반환이 틀린 구현도 거부한다",
+      "probe": "function wrongReturn(start){let count=start;return{value:()=>count,increment(delta=1){count+=delta;},reset(){count=start;return count;}}} observe(submission.auditCounterFactory(wrongReturn));",
+      "expected": [
+        {
+          "id": "initial-value",
+          "passed": true
+        },
+        {
+          "id": "increment-and-default",
+          "passed": false
+        },
+        {
+          "id": "zero-and-negative",
+          "passed": false
+        },
+        {
+          "id": "reset-origin",
+          "passed": false
+        },
+        {
+          "id": "independent-instances",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "failure-does-not-abort-suite",
+      "label": "첫 검사 예외 뒤에도 나머지 검사를 실행한다",
+      "probe": "function good(start){let count=start;return{value:()=>count,increment(delta=1){count+=delta;return count;},reset(){count=start;return count;}}} const starts=[]; function partial(start){starts.push(start);if(start===5)throw undefined;return good(start);} observe({report:submission.auditCounterFactory(partial),starts});",
+      "expected": {
+        "report": [
+          {
+            "id": "initial-value",
+            "passed": false
+          },
+          {
+            "id": "increment-and-default",
+            "passed": true
+          },
+          {
+            "id": "zero-and-negative",
+            "passed": true
+          },
+          {
+            "id": "reset-origin",
+            "passed": true
+          },
+          {
+            "id": "independent-instances",
+            "passed": true
+          }
+        ],
+        "starts": [
+          5,
+          -2,
+          3,
+          7,
+          2,
+          10
+        ]
+      }
+    },
+    {
+      "id": "unfinished-factory-fails",
+      "label": "미완성·임의 예외를 다섯 개의 실패로 보고한다",
+      "probe": "const empty=submission.auditCounterFactory(()=>undefined); const throwing=submission.auditCounterFactory(()=>{throw null;}); observe({empty,throwing});",
+      "expected": {
+        "empty": [
+          {
+            "id": "initial-value",
+            "passed": false
+          },
+          {
+            "id": "increment-and-default",
+            "passed": false
+          },
+          {
+            "id": "zero-and-negative",
+            "passed": false
+          },
+          {
+            "id": "reset-origin",
+            "passed": false
+          },
+          {
+            "id": "independent-instances",
+            "passed": false
+          }
+        ],
+        "throwing": [
+          {
+            "id": "initial-value",
+            "passed": false
+          },
+          {
+            "id": "increment-and-default",
+            "passed": false
+          },
+          {
+            "id": "zero-and-negative",
+            "passed": false
+          },
+          {
+            "id": "reset-origin",
+            "passed": false
+          },
+          {
+            "id": "independent-instances",
+            "passed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "invalid-factory",
+      "label": "검사 대상이 함수가 아니면 TypeError로 거부한다",
+      "probe": "const errors=[];for(const value of [null,undefined,0,{}]){try{submission.auditCounterFactory(value);errors.push('returned');}catch(error){errors.push(error.name);}}observe(errors);",
+      "expected": [
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "TypeError"
+      ]
+    },
+    {
+      "id": "fresh-reports",
+      "label": "검사 재실행 결과가 이전 보고서 변경과 독립적이다",
+      "probe": "function good(start){let count=start;return{value:()=>count,increment(delta=1){count+=delta;return count;},reset(){count=start;return count;}}} const first=submission.auditCounterFactory(good);try{first[0].passed=false;}catch{}try{first.push({id:'injected',passed:true});}catch{}const second=submission.auditCounterFactory(good);observe({second,newArray:first!==second,newRow:first[1]!==second[1]});",
+      "expected": {
+        "second": [
+          {
+            "id": "initial-value",
+            "passed": true
+          },
+          {
+            "id": "increment-and-default",
+            "passed": true
+          },
+          {
+            "id": "zero-and-negative",
+            "passed": true
+          },
+          {
+            "id": "reset-origin",
+            "passed": true
+          },
+          {
+            "id": "independent-instances",
+            "passed": true
+          }
+        ],
+        "newArray": true,
+        "newRow": true
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

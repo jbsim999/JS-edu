@@ -1,8 +1,10 @@
 # 이용자 요청 강의 항목 대조
 
+> 아래 기획 상태·초안 수·포함 수치는 2026-10-14 당시 기록입니다. 현재 구현과 실제 검증 범위는 [현재 상태](project-state.md)와 [M3 검증](curriculum-m3-verification.md)을 따릅니다.
+
 기준일: 2026-10-14. 요청한 7장·71개 항목을 증보 전 로드맵과 비교했다. 기준 로드맵 SHA256은 84738c0c2651347e97d402c65ee940a84ccbf00de7653f634e6fcccef37ae0ee다. 기존 기획 명시 포함 28개·부분 포함 36개·미명시 7개이며, 아래 최종 연결과 [로드맵 증보 절](roadmap.md)의 핵심 내용/실습으로 모두 수용한다.
 
-포함은 기존 기획 문구에 명시됐다는 뜻이다. 부분은 관련 개념이 있으나 요청 구분·사례·평가가 불분명한 상태, 미명시는 독립 설명이 확인되지 않은 상태다. 구현/교재 검수 완료와 다르다. 현 카탈로그는 bindings-and-closures의 draft-1 초안 1개이며 강의 수는 계획대로 공통32·브라우저8·Node8·통합4를 유지한다.
+포함은 기존 기획 문구에 명시됐다는 뜻이다. 부분은 관련 개념이 있으나 요청 구분·사례·평가가 불분명한 상태, 미명시는 독립 설명이 확인되지 않은 상태다. 구현/교재 검수 완료와 다르다. 기획 당시 카탈로그는 bindings-and-closures의 draft-1 초안 1개였으며 강의 수는 계획대로 공통32·브라우저8·Node8·통합4를 유지한다.
 
 표의 번호는 로드맵 표시 번호다. 실제 구현은 다음 안정 ID에 연결한다: 01 language-host-boundaries, 02 values-and-types, 06 scope-tdz-and-declarations, 07 bindings-and-closures, 08 function-parameters-and-contracts, 09 this-and-arrow-functions, 10 higher-order-functions, 11 call-stack-and-completion, 12 references-mutation-and-copy, 13 properties-and-descriptors, 14 prototype-delegation, 15 classes-and-private-state, 16 composition-and-domain-contracts, 17 array-pipelines-and-sorting, 21 json-and-serialization, 27 promise-chains-and-errors, 28 async-await-and-iteration, B02 browser-events-and-lifecycle, N01 node-esm-packages-and-cli, N06 node-events-and-lifecycle.
 

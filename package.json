@@ -11,7 +11,7 @@
     "dev": "node web/serve.mjs",
     "validate": "node scripts/validate-project.mjs .",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "test": "node --test tests/adapters.test.mjs tests/validator.test.mjs tests/learning-server.test.mjs tests/workspace-state.test.mjs tests/runtime-worker.test.mjs tests/learning-ui-state.test.mjs tests/curriculum-contract.test.mjs",
+    "test": "node --test tests/adapters.test.mjs tests/validator.test.mjs tests/learning-server.test.mjs tests/workspace-state.test.mjs tests/runtime-worker.test.mjs tests/learning-ui-state.test.mjs tests/curriculum-contract.test.mjs tests/module-runtime.test.mjs tests/module-workspace.test.mjs tests/module-server-integration.test.mjs tests/module-workspace-state.test.mjs tests/module-curriculum-contract.test.mjs",
     "check:curriculum": "node scripts/verify-curriculum.mjs .",
     "check": "npm run validate && npm run check:syntax && npm test && npm run check:curriculum"
   }

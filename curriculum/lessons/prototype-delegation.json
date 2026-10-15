@@ -1,0 +1,180 @@
+{
+  "id": "prototype-delegation",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "프로토타입 위임: 상속 코드를 상태 공유 없이 읽고 고치기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "constructor 함수·prototype 객체·instance의 연결과 메서드 조회를 추적한다.",
+    "prototype에 인스턴스 데이터를 저장한 결함과 constructor 복구를 구분한다.",
+    "상위 메서드 호출·override·메서드 빌려쓰기의 receiver 조건을 판단한다."
+  ],
+  "prerequisites": [
+    "properties-and-descriptors"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §10.1.1 GetPrototypeOf · §10.1.8.1 OrdinaryGet",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=201",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §20.1.2.2 Object.create · §20.2.3.3 Function.prototype.call",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=462",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "prototype-delegation-exercise",
+  "steps": {
+    "theory": "첫 번째 사용자 객체에 이벤트를 추가했는데 두 번째 객체에서도 보인다. 레거시 코드가 Child.prototype=new Parent()로 부모의 데이터까지 prototype에 올렸다면 events 배열을 상속받아 공유할 수 있다. 생성자 함수는 호출될 동작, 그 함수의 prototype 프로퍼티는 new로 만든 인스턴스가 위임할 객체, 인스턴스의 [[Prototype]]은 조회할 다음 객체다. 이 세 가지를 같은 '프로토타입'으로 뭉뚱그리지 않는다.\n\nobj.describe를 읽으면 자체 프로퍼티부터 보고 없으면 프로토타입 체인을 따라간다. 자식 prototype에 같은 이름을 두면 부모 구현을 가리는 override가 된다. 부모 동작도 필요하면 Base.prototype.describe.call(this)처럼 receiver를 명시한다. 체인이 여러 단계라는 것이 다중 상속은 아니며 일반 객체의 연결은 null에서 끝난다.\n\nObject.create(Base.prototype)는 부모 생성자를 실행하지 않고 연결된 객체를 만든다. 인스턴스 데이터는 Child 생성자 안에서 Base.call(this,...)로 각자 초기화한다. 새 Child.prototype에 constructor를 비열거 프로퍼티로 복구해도 그것은 일반 프로퍼티 정비일 뿐, [[Construct]]나 깨진 prototype 연결을 자동 복구하는 명령은 아니다.",
+    "example": "a와 b는 record 메서드를 공유하지만 a.events와 b.events는 다른 배열이다. a만 saved를 기록한다. 이어서 인스턴스→NamedRecord.prototype→BaseRecord.prototype을 직접 비교한다. constructor 프로퍼티를 Other로 바꾼 뒤에도 new NamedRecord는 NamedRecord의 생성 동작을 수행한다. 마지막에는 일반 객체에 describe를 빌려 쓰는 성공과 Date.getTime의 내부 슬롯 요구로 생기는 TypeError를 비교한다.",
+    "quiz": "q1은 prototype 공유 데이터, q2는 constructor 프로퍼티의 한계, q3은 다단계 단일 체인, q4는 Object.prototype의 일반 메서드와 내부 슬롯을 요구하는 메서드의 차이를 확인한다. __proto__ 접근자에 의존하지 않고 Object.getPrototypeOf와 Object.create로 연결을 표현한다.",
+    "practice": "교육용 이벤트 레코드의 레거시 상속을 고친다고 가정한다. 부모 생성자 호출을 prototype 설치 시 한 번 하던 것을 인스턴스 생성 때마다 호출하도록 옮기고, 동작 연결은 Object.create로 만든다. 이후 모든 데이터를 클래스 계층으로 옮기기 전에 실제로 공유해야 하는 동작과 각 객체가 소유할 상태를 목록화한다. 메모에는 override의 부모 호출 순서, constructor 표시를 신뢰해 타입을 판정하면 생기는 문제, 일반 함수/합성으로 단순화할 수 있는 경계를 적는다.",
+    "lab": "createDelegationTypes()는 BaseRecord와 NamedRecord 생성자 함수를 반환한다. BaseRecord(name)는 자체 name·새 events 배열을 만들고 prototype의 record(message)는 추가 후 길이, describe()는 'record:'+name을 반환한다. NamedRecord(name,tag)는 부모 초기화를 각 인스턴스에 수행하고 자체 tag를 만든다. NamedRecord.prototype은 BaseRecord.prototype에 연결하고 자체 constructor를 writable/configurable:true, enumerable:false로 복구한다. describe override는 부모 설명+'#'+tag다. prototype에는 name/tag/events를 두지 않는다. BaseRecord의 메서드는 알맞은 name/events를 가진 일반 receiver에도 빌려 쓸 수 있다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-state-sharing",
+        "prompt": "Child.prototype=new Parent()가 만든 events 배열을 자식들이 상속받으면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "각 자식에 자동으로 새 배열이 생긴다.",
+            "explanation": "조회한 값은 prototype의 같은 배열일 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "events.push가 공유 배열을 변경할 수 있다.",
+            "explanation": "동작은 prototype에, 개별 데이터는 각 인스턴스 초기화에 두어야 한다."
+          },
+          {
+            "id": "c",
+            "text": "배열은 원시값이라 복사된다.",
+            "explanation": "배열은 객체다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-constructor",
+        "prompt": "Child.prototype.constructor=Other로 바꾸면 new Child()가 Other를 실행하는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "아니다. constructor는 일반 프로퍼티이며 new의 호출 대상은 Child다.",
+            "explanation": "표시용 관례와 내부 생성 동작을 분리한다."
+          },
+          {
+            "id": "b",
+            "text": "그렇다. constructor 프로퍼티가 항상 생성 동작을 결정한다.",
+            "explanation": "직접 new Child()가 사용하는 함수와 프로퍼티 조회는 다른 연산이다."
+          },
+          {
+            "id": "c",
+            "text": "prototype 체인도 Other.prototype으로 자동 바뀐다.",
+            "explanation": "constructor 프로퍼티 대입은 [[Prototype]] 연결을 수정하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-multilevel",
+        "prompt": "인스턴스→자식 prototype→부모 prototype→Object.prototype→null은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "여러 부모를 동시에 가진 다중 상속이다.",
+            "explanation": "연결이 여러 단계라는 것과 여러 부모 경로가 있는 것은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "조회할 수 없는 잘못된 체인이다.",
+            "explanation": "정상적인 다단계 단일 위임 체인이다."
+          },
+          {
+            "id": "c",
+            "text": "각 단계의 다음 prototype이 하나인 단일 체인이다.",
+            "explanation": "자체 프로퍼티로 가린 뒤 없으면 다음 단계를 조회한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q4-borrowing",
+        "prompt": "Object.prototype.hasOwnProperty.call(record,key)와 Date.prototype.getTime.call({})의 차이는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "둘 다 모든 객체에서 동작한다.",
+            "explanation": "Date 메서드는 Date 내부 슬롯을 요구한다."
+          },
+          {
+            "id": "b",
+            "text": "전자는 일반 객체에 빌려 쓸 수 있지만 후자는 TypeError다.",
+            "explanation": "메서드마다 receiver 계약과 내부 슬롯 요구를 확인한다."
+          },
+          {
+            "id": "c",
+            "text": "둘 다 prototype이 없는 객체에서는 무조건 금지된다.",
+            "explanation": "프로퍼티를 대상에서 찾지 않고 메서드 자체를 명시적으로 호출할 수 있다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q3-multilevel"
+      ],
+      "caseIds": [
+        "chain-and-null-end",
+        "override-and-parent-call"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q1-state-sharing",
+        "q2-constructor"
+      ],
+      "caseIds": [
+        "instance-state-isolated",
+        "constructor-descriptor",
+        "constructor-not-construction",
+        "prototype-has-no-instance-state"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-borrowing"
+      ],
+      "caseIds": [
+        "borrowed-and-shadowed-method",
+        "shared-method-distinct-state"
+      ]
+    }
+  ],
+  "example": {
+    "file": "curriculum/examples/prototype-delegation.mjs",
+    "expectedLogs": [
+      "{\"a\":\"record:A#one\",\"b\":\"record:B#two\",\"aEvents\":[\"saved\"],\"bEvents\":[]}",
+      "true true",
+      "true record:C#three",
+      "record:borrowed",
+      "TypeError"
+    ]
+  }
+}

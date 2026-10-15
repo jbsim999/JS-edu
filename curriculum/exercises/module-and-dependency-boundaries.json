@@ -1,0 +1,76 @@
+{
+  "id": "module-and-dependency-boundaries-exercise",
+  "lessonId": "module-and-dependency-boundaries",
+  "contentRevision": "draft-1",
+  "graderRevision": "module-and-dependency-boundaries-checks-v1",
+  "mode": "files",
+  "instructions": [
+    "main.mjs 전체를 편집하고 createReceiptService 하나만 export합니다. reader.mjs는 읽기 전용 내부 모듈입니다.",
+    "adapters는 배열이 아닌 객체이고 now·persist는 함수입니다. 잘못되면 TypeError이며 서비스 생성 때 함수를 호출하지 않습니다.",
+    "issue(order)는 readOrder(order)로 검증한 뒤 now()를 한 번 호출하고 유한한 number인지 검증합니다.",
+    "새 {id,items,total,createdAt}와 각 items 항목·배열을 동결합니다. 원본 주문의 추가 필드는 보존하고 결과에는 공개 필드만 둡니다.",
+    "persist(receipt)를 한 번 호출한 뒤 같은 receipt를 반환합니다. 주입 함수는 동기 계약이며 실패 값을 그대로 전파합니다.",
+    "DOM/fs/네트워크/전역 시계를 직접 호출하거나 import 시 I/O를 수행하지 않습니다."
+  ],
+  "template": "import { readOrder } from './reader.mjs';\n\n// 공개 export는 이 팩터리 하나입니다. 시계·저장은 호출자로부터 받습니다.\nexport function createReceiptService(adapters) {\n  // TODO: 의존성 검증 뒤 issue(order)를 가진 서비스를 반환하세요.\n  // TODO: issue 호출 때 주문 검증 → now → 불변 영수증 생성 → persist 순서입니다.\n}\n",
+  "profileId": "browser-esm",
+  "profileByVersion": {
+    "ES2026": "browser-esm"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/module-and-dependency-boundaries.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "공개 진입점에서 내부 함수를 노출하지 않는다",
+    "서비스 생성만으로 시계·저장을 호출하지 않는다",
+    "검증 뒤 시각을 읽고 완성된 영수증을 한 번 저장한다",
+    "인스턴스별 의존성과 매번 읽는 시각을 분리한다",
+    "동결 입력을 보존하고 반환 중첩 값을 공유하지 않는다",
+    "잘못된 주문을 시계·저장 호출 전에 거부한다",
+    "잘못된 어댑터와 시각을 저장 전에 거부한다",
+    "시계·저장의 실패를 같은 값으로 전파한다"
+  ],
+  "rubric": [
+    "최소 공개 표면과 내부 모듈",
+    "부수 효과 없는 초기화와 의존성 주입",
+    "검증·소유권·실패 전파"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const saved=[]; const service=submission.createReceiptService({now:()=>100,persist:receipt=>saved.push(receipt)}); const receipt=service.issue({id:'sample',items:[{sku:'book',quantity:2,unitPrice:1200}]}); observe({receipt,savedCount:saved.length});"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import { readOrder } from './reader.mjs';\n\n// 공개 export는 이 팩터리 하나입니다. 시계·저장은 호출자로부터 받습니다.\nexport function createReceiptService(adapters) {\n  // TODO: 의존성 검증 뒤 issue(order)를 가진 서비스를 반환하세요.\n  // TODO: issue 호출 때 주문 검증 → now → 불변 영수증 생성 → persist 순서입니다.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "reader.mjs",
+        "source": "// 순수 내부 모듈: 호스트 API, 시계, 저장소를 호출하지 않습니다.\nexport function readOrder(order) {\n  if (order === null || typeof order !== 'object' || Array.isArray(order) ||\n      typeof order.id !== 'string' || order.id.trim() === '' || !Array.isArray(order.items)) {\n    throw new TypeError('invalid order');\n  }\n  const items = [];\n  let total = 0;\n  for (const item of order.items) {\n    if (item === null || typeof item !== 'object' ||\n        typeof item.sku !== 'string' || item.sku.trim() === '' ||\n        !Number.isSafeInteger(item.quantity) || item.quantity <= 0 ||\n        !Number.isSafeInteger(item.unitPrice) || item.unitPrice < 0) {\n      throw new TypeError('invalid order item');\n    }\n    const subtotal = item.quantity * item.unitPrice;\n    if (!Number.isSafeInteger(subtotal) || !Number.isSafeInteger(total + subtotal)) {\n      throw new RangeError('order total is not a safe integer');\n    }\n    total += subtotal;\n    items.push({ sku: item.sku, quantity: item.quantity, unitPrice: item.unitPrice });\n  }\n  return { id: order.id, items, total };\n}\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/module-and-dependency-boundaries.json",
+  "referenceFile": "reference/module-and-dependency-boundaries.mjs",
+  "incorrectFile": "reference/incorrect/module-and-dependency-boundaries.mjs",
+  "exampleFile": "curriculum/examples/module-and-dependency-boundaries.mjs",
+  "exampleExpectedLogs": [
+    "constructed []",
+    "{\"id\":\"order-1\",\"items\":[{\"sku\":\"book\",\"quantity\":2,\"unitPrice\":1200}],\"total\":2400,\"createdAt\":100}",
+    "{\"id\":\"empty\",\"items\":[],\"total\":0,\"createdAt\":101}",
+    "calls [\"now\",\"persist\",\"now\",\"persist\"]",
+    "frozen true, input 1200"
+  ],
+  "verificationRecord": "docs/execution/module-and-dependency-boundaries-exercise.json"
+}

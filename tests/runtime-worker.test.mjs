@@ -8,7 +8,8 @@ import { equalBehaviorValue, gradeWorkerResults, isBehaviorValue, missingRequire
 // Runs the real worker script on an isolated Node worker thread for protocol/behavior tests.
 // This bridge does not emulate browser CSP or prove OS security isolation.
 class WorkerBridge {
-  constructor(url, { removeFeatures = [] } = {}) {
+  constructor(url, { removeFeatures = [], realmSetup = '' } = {}) {
+    this.featureGetterReads = 0;
     this.thread = new ThreadWorker(`
       const { parentPort, workerData, MessagePort } = require('node:worker_threads');
       globalThis.self = globalThis;
@@ -30,9 +31,10 @@ class WorkerBridge {
         for (let i = 0; i < parts.length - 1; i++) value = value[parts[i]];
         delete value[parts.at(-1)];
       }
+      new Function('parentPort', workerData.realmSetup)(parentPort);
       new Function(workerData.source)();
-    `, { eval: true, workerData: { source: readFileSync(url, 'utf8'), removeFeatures } });
-    this.thread.on('message', data => this.onmessage?.({ data }));
+    `, { eval: true, workerData: { source: readFileSync(url, 'utf8'), removeFeatures, realmSetup } });
+    this.thread.on('message', data => { if (data?.type === 'feature-getter-read') this.featureGetterReads++; this.onmessage?.({ data }); });
     this.thread.on('error', error => this.onerror?.({ message: error.message, preventDefault() {} }));
   }
   postMessage(data, ports) { this.thread.postMessage({ data, ports }, ports); }
@@ -252,6 +254,61 @@ test('required feature paths resolve callable APIs without evaluating getters or
   assert.deepEqual(missingRequiredFeatures(['Intl.Segmenter', 'Intl.NumberFormat.prototype.formatToParts', 'Intl.DateTimeFormat.prototype.formatToParts', 'unsafe'], realm), ['Intl.DateTimeFormat.prototype.formatToParts', 'unsafe']);
   assert.equal(getterRead, false);
   for (const requiredFeatures of [['Intl.Segmenter()'], ['Intl.Segmenter', 'Intl.Segmenter'], ['Intl.__proto__.toString'], 'Intl.Segmenter']) assert.throws(() => validateExercise({ ...exercise, requiredFeatures }));
+});
+
+test('required APIs may be inherited, but shadowing accessors are never read and lookup is bounded', () => {
+  let getterReads = 0;
+  let functionCalls = 0;
+  const inherited = { callable() { functionCalls++; }, namespace: Object.create({ nested() { functionCalls++; } }) };
+  Object.defineProperty(inherited, 'inheritedGetter', { get() { getterReads++; return () => {}; } });
+  const realm = Object.create(inherited);
+  Object.defineProperty(realm, 'ownGetter', { get() { getterReads++; return () => {}; } });
+  Object.defineProperty(realm, 'callable', { get() { getterReads++; return () => {}; } });
+  assert.deepEqual(missingRequiredFeatures(['namespace.nested', 'inheritedGetter', 'ownGetter', 'callable'], realm), ['inheritedGetter', 'ownGetter', 'callable']);
+  assert.equal(getterReads, 0);
+  assert.equal(functionCalls, 0);
+  let atLimit = { callable() { functionCalls++; } };
+  for (let depth = 0; depth < 15; depth++) atLimit = Object.create(atLimit);
+  assert.deepEqual(missingRequiredFeatures(['callable'], atLimit), []);
+  assert.deepEqual(missingRequiredFeatures(['callable'], Object.create(atLimit)), ['callable']);
+  assert.deepEqual(missingRequiredFeatures(['callable'], new Proxy({}, { getPrototypeOf() { throw new Error('unreadable'); } })), ['callable']);
+  assert.equal(functionCalls, 0);
+});
+
+test('real Node worker bridge supports native timer APIs moved onto its global prototype', async () => {
+  class InheritedWorkerFeatures extends WorkerBridge {
+    constructor(url) {
+      super(url, { realmSetup: `const prototype = Object.create(Object.getPrototypeOf(globalThis));
+        for (const name of ['setTimeout', 'queueMicrotask']) { Object.defineProperty(prototype, name, Object.getOwnPropertyDescriptor(globalThis, name)); delete globalThis[name]; }
+        Object.setPrototypeOf(globalThis, prototype);` });
+    }
+  }
+  const adapter = runner({ exercises: [{ ...exercise, requiredFeatures: ['setTimeout', 'queueMicrotask'] }], WorkerConstructor: InheritedWorkerFeatures });
+  assert.equal((await adapter.getEnvironment()).available, true);
+  assert.equal((await adapter.prepare(await payload(reference))).status, 'ready');
+  assert.equal((await adapter.run(await payload(reference))).status, 'success');
+  assert.equal((await adapter.submit(await payload(reference))).status, 'success');
+});
+
+test('real Node worker preflight rejects own and inherited API getters without invoking them or learner code', async () => {
+  for (const inherited of [false, true]) {
+    const workers = [];
+    class GetterWorkerFeature extends WorkerBridge {
+      constructor(url) {
+        super(url, { realmSetup: `const prototype = Object.create(Object.getPrototypeOf(globalThis));
+          delete globalThis.queueMicrotask;
+          Object.defineProperty(${inherited ? 'prototype' : 'globalThis'}, 'queueMicrotask', {get() { parentPort.postMessage({type:'feature-getter-read'}); return () => {}; }});
+          Object.setPrototypeOf(globalThis, prototype);` });
+        workers.push(this);
+      }
+    }
+    const adapter = runner({ exercises: [{ ...exercise, requiredFeatures: ['queueMicrotask'] }], WorkerConstructor: GetterWorkerFeature });
+    const result = await adapter.submit(await payload('throw new Error("must never execute");'));
+    assert.equal(result.status, 'infrastructure-error');
+    assert.deepEqual(result.missingFeatures, ['queueMicrotask']);
+    assert.doesNotMatch(result.stderr, /must never execute/);
+    assert.equal(workers[0].featureGetterReads, 0);
+  }
 });
 
 test('missing declared features are environment failures before preparation, execution, grading or grader loading', async () => {

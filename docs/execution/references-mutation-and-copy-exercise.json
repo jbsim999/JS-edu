@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "exerciseId": "references-mutation-and-copy-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "references-mutation-and-copy-checks-v1",
+  "executedTests": 10,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:7567d6f7e64c8111b5054145e03db1c20ce3d8688135ca6b0695f333d7f86a45",
+  "referenceChecks": [
+    "nested-cart-preserved",
+    "cycles-and-aliases",
+    "date-copy-policy",
+    "unsupported-values",
+    "accessor-not-invoked",
+    "deep-freeze-cycle",
+    "date-freeze-rejected",
+    "quantity-and-missing-item",
+    "primitive-and-null-prototype",
+    "unsupported-property-shapes"
+  ],
+  "referenceChecksPassed": 10,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

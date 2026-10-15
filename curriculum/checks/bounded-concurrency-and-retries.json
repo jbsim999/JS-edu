@@ -1,0 +1,339 @@
+{
+  "exerciseId": "bounded-concurrency-and-retries-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "bounded-concurrency-and-retries-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "limit-and-order",
+      "label": "활성 상한·슬롯 회수·입력 순서",
+      "probe": "const releases=[];const started=[];const startedSignals=Array.from({length:4},(_,i)=>new Promise(resolve=>{started[i]=resolve;}));const gates=Array.from({length:4},(_,index)=>new Promise(resolve=>{releases[index]=resolve;}));let active=0;let maximum=0;const starts=[];const tasks=gates.map((gate,index)=>()=>{starts.push(index);active++;maximum=Math.max(maximum,active);started[index]();return gate.then(value=>{active--;return value;});});const pending=Promise.resolve(submission.runBounded(tasks,{limit:2}));const ended=pending.then(()=>false,()=>false);await Promise.race([Promise.all(startedSignals.slice(0,2)),ended]);const initial=starts.slice();releases[1]('B');await Promise.race([startedSignals[2],ended]);const reused=starts.slice();releases[0]('A');releases[2]('C');releases[3]('D');observe({initial,reused,maximum,activeAfter:await pending.then(()=>active),results:await pending});",
+      "expected": {
+        "initial": [
+          0,
+          1
+        ],
+        "reused": [
+          0,
+          1,
+          2
+        ],
+        "maximum": 2,
+        "activeAfter": 0,
+        "results": [
+          {
+            "status": "fulfilled",
+            "value": "A",
+            "attempts": 1
+          },
+          {
+            "status": "fulfilled",
+            "value": "B",
+            "attempts": 1
+          },
+          {
+            "status": "fulfilled",
+            "value": "C",
+            "attempts": 1
+          },
+          {
+            "status": "fulfilled",
+            "value": "D",
+            "attempts": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "failure-slot-recovery",
+      "label": "throw와 rejection 후에도 다음 작업을 처리",
+      "probe": "const calls=[];const reasons=[{code:'SYNC'},{code:'ASYNC'}];const result=await submission.runBounded([()=>{calls.push(0);throw reasons[0];},()=>{calls.push(1);return Promise.reject(reasons[1]);},()=>{calls.push(2);return 0;}],{limit:1});observe({calls,result:result?.map((item,index)=>item.status==='rejected'?{status:item.status,same:item.reason===reasons[index],attempts:item.attempts}:item)});",
+      "expected": {
+        "calls": [
+          0,
+          1,
+          2
+        ],
+        "result": [
+          {
+            "status": "rejected",
+            "same": true,
+            "attempts": 1
+          },
+          {
+            "status": "rejected",
+            "same": true,
+            "attempts": 1
+          },
+          {
+            "status": "fulfilled",
+            "value": 0,
+            "attempts": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "retry-backoff",
+      "label": "시도 번호와 주입한 지수 backoff 기록",
+      "probe": "const attempts=[];const waits=[];const result=await submission.runBounded([({attempt,index})=>{attempts.push({attempt,index});if(attempt<3)throw new Error('retry');return 'ok';}],{limit:1,retries:2,baseDelay:3,wait:async(delay,context)=>{waits.push({delay,index:context.index,attempt:context.attempt});}});observe({attempts,waits,result});",
+      "expected": {
+        "attempts": [
+          {
+            "attempt": 1,
+            "index": 0
+          },
+          {
+            "attempt": 2,
+            "index": 0
+          },
+          {
+            "attempt": 3,
+            "index": 0
+          }
+        ],
+        "waits": [
+          {
+            "delay": 3,
+            "index": 0,
+            "attempt": 1
+          },
+          {
+            "delay": 6,
+            "index": 0,
+            "attempt": 2
+          }
+        ],
+        "result": [
+          {
+            "status": "fulfilled",
+            "value": "ok",
+            "attempts": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "retry-exhaustion",
+      "label": "재시도 상한 이후 마지막 오류 이유 보존",
+      "probe": "const reason={code:'PERMANENT'};let calls=0;const delays=[];const result=await submission.runBounded([()=>{calls++;return Promise.reject(reason);}],{retries:2,wait:async delay=>{delays.push(delay);}});observe({calls,delays,result:result?.map(item=>({status:item.status,attempts:item.attempts,same:item.reason===reason}))});",
+      "expected": {
+        "calls": 3,
+        "delays": [
+          1,
+          2
+        ],
+        "result": [
+          {
+            "status": "rejected",
+            "attempts": 3,
+            "same": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "cancel-before-start",
+      "label": "이미 취소된 입력에서는 작업을 시작하지 않는다",
+      "probe": "const controller=new AbortController();controller.abort();let calls=0;const result=await submission.runBounded([()=>{calls++;return 1;},()=>{calls++;return 2;}],{signal:controller.signal});observe({calls,result});",
+      "expected": {
+        "calls": 0,
+        "result": [
+          {
+            "status": "cancelled",
+            "attempts": 0
+          },
+          {
+            "status": "cancelled",
+            "attempts": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "cancel-active-and-queue",
+      "label": "취소 뒤 대기열을 시작하지 않고 활성 완료를 정리",
+      "probe": "const controller=new AbortController();const releases=[];const started=[];const startedSignals=Array.from({length:2},(_,i)=>new Promise(resolve=>{started[i]=resolve;}));const gates=Array.from({length:4},(_,index)=>new Promise(resolve=>{releases[index]=resolve;}));const starts=[];const signals=[];const pending=Promise.resolve(submission.runBounded(gates.map((gate,index)=>context=>{starts.push(index);signals.push(context.signal===controller.signal);started[index]?.();return gate;}),{limit:2,signal:controller.signal}));await Promise.race([Promise.all(startedSignals),pending.then(()=>false,()=>false)]);controller.abort();releases.forEach((release,index)=>release(index));const result=await pending;observe({starts,signals,result});",
+      "expected": {
+        "starts": [
+          0,
+          1
+        ],
+        "signals": [
+          true,
+          true
+        ],
+        "result": [
+          {
+            "status": "cancelled",
+            "attempts": 1
+          },
+          {
+            "status": "cancelled",
+            "attempts": 1
+          },
+          {
+            "status": "cancelled",
+            "attempts": 0
+          },
+          {
+            "status": "cancelled",
+            "attempts": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "cancel-during-backoff",
+      "label": "backoff 도중 취소되면 다음 시도를 시작하지 않는다",
+      "probe": "const controller=new AbortController();const calls=[];const waits=[];const result=await submission.runBounded([()=>{calls.push(0);throw new Error('retry');},()=>{calls.push(1);return 1;}],{limit:1,retries:3,signal:controller.signal,wait:async(delay,context)=>{waits.push({delay,same:context.signal===controller.signal});controller.abort();}});observe({calls,waits,result});",
+      "expected": {
+        "calls": [
+          0
+        ],
+        "waits": [
+          {
+            "delay": 1,
+            "same": true
+          }
+        ],
+        "result": [
+          {
+            "status": "cancelled",
+            "attempts": 1
+          },
+          {
+            "status": "cancelled",
+            "attempts": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "wait-failure-releases-slot",
+      "label": "wait 실패를 최종 실패로 기록하고 슬롯을 회수",
+      "probe": "const waitReason={code:'WAIT'};const calls=[];const result=await submission.runBounded([()=>{calls.push(0);throw new Error('task');},()=>{calls.push(1);return 'next';}],{limit:1,retries:3,wait:()=>Promise.reject(waitReason)});observe({calls,result:result?.map(item=>item.status==='rejected'?{status:item.status,attempts:item.attempts,same:item.reason===waitReason}:item)});",
+      "expected": {
+        "calls": [
+          0,
+          1
+        ],
+        "result": [
+          {
+            "status": "rejected",
+            "attempts": 1,
+            "same": true
+          },
+          {
+            "status": "fulfilled",
+            "value": "next",
+            "attempts": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "input-validation",
+      "label": "옵션과 작업 전체를 시작 전에 검증",
+      "probe": "let calls=0;const task=()=>{calls++;return 1;};const errors=[];for(const options of [{limit:0},{limit:1.5},{limit:33},{retries:-1},{retries:6},{retries:0.5},{baseDelay:-1},{baseDelay:Infinity},{baseDelay:'1'},{wait:null},null,[]]){try{await submission.runBounded([task],options);errors.push('accepted');}catch(error){errors.push(error.name);}}for(const tasks of [[task,null],null]){try{await submission.runBounded(tasks);errors.push('accepted');}catch(error){errors.push(error.name);}}observe({calls,errors});",
+      "expected": {
+        "calls": 0,
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ]
+      }
+    },
+    {
+      "id": "empty-and-immutable",
+      "label": "빈 입력·falsy 성공 값·원본 불변",
+      "probe": "const tasks=Object.freeze([()=>false,()=>0]);const options=Object.freeze({limit:1,retries:0,baseDelay:0});const result=await submission.runBounded(tasks,options);observe({empty:await submission.runBounded([]),result,length:tasks.length,options});",
+      "expected": {
+        "empty": [],
+        "result": [
+          {
+            "status": "fulfilled",
+            "value": false,
+            "attempts": 1
+          },
+          {
+            "status": "fulfilled",
+            "value": 0,
+            "attempts": 1
+          }
+        ],
+        "length": 2,
+        "options": {
+          "limit": 1,
+          "retries": 0,
+          "baseDelay": 0
+        }
+      }
+    },
+    {
+      "id": "backoff-holds-slot",
+      "label": "재시도 대기 중에도 해당 작업의 슬롯을 유지",
+      "probe": "let release;const gate=new Promise(resolve=>{release=resolve;});let entered;const waiting=new Promise(resolve=>{entered=resolve;});const starts=[];const pending=Promise.resolve(submission.runBounded([({attempt})=>{starts.push('a:'+attempt);if(attempt===1)throw new Error('again');return 'A';},()=>{starts.push('b');return 'B';}],{limit:1,retries:1,wait:()=>{entered();return gate;}}));await Promise.race([waiting,pending.then(()=>false,()=>false)]);const beforeRelease=starts.slice();release();const result=await pending;observe({beforeRelease,starts,result});",
+      "expected": {
+        "beforeRelease": [
+          "a:1"
+        ],
+        "starts": [
+          "a:1",
+          "a:2",
+          "b"
+        ],
+        "result": [
+          {
+            "status": "fulfilled",
+            "value": "A",
+            "attempts": 2
+          },
+          {
+            "status": "fulfilled",
+            "value": "B",
+            "attempts": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "dense-task-validation",
+      "label": "빈 슬롯과 상속 요소는 실행 전에 거부",
+      "probe": "let calls=0;const task=()=>{calls++;return 1;};const sparse=[task,,task];const inherited=[task,,task];const prototype=Object.create(Array.prototype);prototype[1]=task;Object.setPrototypeOf(inherited,prototype);const errors=[];for(const tasks of [sparse,inherited]){try{await submission.runBounded(tasks);errors.push(false);}catch(error){errors.push(error instanceof TypeError);}}observe({calls,errors});",
+      "expected": {
+        "calls": 0,
+        "errors": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "signal-validation-before-start",
+      "label": "실제 AbortSignal만 허용하고 잘못된 신호에서는 시작 금지",
+      "probe": "let calls=0;const errors=[];for(const signal of [null,123,{}, {aborted:false}]){try{await submission.runBounded([()=>{calls++;return 1;}],{signal});errors.push(false);}catch(error){errors.push(error instanceof TypeError);}}observe({calls,errors});",
+      "expected": {
+        "calls": 0,
+        "errors": [
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    }
+  ]
+}

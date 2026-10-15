@@ -1,0 +1,310 @@
+{
+  "exerciseId": "json-and-serialization-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "json-and-serialization-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "decode-large-id",
+      "label": "큰 ID를 숫자로 바꾸지 않고 복원한다",
+      "probe": "const codec=submission.createRecordCodec();observe(codec.decode(\"{\\\"version\\\":1,\\\"id\\\":\\\"9007199254740993\\\",\\\"count\\\":2,\\\"labels\\\":[\\\"한글\\\",\\\"x\\\"],\\\"data\\\":{\\\"active\\\":true}}\"));",
+      "expected": {
+        "ok": true,
+        "record": {
+          "version": 1,
+          "id": "9007199254740993",
+          "count": 2,
+          "labels": [
+            "한글",
+            "x"
+          ],
+          "data": {
+            "active": true
+          }
+        }
+      }
+    },
+    {
+      "id": "defaults",
+      "label": "생략한 선택 필드를 명시적 기본값으로 복원한다",
+      "probe": "observe(submission.createRecordCodec().decode('{\"version\":1,\"id\":\"0\",\"count\":0}'));",
+      "expected": {
+        "ok": true,
+        "record": {
+          "version": 1,
+          "id": "0",
+          "count": 0,
+          "labels": [],
+          "data": null
+        }
+      }
+    },
+    {
+      "id": "parse-and-schema",
+      "label": "문법 실패와 스키마 실패를 구분한다",
+      "probe": "const codec=submission.createRecordCodec();observe(['{','null','[]','{\"version\":1}'].map(text=>codec.decode(text)));",
+      "expected": [
+        {
+          "ok": false,
+          "error": "parse"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        }
+      ]
+    },
+    {
+      "id": "version-and-types",
+      "label": "지원하지 않는 개정과 잘못된 필드 타입을 구분한다",
+      "probe": "const codec=submission.createRecordCodec();observe([codec.decode('{\"version\":2,\"id\":\"1\",\"count\":0}'),codec.decode('{\"version\":\"1\",\"id\":\"1\",\"count\":0}'),codec.decode('{\"version\":1,\"id\":\"1\",\"count\":0,\"labels\":null}'),codec.decode(7)]);",
+      "expected": [
+        {
+          "ok": false,
+          "error": "version"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "input-type"
+        }
+      ]
+    },
+    {
+      "id": "numeric-boundaries",
+      "label": "숫자 ID·위험한 count·비정규 ID를 거부한다",
+      "probe": "const codec=submission.createRecordCodec();observe(['{\"version\":1,\"id\":9007199254740993,\"count\":0}','{\"version\":1,\"id\":\"1\",\"count\":9007199254740993}','{\"version\":1,\"id\":\"01\",\"count\":0}','{\"version\":1,\"id\":\"1\",\"count\":-1}'].map(text=>codec.decode(text)));",
+      "expected": [
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        },
+        {
+          "ok": false,
+          "error": "schema"
+        }
+      ]
+    },
+    {
+      "id": "encode-roundtrip",
+      "label": "정해진 필드 순서로 인코딩하고 다시 복원한다",
+      "probe": "const codec=submission.createRecordCodec();const input=Object.freeze({version:1,id:'42',count:3,labels:Object.freeze(['a']),data:Object.freeze({enabled:false})});const encoded=codec.encode(input);observe({encoded,decoded:codec.decode(encoded.text),input});",
+      "expected": {
+        "encoded": {
+          "ok": true,
+          "text": "{\"version\":1,\"id\":\"42\",\"count\":3,\"labels\":[\"a\"],\"data\":{\"enabled\":false}}"
+        },
+        "decoded": {
+          "ok": true,
+          "record": {
+            "version": 1,
+            "id": "42",
+            "count": 3,
+            "labels": [
+              "a"
+            ],
+            "data": {
+              "enabled": false
+            }
+          }
+        },
+        "input": {
+          "version": 1,
+          "id": "42",
+          "count": 3,
+          "labels": [
+            "a"
+          ],
+          "data": {
+            "enabled": false
+          }
+        }
+      }
+    },
+    {
+      "id": "serialization-loss",
+      "label": "순환·BigInt·함수·undefined·Date의 암묵적 손실을 거부한다",
+      "probe": "const codec=submission.createRecordCodec();const cyclic={};cyclic.self=cyclic;const sparse=[];sparse.length=1;const values=[cyclic,1n,()=>1,undefined,NaN,new Date(0),Symbol('s'),sparse];observe(values.map(data=>codec.encode({version:1,id:'1',count:0,data})));",
+      "expected": [
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        },
+        {
+          "ok": false,
+          "error": "serialization"
+        }
+      ]
+    },
+    {
+      "id": "unknown-root-and-safe-data-key",
+      "label": "허용하지 않은 루트 필드와 데이터 프로퍼티를 구분한다",
+      "probe": "const codec=submission.createRecordCodec();const invalid=codec.decode('{\"version\":1,\"id\":\"1\",\"count\":0,\"__proto__\":{\"polluted\":true}}');const safe=codec.decode('{\"version\":1,\"id\":\"1\",\"count\":0,\"data\":{\"__proto__\":{\"marker\":\"data\"}}}');observe({invalid,own:Object.hasOwn(safe.record.data,'__proto__'),marker:safe.record.data.__proto__.marker,globalType:typeof ({}).polluted});",
+      "expected": {
+        "invalid": {
+          "ok": false,
+          "error": "schema"
+        },
+        "own": true,
+        "marker": "data",
+        "globalType": "undefined"
+      }
+    },
+    {
+      "id": "depth-limit",
+      "label": "허용 데이터 깊이 초과를 거부한다",
+      "probe": "let data=0;for(let index=0;index<21;index++)data={child:data};observe(submission.createRecordCodec().encode({version:1,id:'1',count:0,data}));",
+      "expected": {
+        "ok": false,
+        "error": "serialization"
+      }
+    },
+    {
+      "id": "shared-data-and-negative-zero",
+      "label": "비순환 공유 값은 복제하고 음수 0은 JSON 0으로 정규화한다",
+      "probe": "const shared={value:1};const codec=submission.createRecordCodec();const encoded=codec.encode({version:1,id:'1',count:-0,data:{a:shared,b:shared,zero:-0}});observe(codec.decode(encoded.text));",
+      "expected": {
+        "ok": true,
+        "record": {
+          "version": 1,
+          "id": "1",
+          "count": 0,
+          "labels": [],
+          "data": {
+            "a": {
+              "value": 1
+            },
+            "b": {
+              "value": 1
+            },
+            "zero": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "accessors-symbols-and-decoration",
+      "label": "접근자를 실행하지 않고 비데이터 프로퍼티와 장식 배열을 거부한다",
+      "probe": "const codec=submission.createRecordCodec();let calls=0;const root={version:1,id:'1'};Object.defineProperty(root,'count',{enumerable:true,get(){calls++;return 0;}});const accessor={};Object.defineProperty(accessor,'value',{enumerable:true,get(){calls++;return 1;}});const hidden={};Object.defineProperty(hidden,'value',{value:1,enumerable:false});const symbolKey={[Symbol('x')]:1};const decorated=[1];decorated.note='extra';const outputs=[codec.encode(root),...([accessor,hidden,symbolKey,decorated,Infinity].map(data=>codec.encode({version:1,id:'1',count:0,data})))];observe({outputs,calls});",
+      "expected": {
+        "outputs": [
+          {
+            "ok": false,
+            "error": "schema"
+          },
+          {
+            "ok": false,
+            "error": "serialization"
+          },
+          {
+            "ok": false,
+            "error": "serialization"
+          },
+          {
+            "ok": false,
+            "error": "serialization"
+          },
+          {
+            "ok": false,
+            "error": "serialization"
+          },
+          {
+            "ok": false,
+            "error": "serialization"
+          }
+        ],
+        "calls": 0
+      }
+    },
+    {
+      "id": "null-prototype-record",
+      "label": "null 프로토타입의 own 데이터도 명시적 스키마로 정상화한다",
+      "probe": "const data=Object.assign(Object.create(null),{value:2});const record=Object.assign(Object.create(null),{version:1,id:'2',count:0,data});const codec=submission.createRecordCodec();observe(codec.decode(codec.encode(record).text));",
+      "expected": {
+        "ok": true,
+        "record": {
+          "version": 1,
+          "id": "2",
+          "count": 0,
+          "labels": [],
+          "data": {
+            "value": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "labels-own-dense-strings",
+      "label": "labels의 빈 자리·undefined·접근자·추가 필드는 schema 오류다",
+      "probe": "const codec=submission.createRecordCodec();const sparse=[];sparse.length=1;let calls=0;const accessor=[];Object.defineProperty(accessor,'0',{enumerable:true,configurable:true,get(){calls++;return 'a';}});const decorated=['a'];decorated.note='extra';const outputs=[sparse,[undefined],accessor,decorated].map(labels=>codec.encode({version:1,id:'1',count:0,labels}));observe({outputs,calls});",
+      "expected": {
+        "outputs": [
+          {
+            "ok": false,
+            "error": "schema"
+          },
+          {
+            "ok": false,
+            "error": "schema"
+          },
+          {
+            "ok": false,
+            "error": "schema"
+          },
+          {
+            "ok": false,
+            "error": "schema"
+          }
+        ],
+        "calls": 0
+      }
+    }
+  ]
+}

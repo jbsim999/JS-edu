@@ -1,0 +1,70 @@
+{
+  "id": "iterators-and-generators-exercise",
+  "lessonId": "iterators-and-generators",
+  "contentRevision": "draft-1",
+  "graderRevision": "iterators-and-generators-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "takeMatching(iterable,limit,predicate)는 동기 generator다. limit은 0 이상의 정수만 허용하며 아니면 generator가 처음 실행될 때 RangeError를 던진다. limit 0은 원본 iterator를 얻지 않고 종료한다. 나머지는 원본 순서대로 predicate(value)를 한 번씩 호출하여 truthy인 값만 최대 limit개 yield한다.\n\ngenerator 생성만으로 원본을 소비하지 않는다. 제한에 도달한 뒤 더 진행하거나 소비자가 break/return하면 원본 순회를 닫는다. 원본이 자연 소진되면 불필요한 return을 추가하지 않는다. predicate가 던지면 같은 값을 보존하고 루프 정리를 수행한다. 원본 next 자체의 예외 정책이나 비동기 순회는 이번 과제에서 확장하지 않는다."
+  ],
+  "template": "export function* takeMatching(iterable, limit, predicate) {\n  // TODO: 필요한 값만 지연 소비하고 순회 종료 시 원본 iterator를 정리하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/iterators-and-generators.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "조건에 맞는 값만 제한 수만큼 반환한다",
+    "제한 0은 iterator를 얻거나 predicate를 호출하지 않는다",
+    "next 요청 때만 읽고 제한 뒤 한 항목 더 소비하지 않는다",
+    "소비자의 break가 원본 정리까지 전달된다",
+    "predicate 예외를 보존하며 원본을 정리한다",
+    "자연 소진 뒤 불필요하게 return을 호출하지 않는다",
+    "음수·소수·무한 제한을 거부한다",
+    "빈 iterable과 독립된 순회를 처리한다"
+  ],
+  "rubric": [
+    "iterable·iterator·generator의 역할과 일회성 소비를 구분한다.",
+    "지연 실행으로 필요한 값만 소비하고 제한·빈 입력을 처리한다.",
+    "break·정상 소진·predicate 오류의 IteratorClose 경로를 추적한다."
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "takeMatching",
+    "parameters": [
+      "iterable",
+      "limit",
+      "predicate"
+    ],
+    "async": false,
+    "generator": true,
+    "runProbe": "observe([...submission.takeMatching([1,2,3,4,5,6],2,value=>value%2===0)]);"
+  },
+  "editable": {
+    "prefix": "export function* takeMatching(iterable, limit, predicate) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 필요한 값만 지연 소비하고 순회 종료 시 원본 iterator를 정리하세요."
+  },
+  "graderFile": "curriculum/checks/iterators-and-generators.json",
+  "referenceFile": "reference/iterators-and-generators.mjs",
+  "incorrectFile": "reference/incorrect/iterators-and-generators.mjs",
+  "exampleFile": "curriculum/examples/iterators-and-generators.mjs",
+  "exampleExpectedLogs": [
+    "[]",
+    "{\"value\":2,\"done\":false}",
+    "[1,2]",
+    "{\"value\":4,\"done\":false}",
+    "true",
+    "[1,2,3,4,\"closed\"]",
+    "[]"
+  ],
+  "verificationRecord": "docs/execution/iterators-and-generators-exercise.json"
+}

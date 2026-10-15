@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "exerciseId": "composition-and-domain-contracts-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "composition-and-domain-contracts-checks-v1",
+  "executedTests": 9,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:49bc1b4dd290d6abe502a7159d60da754ad3066a2d4c6dc9c240d0c5bc74c158",
+  "referenceChecks": [
+    "replaceable-policy",
+    "separate-checkouts",
+    "one-call-unbound-receiver",
+    "invalid-amount-before-policy",
+    "discount-output-contract",
+    "invalid-replacement-preserves-policy",
+    "original-failure-propagates",
+    "detached-and-fresh-results",
+    "reentrant-policy-change"
+  ],
+  "referenceChecksPassed": 9,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

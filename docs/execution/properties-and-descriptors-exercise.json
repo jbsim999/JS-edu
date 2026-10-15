@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "properties-and-descriptors-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "properties-and-descriptors-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:37da8c0ce18e22ea27bb3c01c2f9033ce6514c100e895777345eb7cc6da76d5f",
+  "referenceChecks": [
+    "allowed-own-fields",
+    "missing-and-undefined",
+    "inherited-excluded",
+    "accessors-rejected",
+    "enumeration-and-priority",
+    "prototype-names-safe",
+    "source-descriptor-preserved",
+    "empty-and-shallow-contract"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

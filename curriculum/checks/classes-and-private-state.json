@@ -1,0 +1,137 @@
+{
+  "exerciseId": "classes-and-private-state-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "classes-and-private-state-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "valid-state-transitions",
+      "label": "정상 증감과 snapshot이 같은 상태를 나타낸다",
+      "probe": "const {StockItem}=submission.createStockTypes();const item=new StockItem('A',3);observe({first:item.adjust(2),second:item.adjust(-4),snapshot:item.snapshot(),name:item.name,quantity:item.quantity});",
+      "expected": {
+        "first": 5,
+        "second": 1,
+        "snapshot": {
+          "name": "A",
+          "quantity": 1
+        },
+        "name": "A",
+        "quantity": 1
+      }
+    },
+    {
+      "id": "invalid-adjust-no-mutation",
+      "label": "음수 재고·소수·비유한·overflow 실패가 기존 상태를 보존한다",
+      "probe": "const {StockItem}=submission.createStockTypes();const item=new StockItem('A',2);const errors=[-3,0.5,NaN,Infinity,'1'].map(delta=>{try{item.adjust(delta);return 'none';}catch(error){return error.name;}});const maximum=new StockItem('M',Number.MAX_SAFE_INTEGER);let overflow='none';try{maximum.adjust(1);}catch(error){overflow=error.name;}observe({errors,quantity:item.quantity,overflow,maximum:maximum.quantity});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "quantity": 2,
+        "overflow": "RangeError",
+        "maximum": 9007199254740991
+      }
+    },
+    {
+      "id": "construction-validation",
+      "label": "생성 단계에서도 이름·재고 불변식을 검사한다",
+      "probe": "const {StockItem}=submission.createStockTypes();const errors=[['',1],[3,1],['A',-1],['A',1.5]].map(args=>{try{new StockItem(...args);return 'none';}catch(error){return error.name;}});observe({errors,defaultQuantity:new StockItem('A').quantity});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "defaultQuantity": 0
+      }
+    },
+    {
+      "id": "tracked-success-only",
+      "label": "부모 검증이 성공한 전이만 기록한다",
+      "probe": "const {TrackedStockItem}=submission.createStockTypes();const item=new TrackedStockItem('A',2);item.adjust(3);try{item.adjust(-99);}catch{}observe({quantity:item.quantity,history:item.history});",
+      "expected": {
+        "quantity": 5,
+        "history": [
+          {
+            "before": 2,
+            "delta": 3,
+            "after": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-isolation",
+      "label": "인스턴스와 반환된 기록 배열·항목이 내부 상태를 공유하지 않는다",
+      "probe": "const {TrackedStockItem}=submission.createStockTypes();const a=new TrackedStockItem('A',2),b=new TrackedStockItem('B',4);a.adjust(1);const history=a.history,second=a.history;const snapshot=a.snapshot();const fresh=history!==second&&history[0]!==second[0]&&snapshot!==a.snapshot();try{history[0].after=999;}catch{}try{history.push({before:0,delta:0,after:0});}catch{}try{snapshot.quantity=999;}catch{}observe({fresh,a:a.snapshot(),aHistory:a.history,bHistory:b.history});",
+      "expected": {
+        "a": {
+          "name": "A",
+          "quantity": 3
+        },
+        "aHistory": [
+          {
+            "before": 2,
+            "delta": 1,
+            "after": 3
+          }
+        ],
+        "bHistory": [],
+        "fresh": true
+      }
+    },
+    {
+      "id": "readonly-and-private-brand",
+      "label": "공개 getter 재할당과 가짜 receiver가 private 상태를 바꾸지 못한다",
+      "probe": "const {StockItem}=submission.createStockTypes();const item=new StockItem('A',2);let assignment='none',borrow='none';try{item.quantity=99;}catch(error){assignment=error.name;}try{item['#quantity']=88;}catch{}try{StockItem.prototype.adjust.call({quantity:2},1);}catch(error){borrow=error.name;}observe({assignment,borrow,quantity:item.quantity,snapshot:item.snapshot()});",
+      "expected": {
+        "assignment": "TypeError",
+        "borrow": "TypeError",
+        "quantity": 2,
+        "snapshot": {
+          "name": "A",
+          "quantity": 2
+        }
+      }
+    },
+    {
+      "id": "inherited-static-factory",
+      "label": "상속된 static factory가 호출한 클래스로 인스턴스를 만든다",
+      "probe": "const {StockItem,TrackedStockItem}=submission.createStockTypes();const item=TrackedStockItem.from(Object.freeze({name:'A',quantity:4}));item.adjust(-1);observe({base:item instanceof StockItem,derived:item instanceof TrackedStockItem,snapshot:item.snapshot(),history:item.history,instanceHasFrom:typeof item.from});",
+      "expected": {
+        "base": true,
+        "derived": true,
+        "snapshot": {
+          "name": "A",
+          "quantity": 3
+        },
+        "history": [
+          {
+            "before": 4,
+            "delta": -1,
+            "after": 3
+          }
+        ],
+        "instanceHasFrom": "undefined"
+      }
+    },
+    {
+      "id": "class-and-shared-methods",
+      "label": "class의 new 요구와 메서드 공유·인스턴스 데이터 분리를 유지한다",
+      "probe": "const {StockItem,TrackedStockItem}=submission.createStockTypes();let withoutNew='none';try{StockItem('A',1);}catch(error){withoutNew=error.name;}const a=new TrackedStockItem('A'),b=new TrackedStockItem('B');observe({withoutNew,sameMethod:a.adjust===b.adjust,ownAdjust:Object.hasOwn(a,'adjust'),prototypeHistoryOwn:Object.hasOwn(TrackedStockItem.prototype,'#changes'),a:a.quantity,b:b.quantity});",
+      "expected": {
+        "withoutNew": "TypeError",
+        "sameMethod": true,
+        "ownAdjust": false,
+        "prototypeHistoryOwn": false,
+        "a": 0,
+        "b": 0
+      }
+    }
+  ]
+}

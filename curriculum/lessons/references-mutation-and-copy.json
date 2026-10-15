@@ -1,0 +1,183 @@
+{
+  "id": "references-mutation-and-copy",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "참조·변경·복사: 장바구니를 고치면서 원본 지키기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "원시값 불변성과 객체 공유·비변경 갱신을 구분한다.",
+    "순환·별칭·Date·함수의 복사 정책을 구현한다.",
+    "얕은 freeze의 범위와 깊은 불변성의 한계를 설명한다."
+  ],
+  "prerequisites": [
+    "call-stack-and-completion",
+    "bindings-and-closures",
+    "higher-order-functions"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §6.1 Types · §20.1.2.6 Object.freeze",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=463",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML §2.7 Safe passing of structured data",
+      "url": "https://html.spec.whatwg.org/multipage/structured-data.html#safe-passing-of-structured-data",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "references-mutation-and-copy-exercise",
+  "steps": {
+    "theory": "장바구니를 {...cart}로 복사한 뒤 copy.items[0].quantity를 바꿨는데 이전 화면의 값까지 달라졌다. 펼치기는 바깥 객체의 프로퍼티 값을 복사한다. 그 값이 배열이나 객체라면 같은 객체를 가리키는 값이 복사되어 중첩 내용은 여전히 공유된다. 함수에 객체를 전달할 때도 객체의 참조를 나타내는 값이 전달되는 것이며, 매개변수 재할당과 원본 객체 변경은 다르다. 문자열 같은 원시값의 불변성과 const 바인딩의 재할당 금지도 각각 구분한다.\n\n깊은 복사를 '모든 것을 재귀로 펼치기'로 정의하면 순환에서 끝나지 않고 같은 하위 객체를 두 번 복사해 별칭 관계를 잃는다. 원본→복사본 대응표를 먼저 등록해야 자기 자신과 공유 자식을 복사본 안에서 다시 연결할 수 있다. Date는 빈 프로퍼티 모음이 아니라 내부 시간값을 가진 객체이므로 타입별 계약이 필요하다.\n\nObject.freeze는 대상 객체 자체의 프로퍼티를 고정한다. 중첩 객체를 자동 동결하지 않고 Date의 내부 시간값도 고정하지 않는다. structuredClone은 HTML 호스트 API로 순환·Date를 다루지만 함수나 임의 사용자 프로토타입을 그대로 보존하는 만능 도구가 아니다. 이 강의의 제한된 복사기는 지원 범위를 명시하고 나머지는 거부한다.",
+    "example": "첫 예제는 수량을 3으로 만든 새 장바구니의 상품명을 바꿔도 원본의 수량 1과 '연필'이 유지되는지 확인한다. 다음은 순환 객체를 복사한 뒤 copy.self가 copy 자신을 가리키는지 비교한다. deepFreezeCopy는 중첩 detail까지 동결한다. 마지막 Date 예제는 freeze 뒤에도 setTime으로 1000으로 바뀌므로 'frozen이면 모든 내부 상태가 불변'이라는 가정의 반례다.",
+    "quiz": "q1은 얕은 복사의 공유 부분을, q2는 순환과 별칭을, q3은 freeze의 범위를, q4는 structuredClone과 JSON 왕복의 한계를 묻는다. 복사가 필요한 경로만 새로 만드는 구조적 공유와 전체 복사를 비교하되 둘을 같은 비용이나 같은 지원 범위로 취급하지 않는다.",
+    "practice": "교육용 편집 화면의 취소 버튼은 원본 스냅샷이 보존돼야 동작한다. 모든 데이터를 무조건 깊게 복사하면 큰 객체 그래프의 비용이 늘고, 공유하면 수정 경로를 통제해야 한다. 장바구니 스키마가 고정되면 바뀐 경로만 복사하는 대안도 있다. 이번 실습은 복사 의미를 검증하기 위해 제한된 전체 복사를 선택한다. Proxy·호스트 객체·외부 자원·사용자 클래스는 지원하지 않는다. 메모에는 허용 타입, 순환/Date 처리, 불변 스냅샷에 Date를 그대로 넣지 않는 대안과 복사 비용 측정 방법을 적는다.",
+    "lab": "createCopyTools()에서 cloneData, reviseCart, deepFreezeCopy를 반환한다. cloneData는 Symbol/함수 외 원시값, 일반 객체·null 원형 객체·표준 배열(하위 클래스 제외)·추가 자체 필드 없는 Date를 복사하고 순환/별칭을 유지한다. 객체의 자체 열거 가능한 문자열 데이터 프로퍼티만 지원하며 접근자·Symbol 키·비열거 필드·기타 인스턴스는 TypeError다(배열 length 제외). descriptor 속성은 보존하지 않고 복사본 필드는 쓰기 가능하다. reviseCart는 고유 id의 items를 가진 정상 cart에서 지정 항목 수량만 바꾼 독립 복사본을 반환한다. 수량은 0 이상 안전 정수, 없는 id/불량 수량은 RangeError다. deepFreezeCopy는 cloneData 결과의 배열/일반 객체를 순환 안전하게 동결하며 Date는 TypeError로 거부한다. 모든 입력 원본은 보존한다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-shallow-copy",
+        "prompt": "{...cart}만 복사한 뒤 copy.items[0].quantity=3을 실행하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "중첩 items가 공유돼 원본 항목도 바뀔 수 있다.",
+            "explanation": "바깥 객체를 새로 만든 것과 중첩 객체를 새로 만든 것은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "모든 중첩 객체가 자동 복사된다.",
+            "explanation": "객체 펼치기는 깊은 복사 계약이 아니다."
+          },
+          {
+            "id": "c",
+            "text": "const cart라면 변경이 차단된다.",
+            "explanation": "const는 바인딩 재할당을 제한한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-cycle-alias",
+        "prompt": "source.a와 source.b가 같은 객체이고 source.self===source다. 복사 계약은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "필드마다 새 객체를 만들어 공유를 모두 없앤다.",
+            "explanation": "이 계약은 원본 안의 별칭 관계를 보존해야 한다."
+          },
+          {
+            "id": "b",
+            "text": "copy.a===copy.b와 copy.self===copy를 유지하되 원본과 분리한다.",
+            "explanation": "대응표에 복사본을 먼저 등록하면 순환과 별칭을 함께 처리할 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "순환 객체는 JSON 왕복으로 해결한다.",
+            "explanation": "일반 JSON.stringify는 순환 구조를 그대로 직렬화하지 못한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-freeze-depth",
+        "prompt": "Object.freeze({detail:{n:1}})와 Object.freeze(new Date(0))에 대한 설명은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "둘 다 모든 내부 상태가 불변이다.",
+            "explanation": "중첩 객체와 내부 슬롯까지 자동 고정하는 계약이 아니다."
+          },
+          {
+            "id": "b",
+            "text": "freeze는 아무런 속성도 바꾸지 않는다.",
+            "explanation": "대상 자신의 확장·프로퍼티 속성을 제한한다."
+          },
+          {
+            "id": "c",
+            "text": "detail.n과 Date 내부 시간값은 여전히 바뀔 수 있다.",
+            "explanation": "원하는 불변성 범위와 허용 타입을 별도로 정해야 한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q4-clone-boundaries",
+        "prompt": "structuredClone과 JSON 왕복을 비교한 설명 중 맞는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "둘 다 함수를 완전히 복사한다.",
+            "explanation": "함수는 structured clone 대상이 아니며 JSON도 함수 의미를 보존하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "structuredClone은 HTML 호스트 API이며 JSON과 지원 타입·손실이 다르다.",
+            "explanation": "언어 내장 API와 호스트 계약을 구분하고 사용자 클래스의 의미 보존도 따로 확인한다."
+          },
+          {
+            "id": "c",
+            "text": "JSON 왕복은 undefined와 Date 타입을 그대로 보존한다.",
+            "explanation": "undefined 필드가 빠질 수 있고 Date가 문자열로 바뀔 수 있다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-shallow-copy"
+      ],
+      "caseIds": [
+        "nested-cart-preserved",
+        "quantity-and-missing-item"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-cycle-alias",
+        "q4-clone-boundaries"
+      ],
+      "caseIds": [
+        "cycles-and-aliases",
+        "date-copy-policy",
+        "primitive-and-null-prototype",
+        "unsupported-values",
+        "accessor-not-invoked",
+        "unsupported-property-shapes"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-freeze-depth"
+      ],
+      "caseIds": [
+        "deep-freeze-cycle",
+        "date-freeze-rejected"
+      ]
+    }
+  ],
+  "example": {
+    "file": "curriculum/examples/references-mutation-and-copy.mjs",
+    "expectedLogs": [
+      "[{\"id\":\"p\",\"quantity\":1,\"detail\":{\"title\":\"연필\"}},{\"id\":\"p\",\"quantity\":3,\"detail\":{\"title\":\"펜\"}}]",
+      "true true",
+      "true true",
+      "1000"
+    ]
+  }
+}

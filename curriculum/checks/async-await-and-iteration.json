@@ -1,0 +1,124 @@
+{
+  "exerciseId": "async-await-and-iteration-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "async-await-and-iteration-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "sequential-mapping",
+      "label": "페이지 소비와 비동기 변환의 순서를 보존",
+      "probe": "const events=[];async function* source(){for(const value of [2,4,6]){events.push('pull:'+value);yield value;}}const result=await submission.collectPages(source(),3,async(value,index)=>{events.push('map:'+index);await Promise.resolve();events.push('done:'+index);return value+index;});observe({result,events});",
+      "expected": {
+        "result": [
+          2,
+          5,
+          8
+        ],
+        "events": [
+          "pull:2",
+          "map:0",
+          "done:0",
+          "pull:4",
+          "map:1",
+          "done:1",
+          "pull:6",
+          "map:2",
+          "done:2"
+        ]
+      }
+    },
+    {
+      "id": "bounded-break-cleanup",
+      "label": "상한 뒤에 추가로 읽지 않고 async finally를 기다린다",
+      "probe": "const events=[];async function* source(){try{for(const value of [1,2,3,4]){events.push('pull:'+value);yield value;}}finally{await Promise.resolve();events.push('closed');}}const result=await submission.collectPages(source(),2,value=>value*10);observe({result,events});",
+      "expected": {
+        "result": [
+          10,
+          20
+        ],
+        "events": [
+          "pull:1",
+          "pull:2",
+          "closed"
+        ]
+      }
+    },
+    {
+      "id": "empty-and-default",
+      "label": "빈 입력과 기본 mapper의 페이지 경계",
+      "probe": "async function* empty(){}const page=Object.freeze([1,2]);async function* one(){yield page;}const result=await submission.collectPages(one(),4);observe({empty:await submission.collectPages(empty(),2),result,samePage:result?.[0]===page});",
+      "expected": {
+        "empty": [],
+        "result": [
+          [
+            1,
+            2
+          ]
+        ],
+        "samePage": true
+      }
+    },
+    {
+      "id": "consumer-error-cleanup",
+      "label": "mapper throw/rejection에서 원인과 생산자 정리를 유지",
+      "probe": "const outcomes=[];for(const asynchronous of [false,true]){const reason=new Error('map');const events=[];async function* source(){try{events.push('open');yield 1;events.push('overread');yield 2;}finally{await Promise.resolve();events.push('close');}}let same=false;try{await submission.collectPages(source(),5,()=>{if(asynchronous)return Promise.reject(reason);throw reason;});}catch(error){same=error===reason;}outcomes.push({same,events});}observe(outcomes);",
+      "expected": [
+        {
+          "same": true,
+          "events": [
+            "open",
+            "close"
+          ]
+        },
+        {
+          "same": true,
+          "events": [
+            "open",
+            "close"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "producer-error",
+      "label": "async generator의 실패와 자체 finally를 보존",
+      "probe": "const reason={code:'PAGE'};const events=[];async function* source(){try{yield 1;throw reason;}finally{events.push('producer-close');}}let same=false;try{await submission.collectPages(source(),4,value=>{events.push('map:'+value);return value;});}catch(error){same=error===reason;}observe({same,events});",
+      "expected": {
+        "same": true,
+        "events": [
+          "map:1",
+          "producer-close"
+        ]
+      }
+    },
+    {
+      "id": "validate-before-pull",
+      "label": "잘못된 상한·mapper를 읽기 전에 거부",
+      "probe": "const outcomes=[];let reads=0;const source={async *[Symbol.asyncIterator](){reads++;yield 1;}};for(const limit of [0,-1,1.5,101,Infinity,'2']){try{await submission.collectPages(source,limit);outcomes.push('accepted');}catch(error){outcomes.push(error.name);}}try{await submission.collectPages(source,2,null);outcomes.push('accepted');}catch(error){outcomes.push(error.name);}observe({outcomes,reads});",
+      "expected": {
+        "outcomes": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "TypeError"
+        ],
+        "reads": 0
+      }
+    },
+    {
+      "id": "single-page-bound",
+      "label": "첫 페이지가 falsy여도 상한을 하나로 센다",
+      "probe": "let pulls=0;let closed=0;async function* source(){try{for(const value of [0,false,'']){pulls++;yield value;}}finally{closed++;}}const result=await submission.collectPages(source(),1);observe({result,pulls,closed});",
+      "expected": {
+        "result": [
+          0
+        ],
+        "pulls": 1,
+        "closed": 1
+      }
+    }
+  ]
+}

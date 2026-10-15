@@ -1,6 +1,7 @@
 import { readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { validateModuleExercise } from './verify-module-curriculum.mjs';
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const nonempty = value => typeof value === 'string' && value.trim().length > 0;
@@ -187,7 +188,8 @@ export async function validateProject(directory) {
         }
       }
     }
-    need(['structure', 'body', 'project'].includes(exercise.mode), `Invalid exercise mode: ${id}`);
+    need(['structure', 'body', 'project', 'files'].includes(exercise.mode), `Invalid exercise mode: ${id}`);
+    if (exercise.mode === 'files') need(exercise.runner?.kind === 'module-files', `Files mode requires a module-files runner: ${id}`);
     need(typeof exercise.executionVerified === 'boolean', `Missing executionVerified: ${id}`);
     if (exercise.contentRevision !== undefined || exercise.runner !== undefined) {
       need(nonempty(exercise.contentRevision) && exercise.contentRevision === lessons.get(exercise.lessonId)?.contentRevision,
@@ -201,31 +203,38 @@ export async function validateProject(directory) {
     }
     if (exercise.runner !== undefined) {
       const runner = exercise.runner;
-      need(runner?.kind === 'function-body', `Unsupported runner kind: ${id}`);
-      need(nonempty(runner?.exportName) && /^[A-Za-z_$][\w$]*$/.test(runner.exportName), `Invalid runner exportName: ${id}`);
-      need(typeof runner?.async === 'boolean', `Runner async flag missing: ${id}`);
-      need(runner?.generator === undefined || typeof runner.generator === 'boolean', `Invalid runner generator flag: ${id}`);
-      const parameters = list(runner?.parameters, `${id}.runner.parameters`);
-      need(parameters.every(nonempty), `Runner parameters must be nonempty strings: ${id}`);
+      need(['function-body', 'module-files'].includes(runner?.kind), `Unsupported runner kind: ${id}`);
       need(nonempty(exercise.graderRevision), `Missing graderRevision: ${id}`);
       need(Array.isArray(exercise.files) && exercise.files.length > 0, `Runner requires a starter file: ${id}`);
       need(Array.isArray(exercise.behaviorCriteria) && exercise.behaviorCriteria.length > 0 && exercise.behaviorCriteria.every(nonempty),
         `Runner requires behavior criteria: ${id}`);
-      const editable = exercise.editable;
-      need(editable && ['prefix', 'suffix', 'initialBody'].every(field => typeof editable[field] === 'string'), `Missing editable template parts: ${id}`);
-      if (editable && ['prefix', 'suffix', 'initialBody'].every(field => typeof editable[field] === 'string')) {
-        need(editable.prefix + editable.initialBody + editable.suffix === exercise.template, `Editable/template mismatch: ${id}`);
-        const declaration = `export ${runner?.async ? 'async ' : ''}function${runner?.generator ? '*' : ''} ${runner?.exportName}(${parameters.join(', ')}) {\n`;
-        need(normalizedLines(editable.prefix) === declaration && /^\s*\}\s*$/u.test(editable.suffix), `Displayed declaration/runner mismatch: ${id}`);
-        try {
-          // A strict outer factory also supports default/rest parameters, whose bodies cannot
-          // contain their own "use strict" directive. It matches the authored ES module contract.
-          new Function(`"use strict"; return ${runner?.async ? 'async ' : ''}function${runner?.generator ? '*' : ''} ${runner?.exportName}(${parameters.join(',')}) {\n${editable.initialBody}\n}`);
-        } catch (error) { errors.push(`Invalid runner function syntax: ${id}: ${error.message}`); }
+      if (runner?.kind === 'module-files') {
+        errors.push(...validateModuleExercise(exercise));
+      } else if (runner?.kind === 'function-body') {
+        need(nonempty(runner.exportName) && /^[A-Za-z_$][\w$]*$/.test(runner.exportName), `Invalid runner exportName: ${id}`);
+        need(typeof runner.async === 'boolean', `Runner async flag missing: ${id}`);
+        need(runner.generator === undefined || typeof runner.generator === 'boolean', `Invalid runner generator flag: ${id}`);
+        const parameters = list(runner.parameters, `${id}.runner.parameters`);
+        need(parameters.every(nonempty), `Runner parameters must be nonempty strings: ${id}`);
+        const editable = exercise.editable;
+        need(editable && ['prefix', 'suffix', 'initialBody'].every(field => typeof editable[field] === 'string'), `Missing editable template parts: ${id}`);
+        if (editable && ['prefix', 'suffix', 'initialBody'].every(field => typeof editable[field] === 'string')) {
+          need(editable.prefix + editable.initialBody + editable.suffix === exercise.template, `Editable/template mismatch: ${id}`);
+          const declaration = `export ${runner.async ? 'async ' : ''}function${runner.generator ? '*' : ''} ${runner.exportName}(${parameters.join(', ')}) {\n`;
+          need(normalizedLines(editable.prefix) === declaration && /^\s*\}\s*$/u.test(editable.suffix), `Displayed declaration/runner mismatch: ${id}`);
+          try {
+            // A strict outer factory also supports default/rest parameters, whose bodies cannot
+            // contain their own "use strict" directive. It matches the authored ES module contract.
+            new Function(`"use strict"; return ${runner.async ? 'async ' : ''}function${runner.generator ? '*' : ''} ${runner.exportName}(${parameters.join(',')}) {\n${editable.initialBody}\n}`);
+          } catch (error) { errors.push(`Invalid runner function syntax: ${id}: ${error.message}`); }
+        }
       }
       if (runner?.runProbe !== undefined) {
         need(nonempty(runner.runProbe), `Empty runProbe: ${id}`);
-        try { new AsyncFunction('submission', runner.runProbe); }
+        try {
+          if (runner.kind === 'module-files') new AsyncFunction('submission', 'observe', `"use strict";\n${runner.runProbe}`);
+          else new AsyncFunction('submission', runner.runProbe);
+        }
         catch (error) { errors.push(`Invalid runProbe syntax: ${id}: ${error.message}`); }
       }
       for (const field of ['graderFile', 'referenceFile', 'incorrectFile', 'exampleFile']) await verifyFile(exercise[field], `${id}.${field}`);

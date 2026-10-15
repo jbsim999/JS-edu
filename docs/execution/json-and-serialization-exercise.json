@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "exerciseId": "json-and-serialization-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "json-and-serialization-checks-v1",
+  "executedTests": 13,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:daa1c848ed44428132cd9bd8623c3368db8f7a7a2696fc21117dec5637873b88",
+  "referenceChecks": [
+    "decode-large-id",
+    "defaults",
+    "parse-and-schema",
+    "version-and-types",
+    "numeric-boundaries",
+    "encode-roundtrip",
+    "serialization-loss",
+    "unknown-root-and-safe-data-key",
+    "depth-limit",
+    "shared-data-and-negative-zero",
+    "accessors-symbols-and-decoration",
+    "null-prototype-record",
+    "labels-own-dense-strings"
+  ],
+  "referenceChecksPassed": 13,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

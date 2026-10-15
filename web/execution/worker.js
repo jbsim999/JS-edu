@@ -29,6 +29,17 @@
   const decoder = new TextDecoder();
   let initialized = false;
 
+  function featureDataProperty(value, key) {
+    try {
+      for (let depth = 0; depth < 16 && value !== null && value !== undefined; depth++) {
+        const descriptor = getDescriptor(value, key);
+        if (descriptor) return getDescriptor(descriptor, 'value') ? descriptor.value : undefined;
+        value = getPrototype(value);
+      }
+    } catch { /* Unreadable descriptors are unsupported, not invoked. */ }
+    return undefined;
+  }
+
   function initialize(event) {
     if (initialized || !event.data || event.data.protocol !== protocol || !event.ports || event.ports.length !== 1) return;
     initialized = true;
@@ -163,8 +174,7 @@
           const segments = apply(split, path, ['.']);
           let value = self;
           for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
-            const descriptor = value !== null && value !== undefined ? getDescriptor(value, segments[segmentIndex]) : undefined;
-            value = descriptor && getDescriptor(descriptor, 'value') ? descriptor.value : undefined;
+            value = featureDataProperty(value, segments[segmentIndex]);
           }
           if (typeof value !== 'function') define(missingFeatures, missingFeatures.length, { value: path, enumerable: true, writable: true, configurable: true });
         }

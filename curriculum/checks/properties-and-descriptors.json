@@ -1,0 +1,149 @@
+{
+  "exerciseId": "properties-and-descriptors-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "properties-and-descriptors-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "allowed-own-fields",
+      "label": "허용된 자체 데이터 필드만 순서대로 선택한다",
+      "probe": "const result=submission.selectOwnData({name:'A',count:0,extra:9},['count','name']);observe({entries:Object.entries(result.values),missing:result.missing,rejected:result.rejected});",
+      "expected": {
+        "entries": [
+          [
+            "count",
+            0
+          ],
+          [
+            "name",
+            "A"
+          ]
+        ],
+        "missing": [],
+        "rejected": []
+      }
+    },
+    {
+      "id": "missing-and-undefined",
+      "label": "누락과 존재하는 undefined를 분리한다",
+      "probe": "const result=submission.selectOwnData({unset:undefined,empty:null},['absent','unset','empty']);observe({keys:Object.keys(result.values),hasUnset:Object.hasOwn(result.values,'unset'),unsetType:typeof result.values.unset,empty:result.values.empty,missing:result.missing,undefinedKeys:result.undefinedKeys});",
+      "expected": {
+        "keys": [
+          "unset",
+          "empty"
+        ],
+        "hasUnset": true,
+        "unsetType": "undefined",
+        "empty": null,
+        "missing": [
+          "absent"
+        ],
+        "undefinedKeys": [
+          "unset"
+        ]
+      }
+    },
+    {
+      "id": "inherited-excluded",
+      "label": "상속 데이터와 상속 getter를 읽지 않는다",
+      "probe": "let calls=0;const parent={data:3,get computed(){calls++;return 8;}};const source=Object.create(parent);source.own=1;const result=submission.selectOwnData(source,['data','computed','own']);observe({values:Object.entries(result.values),missing:result.missing,calls});",
+      "expected": {
+        "values": [
+          [
+            "own",
+            1
+          ]
+        ],
+        "missing": [
+          "data",
+          "computed"
+        ],
+        "calls": 0
+      }
+    },
+    {
+      "id": "accessors-rejected",
+      "label": "자체 getter/setter를 호출하지 않고 거부한다",
+      "probe": "let reads=0,writes=0;const source={get value(){reads++;throw new Error('must not read');},set other(value){writes++;}};const result=submission.selectOwnData(source,['value','other']);observe({reads,writes,keys:Object.keys(result.values),rejected:result.rejected});",
+      "expected": {
+        "reads": 0,
+        "writes": 0,
+        "keys": [],
+        "rejected": [
+          {
+            "key": "value",
+            "reason": "accessor"
+          },
+          {
+            "key": "other",
+            "reason": "accessor"
+          }
+        ]
+      }
+    },
+    {
+      "id": "enumeration-and-priority",
+      "label": "비열거 데이터는 거부하고 비열거 접근자는 accessor로 분류한다",
+      "probe": "const source={};Object.defineProperty(source,'hidden',{value:1});Object.defineProperty(source,'hiddenAccessor',{get(){throw new Error('must not read');}});const result=submission.selectOwnData(source,['hidden','hiddenAccessor']);observe({keys:Object.keys(result.values),rejected:result.rejected});",
+      "expected": {
+        "keys": [],
+        "rejected": [
+          {
+            "key": "hidden",
+            "reason": "non-enumerable"
+          },
+          {
+            "key": "hiddenAccessor",
+            "reason": "accessor"
+          }
+        ]
+      }
+    },
+    {
+      "id": "prototype-names-safe",
+      "label": "__proto__·constructor·hasOwnProperty를 평범한 데이터 키로 보존한다",
+      "probe": "const source=Object.create(null);source.__proto__='data';source.constructor=4;source.hasOwnProperty=false;const result=submission.selectOwnData(source,['__proto__','constructor','hasOwnProperty']);observe({nullPrototype:Object.getPrototypeOf(result.values)===null,entries:Object.entries(result.values)});",
+      "expected": {
+        "nullPrototype": true,
+        "entries": [
+          [
+            "__proto__",
+            "data"
+          ],
+          [
+            "constructor",
+            4
+          ],
+          [
+            "hasOwnProperty",
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-descriptor-preserved",
+      "label": "readonly 원본 descriptor를 바꾸지 않고 새 결과를 만든다",
+      "probe": "const source=Object.freeze({n:1});const result=submission.selectOwnData(source,['n']);result.values.n=2;observe({source:source.n,result:result.values.n,writable:Object.getOwnPropertyDescriptor(source,'n').writable,configurable:Object.getOwnPropertyDescriptor(source,'n').configurable});",
+      "expected": {
+        "source": 1,
+        "result": 2,
+        "writable": false,
+        "configurable": false
+      }
+    },
+    {
+      "id": "empty-and-shallow-contract",
+      "label": "빈 허용 목록과 객체 값의 얕은 전달 계약을 지킨다",
+      "probe": "const child={n:1};const source={child};const empty=submission.selectOwnData(source,[]);const result=submission.selectOwnData(source,['child']);observe({emptyKeys:Object.keys(empty.values),missing:empty.missing,shared:result.values.child===child,sourceKeys:Object.keys(source)});",
+      "expected": {
+        "emptyKeys": [],
+        "missing": [],
+        "shared": true,
+        "sourceKeys": [
+          "child"
+        ]
+      }
+    }
+  ]
+}

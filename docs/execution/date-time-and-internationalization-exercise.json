@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "exerciseId": "date-time-and-internationalization-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "date-time-and-internationalization-checks-v1",
+  "executedTests": 10,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:579d7e7bc5763b8580b53a5a48a25f57fa22c1ff9f23c3d9e77e70b6d15f9bef",
+  "referenceChecks": [
+    "fixed-utc",
+    "same-instant-seoul",
+    "calendar-rollover",
+    "daylight-saving-boundary",
+    "negative-and-rounding",
+    "invalid-input-before-clock",
+    "one-clock-and-future",
+    "intl-errors-before-clock",
+    "clock-failure-contract",
+    "epoch-and-safe-difference"
+  ],
+  "referenceChecksPassed": 10,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

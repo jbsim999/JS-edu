@@ -1,0 +1,214 @@
+{
+  "id": "promise-combinators",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "Promise 조합: 전체 성공·부분 실패·첫 성공을 구분하기",
+  "track": "async-model",
+  "level": "advanced",
+  "goals": [
+    "all·allSettled·any·race의 완료·실패·빈 입력 의미를 구분한다.",
+    "작업 시작 시점과 결과의 입력 순서를 보존하며 동기 throw를 거부로 연결한다.",
+    "병행 집계와 CPU 병렬 실행·취소·동시성 상한의 차이를 설명한다."
+  ],
+  "prerequisites": [
+    "async-await-and-iteration",
+    "promise-chains-and-errors"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2021",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 제17판 — Promise Objects (§27.2), Async Functions (§27.7), 반복문 (§14.7.5)",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN — Promise.all()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all",
+      "edition": "JavaScript reference / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN — Promise.any()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/any",
+      "edition": "JavaScript reference / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN — Promise.race()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race",
+      "edition": "JavaScript reference / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "promise-combinators-exercise",
+  "steps": {
+    "theory": "상품 화면이 가격·재고·추천을 동시에 조회한다. 추천 하나가 실패해도 나머지를 보여 줄지, 세 결과가 모두 있어야 화면을 열지에 따라 완료 정책이 달라진다. Promise 조합은 이미 시작했거나 시작할 작업들의 완료를 묶는 규칙이지 요구사항을 대신 정하는 장치가 아니다.\n\nall은 모든 성공 값의 배열 또는 하나의 거부를 전달한다. allSettled는 각 항목의 fulfilled/value 또는 rejected/reason 기록을 모은다. any는 처음 성공한 값을 주고 전부 실패하면 AggregateError를 만든다. race는 성공·실패를 가리지 않고 먼저 정해진 결과를 따른다. all·allSettled 배열 및 any의 errors는 입력 순서에 대응한다. 완료 순서로 push하면 어떤 요청의 결과인지 연결이 어긋난다.\n\n빈 입력도 계약이다. all([])과 allSettled([])은 빈 배열로 이행하고 any([])는 빈 errors를 가진 AggregateError로 거부한다. race([])는 완료시킬 항목이 없어 pending을 유지한다. 이번 래퍼는 빈 race를 입력 오류로 거부해 호출자가 끝없이 기다리지 않게 한다. 이것은 표준의 동작을 바꿔 설명하는 것이 아니라 래퍼의 추가 정책이다.\n\ntasks가 함수 목록이면 Promise.resolve().then(() => task())로 각 호출을 연결할 수 있다. 동기 throw도 거부가 되며 앞 작업이 실패해도 다른 작업들의 시작을 일관되게 예약한다. async 함수 호출 자체가 작업을 시작할 수 있으므로 Promise.all이 배열 속 함수를 알아서 실행해 준다고 생각하지 않는다. Promise.all([taskA, taskB])는 함수 두 개를 값으로 취급한다.\n\n병행은 작업의 대기 기간이 겹치는 것이고 CPU 병렬 실행은 실제로 여러 실행 자원을 쓰는 것이다. 조합 메서드가 CPU용 Worker를 자동 생성하지 않는다. race에서 결과가 정해져도 느린 요청의 네트워크·타이머가 취소되지는 않는다. 취소 신호와 동시성 제한은 이어지는 과제에서 별도로 구현한다.\n\ntasks는 빈 슬롯이 없는 자체 요소의 함수 배열입니다. 상속된 숫자 프로퍼티로 빈 슬롯을 채운 입력도 TypeError이며, 모든 입력 검증을 마치기 전 작업을 시작하지 않습니다.",
+    "example": "정해진 Promise들로 all 결과가 ['A','B']이며 입력 순서를 유지하는 것을 본다. settled는 성공 3과 실패 'offline'을 모두 보존한다. any는 먼저 실패한 항목이 있어도 'usable'을 반환한다. 마지막에는 빈 any의 오류 이름과 errors 길이를 출력한다. 실제 외부 네트워크 속도를 흉내 낸 성능 수치는 사용하지 않는다.",
+    "quiz": "전체 성공·부분 실패·첫 성공·첫 완료를 시나리오에 대응한다. 빈 입력, 함수 배열과 Promise 배열, race 뒤 남은 작업의 수명을 구분한다. 성공하기를 기다리는 any와 먼저 실패해도 끝나는 race를 같은 기능으로 고르지 않는다.",
+    "practice": "교육용 대시보드는 필수 가격·재고는 all, 선택 추천 목록은 settled 같은 서로 다른 정책을 가질 수 있다. 실패한 선택 영역을 빈 배열로 조용히 바꾸면 '결과 없음'과 '조회 실패'를 구분하지 못하므로 상태를 화면 계약에 포함한다.\n\n수천 개 작업에 all을 바로 적용하면 모든 요청을 동시에 시작할 수 있다. 집계 정책만 바꿔서는 부하 상한이 생기지 않는다. race로 timeout Promise와 경쟁시켜도 원래 작업이 계속될 수 있으므로 자원 취소와 늦은 결과 무시를 함께 설계한다. 취소 후 재시도를 시작하지 않을 책임도 집계 바깥에 남는다.",
+    "lab": "aggregateQueries(tasks, policy = 'all')의 본문을 작성한다. 모든 작업을 입력 순서로 한 번씩 시작해 값·Promise·thenable·throw를 일관된 완료로 연결한다. 'all'/'settled'/'first'/'race'는 각각 all/allSettled/any/race 의미를 따른다. 결과와 오류 원인을 바꾸지 않는다.\n\n배열·함수 검증과 정책 검증은 작업을 시작하기 전에 수행한다. 빈 race만 RangeError로 처리하고 다른 빈 입력은 표준 조합의 동작을 유지한다. 자동 취소 기능이 있다고 가정하지 않는다. 검사에서는 완료 순서를 직접 제어하므로 고정 지연 시간에 의존하지 않는다."
+  },
+  "quiz": {
+    "revision": "promise-combinators-quiz-v1",
+    "questions": [
+      {
+        "id": "q1-policy",
+        "prompt": "선택 위젯 3개를 조회하며 각각의 실패도 화면에 표시하려 한다. 알맞은 정책은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Promise.allSettled",
+            "explanation": "각 항목의 성공·실패 상태를 모두 모아 입력과 연결할 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "Promise.race",
+            "explanation": "첫 완료만 얻으므로 각 위젯의 전체 상태를 집계하지 못한다."
+          },
+          {
+            "id": "c",
+            "text": "Promise.any",
+            "explanation": "첫 성공을 찾으며 모든 항목의 상태를 반환하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-order",
+        "prompt": "Promise.all([slowA, fastB])가 성공했을 때 배열 순서는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "완료 순서인 [B,A]",
+            "explanation": "all의 결과 배열은 입력 위치에 대응한다."
+          },
+          {
+            "id": "b",
+            "text": "입력 순서인 [A,B]",
+            "explanation": "속도가 달라도 결과 위치는 유지된다."
+          },
+          {
+            "id": "c",
+            "text": "항상 문자열 정렬 순서",
+            "explanation": "정렬은 조합 메서드가 수행하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-empty-race",
+        "prompt": "표준 Promise.race([]) 자체의 상태는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "즉시 undefined로 이행",
+            "explanation": "완료시킬 입력이 없어 pending 상태를 유지한다."
+          },
+          {
+            "id": "b",
+            "text": "RangeError로 거부",
+            "explanation": "이번 과제 래퍼가 정한 추가 정책이며 표준 race 자체의 동작은 아니다."
+          },
+          {
+            "id": "c",
+            "text": "계속 pending",
+            "explanation": "별도 입력이 없으므로 성공이나 거부를 결정하는 완료가 없다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q4-race-cancel",
+        "prompt": "race가 빠른 요청으로 완료됐다. 느린 요청은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "항상 자동 취소된다.",
+            "explanation": "race는 입력 작업의 취소 수단을 호출하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "별도 취소 계약이 없다면 계속 실행될 수 있다.",
+            "explanation": "완료 선택과 자원 취소를 나누어 설계해야 한다."
+          },
+          {
+            "id": "c",
+            "text": "CPU 작업으로 자동 전환된다.",
+            "explanation": "Promise 조합은 스레드나 실행 장치를 바꾸지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q5-functions",
+        "prompt": "Promise.all([fetchA, fetchB])에 함수 자체를 넣었다. 어떤 일이 일어나는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "all이 두 함수를 자동 호출한다.",
+            "explanation": "all은 함수 실행기가 아니다. 항목을 값으로 받아 해결한다."
+          },
+          {
+            "id": "b",
+            "text": "함수 두 개가 값으로 집계된다.",
+            "explanation": "실행하려면 호출 또는 명시적인 작업 시작 경계를 만들어야 한다."
+          },
+          {
+            "id": "c",
+            "text": "무조건 SyntaxError가 발생한다.",
+            "explanation": "유효한 표현식이며 실행 의도와 의미가 다른 문제다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-policy",
+        "q3-empty-race"
+      ],
+      "caseIds": [
+        "all-rejection-identity",
+        "settled-mixed",
+        "first-success",
+        "first-all-fail",
+        "race-first-settle",
+        "empty-policy"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-order",
+        "q5-functions"
+      ],
+      "caseIds": [
+        "all-input-order",
+        "validate-before-start"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-race-cancel"
+      ],
+      "caseIds": [
+        "race-keeps-loser",
+        "dense-task-validation"
+      ]
+    }
+  ],
+  "memoRubric": [
+    "서비스 요구에 맞는 집계 정책과 부분 실패 표시를 골랐다.",
+    "race/any가 남은 작업을 취소하지 않는 점을 적었다.",
+    "작업 수가 클 때 별도 동시성 상한을 두는 이유를 설명했다."
+  ]
+}

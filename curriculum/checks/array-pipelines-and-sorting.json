@@ -1,0 +1,175 @@
+{
+  "exerciseId": "array-pipelines-and-sorting-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "array-pipelines-and-sorting-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "filter-sort-sum",
+      "label": "유효한 결제 주문을 금액 내림차순으로 집계한다",
+      "probe": "observe(submission.summarizeOrders([{id:'a',amount:2,status:'paid'},{id:'b',amount:10,status:'paid'},{id:'c',amount:99,status:'cancelled'},{id:'d',amount:3,status:'paid'}]));",
+      "expected": {
+        "items": [
+          {
+            "id": "b",
+            "amount": 10
+          },
+          {
+            "id": "d",
+            "amount": 3
+          },
+          {
+            "id": "a",
+            "amount": 2
+          }
+        ],
+        "count": 3,
+        "total": 15
+      }
+    },
+    {
+      "id": "empty-and-zero",
+      "label": "빈 목록과 0원 주문을 구분한다",
+      "probe": "observe([submission.summarizeOrders([]),submission.summarizeOrders([{id:'free',amount:0,status:'paid'}])]);",
+      "expected": [
+        {
+          "items": [],
+          "count": 0,
+          "total": 0
+        },
+        {
+          "items": [
+            {
+              "id": "free",
+              "amount": 0
+            }
+          ],
+          "count": 1,
+          "total": 0
+        }
+      ]
+    },
+    {
+      "id": "threshold",
+      "label": "최소 금액 경계를 포함한다",
+      "probe": "observe(submission.summarizeOrders([{id:'low',amount:4,status:'paid'},{id:'edge',amount:5,status:'paid'},{id:'high',amount:6,status:'paid'}],5));",
+      "expected": {
+        "items": [
+          {
+            "id": "high",
+            "amount": 6
+          },
+          {
+            "id": "edge",
+            "amount": 5
+          }
+        ],
+        "count": 2,
+        "total": 11
+      }
+    },
+    {
+      "id": "stable-duplicates",
+      "label": "동액 순서와 중복 ID를 유지한다",
+      "probe": "observe(submission.summarizeOrders([{id:'x',amount:7,status:'paid'},{id:'x',amount:7,status:'paid'},{id:'a',amount:7,status:'paid'},{id:'z',amount:9,status:'paid'}]));",
+      "expected": {
+        "items": [
+          {
+            "id": "z",
+            "amount": 9
+          },
+          {
+            "id": "x",
+            "amount": 7
+          },
+          {
+            "id": "x",
+            "amount": 7
+          },
+          {
+            "id": "a",
+            "amount": 7
+          }
+        ],
+        "count": 4,
+        "total": 30
+      }
+    },
+    {
+      "id": "sparse-own-indices",
+      "label": "구멍과 상속 인덱스를 주문으로 세지 않는다",
+      "probe": "const orders=[];orders.length=4;orders[0]={id:'own',amount:3,status:'paid'};orders[3]=undefined;const inherited=Object.create(Array.prototype);inherited[1]={id:'inherited',amount:90,status:'paid'};Object.setPrototypeOf(orders,inherited);observe(submission.summarizeOrders(orders));",
+      "expected": {
+        "items": [
+          {
+            "id": "own",
+            "amount": 3
+          }
+        ],
+        "count": 1,
+        "total": 3
+      }
+    },
+    {
+      "id": "invalid-records",
+      "label": "누락·잘못된 타입·비유한 금액을 제외한다",
+      "probe": "observe(submission.summarizeOrders([null,undefined,{id:7,amount:2,status:'paid'},{id:'negative',amount:-1,status:'paid'},{id:'nan',amount:NaN,status:'paid'},{id:'inf',amount:Infinity,status:'paid'},{id:'text',amount:'4',status:'paid'},{id:'missing',amount:4},{id:'ok',amount:4,status:'paid'}]));",
+      "expected": {
+        "items": [
+          {
+            "id": "ok",
+            "amount": 4
+          }
+        ],
+        "count": 1,
+        "total": 4
+      }
+    },
+    {
+      "id": "immutable-input",
+      "label": "원본 순서와 레코드를 변경하지 않는다",
+      "probe": "const orders=Object.freeze([Object.freeze({id:'small',amount:2,status:'paid'}),Object.freeze({id:'large',amount:8,status:'paid'})]);const result=submission.summarizeOrders(orders);observe({result,orders});",
+      "expected": {
+        "result": {
+          "items": [
+            {
+              "id": "large",
+              "amount": 8
+            },
+            {
+              "id": "small",
+              "amount": 2
+            }
+          ],
+          "count": 2,
+          "total": 10
+        },
+        "orders": [
+          {
+            "id": "small",
+            "amount": 2,
+            "status": "paid"
+          },
+          {
+            "id": "large",
+            "amount": 8,
+            "status": "paid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "result-owned",
+      "label": "출력 레코드 수정이 입력을 바꾸지 않는다",
+      "probe": "const orders=[{id:'a',amount:4,status:'paid'}];const result=submission.summarizeOrders(orders);const fresh=result.items[0]!==orders[0];try{result.items[0].amount=100;}catch{}observe({fresh,source:orders[0]});",
+      "expected": {
+        "fresh": true,
+        "source": {
+          "id": "a",
+          "amount": 4,
+          "status": "paid"
+        }
+      }
+    }
+  ]
+}

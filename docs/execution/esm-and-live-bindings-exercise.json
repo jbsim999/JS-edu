@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "exerciseId": "esm-and-live-bindings-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "esm-and-live-bindings-checks-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / native ES module Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:d94d424bcdf49bd63207ada86e5308942031209da0e1968b1159f029311b8169",
+  "referenceChecks": [
+    "tla-initialization",
+    "live-binding-through-cycle",
+    "default-zero-and-negative",
+    "invalid-delta-atomic",
+    "overflow-atomic",
+    "namespace-read-only",
+    "snapshot-and-evaluation-effects"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

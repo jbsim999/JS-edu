@@ -1,0 +1,70 @@
+{
+  "id": "composition-and-domain-contracts-exercise",
+  "lessonId": "composition-and-domain-contracts",
+  "contentRevision": "draft-1",
+  "graderRevision": "composition-and-domain-contracts-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createCheckout(initialPolicy)는 독립 상태의 {quote,setPolicy}를 반환한다. 생성·교체 정책은 함수여야 하며 아니면 TypeError다.",
+    "quote(amount)는 0 이상 안전 정수 금액만 허용하고 불량 입력은 정책 호출 전에 RangeError다.",
+    "정책을 receiver 없이 한 번 동기 호출한다. 반환이 number가 아니면 TypeError, 안전 정수/0..amount 범위를 벗어나면 RangeError다.",
+    "성공은 새 {amount,discount,total}이며 정책 throw는 원래 값 그대로 전파한다.",
+    "분리한 메서드 호출도 동작한다. 잘못된 정책 교체는 기존 정책 보존, quote 중 교체는 다음 quote부터 적용, 다른 checkout 상태와 독립이다."
+  ],
+  "template": "export function createCheckout(initialPolicy) {\n  // TODO: 교체 가능한 정책을 인스턴스별로 보관하고 입력·출력 계약을 검사하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/composition-and-domain-contracts.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "정책 교체 후 같은 견적 계약을 유지한다",
+    "서로 다른 checkout의 정책 상태가 섞이지 않는다",
+    "정책을 한 번 호출하고 임의의 receiver를 바인딩하지 않는다",
+    "불량 금액은 정책 호출 전에 거부한다",
+    "정책의 타입·범위·동기 반환 계약을 검사한다",
+    "잘못된 정책 교체는 기존 정책을 보존한다",
+    "정책이 던진 원래 실패를 한 번 전파하고 이후 교체가 가능하다",
+    "분리 호출과 결과 수정이 다음 견적에 영향을 주지 않는다",
+    "계산 중 교체는 다음 견적부터 적용한다"
+  ],
+  "rubric": [
+    "주입 계약과 정책 교체",
+    "입력·반환·실패 검증",
+    "호출 횟수와 상태 독립성"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createCheckout",
+    "parameters": [
+      "initialPolicy"
+    ],
+    "async": false,
+    "runProbe": "const checkout=submission.createCheckout(amount=>Math.floor(amount/10));const before=checkout.quote(125);checkout.setPolicy(amount=>Math.min(20,amount));observe({before,after:checkout.quote(125)});"
+  },
+  "editable": {
+    "prefix": "export function createCheckout(initialPolicy) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 교체 가능한 정책을 인스턴스별로 보관하고 입력·출력 계약을 검사하세요.\n"
+  },
+  "graderFile": "curriculum/checks/composition-and-domain-contracts.json",
+  "referenceFile": "reference/composition-and-domain-contracts.mjs",
+  "incorrectFile": "reference/incorrect/composition-and-domain-contracts.mjs",
+  "exampleFile": "curriculum/examples/composition-and-domain-contracts.mjs",
+  "exampleExpectedLogs": [
+    "{\"amount\":125,\"discount\":12,\"total\":113}",
+    "{\"amount\":125,\"discount\":20,\"total\":105}",
+    "30 50",
+    "TypeError",
+    "0"
+  ],
+  "verificationRecord": "docs/execution/composition-and-domain-contracts-exercise.json"
+}

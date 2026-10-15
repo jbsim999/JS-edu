@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "keyed-collections-and-grouping-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "keyed-collections-and-grouping-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:8bde05fae46a7871b939414b9b1305d591fa3b781fa1289a7bb8524e2485be25",
+  "referenceChecks": [
+    "first-wins-and-groups",
+    "stored-undefined",
+    "same-value-zero",
+    "object-key-identity",
+    "special-string-keys",
+    "empty",
+    "immutable-records",
+    "independent-calls"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

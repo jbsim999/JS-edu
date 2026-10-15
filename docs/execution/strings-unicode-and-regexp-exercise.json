@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "strings-unicode-and-regexp-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "strings-unicode-and-regexp-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:d3af3c49bc33a70e8bad0dd808b1886f9c037a010ed9d3b0afeb90a47dc72e5d",
+  "referenceChecks": [
+    "hangul-normalization",
+    "combining-and-emoji",
+    "flag-and-zwj",
+    "literal-dot",
+    "literal-metacharacters",
+    "nonoverlapping",
+    "empty-query",
+    "case-and-repeat"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

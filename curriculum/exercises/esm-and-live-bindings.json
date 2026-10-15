@@ -1,0 +1,76 @@
+{
+  "id": "esm-and-live-bindings-exercise",
+  "lessonId": "esm-and-live-bindings",
+  "contentRevision": "draft-1",
+  "graderRevision": "esm-and-live-bindings-checks-v1",
+  "mode": "files",
+  "instructions": [
+    "main.mjs 전체만 편집합니다. reader.mjs의 고정 소스와 모듈 경로를 보존합니다.",
+    "count=0 → main:before-await → reader:initial-resolved → await 이후 count=4·ready=ready → main:after-await 순서를 보존합니다. 고정 reader는 호스트 timer task에서 초기화 Promise를 해결합니다. setTimeout은 ECMAScript API가 아닌 호스트 fixture입니다.",
+    "add(delta=1)는 유한한 number만 허용하며 잘못된 증가량은 TypeError, 합계 무한대는 RangeError이고 실패 시 상태를 보존합니다.",
+    "snapshot()은 {count, imported:readCount(), ready:readReady(), trace:[...evaluationTrace]}의 새 관찰값을 반환합니다.",
+    "공개 count를 갱신해 순환 모듈에서도 변경을 읽게 합니다. 검사마다 새 모듈 Worker가 사용됩니다."
+  ],
+  "template": "import { readCount, readReady, initialCount, evaluationTrace } from './reader.mjs';\n\nexport let count = 0;\nexport let ready = 'pending';\n// TODO: before-await 기록, initialCount를 top-level await, ready 변경, after-await 기록.\nexport function add(delta = 1) {\n  // TODO: 유한한 숫자만 허용하고 공개 count 바인딩을 갱신하세요.\n}\nexport function snapshot() {\n  // TODO: 현재 값과 reader의 관찰, 초기화 기록 복사본을 반환하세요.\n}\n",
+  "profileId": "browser-esm",
+  "profileByVersion": {
+    "ES2026": "browser-esm"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/esm-and-live-bindings.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "모듈 평가 완료 뒤 초기화 값과 순서를 관찰한다",
+    "갱신한 바인딩을 순환 모듈의 함수가 읽는다",
+    "기본 증가·0·음수에도 같은 바인딩을 유지한다",
+    "유효하지 않은 증가량을 거부하고 상태를 보존한다",
+    "합계가 무한대가 되면 갱신하지 않는다",
+    "가져온 네임스페이스의 바인딩은 재할당할 수 없다",
+    "스냅샷 변경과 함수 재호출이 초기화 기록을 바꾸지 않는다"
+  ],
+  "rubric": [
+    "실제 import/export와 live binding",
+    "초기화·정상 순환·top-level await 의미",
+    "상태 변경 권한과 오류 뒤 보존"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "observe(submission.snapshot());"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import { readCount, readReady, initialCount, evaluationTrace } from './reader.mjs';\n\nexport let count = 0;\nexport let ready = 'pending';\n// TODO: before-await 기록, initialCount를 top-level await, ready 변경, after-await 기록.\nexport function add(delta = 1) {\n  // TODO: 유한한 숫자만 허용하고 공개 count 바인딩을 갱신하세요.\n}\nexport function snapshot() {\n  // TODO: 현재 값과 reader의 관찰, 초기화 기록 복사본을 반환하세요.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "reader.mjs",
+        "source": "import { count, ready } from './main.mjs';\n\n// 순환 그래프를 연결할 때 아직 초기화되지 않은 바인딩은 읽지 않습니다.\nexport const evaluationTrace = ['reader:evaluated'];\nexport const initialCount = new Promise(resolve => setTimeout(() => { evaluationTrace.push('reader:initial-resolved'); resolve(4); }, 0));\nexport function readCount() { return count; }\nexport function readReady() { return ready; }\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/esm-and-live-bindings.json",
+  "referenceFile": "reference/esm-and-live-bindings.mjs",
+  "incorrectFile": "reference/incorrect/esm-and-live-bindings.mjs",
+  "exampleFile": "curriculum/examples/esm-and-live-bindings.mjs",
+  "exampleExpectedLogs": [
+    "{\"count\":4,\"imported\":4,\"ready\":\"ready\",\"trace\":[\"reader:evaluated\",\"main:before-await\",\"reader:initial-resolved\",\"main:after-await\"]}",
+    "live 7, copied 4, reader 7",
+    "rebind TypeError",
+    "early cycle ReferenceError"
+  ],
+  "requiredFeatures": [
+    "setTimeout"
+  ],
+  "verificationRecord": "docs/execution/esm-and-live-bindings-exercise.json"
+}

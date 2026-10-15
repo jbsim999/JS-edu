@@ -1,0 +1,182 @@
+{
+  "id": "composition-and-domain-contracts",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "합성과 도메인 계약: 할인 정책을 바꿔도 계산은 지키기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "클래스·팩터리·클로저·합성의 책임과 선택 비용을 비교한다.",
+    "주입한 정책의 입력·출력·호출 횟수·실패 계약을 유지한다.",
+    "정책 교체와 여러 인스턴스 사이의 숨은 공유 상태를 제거한다."
+  ],
+  "prerequisites": [
+    "classes-and-private-state",
+    "prototype-delegation"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §7.3.13 Call · §10.2 ECMAScript Function Objects",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=105",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §9.1 Environment Records · §15.7 Class Definitions",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=162",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "composition-and-domain-contracts-exercise",
+  "steps": {
+    "theory": "회원 할인과 쿠폰 할인을 바꿀 때마다 결제 클래스의 하위 타입을 늘려야 할까? 합성은 필요한 동작을 외부 값으로 받아 협력시키는 설계다. 이번 checkout은 금액 검증과 결과 형태를 책임지고, 할인 정책 함수는 할인액 계산을 책임진다. 함수 주입은 ECMAScript의 호출·클로저 기능을 활용한 교육 설계이며 표준이 특정 아키텍처를 정답으로 정한 것은 아니다.\n\n팩터리는 객체를 만드는 함수, 클로저는 생성 환경의 바인딩을 사용하는 함수다. 두 개를 함께 써 각 checkout에 policy 바인딩을 따로 두면 한 checkout의 setPolicy가 다른 checkout에 영향을 주지 않는다. 클래스의 private 필드로도 같은 경계를 만들 수 있지만 어떤 방식이든 모듈 전역이나 생성 함수 프로퍼티에 가변 정책을 놓으면 공유가 생긴다.\n\n교체 가능성은 함수 모양만 같다는 뜻이 아니다. 정책은 유효 금액을 받아 할인액을 동기적으로 한 번 반환하고, 할인액은 0 이상 금액 이하의 안전 정수여야 한다. throw는 원래 실패 그대로 전파한다. quote 중 정책이 바뀌어도 이미 선택한 호출은 마치고 다음 quote부터 새 정책을 사용한다.",
+    "example": "125에 10% 내림 정책을 쓰면 할인 12·합계 113이다. 최대 20 정책으로 교체해도 결과 객체의 amount/discount/total 계약은 같으며 합계는 105다. 다른 checkout을 만든 뒤에도 기존 checkout의 정책은 유지된다. null 교체는 TypeError이며 기존 정책을 잃지 않는다. 마지막은 quote를 구조 분해해도 해당 인스턴스의 클로저 상태를 사용함을 확인한다.",
+    "quiz": "q1은 상속 대신 합성을 고를 조건, q2는 주입했지만 남은 전역 공유, q3은 정책 결과 검증, q4는 오류 전파와 부수 효과 횟수를 묻는다. 도메인 계약은 코드 조직 형태와 독립적으로 행동 검사로 확인한다.",
+    "practice": "교육용 할인 계산에서 정책을 교체하기 쉽다는 이유로 호출 결과를 무조건 믿으면 할인액 초과·문자열·Promise가 잘못된 합계로 이어진다. 도메인 경계에서 결과를 검증하고 정책 실패를 0원 할인 성공으로 숨기지 않는다. 실제 결제·재시도·외부 가격 조회는 별도 서비스 계약이며 이 동기 함수 과제의 범위가 아니다. 메모에는 클래스/클로저 팩터리/명시적 상태 객체 중 선택 이유, 정책 주입의 테스트 이점, 실패를 복구할 호출자와 재시도 부수 효과를 적는다.",
+    "lab": "createCheckout(initialPolicy)는 독립 상태의 {quote,setPolicy}를 반환한다. 정책은 함수여야 하며 생성/교체 시 아니면 TypeError다. quote(amount)는 0 이상 안전 정수 금액이 아니면 정책 호출 전에 RangeError다. 선택한 정책을 receiver 없이 한 번 호출한다. 결과가 number가 아니면 TypeError, 안전 정수가 아니거나 0 미만/amount 초과면 RangeError다. 성공은 새 {amount,discount,total:amount-discount}다. 정책의 throw는 그대로 전파한다. 메서드를 분리 호출해도 동작하고, 잘못된 setPolicy는 기존 정책을 유지하며, 계산 중 교체는 다음 quote부터 반영한다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-composition-choice",
+        "prompt": "할인 종류만 바뀌고 금액 검증·결과 형태는 같을 때 적절한 선택은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "모든 할인마다 상속 계층을 반드시 만든다.",
+            "explanation": "변하는 동작을 함수로 주입하는 합성도 가능하며 계층이 항상 필요한 것은 아니다."
+          },
+          {
+            "id": "b",
+            "text": "금액 계약을 유지하는 checkout에 할인 정책을 주입한다.",
+            "explanation": "변하는 정책과 안정적인 도메인 규칙을 분리한다."
+          },
+          {
+            "id": "c",
+            "text": "계산 함수 안에서 DOM의 회원 등급을 직접 읽는다.",
+            "explanation": "호스트 상태에 결합되면 테스트와 재사용 경계가 흐려진다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-hidden-state",
+        "prompt": "팩터리를 쓰지만 factory.currentPolicy에 정책을 저장하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "팩터리라서 인스턴스는 항상 독립적이다.",
+            "explanation": "생성 방식 이름만으로 상태 독립성이 보장되지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "모든 함수가 불변이라 정책을 교체할 수 없다.",
+            "explanation": "함수도 객체이며 프로퍼티를 가질 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "같은 생성 함수를 사용하는 인스턴스 사이에 정책이 공유될 수 있다.",
+            "explanation": "인스턴스별 바인딩·필드에 정책을 보관해야 한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q3-policy-output",
+        "prompt": "정책 함수가 Promise.resolve(10)을 반환했다. 동기 quote 계약에서는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Promise를 숫자처럼 빼서 결과를 만든다.",
+            "explanation": "동기 숫자 계약을 벗어나 잘못된 연산으로 이어진다."
+          },
+          {
+            "id": "b",
+            "text": "TypeError로 거부하고 비동기 정책은 별도 계약으로 설계한다.",
+            "explanation": "함수라는 사실만이 아니라 반환 의미와 완료 시점도 계약이다."
+          },
+          {
+            "id": "c",
+            "text": "무조건 await를 추가하면 기존 계약은 바뀌지 않는다.",
+            "explanation": "quote의 반환 타입과 호출자의 흐름까지 바뀐다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-failure",
+        "prompt": "정책이 외부 기록을 남긴 뒤 오류를 던진다. 이 checkout의 처리로 맞는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "정책을 바로 다시 호출해 성공할 때까지 반복한다.",
+            "explanation": "부수 효과가 중복될 수 있고 재시도 계약이 없다."
+          },
+          {
+            "id": "b",
+            "text": "오류를 0 할인으로 바꿔 성공 처리한다.",
+            "explanation": "실패가 정상 무할인 정책과 구별되지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "한 번 호출하고 원래 오류를 호출자에게 전달한다.",
+            "explanation": "이 계약의 책임을 지키고 복구·재시도는 별도 경계에서 결정한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-composition-choice"
+      ],
+      "caseIds": [
+        "replaceable-policy",
+        "detached-and-fresh-results"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q3-policy-output",
+        "q4-failure"
+      ],
+      "caseIds": [
+        "one-call-unbound-receiver",
+        "invalid-amount-before-policy",
+        "discount-output-contract",
+        "original-failure-propagates"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q2-hidden-state"
+      ],
+      "caseIds": [
+        "separate-checkouts",
+        "invalid-replacement-preserves-policy",
+        "reentrant-policy-change"
+      ]
+    }
+  ],
+  "example": {
+    "file": "curriculum/examples/composition-and-domain-contracts.mjs",
+    "expectedLogs": [
+      "{\"amount\":125,\"discount\":12,\"total\":113}",
+      "{\"amount\":125,\"discount\":20,\"total\":105}",
+      "30 50",
+      "TypeError",
+      "0"
+    ]
+  }
+}

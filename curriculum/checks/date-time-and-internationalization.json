@@ -1,0 +1,198 @@
+{
+  "exerciseId": "date-time-and-internationalization-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "date-time-and-internationalization-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "fixed-utc",
+      "label": "고정 시각·기본 locale·UTC로 같은 표시를 만든다",
+      "probe": "const timestamp=Date.UTC(2026,9,15);observe(submission.formatSnapshot(timestamp,1234.5,()=>timestamp+60000));",
+      "expected": {
+        "iso": "2026-10-15T00:00:00.000Z",
+        "date": {
+          "year": "2026",
+          "month": "10",
+          "day": "15",
+          "hour": "00",
+          "minute": "00",
+          "second": "00"
+        },
+        "number": {
+          "negative": false,
+          "integer": "1234",
+          "fraction": "50"
+        },
+        "elapsedMs": 60000
+      }
+    },
+    {
+      "id": "same-instant-seoul",
+      "label": "같은 instant를 명시한 시간대로 표시하고 ISO는 보존한다",
+      "probe": "const timestamp=Date.UTC(2026,9,15);observe(submission.formatSnapshot(timestamp,1234.5,()=>timestamp,{locale:'ko-KR',timeZone:'Asia/Seoul'}));",
+      "expected": {
+        "iso": "2026-10-15T00:00:00.000Z",
+        "date": {
+          "year": "2026",
+          "month": "10",
+          "day": "15",
+          "hour": "09",
+          "minute": "00",
+          "second": "00"
+        },
+        "number": {
+          "negative": false,
+          "integer": "1234",
+          "fraction": "50"
+        },
+        "elapsedMs": 0
+      }
+    },
+    {
+      "id": "calendar-rollover",
+      "label": "UTC 날짜와 표시 시간대의 날짜가 다를 수 있다",
+      "probe": "const timestamp=Date.UTC(2026,9,14,18,5,7);observe(submission.formatSnapshot(timestamp,0,()=>timestamp,{locale:'en-US',timeZone:'Asia/Seoul'}));",
+      "expected": {
+        "iso": "2026-10-14T18:05:07.000Z",
+        "date": {
+          "year": "2026",
+          "month": "10",
+          "day": "15",
+          "hour": "03",
+          "minute": "05",
+          "second": "07"
+        },
+        "number": {
+          "negative": false,
+          "integer": "0",
+          "fraction": "00"
+        },
+        "elapsedMs": 0
+      }
+    },
+    {
+      "id": "daylight-saving-boundary",
+      "label": "고정된 과거 DST 경계에서 시간대 규칙을 적용한다",
+      "probe": "const times=[Date.UTC(2024,2,10,6,59),Date.UTC(2024,2,10,7,0)];observe(times.map(timestamp=>submission.formatSnapshot(timestamp,1,()=>timestamp,{locale:'en-US',timeZone:'America/New_York'}).date));",
+      "expected": [
+        {
+          "year": "2024",
+          "month": "03",
+          "day": "10",
+          "hour": "01",
+          "minute": "59",
+          "second": "00"
+        },
+        {
+          "year": "2024",
+          "month": "03",
+          "day": "10",
+          "hour": "03",
+          "minute": "00",
+          "second": "00"
+        }
+      ]
+    },
+    {
+      "id": "negative-and-rounding",
+      "label": "음수 0·음수·두 자리 표시 반올림을 분리한다",
+      "probe": "const timestamp=Date.UTC(2026,9,15);observe([-12.5,-0,1.236].map(amount=>submission.formatSnapshot(timestamp,amount,()=>timestamp).number));",
+      "expected": [
+        {
+          "negative": true,
+          "integer": "12",
+          "fraction": "50"
+        },
+        {
+          "negative": true,
+          "integer": "0",
+          "fraction": "00"
+        },
+        {
+          "negative": false,
+          "integer": "1",
+          "fraction": "24"
+        }
+      ]
+    },
+    {
+      "id": "invalid-input-before-clock",
+      "label": "잘못된 날짜와 금액은 시계를 호출하기 전에 거부한다",
+      "probe": "let calls=0;const clock=()=>{calls++;return 0;};const errors=[];for(const value of [NaN,Infinity,1e20,'2026-10-15',0.5]){try{submission.formatSnapshot(value,1,clock);errors.push('accepted');}catch(error){errors.push(error.name);}}for(const value of [Infinity,NaN,'12']){try{submission.formatSnapshot(0,value,clock);errors.push('accepted');}catch(error){errors.push(error.name);}}observe({errors,calls});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "calls": 0
+      }
+    },
+    {
+      "id": "one-clock-and-future",
+      "label": "시계를 한 번 읽고 미래 시각의 음수 차이를 유지한다",
+      "probe": "const timestamp=Date.UTC(2026,9,15);let calls=0;const options=Object.freeze({locale:'en-US',timeZone:'UTC'});const result=submission.formatSnapshot(timestamp,2,()=>{calls++;return timestamp-1000;},options);observe({elapsedMs:result.elapsedMs,calls,options});",
+      "expected": {
+        "elapsedMs": -1000,
+        "calls": 1,
+        "options": {
+          "locale": "en-US",
+          "timeZone": "UTC"
+        }
+      }
+    },
+    {
+      "id": "intl-errors-before-clock",
+      "label": "잘못된 locale·시간대는 Intl 오류로 전파하고 시계를 읽지 않는다",
+      "probe": "let calls=0;const errors=[];for(const options of [{timeZone:'Not/AZone'},{locale:'not_a_locale'}]){try{submission.formatSnapshot(0,1,()=>{calls++;return 0;},options);errors.push('accepted');}catch(error){errors.push(error.name);}}observe({errors,calls});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError"
+        ],
+        "calls": 0
+      }
+    },
+    {
+      "id": "clock-failure-contract",
+      "label": "잘못된 시계 값은 거부하고 시계 예외의 정체성을 보존한다",
+      "probe": "const errors=[];for(const value of [NaN,Infinity,'0',0.5]){try{submission.formatSnapshot(0,1,()=>value);errors.push('accepted');}catch(error){errors.push(error.name);}}const marker={reason:'clock-unavailable'};let observed;try{submission.formatSnapshot(0,1,()=>{throw marker;});}catch(error){observed={same:error===marker,reason:error.reason};}observe({errors,observed});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "observed": {
+          "same": true,
+          "reason": "clock-unavailable"
+        }
+      }
+    },
+    {
+      "id": "epoch-and-safe-difference",
+      "label": "epoch 0과 Date 범위 안이지만 안전 정수 밖인 차이를 구분한다",
+      "probe": "const epoch=submission.formatSnapshot(0,1,()=>0);let errorName='accepted';try{submission.formatSnapshot(-8640000000000000,1,()=>8640000000000000);}catch(error){errorName=error.name;}observe({iso:epoch.iso,date:epoch.date,elapsedMs:epoch.elapsedMs,errorName});",
+      "expected": {
+        "iso": "1970-01-01T00:00:00.000Z",
+        "date": {
+          "year": "1970",
+          "month": "01",
+          "day": "01",
+          "hour": "00",
+          "minute": "00",
+          "second": "00"
+        },
+        "elapsedMs": 0,
+        "errorName": "RangeError"
+      }
+    }
+  ]
+}
+

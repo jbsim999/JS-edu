@@ -1,0 +1,160 @@
+{
+  "exerciseId": "module-and-dependency-boundaries-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "module-and-dependency-boundaries-checks-v1",
+  "cases": [
+    {
+      "id": "public-surface",
+      "label": "공개 진입점에서 내부 함수를 노출하지 않는다",
+      "probe": "observe(Object.keys(submission).sort());",
+      "expected": [
+        "createReceiptService"
+      ]
+    },
+    {
+      "id": "construction-without-effects",
+      "label": "서비스 생성만으로 시계·저장을 호출하지 않는다",
+      "probe": "const calls=[]; const service=submission.createReceiptService({now(){calls.push('now');return 10;},persist(){calls.push('persist');}}); observe({calls,issueType:typeof service.issue});",
+      "expected": {
+        "calls": [],
+        "issueType": "function"
+      }
+    },
+    {
+      "id": "issue-order-and-value",
+      "label": "검증 뒤 시각을 읽고 완성된 영수증을 한 번 저장한다",
+      "probe": "const calls=[]; let saved;let frozenAtPersist=false; const service=submission.createReceiptService({now(){calls.push('now');return 1700000000000;},persist(value){calls.push('persist');saved=value;frozenAtPersist=Object.isFrozen(value)&&Object.isFrozen(value.items)&&value.items.every(Object.isFrozen);}}); const receipt=service.issue({id:'o-1',items:[{sku:'a',quantity:2,unitPrice:1200},{sku:'b',quantity:1,unitPrice:500}]}); observe({receipt,calls,frozenAtPersist,same:saved===receipt,frozen:Object.isFrozen(receipt)&&Object.isFrozen(receipt.items)&&receipt.items.every(Object.isFrozen)});",
+      "expected": {
+        "receipt": {
+          "id": "o-1",
+          "items": [
+            {
+              "sku": "a",
+              "quantity": 2,
+              "unitPrice": 1200
+            },
+            {
+              "sku": "b",
+              "quantity": 1,
+              "unitPrice": 500
+            }
+          ],
+          "total": 2900,
+          "createdAt": 1700000000000
+        },
+        "calls": [
+          "now",
+          "persist"
+        ],
+        "same": true,
+        "frozen": true,
+        "frozenAtPersist": true
+      }
+    },
+    {
+      "id": "independent-adapters-and-fresh-clock",
+      "label": "인스턴스별 의존성과 매번 읽는 시각을 분리한다",
+      "probe": "let tick=10; const storedA=[]; const storedB=[]; const a=submission.createReceiptService({now:()=>tick++,persist:r=>storedA.push(r.createdAt)}); const b=submission.createReceiptService({now:()=>99,persist:r=>storedB.push(r.createdAt)}); const order={id:'empty',items:[]}; const receipts=[a.issue(order),b.issue(order),a.issue(order)]; observe({times:receipts.map(r=>r.createdAt),totals:receipts.map(r=>r.total),storedA,storedB});",
+      "expected": {
+        "times": [
+          10,
+          99,
+          11
+        ],
+        "totals": [
+          0,
+          0,
+          0
+        ],
+        "storedA": [
+          10,
+          11
+        ],
+        "storedB": [
+          99
+        ]
+      }
+    },
+    {
+      "id": "input-copy-and-no-mutation",
+      "label": "동결 입력을 보존하고 반환 중첩 값을 공유하지 않는다",
+      "probe": "const item=Object.freeze({sku:'free',quantity:1,unitPrice:0,privateNote:'keep'}); const order=Object.freeze({id:' o ',items:Object.freeze([item]),extra:'keep'}); const service=submission.createReceiptService({now:()=>0,persist:()=>{}}); const result=service.issue(order); observe({result,original:order,newItems:result.items!==order.items,newItem:result.items[0]!==item});",
+      "expected": {
+        "result": {
+          "id": " o ",
+          "items": [
+            {
+              "sku": "free",
+              "quantity": 1,
+              "unitPrice": 0
+            }
+          ],
+          "total": 0,
+          "createdAt": 0
+        },
+        "original": {
+          "id": " o ",
+          "items": [
+            {
+              "sku": "free",
+              "quantity": 1,
+              "unitPrice": 0,
+              "privateNote": "keep"
+            }
+          ],
+          "extra": "keep"
+        },
+        "newItems": true,
+        "newItem": true
+      }
+    },
+    {
+      "id": "validation-before-effects",
+      "label": "잘못된 주문을 시계·저장 호출 전에 거부한다",
+      "probe": "const calls=[]; const service=submission.createReceiptService({now(){calls.push('now');return 0;},persist(){calls.push('persist');}}); const errors=[]; for(const order of [null,{id:'',items:[]},{id:'x',items:[{sku:'a',quantity:0,unitPrice:1}]},{id:'x',items:[{sku:'a',quantity:1,unitPrice:1.5}]},{id:'x',items:[{sku:'a',quantity:2,unitPrice:Number.MAX_SAFE_INTEGER}]}]){try{service.issue(order);errors.push('returned');}catch(error){errors.push(error.name);}} observe({errors,calls});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "RangeError"
+        ],
+        "calls": []
+      }
+    },
+    {
+      "id": "invalid-clock-and-adapters",
+      "label": "잘못된 어댑터와 시각을 저장 전에 거부한다",
+      "probe": "const invalid=[]; for(const adapters of [null,[],{}, {now:0,persist(){}}]){try{submission.createReceiptService(adapters);invalid.push('returned');}catch(error){invalid.push(error.name);}} const clock=[]; let saves=0; for(const value of [undefined,'0',NaN,Infinity]){try{submission.createReceiptService({now:()=>value,persist(){saves++;}}).issue({id:'x',items:[]});clock.push('returned');}catch(error){clock.push(error.name);}} observe({invalid,clock,saves});",
+      "expected": {
+        "invalid": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "clock": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "saves": 0
+      }
+    },
+    {
+      "id": "dependency-failure-propagation",
+      "label": "시계·저장의 실패를 같은 값으로 전파한다",
+      "probe": "const first={code:'clock'}; const second=undefined; let saves=0; const outcomes=[]; for(const [now,persist,reason] of [[()=>{throw first;},()=>{saves++;},first],[()=>1,()=>{saves++;throw second;},second]]){try{submission.createReceiptService({now,persist}).issue({id:'x',items:[]});outcomes.push(false);}catch(error){outcomes.push(Object.is(error,reason));}} observe({outcomes,saves});",
+      "expected": {
+        "outcomes": [
+          true,
+          true
+        ],
+        "saves": 1
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

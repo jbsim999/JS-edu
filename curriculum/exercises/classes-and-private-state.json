@@ -1,0 +1,67 @@
+{
+  "id": "classes-and-private-state-exercise",
+  "lessonId": "classes-and-private-state",
+  "contentRevision": "draft-1",
+  "graderRevision": "classes-and-private-state-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createStockTypes()는 {StockItem,TrackedStockItem} 클래스를 반환한다. TrackedStockItem extends StockItem.",
+    "이름은 비어 있지 않은 문자열(TypeError), 재고는 기본0이며 0 이상 안전 정수(RangeError). private 상태를 읽기 전용 name/quantity getter로 제공한다.",
+    "adjust(delta)는 안전 정수 delta와 다음 재고를 검증한 뒤 변경하고 새 재고를 반환한다. 불량 입력/음수/overflow는 RangeError이며 기존 상태 보존.",
+    "snapshot은 새 {name,quantity}, static from(record)은 호출 클래스의 새 인스턴스를 반환한다.",
+    "하위 클래스는 성공한 조정만 {before,delta,after}로 기록한다. history는 배열과 항목의 복사본이며 인스턴스별 독립적이다."
+  ],
+  "template": "export function createStockTypes() {\n  // TODO: private 상태의 불변식과 성공 후 기록하는 상속 모델을 구현하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/classes-and-private-state.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "정상 증감과 snapshot이 같은 상태를 나타낸다",
+    "음수 재고·소수·비유한·overflow 실패가 기존 상태를 보존한다",
+    "생성 단계에서도 이름·재고 불변식을 검사한다",
+    "부모 검증이 성공한 전이만 기록한다",
+    "인스턴스와 반환된 기록 배열·항목이 내부 상태를 공유하지 않는다",
+    "공개 getter 재할당과 가짜 receiver가 private 상태를 바꾸지 못한다",
+    "상속된 static factory가 호출한 클래스로 인스턴스를 만든다",
+    "class의 new 요구와 메서드 공유·인스턴스 데이터 분리를 유지한다"
+  ],
+  "rubric": [
+    "생성·전이 불변식",
+    "private·읽기 경계",
+    "상위 호출·정리된 기록·독립 상태"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createStockTypes",
+    "parameters": [],
+    "async": false,
+    "runProbe": "const {StockItem}=submission.createStockTypes();const item=new StockItem('A',3);observe({first:item.adjust(2),second:item.adjust(-4),snapshot:item.snapshot(),name:item.name,quantity:item.quantity});"
+  },
+  "editable": {
+    "prefix": "export function createStockTypes() {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: private 상태의 불변식과 성공 후 기록하는 상속 모델을 구현하세요.\n"
+  },
+  "graderFile": "curriculum/checks/classes-and-private-state.json",
+  "referenceFile": "reference/classes-and-private-state.mjs",
+  "incorrectFile": "reference/incorrect/classes-and-private-state.mjs",
+  "exampleFile": "curriculum/examples/classes-and-private-state.mjs",
+  "exampleExpectedLogs": [
+    "RangeError",
+    "{\"item\":{\"name\":\"연필\",\"quantity\":2},\"history\":[{\"before\":3,\"delta\":-1,\"after\":2}]}",
+    "2",
+    "true 4 0",
+    "ReferenceError"
+  ],
+  "verificationRecord": "docs/execution/classes-and-private-state-exercise.json"
+}

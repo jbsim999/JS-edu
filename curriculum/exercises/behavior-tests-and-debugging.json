@@ -1,0 +1,71 @@
+{
+  "id": "behavior-tests-and-debugging-exercise",
+  "lessonId": "behavior-tests-and-debugging",
+  "contentRevision": "draft-1",
+  "graderRevision": "behavior-tests-and-debugging-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createCounter가 함수가 아니면 TypeError를 던집니다. 각 상황은 새 인스턴스로 시작합니다.",
+    "결과는 initial-value, increment-and-default, zero-and-negative, reset-origin, independent-instances 순서의 {id,passed} 다섯 행입니다.",
+    "initial-value: start=5 → value() === 5.",
+    "increment-and-default: start=-2 → increment(), increment(4), value()의 결과 [-1,3,3].",
+    "zero-and-negative: start=3 → increment(0), increment(-5), value()의 결과 [3,-2,-2].",
+    "reset-origin: start=7 → increment(4), reset(), value(), increment(), value()의 결과 [11,7,7,8,8].",
+    "independent-instances: first(2),second(10) 생성 → first.increment(3),first.value(),second.value(),second.increment(-2),first.value(),second.value(),first.reset(),first.value(),second.value()의 결과 [5,5,10,8,5,8,2,2,8].",
+    "각 상황의 임의 예외는 그 행의 false이며 다음 검사를 계속합니다. 반환 보고서 배열·행은 매번 새로 만듭니다."
+  ],
+  "template": "export function auditCounterFactory(createCounter) {\n  // TODO: 독립적인 다섯 행동 검사를 실행하고 각 {id, passed}를 반환하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/behavior-tests-and-debugging.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "정상 구현의 다섯 행동을 모두 통과시킨다",
+    "인스턴스 간 공유 상태 오답을 찾아낸다",
+    "0을 기본값으로 바꾸는 오답을 경계값으로 찾는다",
+    "시작값 대신 0으로 초기화하는 회귀를 찾는다",
+    "상태 변경만 맞고 반환이 틀린 구현도 거부한다",
+    "첫 검사 예외 뒤에도 나머지 검사를 실행한다",
+    "미완성·임의 예외를 다섯 개의 실패로 보고한다",
+    "검사 대상이 함수가 아니면 TypeError로 거부한다",
+    "검사 재실행 결과가 이전 보고서 변경과 독립적이다"
+  ],
+  "rubric": [
+    "입력·행동·고정 기대값 분리",
+    "경계값·독립 상태·반환 계약",
+    "오답 탐지와 검사 실패 격리"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "auditCounterFactory",
+    "parameters": [
+      "createCounter"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function auditCounterFactory(createCounter) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 독립적인 다섯 행동 검사를 실행하고 각 {id, passed}를 반환하세요."
+  },
+  "graderFile": "curriculum/checks/behavior-tests-and-debugging.json",
+  "referenceFile": "reference/behavior-tests-and-debugging.mjs",
+  "incorrectFile": "reference/incorrect/behavior-tests-and-debugging.mjs",
+  "exampleFile": "curriculum/examples/behavior-tests-and-debugging.mjs",
+  "exampleExpectedLogs": [
+    "correct PASS PASS PASS PASS PASS",
+    "shared failed independent-instances",
+    "unfinished failed initial-value,increment-and-default,zero-and-negative,reset-origin,independent-instances",
+    "zero failed zero-and-negative"
+  ],
+  "verificationRecord": "docs/execution/behavior-tests-and-debugging-exercise.json"
+}

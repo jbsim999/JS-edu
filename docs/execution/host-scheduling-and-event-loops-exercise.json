@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "exerciseId": "host-scheduling-and-event-loops-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "host-scheduling-and-event-loops-checks-v1",
+  "executedTests": 6,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:f6096cd4252cb83a61c244e8b0c1da4ecf0c1af7462122d66fadb263f6f7b3b8",
+  "referenceChecks": [
+    "observed-completion",
+    "caller-stack-boundary",
+    "microtask-frontier",
+    "isolated-calls",
+    "completion-boundary",
+    "actual-timer-task-boundary"
+  ],
+  "referenceChecksPassed": 6,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

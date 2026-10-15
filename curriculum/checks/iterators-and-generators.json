@@ -1,0 +1,132 @@
+{
+  "exerciseId": "iterators-and-generators-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "iterators-and-generators-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "limited-values",
+      "label": "조건에 맞는 값만 제한 수만큼 반환한다",
+      "probe": "observe([...submission.takeMatching([1,2,3,4,5,6],2,value=>value%2===0)]);",
+      "expected": [
+        2,
+        4
+      ]
+    },
+    {
+      "id": "zero-without-acquire",
+      "label": "제한 0은 iterator를 얻거나 predicate를 호출하지 않는다",
+      "probe": "const log=[];const source={get [Symbol.iterator](){log.push('acquire');return function(){return [1,2][Symbol.iterator]();};}};const values=[...submission.takeMatching(source,0,()=>{log.push('predicate');return true;})];observe({values,log});",
+      "expected": {
+        "values": [],
+        "log": []
+      }
+    },
+    {
+      "id": "lazy-and-no-extra-read",
+      "label": "next 요청 때만 읽고 제한 뒤 한 항목 더 소비하지 않는다",
+      "probe": "const log=[];function* source(){try{log.push('start');for(let value=1;value<=6;value++){log.push(value);yield value;}}finally{log.push('closed');}}const iterator=submission.takeMatching(source(),2,value=>value%2===0);const before=[...log];const first=iterator.next();const afterFirst=[...log];const second=iterator.next();const complete=iterator.next();observe({before,first,afterFirst,second,done:complete.done,log});",
+      "expected": {
+        "before": [],
+        "first": {
+          "value": 2,
+          "done": false
+        },
+        "afterFirst": [
+          "start",
+          1,
+          2
+        ],
+        "second": {
+          "value": 4,
+          "done": false
+        },
+        "done": true,
+        "log": [
+          "start",
+          1,
+          2,
+          3,
+          4,
+          "closed"
+        ]
+      }
+    },
+    {
+      "id": "consumer-break-closes",
+      "label": "소비자의 break가 원본 정리까지 전달된다",
+      "probe": "const log=[];function* source(){try{yield 1;yield 2;yield 3;}finally{log.push('closed');}}const values=[];for(const value of submission.takeMatching(source(),3,()=>true)){values.push(value);break;}observe({values,log});",
+      "expected": {
+        "values": [
+          1
+        ],
+        "log": [
+          "closed"
+        ]
+      }
+    },
+    {
+      "id": "predicate-error-closes",
+      "label": "predicate 예외를 보존하며 원본을 정리한다",
+      "probe": "const log=[];const thrown={code:'predicate'};function* source(){try{yield 1;yield 2;yield 3;}finally{log.push('closed');}}try{for(const value of submission.takeMatching(source(),3,value=>{log.push(value);if(value===2)throw thrown;return true;})){log.push('yield:'+value);}}catch(error){error.observed='caught';}observe({log,thrown});",
+      "expected": {
+        "log": [
+          1,
+          "yield:1",
+          2,
+          "closed"
+        ],
+        "thrown": {
+          "code": "predicate",
+          "observed": "caught"
+        }
+      }
+    },
+    {
+      "id": "natural-exhaustion",
+      "label": "자연 소진 뒤 불필요하게 return을 호출하지 않는다",
+      "probe": "const log=[];let index=0;const source={[Symbol.iterator](){return this;},next(){log.push('next');index++;return index<=2?{value:index,done:false}:{done:true};},return(){log.push('return');return {done:true};}};const values=[...submission.takeMatching(source,10,()=>true)];observe({values,log});",
+      "expected": {
+        "values": [
+          1,
+          2
+        ],
+        "log": [
+          "next",
+          "next",
+          "next"
+        ]
+      }
+    },
+    {
+      "id": "invalid-limit",
+      "label": "음수·소수·무한 제한을 거부한다",
+      "probe": "const names=[];for(const limit of [-1,0.5,Infinity]){try{const iterator=submission.takeMatching([],limit,()=>true);iterator.next();names.push('not-thrown');}catch(error){names.push(error.name);}}observe(names);",
+      "expected": [
+        "RangeError",
+        "RangeError",
+        "RangeError"
+      ]
+    },
+    {
+      "id": "empty-and-independent",
+      "label": "빈 iterable과 독립된 순회를 처리한다",
+      "probe": "const source=Object.freeze([1,2,3]);const a=submission.takeMatching(source,1,()=>true);const b=submission.takeMatching(source,2,()=>true);observe({empty:[...submission.takeMatching([],3,()=>true)],a:[...a],b:[...b],source});",
+      "expected": {
+        "empty": [],
+        "a": [
+          1
+        ],
+        "b": [
+          1,
+          2
+        ],
+        "source": [
+          1,
+          2,
+          3
+        ]
+      }
+    }
+  ]
+}

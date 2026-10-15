@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "exerciseId": "async-await-and-iteration-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "async-await-and-iteration-checks-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-15T10:02:09.060Z",
+  "startedAt": "2026-10-15T10:01:53.409Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:4446e56a700f3a1ceb3a9178c8e15c408bfdb243dff374dc9c3b3ffabe13ce2e",
+  "referenceChecks": [
+    "sequential-mapping",
+    "bounded-break-cleanup",
+    "empty-and-default",
+    "consumer-error-cleanup",
+    "producer-error",
+    "validate-before-pull",
+    "single-page-bound"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

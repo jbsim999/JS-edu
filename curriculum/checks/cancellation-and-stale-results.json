@@ -1,0 +1,190 @@
+{
+  "exerciseId": "cancellation-and-stale-results-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "cancellation-and-stale-results-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "initial-and-success",
+      "label": "최초 상태·값 반영·완료 상태를 유지",
+      "probe": "const commits=[];const errors=[];let receivedSignal;const controller=await submission.createLatestController((query,signal)=>{receivedSignal=signal;return query.toUpperCase();},(value,query)=>commits.push([value,query]),error=>errors.push(error));const initial=controller.getState();const pending=controller.start('ok');const running=controller.getState();const outcome=await pending;observe({initial,running,outcome,after:controller.getState(),commits,errors,signal:{aborted:receivedSignal.aborted,hasListener:typeof receivedSignal.addEventListener==='function'}});",
+      "expected": {
+        "initial": {
+          "generation": 0,
+          "pending": false
+        },
+        "running": {
+          "generation": 1,
+          "pending": true
+        },
+        "outcome": "committed",
+        "after": {
+          "generation": 1,
+          "pending": false
+        },
+        "commits": [
+          [
+            "OK",
+            "ok"
+          ]
+        ],
+        "errors": [],
+        "signal": {
+          "aborted": false,
+          "hasListener": true
+        }
+      }
+    },
+    {
+      "id": "inverted-success",
+      "label": "A/B 응답 역전에서 최신 성공만 반영",
+      "probe": "let finishA,finishB;const a=new Promise(resolve=>{finishA=resolve;});const b=new Promise(resolve=>{finishB=resolve;});const signals={};const commits=[];const errors=[];const controller=await submission.createLatestController((query,signal)=>{signals[query]=signal;return query==='A'?a:b;},(value,query)=>commits.push([value,query]),reason=>errors.push(String(reason)));const old=controller.start('A');const fresh=controller.start('B');const aborted=signals.A.aborted;finishB('new');const freshStatus=await fresh;finishA('old');const oldStatus=await old;observe({aborted,freshStatus,oldStatus,commits,errors,state:controller.getState()});",
+      "expected": {
+        "aborted": true,
+        "freshStatus": "committed",
+        "oldStatus": "stale",
+        "commits": [
+          [
+            "new",
+            "B"
+          ]
+        ],
+        "errors": [],
+        "state": {
+          "generation": 2,
+          "pending": false
+        }
+      }
+    },
+    {
+      "id": "stale-error",
+      "label": "취소를 무시한 오래된 실패도 반영하지 않는다",
+      "probe": "let rejectA,finishB;const a=new Promise((_,reject)=>{rejectA=reject;});const b=new Promise(resolve=>{finishB=resolve;});const events=[];const controller=await submission.createLatestController(query=>query==='A'?a:b,(value,query)=>events.push('commit:'+query),(reason,query)=>events.push('error:'+query));const old=controller.start('A');const fresh=controller.start('B');rejectA(new Error('late'));const oldStatus=await old;const during=controller.getState();finishB('new');const freshStatus=await fresh;observe({oldStatus,during,freshStatus,events});",
+      "expected": {
+        "oldStatus": "stale",
+        "during": {
+          "generation": 2,
+          "pending": true
+        },
+        "freshStatus": "committed",
+        "events": [
+          "commit:B"
+        ]
+      }
+    },
+    {
+      "id": "cancel-and-restart",
+      "label": "취소 후 완료를 무시하고 새 작업으로 재시작",
+      "probe": "let finish;const oldData=new Promise(resolve=>{finish=resolve;});let signal;const events=[];const controller=await submission.createLatestController((query,ownSignal)=>{if(query==='old'){signal=ownSignal;return oldData;}return 'fresh';},(value,query)=>events.push([value,query]),()=>events.push('error'));const old=controller.start('old');controller.cancel();const cancelled=controller.getState();finish('late');const oldStatus=await old;const freshStatus=await controller.start('new');observe({cancelled,aborted:signal.aborted,oldStatus,freshStatus,events,after:controller.getState()});",
+      "expected": {
+        "cancelled": {
+          "generation": 2,
+          "pending": false
+        },
+        "aborted": true,
+        "oldStatus": "stale",
+        "freshStatus": "committed",
+        "events": [
+          [
+            "fresh",
+            "new"
+          ]
+        ],
+        "after": {
+          "generation": 3,
+          "pending": false
+        }
+      }
+    },
+    {
+      "id": "current-error",
+      "label": "현재 작업의 throw/rejection 원인만 오류 콜백에 전달",
+      "probe": "const outcomes=[];for(const asynchronous of [false,true]){const reason={code:'CURRENT'};const errors=[];let commits=0;const controller=await submission.createLatestController(()=>{if(asynchronous)return Promise.reject(reason);throw reason;},()=>commits++,(error,query)=>errors.push({same:error===reason,query}));const status=await controller.start('query');outcomes.push({status,errors,commits,state:controller.getState()});}observe(outcomes);",
+      "expected": [
+        {
+          "status": "failed",
+          "errors": [
+            {
+              "same": true,
+              "query": "query"
+            }
+          ],
+          "commits": 0,
+          "state": {
+            "generation": 1,
+            "pending": false
+          }
+        },
+        {
+          "status": "failed",
+          "errors": [
+            {
+              "same": true,
+              "query": "query"
+            }
+          ],
+          "commits": 0,
+          "state": {
+            "generation": 1,
+            "pending": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "cooperative-abort",
+      "label": "실제 abort 이벤트로 거부한 이전 작업도 stale 처리",
+      "probe": "const events=[];const controller=await submission.createLatestController((query,signal)=>query==='A'?new Promise((resolve,reject)=>signal.addEventListener('abort',()=>{events.push('abort:A');reject(signal.reason);},{once:true})):Promise.resolve('B'),(value,query)=>events.push('commit:'+query),(reason,query)=>events.push('error:'+query));const old=controller.start('A');const fresh=controller.start('B');observe({old:await old,fresh:await fresh,events});",
+      "expected": {
+        "old": "stale",
+        "fresh": "committed",
+        "events": [
+          "abort:A",
+          "commit:B"
+        ]
+      }
+    },
+    {
+      "id": "snapshot-isolation",
+      "label": "상태 조회 결과를 변경해도 내부 generation이 보존",
+      "probe": "const controller=await submission.createLatestController(query=>query,()=>{},()=>{});const first=controller.getState();try{first.generation=100;}catch{}try{first.pending=true;}catch{}const second=controller.getState();controller.cancel();controller.cancel();observe({second,same:first===second,after:controller.getState()});",
+      "expected": {
+        "second": {
+          "generation": 0,
+          "pending": false
+        },
+        "same": false,
+        "after": {
+          "generation": 2,
+          "pending": false
+        }
+      }
+    },
+    {
+      "id": "reentrant-abort-listener",
+      "label": "동기 abort 재진입에서도 최신 작업과 정리 대상을 보존",
+      "probe": "const releases={};const signals={};const commits=[];let controller;let nested;controller=await submission.createLatestController((query,signal)=>{signals[query]=signal;if(query==='A')signal.addEventListener('abort',()=>{nested=controller.start('C');},{once:true});return new Promise(resolve=>{releases[query]=resolve;});},(value,query)=>commits.push(query),()=>{});const a=controller.start('A');const b=controller.start('B');const before=controller.getState();releases.C('C');const cStatus=await nested;const after=controller.getState();releases.A('A');releases.B('B');observe({before,after,cStatus,aStatus:await a,bStatus:await b,commits,aborted:{A:signals.A.aborted,B:signals.B.aborted,C:signals.C.aborted}});",
+      "expected": {
+        "before": {
+          "generation": 3,
+          "pending": true
+        },
+        "after": {
+          "generation": 3,
+          "pending": false
+        },
+        "cStatus": "committed",
+        "aStatus": "stale",
+        "bStatus": "stale",
+        "commits": [
+          "C"
+        ],
+        "aborted": {
+          "A": true,
+          "B": true,
+          "C": false
+        }
+      }
+    }
+  ]
+}

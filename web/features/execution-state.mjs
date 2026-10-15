@@ -1,5 +1,40 @@
 const identityFields = ["requestId", "lessonId", "exerciseId", "contentRevision", "sourceFingerprint", "targetVersion"];
 
+// Each provider keeps its own environment identity. A single UI execution state
+// controls concurrency; cancellation is forwarded to every provider by request ID.
+export function createExecutionRouter(providers) {
+  const routes = new Map();
+  const runners = new Set();
+  for (const { runner, exerciseIds } of providers) {
+    if (!["getEnvironment", "prepare", "run", "submit", "cancel"].every(key => typeof runner?.[key] === "function")) {
+      throw new TypeError("실행 제공자의 계약을 확인해 주세요.");
+    }
+    runners.add(runner);
+    for (const id of exerciseIds) {
+      if (typeof id !== "string" || !id || routes.has(id)) throw new TypeError("중복 없는 과제 실행 경로가 필요합니다.");
+      routes.set(id, runner);
+    }
+  }
+  const unavailable = { available: false, actualRuntime: "연결할 수 없음", environmentFingerprint: "javascript-edu-unavailable",
+    reason: "이 과제의 전용 실행 환경을 준비하고 있습니다.", missingFeatures: [] };
+  const getEnvironment = async context => {
+    const exerciseId = typeof context === "string" ? context : context?.exerciseId;
+    if (exerciseId !== undefined) return routes.get(exerciseId)?.getEnvironment({ exerciseId }) || { ...unavailable };
+    const availability = await Promise.all([...routes].map(async ([id, runner]) => [id, await runner.getEnvironment({ exerciseId: id })]));
+    return { ...unavailable, exerciseAvailability: Object.fromEntries(availability) };
+  };
+  const invoke = async (kind, request) => {
+    const runner = routes.get(request.exerciseId);
+    if (runner) return runner[kind](request);
+    return { ...Object.fromEntries(identityFields.map(key => [key, request[key]])), ...unavailable,
+      status: "infrastructure-error", stdout: "", stderr: unavailable.reason, compilerOutput: "", checks: [], durationMs: 0 };
+  };
+  return Object.freeze({ getEnvironment,
+    prepare: request => invoke("prepare", request), run: request => invoke("run", request), submit: request => invoke("submit", request),
+    cancel: requestId => Promise.allSettled([...runners].map(runner => runner.cancel(requestId))),
+  });
+}
+
 export function resultMatches(result, request, environmentFingerprint) {
   return Boolean(result && typeof environmentFingerprint === "string" && environmentFingerprint
     && identityFields.every(key => typeof request[key] === "string" && request[key] && result[key] === request[key])
