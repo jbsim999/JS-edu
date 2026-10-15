@@ -1,0 +1,80 @@
+{
+  "exerciseId": "scope-tdz-and-declarations-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "scope-tdz-and-declarations-checks-v1",
+  "cases": [
+    {
+      "id": "per-iteration-index",
+      "label": "반복별 인덱스와 값을 읽는다",
+      "probe": "const readers=submission.createScopedReaders(['A','B','C'],'row'); observe(readers.map(read=>read()));",
+      "expected": [
+        "row[0]=A",
+        "row[1]=B",
+        "row[2]=C"
+      ]
+    },
+    {
+      "id": "empty-input",
+      "label": "빈 입력에서 초기화 오류 없이 빈 배열을 반환한다",
+      "probe": "observe(submission.createScopedReaders([],'empty'));",
+      "expected": []
+    },
+    {
+      "id": "snapshot-values",
+      "label": "원본 배열 변경 후에도 생성 당시 원시값을 보존한다",
+      "probe": "const values=['A','B']; const readers=submission.createScopedReaders(values,'item'); values[0]='X'; values.pop(); observe(readers.map(read=>read()));",
+      "expected": [
+        "item[0]=A",
+        "item[1]=B"
+      ]
+    },
+    {
+      "id": "separate-invocations",
+      "label": "다른 호출의 prefix와 반복 환경이 섞이지 않는다",
+      "probe": "const left=submission.createScopedReaders(['same'],'left'); const right=submission.createScopedReaders(['same','next'],'right'); observe([right[1](),left[0](),right[0](),left[0]()]);",
+      "expected": [
+        "right[1]=next",
+        "left[0]=same",
+        "right[0]=same",
+        "left[0]=same"
+      ]
+    },
+    {
+      "id": "falsy-elements",
+      "label": "빈 문자열·0·false도 생성 당시 값으로 읽는다",
+      "probe": "const readers=submission.createScopedReaders(['',0,false],''); observe(readers.map(read=>read()));",
+      "expected": [
+        "[0]=",
+        "[1]=0",
+        "[2]=false"
+      ]
+    },
+    {
+      "id": "frozen-input",
+      "label": "입력을 변경하지 않고 읽기 함수를 만든다",
+      "probe": "const values=Object.freeze(['한글','🙂']); const readers=submission.createScopedReaders(values,'항목'); observe({values,results:readers.map(read=>read())});",
+      "expected": {
+        "values": [
+          "한글",
+          "🙂"
+        ],
+        "results": [
+          "항목[0]=한글",
+          "항목[1]=🙂"
+        ]
+      }
+    },
+    {
+      "id": "deferred-repeated-order",
+      "label": "읽기 함수를 늦게 역순·반복 호출해도 결과가 유지된다",
+      "probe": "const readers=submission.createScopedReaders([10,20,30],'n'); observe([readers[2](),readers[0](),readers[2](),readers[1]()]);",
+      "expected": [
+        "n[2]=30",
+        "n[0]=10",
+        "n[2]=30",
+        "n[1]=20"
+      ]
+    }
+  ],
+  "observationMode": "callback"
+}

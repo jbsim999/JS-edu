@@ -1,0 +1,196 @@
+{
+  "id": "scope-tdz-and-declarations",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "스코프·TDZ·실행 컨텍스트: 이름이 언제 어디의 값을 읽는가",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "바인딩 생성·초기화·재할당을 분리해 var/let/const와 TDZ를 설명한다.",
+    "실행 컨텍스트의 환경 구성 요소와 어휘적 외부 환경 연결을 추적한다.",
+    "반복별 바인딩과 원시값 스냅샷으로 지연 호출 결함을 수정한다."
+  ],
+  "prerequisites": [
+    "control-flow-and-operators"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §9.1 Environment Records · GetBindingValue",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=162",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §9.4 Execution Contexts — Table 21",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=185",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §14.7.4.4 CreatePerIterationEnvironment",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=337",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "scope-tdz-and-declarations-exercise",
+  "steps": {
+    "theory": "반복문에서 만든 함수 세 개가 모두 마지막 인덱스를 읽거나, 바깥에 값이 있는데도 let 선언 앞에서 ReferenceError가 난다. 둘 다 '이 줄에서 어떤 바인딩을 읽는가'라는 질문이다. 스코프는 이름을 찾는 범위이고 실행 컨텍스트는 현재 실행을 설명하는 명세상의 상태다. 함수 호출 때 컨텍스트가 활성화되고 지역 선언을 위한 환경이 준비된다.\n\n호이스팅은 코드를 실제로 위로 이동시키는 기능명이 아니다. 선언별 준비 과정을 설명하는 학습 용어다. 함수 선언은 선언문 이전 호출이 가능한 경우가 있고 var는 초기화 전 할당식에 도달하기 전에도 undefined로 읽히지만, let/const는 바인딩이 만들어져도 선언의 초기화 전에는 읽을 수 없다. 이 TDZ에서 typeof도 ReferenceError다. const의 재할당 금지와 객체 내용 불변은 별개다.\n\nES2026의 LexicalEnvironment는 식별자 해석에 사용할 Environment Record, VariableEnvironment는 var 선언 바인딩을 보유하는 Environment Record를 식별한다. 둘을 '원본/복사본'으로 설명하지 않는다. 이전 교재의 environmentRecord·outerEnvironmentReference 그림은 바인딩 저장·외부 연결을 설명하는 관용 모델이다. 현재 명세는 Environment Record와 [[OuterEnv]] 연결로 서술한다. 내부 레코드가 JS의 일반 객체로 노출되거나 물리적 메모리 주소가 고정된다는 뜻은 아니다.\n\n이름은 현재 환경에서 시작해 바깥 환경을 따라 찾는다. 호출한 함수의 지역 변수로 이동하는 규칙이 아니다. for(let i=...)는 반복별 바인딩을 만들어 각 함수의 i를 분리한다. 함수가 이 연결을 계속 사용하는 클로저의 수명은 07강에서 다룬다. this 바인딩은 일반 식별자 스코프와 구분해 09강에서 호출 형태별로 확인한다.",
+    "example": "예제의 readers를 만든 뒤 원본 source[0]을 바꿔도 row[0]=A가 나온다. 반복별 index뿐 아니라 그때의 원시값을 const value에 저장했기 때문이다. observeInitialization은 var 읽기→undefined, lexical TDZ 접근→ReferenceError, 준비된 함수 선언 호출→function-ready 순서를 기록한다. 마지막 callElsewhere 안의 label='caller'는 readLabel이 정의된 외부 환경의 label을 바꾸지 않아 definition을 출력한다. 각 결과를 선언 위치·초기화 시점·외부 연결의 세 축으로 추적한다.",
+    "quiz": "q1은 선언되지 않은 이름과 TDZ를, q2는 반복별 환경을, q3은 실행 컨텍스트의 두 환경 구성 요소를, q4는 정의 위치와 호출 위치를 구분한다. q5는 const 재할당과 객체 변경을 복습한다. 관문에서는 단순히 let으로 치환했다는 설명보다 어떤 바인딩을 언제 초기화하고 각 함수가 어느 바인딩을 참조하는지 적는다.",
+    "practice": "교육용 테이블이 행별 클릭 처리 함수를 예약한다고 가정한다. var index 하나를 공유하면 클릭 시점에 모두 반복 종료 값을 읽는다. let index만 써도 함수 안에서 values[index]를 나중에 읽으면 원본 배열의 후속 변경이 반영된다. 화면 생성 당시 문자열을 보존할지 최신 값을 읽을지는 업무 정책이다. 이번 과제는 생성 당시 원시값을 보존한다. 메모에는 스냅샷과 실시간 조회 중 선택한 이유, 오래된 처리 함수를 교체·정리할 시점, 원시값 대신 중첩 객체를 저장하면 달라지는 점을 적는다.",
+    "lab": "createScopedReaders(values, prefix)를 구현한다. values는 string/유한 number/boolean으로 이루어진 조밀한 배열이고 prefix는 문자열이다. 같은 길이의 함수 배열을 반환한다. 각 함수는 인수 없이 호출할 때 생성 당시 prefix+'['+index+']='+value 문자열을 반환한다. values를 나중에 수정하거나 함수들을 역순·반복 호출해도 결과가 유지돼야 한다. 각 createScopedReaders 호출의 상태를 분리하고 원본 배열을 변경하지 않는다. 빈 배열은 []다. 과제는 행동을 검사하며 let 철자 사용 자체를 정답 조건으로 삼지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-tdz-typeof",
+        "prompt": "블록 안에서 typeof x를 실행한 다음 let x=1을 선언한다. 어떤 일이 생기는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "\"undefined\"를 반환한다.",
+            "explanation": "선언이 아예 없는 이름에 대한 typeof 예외 규칙과 초기화되지 않은 lexical 바인딩을 혼동했다."
+          },
+          {
+            "id": "b",
+            "text": "ReferenceError가 발생한다.",
+            "explanation": "블록의 x 바인딩은 존재하지만 선언 실행 전에는 초기화되지 않았다. typeof도 이 TDZ 접근을 피하지 못한다."
+          },
+          {
+            "id": "c",
+            "text": "바깥 x의 값을 자동으로 읽는다.",
+            "explanation": "현재 환경에 초기화되지 않은 x가 있으면 그 바인딩이 바깥 이름을 가린다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-var-let-loop",
+        "prompt": "for(var i=0;i<3;i++){readers.push(()=>i)} 후 호출하면 [3,3,3]이다. let i로 바꾸면 [0,1,2]인 이유는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "let은 매번 함수를 즉시 실행한다.",
+            "explanation": "함수 호출 시점은 바뀌지 않는다. 참조하는 바인딩이 달라진다."
+          },
+          {
+            "id": "b",
+            "text": "var는 함수들을 문자열로 저장한다.",
+            "explanation": "두 경우 모두 함수 값이 만들어진다."
+          },
+          {
+            "id": "c",
+            "text": "let 반복에서는 반복별 환경을 만들고 var는 한 바인딩을 공유한다.",
+            "explanation": "각 함수가 어떤 Environment Record의 i를 참조하는지가 결과를 결정한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q3-environment-components",
+        "prompt": "ES2026의 LexicalEnvironment와 VariableEnvironment를 가장 정확히 설명한 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "한쪽은 다른 쪽의 영구적인 값 복사본이다.",
+            "explanation": "실행 컨텍스트의 환경 식별 역할이며 상태를 한 번 복사해 보관한다는 계약이 아니다."
+          },
+          {
+            "id": "b",
+            "text": "둘 다 Environment Record를 가리키며 식별자 해석과 var 선언 바인딩의 역할을 구분한다.",
+            "explanation": "현재 명세의 구성 요소는 Environment Record다. 코드 경로에 따라 같은 레코드를 가리키거나 달라질 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "JavaScript 코드에서 직접 순회할 수 있는 일반 객체다.",
+            "explanation": "명세의 추상 모델이지 일반 프로퍼티 API로 노출된 객체가 아니다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-lexical-not-caller",
+        "prompt": "외부 label=\"definition\"을 읽는 readLabel을, 지역 label=\"caller\"가 있는 함수 안에서 호출하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "\"definition\"",
+            "explanation": "자유 식별자는 함수가 정의된 환경의 연결을 따라 해석한다. 호출자의 같은 이름을 자동으로 선택하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "\"caller\"",
+            "explanation": "호출 위치의 지역 변수를 동적으로 찾는 규칙이 아니다."
+          },
+          {
+            "id": "c",
+            "text": "항상 undefined",
+            "explanation": "외부 바인딩이 정상 초기화되어 있으면 그 값을 읽는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q5-const-binding",
+        "prompt": "const config={n:1}; config.n=2;는 성공하지만 config={n:2};는 왜 실패하는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "const는 바인딩 재할당을 막고 객체 프로퍼티 변경까지 막지 않는다.",
+            "explanation": "값을 바꾸는 위치가 이름과 값의 연결인지, 같은 객체 안의 프로퍼티인지 구분한다."
+          },
+          {
+            "id": "b",
+            "text": "const는 선언 뒤 모든 연산을 금지한다.",
+            "explanation": "const 바인딩을 읽거나 그 객체의 허용된 프로퍼티를 변경할 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "첫 문장도 항상 실패한다.",
+            "explanation": "객체를 별도로 freeze하지 않은 예제이며 n은 변경 가능한 프로퍼티다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-tdz-typeof",
+        "q5-const-binding"
+      ],
+      "caseIds": [
+        "empty-input"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q3-environment-components",
+        "q4-lexical-not-caller"
+      ],
+      "caseIds": [
+        "separate-invocations"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q2-var-let-loop"
+      ],
+      "caseIds": [
+        "per-iteration-index",
+        "snapshot-values",
+        "deferred-repeated-order"
+      ]
+    }
+  ]
+}

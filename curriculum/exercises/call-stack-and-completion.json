@@ -1,0 +1,73 @@
+{
+  "id": "call-stack-and-completion-exercise",
+  "lessonId": "call-stack-and-completion",
+  "contentRevision": "draft-1",
+  "graderRevision": "call-stack-and-completion-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "nodes는 숫자/배열로 이뤄진 유한·비순환 배열, maxDepth는 0~128 정수입니다. 루트 깊이는 0입니다.",
+    "왼쪽부터 깊이 우선으로 숫자마다 visit(value)를 한 번 호출하고 반환한 숫자를 새 결과 배열에 담습니다. null이면 해당 결과를 제외하고 전체 순회를 종료합니다.",
+    "하위 배열 깊이가 maxDepth보다 크면 RangeError를 던집니다. 입력을 변경하지 않습니다.",
+    "정상·빈 입력·조기 종료·예외 모두 cleanup()을 인수 없이 정확히 한 번 호출합니다. cleanup의 정상 반환값은 무시합니다.",
+    "작업/깊이 오류가 이미 있으면 cleanup 오류가 생겨도 원래 던진 값을 보존합니다. 작업 성공 뒤 cleanup만 던지면 그 값을 전달합니다.",
+    "throw undefined와 같은 falsy 예외도 보존합니다. 콜백은 동기이며 비동기 정리와 입력 전제 밖 타입 검증은 범위 밖입니다."
+  ],
+  "template": "export function processNested(nodes, visit, cleanup, maxDepth = 32) {\n  // TODO: 깊이·조기 종료·원래 오류를 보존하며 cleanup을 정확히 한 번 실행하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/call-stack-and-completion.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "왼쪽부터 깊이 우선 방문하고 정리 반환값을 무시한다",
+    "빈 입력에서도 정리한다",
+    "null 반환은 전체 순회를 끝내고 정리한다",
+    "정리도 실패할 때 원래 작업 오류를 보존한다",
+    "작업 성공 뒤 정리 오류를 전달한다",
+    "약속한 깊이 초과를 중단하고 정리한다",
+    "허용한 깊이의 입력을 빠짐없이 처리한다",
+    "throw undefined를 정상 경로로 바꾸지 않는다"
+  ],
+  "rubric": [
+    "스택·깊이와 종료",
+    "방문 순서·횟수",
+    "정리 보장과 반환 보존",
+    "오류 우선순위·falsy 예외"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "processNested",
+    "parameters": [
+      "nodes",
+      "visit",
+      "cleanup",
+      "maxDepth = 32"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function processNested(nodes, visit, cleanup, maxDepth = 32) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 깊이·조기 종료·원래 오류를 보존하며 cleanup을 정확히 한 번 실행하세요."
+  },
+  "graderFile": "curriculum/checks/call-stack-and-completion.json",
+  "referenceFile": "reference/call-stack-and-completion.mjs",
+  "incorrectFile": "reference/incorrect/call-stack-and-completion.mjs",
+  "exampleFile": "curriculum/examples/call-stack-and-completion.mjs",
+  "exampleExpectedLogs": [
+    "[\"outer:start\",\"inner\",\"outer:value:4\",\"outer:cleanup\",\"caller:value:4\"]",
+    "masked",
+    "work",
+    "6",
+    "RangeError"
+  ],
+  "verificationRecord": "docs/execution/call-stack-and-completion-exercise.json"
+}

@@ -1,0 +1,73 @@
+{
+  "id": "this-and-arrow-functions-exercise",
+  "lessonId": "this-and-arrow-functions",
+  "contentRevision": "draft-1",
+  "graderRevision": "this-and-arrow-functions-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "callback·receiver·args를 받고 ordinary,method,call,apply,bound,mapped 순서로 호출합니다.",
+    "method만 새 {tag:'method', callback} 객체에서 호출합니다. ordinary는 plain call입니다.",
+    "call/apply는 지정 receiver를 사용합니다. bound는 receiver와 args를 bind한 함수를 인수 없이 호출합니다.",
+    "mapped는 args.map(callback,receiver)이며 콜백에 value,index,array가 전달됩니다.",
+    "각 실제 반환값을 같은 이름의 결과 프로퍼티에 저장합니다. receiver와 args는 변경하지 않습니다.",
+    "콜백이 던지면 즉시 같은 값을 전달하고 이후 호출을 중단합니다."
+  ],
+  "template": "export function compareInvocations(callback, receiver, args) {\n  // TODO: 호출 방식별 결과를 순서대로 모으고 receiver와 args를 보존하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/this-and-arrow-functions.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "일반·메서드·명시 receiver를 실제 호출한다",
+    "화살표는 외부 this를 유지한다",
+    "이미 bind된 함수의 receiver는 교체되지 않는다",
+    "bind의 앞 인수와 map의 세 인수를 보존한다",
+    "빈 인수와 빈 map 결과를 처리한다",
+    "receiver와 인수 목록을 변경하지 않는다",
+    "콜백 예외 이후의 호출을 중단한다",
+    "각 호출의 순서와 횟수를 유지한다"
+  ],
+  "rubric": [
+    "일반·메서드 receiver",
+    "명시 바인딩과 인수 계약",
+    "화살표·bind 예외",
+    "원본과 오류 전파"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "compareInvocations",
+    "parameters": [
+      "callback",
+      "receiver",
+      "args"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function compareInvocations(callback, receiver, args) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 호출 방식별 결과를 순서대로 모으고 receiver와 args를 보존하세요."
+  },
+  "graderFile": "curriculum/checks/this-and-arrow-functions.json",
+  "referenceFile": "reference/this-and-arrow-functions.mjs",
+  "incorrectFile": "reference/incorrect/this-and-arrow-functions.mjs",
+  "exampleFile": "curriculum/examples/this-and-arrow-functions.mjs",
+  "exampleExpectedLogs": [
+    "account unbound other",
+    "item:fixed:A",
+    "outer",
+    "[3,6]",
+    "new-name undefined",
+    "TypeError"
+  ],
+  "verificationRecord": "docs/execution/this-and-arrow-functions-exercise.json"
+}

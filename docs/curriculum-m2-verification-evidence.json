@@ -1,0 +1,487 @@
+{
+  "milestone": "M2",
+  "status": "passed",
+  "sourceFormat": "Git index LF bytes, excludes reports/prototypes/untracked M3 and M4 work",
+  "sourceSnapshot": {
+    "files": [
+      {
+        "file": ".github/workflows/scaffold-check.yml",
+        "sha256": "0bfc28eb9b885f3d5b343c39b3f481d355c91d758e72ac6b062987de680f7d08"
+      },
+      {
+        "file": "curriculum/catalog.json",
+        "sha256": "4e4475bf3c149686f8b53d699fe3a82a3230621a8268cf41554bbb1d86ec3cf1"
+      },
+      {
+        "file": "curriculum/checks/call-stack-and-completion.json",
+        "sha256": "b568290926b28250999b314be43f8bc22d65d070c8d8bcbd0cdac1ca1df57aa7"
+      },
+      {
+        "file": "curriculum/checks/coercion-and-equality.json",
+        "sha256": "997e72f036ad57cd408ea480fa51e92179571f4f008cf0b8193142d536fb455d"
+      },
+      {
+        "file": "curriculum/checks/control-flow-and-operators.json",
+        "sha256": "60c2fc18a70eda2436b1f4439ce043328c0509a628df6503c1b2681ed72979be"
+      },
+      {
+        "file": "curriculum/checks/function-parameters-and-contracts.json",
+        "sha256": "e8ab86845bb1b70dd050977f51765c0e82ab7c60afcf796cda7645a6e4996ca9"
+      },
+      {
+        "file": "curriculum/checks/higher-order-functions.json",
+        "sha256": "4c49e155637927691945cbd6bc24e59cec9bd5a6a3d99502b07beeaa0fa7fc47"
+      },
+      {
+        "file": "curriculum/checks/independent-counter.json",
+        "sha256": "843d01f39e3eb2f5f3e51bb942af607729e6b75e3b3146c35c4f325ebea7c485"
+      },
+      {
+        "file": "curriculum/checks/language-host-boundaries.json",
+        "sha256": "d5d3458b4fbaa3a6ad8893a290a179a8d68bdaf36409bfeeaa0fd6e3a3563b9c"
+      },
+      {
+        "file": "curriculum/checks/numbers-and-precision.json",
+        "sha256": "dec7e6174f4b7c505cf53d490f41d90a8bb1deef8b17ae3e540635c16af476b6"
+      },
+      {
+        "file": "curriculum/checks/scope-tdz-and-declarations.json",
+        "sha256": "7bac4d323eb13c003791e92a7aded458ea2b79bf1e22d9035e10a6c59a34684f"
+      },
+      {
+        "file": "curriculum/checks/this-and-arrow-functions.json",
+        "sha256": "b6158aa369fa8e246cd687b9b3b4d0343cdb9f67b68bb6d38b35d3c53ee07fdd"
+      },
+      {
+        "file": "curriculum/checks/values-and-types.json",
+        "sha256": "fed0c0e434faeb94f6ff35483515e6933e163f31d8fb691eb899054c05169bd8"
+      },
+      {
+        "file": "curriculum/examples/bindings-and-closures.mjs",
+        "sha256": "c23d76ab3637a093e83c8edaa5182b0f8ebc25c2332582ed30d4ecb80527ebad"
+      },
+      {
+        "file": "curriculum/examples/call-stack-and-completion.mjs",
+        "sha256": "814828666c7492efd615df1557e556e6d2cf1f1d6922f7a6baaa86bd13759258"
+      },
+      {
+        "file": "curriculum/examples/coercion-and-equality.mjs",
+        "sha256": "dc4d83b53665fcef70328688b4027605821658328da1014b758f9be54931d3cd"
+      },
+      {
+        "file": "curriculum/examples/control-flow-and-operators.mjs",
+        "sha256": "c3ab62e197944a75c1b7ce3efde0a9afd781c227700fd0535dad0879f5a02d2e"
+      },
+      {
+        "file": "curriculum/examples/function-parameters-and-contracts.mjs",
+        "sha256": "3b2424ed7a0d50ec1cb94b2faa7940292ad2f5a084070614f90242a8cd190e1e"
+      },
+      {
+        "file": "curriculum/examples/higher-order-functions.mjs",
+        "sha256": "2d3d8345ab216c07c96ebaebb037c620755ad56e6d46aa4a95ef65e0dc5669de"
+      },
+      {
+        "file": "curriculum/examples/language-host-boundaries.mjs",
+        "sha256": "a5dd6c291cf16da438714a122ba71c708efbed7f7205931ccdabfdb56d477a21"
+      },
+      {
+        "file": "curriculum/examples/numbers-and-precision.mjs",
+        "sha256": "ddbe3ae468f5f958111a45cdda3e548ad440d62cd3ee68d2d1f9e7e8263175cf"
+      },
+      {
+        "file": "curriculum/examples/scope-tdz-and-declarations.mjs",
+        "sha256": "1cf93d1a000e604062531ff5d74cc299d5f9c05638780800373fe982ade700fc"
+      },
+      {
+        "file": "curriculum/examples/this-and-arrow-functions.mjs",
+        "sha256": "4a0f8459730f4ced6d6bbff75b2c7f1a3cbcdbf3ef641428ef945b8e2e1ad837"
+      },
+      {
+        "file": "curriculum/examples/values-and-types.mjs",
+        "sha256": "64aeccb51695824a3a4b7b7d0c29f1f3d7afe5e0c228bb996c9a19d16b91274c"
+      },
+      {
+        "file": "curriculum/exercises.json",
+        "sha256": "6062f5df873ddaa84a451f1dd5ac6f1665b6d32fcad2c94da9b1eda91ea5626c"
+      },
+      {
+        "file": "curriculum/exercises/call-stack-and-completion.json",
+        "sha256": "cd6867af1cfebb75f3b9e0986c759b39f2604371a79cdc0eb2ff9d525b303598"
+      },
+      {
+        "file": "curriculum/exercises/coercion-and-equality.json",
+        "sha256": "91e31b3d9a47175e16ae3e64d692a655420cf528504c5eef642d4d61ea02e06e"
+      },
+      {
+        "file": "curriculum/exercises/control-flow-and-operators.json",
+        "sha256": "0ee82c0a206aeb15a472627057e9699970450ad68fa51793b4a46de347c49a7e"
+      },
+      {
+        "file": "curriculum/exercises/function-parameters-and-contracts.json",
+        "sha256": "8e42884cc55ebd1b1d8f45f1189d511a38d36e4519f6931e17fd72254ee06069"
+      },
+      {
+        "file": "curriculum/exercises/higher-order-functions.json",
+        "sha256": "0360b53f479074d50121d982d14174b686882ddf81869b4956ac93039e5b08d2"
+      },
+      {
+        "file": "curriculum/exercises/language-host-boundaries.json",
+        "sha256": "e0c33cf7e6311c699a4ad8c248766c0034934d6c2243e89059bff6fb21c20590"
+      },
+      {
+        "file": "curriculum/exercises/numbers-and-precision.json",
+        "sha256": "166defaeac5630a6a478e9fe9dc128c8b28844f78722297fc9c32838191ee620"
+      },
+      {
+        "file": "curriculum/exercises/scope-tdz-and-declarations.json",
+        "sha256": "9146d68f0af1699f7ee2dd42f3a2620a900e852bb6ea06a1dab4d4800ebabd43"
+      },
+      {
+        "file": "curriculum/exercises/this-and-arrow-functions.json",
+        "sha256": "acbaf413926a6c88b4a7eba99b533f27419e27e5f1e9bd9c01af0f45776b3d00"
+      },
+      {
+        "file": "curriculum/exercises/values-and-types.json",
+        "sha256": "22411345a04e1a8f9afcc0bfe3b451dc71e09ffac6322c4da97b80ec9ff39158"
+      },
+      {
+        "file": "curriculum/lessons/bindings-and-closures.json",
+        "sha256": "f4d8a5c05173580440b581175d48582e0238547782dad99280ebfb2ef3bdf1f5"
+      },
+      {
+        "file": "curriculum/lessons/call-stack-and-completion.json",
+        "sha256": "9b501103373281160ed60327ec5570ae8d551d923bc9209ae5ebbddb3a8e1663"
+      },
+      {
+        "file": "curriculum/lessons/coercion-and-equality.json",
+        "sha256": "aee15c1a1fcdff1663a8dc9ede5445f18b1b66d2ccfb6d107b01db62421c1695"
+      },
+      {
+        "file": "curriculum/lessons/control-flow-and-operators.json",
+        "sha256": "9ed6a9f248f3e63398934c8190dca556176eb6811dc140be2476169ca6765bf8"
+      },
+      {
+        "file": "curriculum/lessons/function-parameters-and-contracts.json",
+        "sha256": "8a0f009913ac4a3902dabbfc45a03b7522d2d405513386ec05efc02cb8182fec"
+      },
+      {
+        "file": "curriculum/lessons/higher-order-functions.json",
+        "sha256": "c5ee19717d91dff0574c831aef8066b3543c118136f3b38576441ff9b7edc932"
+      },
+      {
+        "file": "curriculum/lessons/language-host-boundaries.json",
+        "sha256": "936651c28ccd81b762e8dec41228cb7858639d69c0469de993f87c30ff71f02f"
+      },
+      {
+        "file": "curriculum/lessons/numbers-and-precision.json",
+        "sha256": "48069ac3d6e8ebff0ca7e48fdc36bbad05ca8c592e5bd4805e325aece4af4a44"
+      },
+      {
+        "file": "curriculum/lessons/scope-tdz-and-declarations.json",
+        "sha256": "726b48c1d3c7c3ebe14cec44657dc8efeb182e25b5f95cfe87389c18a779adda"
+      },
+      {
+        "file": "curriculum/lessons/this-and-arrow-functions.json",
+        "sha256": "0d6c9040b348609aff813032d924b6c715074587f625e3d529e69bfd8c70f5c4"
+      },
+      {
+        "file": "curriculum/lessons/values-and-types.json",
+        "sha256": "a8977db81e05c668783a2bef3bedb5eede8feec1cefa4bb1d1106097809e1df5"
+      },
+      {
+        "file": "education.config.json",
+        "sha256": "cfe78a62e67c31528720ced150b5dbcb0be345ffaa94e1bd873434d3ec2f9106"
+      },
+      {
+        "file": "package.json",
+        "sha256": "4109fd17f37114a12658c26cea19ca73ad6c5d14e3edaee13f9fc659f9cd6cf3"
+      },
+      {
+        "file": "reference/call-stack-and-completion.mjs",
+        "sha256": "dd29850793f3aebcba279eaa4e0fc1c470cb86c045336a705294ab2077ee1e77"
+      },
+      {
+        "file": "reference/coercion-and-equality.mjs",
+        "sha256": "4e893c661760c81dfa4c08606f63fff3ff4f254ef24eaea00df1d18147f3f65c"
+      },
+      {
+        "file": "reference/control-flow-and-operators.mjs",
+        "sha256": "e6807fbe335e91523bbbf78777866d9805d87a5b8365f0e4058085c7df69f8d5"
+      },
+      {
+        "file": "reference/function-parameters-and-contracts.mjs",
+        "sha256": "1fe008a75d7e0153f6a69ae729df36e61c1fe4551f71bc6570320726e082a3b7"
+      },
+      {
+        "file": "reference/higher-order-functions.mjs",
+        "sha256": "62d80ba5f43afe4fb77cc52a5483bade6d1a95dc2381c32dc9776688187d5591"
+      },
+      {
+        "file": "reference/incorrect/call-stack-and-completion.mjs",
+        "sha256": "0f87fe05f3a5b28db731b7285ae0dab0f5a6d1a8060cf7b6899d137493cc9c10"
+      },
+      {
+        "file": "reference/incorrect/coercion-and-equality.mjs",
+        "sha256": "0c9f76cac46ba0d1c4a96db42b6dcef7da857d27fd249274da5276c14f942ffe"
+      },
+      {
+        "file": "reference/incorrect/control-flow-and-operators.mjs",
+        "sha256": "9188ddd1ee80af43f895c36b8e4889845aeb33719c873636c1b22494b34a3b42"
+      },
+      {
+        "file": "reference/incorrect/function-parameters-and-contracts.mjs",
+        "sha256": "c46988e5613890ba7ba8aa5b167ec7e28311f285b260711a50351a3f9a536397"
+      },
+      {
+        "file": "reference/incorrect/higher-order-functions.mjs",
+        "sha256": "6f795b0561733de4889086b4aad7b5ba8ec3121c1f80125d3b867187738b7491"
+      },
+      {
+        "file": "reference/incorrect/independent-counter.mjs",
+        "sha256": "49366e592a56b9743fa450a0e7a2242b254c05a8bb99202bf7ec2fdb29d520cb"
+      },
+      {
+        "file": "reference/incorrect/language-host-boundaries.mjs",
+        "sha256": "5dd0674d17144a4413b7a26b8de7029812d966ecd7442a540e6fce08509edb0b"
+      },
+      {
+        "file": "reference/incorrect/numbers-and-precision.mjs",
+        "sha256": "21a38f5bc6d02321851cd6bf53681c6c30427c252ac54af33b214eeaf7cf43b9"
+      },
+      {
+        "file": "reference/incorrect/scope-tdz-and-declarations.mjs",
+        "sha256": "212a048e22bb112675be119668220cd0a841da4a6f9927247473fa607203c84b"
+      },
+      {
+        "file": "reference/incorrect/this-and-arrow-functions.mjs",
+        "sha256": "43a7e7df142be70d47ffe77151e011fc57a1d9e3c7f6e65f4f505a35fce6320b"
+      },
+      {
+        "file": "reference/incorrect/values-and-types.mjs",
+        "sha256": "41925d27d6d44194efc43ed0efa768dc2eeebf2b5c95816765aba865fe5124c4"
+      },
+      {
+        "file": "reference/independent-counter.mjs",
+        "sha256": "c03b910c36c49efdb1fa3533ec1f2ff27c0ae53f9230cef4e20c2d4c8ea1536d"
+      },
+      {
+        "file": "reference/language-host-boundaries.mjs",
+        "sha256": "dd6c9a17ece28b41e8675adc81c2784766c6978a9f21440b981496715e8d651d"
+      },
+      {
+        "file": "reference/numbers-and-precision.mjs",
+        "sha256": "13eac9288b6a38bef7761cd4e9b6863a72ffb6e3f27e2a31b379a097bd3b1aef"
+      },
+      {
+        "file": "reference/scope-tdz-and-declarations.mjs",
+        "sha256": "58862e19090f7e46f451c700d4d4e7bb30bb85d88e4a6a936b71b8331a6f7d2f"
+      },
+      {
+        "file": "reference/this-and-arrow-functions.mjs",
+        "sha256": "b4a0a8924905625cab3f4262b1cad459e38292412fd2a1f093935b5015944e57"
+      },
+      {
+        "file": "reference/values-and-types.mjs",
+        "sha256": "8cb0e24eee4a446f9d11f81da0ff19b81022472effb2c74f98a7a1aaa11bf206"
+      },
+      {
+        "file": "runtime/profiles.json",
+        "sha256": "f160f8fe97b9e193a732909704c6adf52d4203b6d5d1f52810c7a91c6208ac08"
+      },
+      {
+        "file": "scaffold-manifest.json",
+        "sha256": "a6e9ebb3fdfbafb7160437b5d3589c6c585a89486545d8bbf961ccee71b5c78c"
+      },
+      {
+        "file": "scripts/check-syntax.mjs",
+        "sha256": "e37abd6f6eefb4654fef10ff2d4757772443d1b862f3243325662a9828127e45"
+      },
+      {
+        "file": "scripts/validate-project.mjs",
+        "sha256": "62aeef9c3481a65f24ae7aefb1dbe6a9de78a985c9b03e35c7954ad5d70d1f88"
+      },
+      {
+        "file": "scripts/verify-curriculum.mjs",
+        "sha256": "f6e00fb7a36fedc6c602ec8a4f4978df4d0c80c0522d14e92f611bd4349f7109"
+      },
+      {
+        "file": "starter/call-stack-and-completion.mjs",
+        "sha256": "e5b2ea24425b30fdce508cf1c34c6f724387ddb6a7e8cd161fdabe06c08e4b5b"
+      },
+      {
+        "file": "starter/coercion-and-equality.mjs",
+        "sha256": "b2930ce7305c81a8d70b06e045445d7e232dbd8812c3b571f7bb4f31f1613a0d"
+      },
+      {
+        "file": "starter/control-flow-and-operators.mjs",
+        "sha256": "c8c4963fd71b09ef9e8e3c6c442854d50d4ed8af9548ff5d3c7a954b0b1a6755"
+      },
+      {
+        "file": "starter/create-counter.mjs",
+        "sha256": "51634e7f75a78a116e07a4b59d2d2495b3797f8cb6999f33858169e3ca936c3c"
+      },
+      {
+        "file": "starter/function-parameters-and-contracts.mjs",
+        "sha256": "06c043bce0be9edecc6bed5a852624e9f84f0c0538241a86d7c10de4c90999ca"
+      },
+      {
+        "file": "starter/higher-order-functions.mjs",
+        "sha256": "45960fb687e7bf307e4393e96a04de3ee81a25624c44c90c8ed5c9402f24149e"
+      },
+      {
+        "file": "starter/language-host-boundaries.mjs",
+        "sha256": "350c845660a943dbd220f7cf79b41b165cd3d83861c49849a8fc2e16a514406e"
+      },
+      {
+        "file": "starter/numbers-and-precision.mjs",
+        "sha256": "190b687106e688b7d67b451d8357331edb5f8c754737c6d38dce1395f868bcc1"
+      },
+      {
+        "file": "starter/scope-tdz-and-declarations.mjs",
+        "sha256": "2f20cc5a55f7cbe1c12580c9099b6c3fc51b6642b8d1a50a7186bffd5311770d"
+      },
+      {
+        "file": "starter/this-and-arrow-functions.mjs",
+        "sha256": "ed6f473182fe8f124741efd330f2585407eadd83dcae5ed46ce71ce8ea7f4d82"
+      },
+      {
+        "file": "starter/values-and-types.mjs",
+        "sha256": "7d2155a01d256563b4ff02f7ed24a7e99b4c5f861e0ebd7fe6016548bba11d24"
+      },
+      {
+        "file": "tests/adapters.test.mjs",
+        "sha256": "17d5802a8f6ddb46dea2b8c8d2abbc851dbb581d77cdcda517fb6226886ba659"
+      },
+      {
+        "file": "tests/curriculum-contract.test.mjs",
+        "sha256": "08fbda5353ac4de4abbaaf823e043e88332b1e8ae70c108337393b2170e78885"
+      },
+      {
+        "file": "tests/learning-server.test.mjs",
+        "sha256": "32947c563fbd48a6019f967fb269356ccd9955316bd347c4c0ae75501699911a"
+      },
+      {
+        "file": "tests/learning-ui-state.test.mjs",
+        "sha256": "d805deb8b109952f4448d3ee079e6525d4842a24a897af285f8e9d058dcedffb"
+      },
+      {
+        "file": "tests/runtime-worker.test.mjs",
+        "sha256": "2e5b7925ad5d57431aef649ce6f3e1295b41c74402d5283615a347118cb4ec43"
+      },
+      {
+        "file": "tests/validator.test.mjs",
+        "sha256": "c0480afe9fbb0e1929e155f9f83523c62b02f473813670f15dd734deb51188ff"
+      },
+      {
+        "file": "tests/workspace-state.test.mjs",
+        "sha256": "3d4fb98bdf768bd5cdc4e7acaa19efd806276d6ee5b0cce8e2a732c544973b27"
+      },
+      {
+        "file": "web/adapters/runner.mjs",
+        "sha256": "ff09cdf4ee5046df4906276fb1178e6b9754829723a4e5b352ff38235e3e4556"
+      },
+      {
+        "file": "web/adapters/storage.mjs",
+        "sha256": "7ad11540382c4501f486fdb96d29fba602143969dbedd6a998d460d6b496e7b3"
+      },
+      {
+        "file": "web/app.mjs",
+        "sha256": "df45e0360b1563c7eb0a69eb1509b33e6a23423f43611b17400305b8c3cbaa8a"
+      },
+      {
+        "file": "web/execution/browser-runner.mjs",
+        "sha256": "44184a517475d6dac6796ef3c72978c327a58526d39266d874ff94b6b7269d53"
+      },
+      {
+        "file": "web/execution/protocol.mjs",
+        "sha256": "558d87ad4939f6e0e0d31600dce811b32f72cc706d7338162d3f4ba7f6b626cc"
+      },
+      {
+        "file": "web/execution/qualification.html",
+        "sha256": "6abfbf89f6161eca2d7a04d9477e16f18b9cc02061cb9b69d79eea68d0fa1b30"
+      },
+      {
+        "file": "web/execution/qualification.mjs",
+        "sha256": "ce381a56310bbe32cc26717b9e1e57b0dd6f5d53068149a973cb27c1bafd43b0"
+      },
+      {
+        "file": "web/execution/worker.js",
+        "sha256": "edad0ba4e0527fb9de2df2f25e360b588d621843ba6b924fab138d753ba8c4e8"
+      },
+      {
+        "file": "web/features/execution-state.mjs",
+        "sha256": "0b4c1ee7007e7d2a3c3ecaacb76af3c6d9317768e8a06cdd2e77cb75560c09f3"
+      },
+      {
+        "file": "web/features/learning-data.mjs",
+        "sha256": "e6a831cdc6d23d39a756423563978d1824b204d3ced710a3be25fc4e01c1fb3a"
+      },
+      {
+        "file": "web/features/learning-progress.mjs",
+        "sha256": "f387c1b9bbad49f2d9676425859acf4e109ec72c067ee9fac11b3d49233edbbe"
+      },
+      {
+        "file": "web/features/workspace-state.mjs",
+        "sha256": "e0234293e5c710c40b3d3c31359903e1443faeb78194a0343acaa751e7cb24ac"
+      },
+      {
+        "file": "web/glossary-data.mjs",
+        "sha256": "26378d433ec271a4d95751a9b749f1a01c8922648b923ff121277d7f051f0532"
+      },
+      {
+        "file": "web/index.html",
+        "sha256": "a1e490a98f972af15eb57d2198a96dec1e560836cc4658aa9ce47c7b03a0dba9"
+      },
+      {
+        "file": "web/serve.mjs",
+        "sha256": "741934cf2234f722d8e0869164c5d76abbfd1c208d59d36bcaa2bac605ef49a8"
+      },
+      {
+        "file": "web/styles.css",
+        "sha256": "a3f1760f6ba7a0681709346cda8b4d0074a9e65f27ed076ea71b43e18e8a2bb3"
+      }
+    ],
+    "aggregateFormat": "SHA256 UTF-8 file + NUL + sha256 + LF per ordered item",
+    "aggregateSha256": "aa63e3104b9f242ef2e8312cb1808ddb49084487e9783174ab937f20029e2b99"
+  },
+  "nativeChecks": {
+    "runtime": "Windows Node22.17.0",
+    "command": "npm --prefix work/m2-review run check",
+    "stagedTreeOnly": true,
+    "syntaxFiles": 70,
+    "testsPassed": 80,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "referenceChecks": 82,
+    "exercisesPassed": 11,
+    "incorrectSolutionsRejected": 11,
+    "startersRejected": 11,
+    "examplesCompared": 11,
+    "exampleFailures": 0
+  },
+  "browserChecks": {
+    "runtime": "IAB Chrome155 / Windows / Dedicated Worker",
+    "startedAt": "2026-10-15T08:57:49.933Z",
+    "completedAt": "2026-10-15T08:57:54.100Z",
+    "referenceChecks": 82,
+    "referenceChecksPassed": 82,
+    "exercisesPassed": 11,
+    "incorrectSolutionsRejected": 11,
+    "startersRejected": 11,
+    "runtimeCasesPassed": 6
+  },
+  "reviews": {
+    "content": "independent 10-lesson static review and fixed example outputs PASS",
+    "ui": "Independent Chrome QA PASS: all 55 lesson stages, examples/quiz/editors, 08 and 11 actual grading/draft isolation, 12 planned state, track URL/reload, long content at 320px; viewport reset"
+  },
+  "previousMilestone": {
+    "commit": "9b44b54ede21580d29715677fe5028275a4a54ed",
+    "branch": "feat/runtime-and-curriculum",
+    "ci": "https://github.com/jbsim999/JS-edu/actions/runs/38709012887",
+    "result": "Windows/Ubuntu x Node22/24 all success"
+  },
+  "limitations": [
+    "Self-study behavior checks, not certified grading.",
+    "Real devices, OS IME, screen readers and actual 200% zoom were not tested."
+  ]
+}

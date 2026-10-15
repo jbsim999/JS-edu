@@ -1,5 +1,17 @@
 # 현재 상태
 
+M2 독립 화면 QA PASS: 별도 Chrome 검수 세션에서 11강×5단계55개를 전수 열어 자료·예제·퀴즈·실습 버튼을 확인했다. 08·11 실제 제출과 초안/메모 분리·수정 무효화·복원,12 준비중·트랙 URL/재로드,320px 긴 본문/예제/편집기에서 넘침·잘림 없음 확인. 총괄도 실제320 this본문/1280숫자예제 합성 화면을 직접 검토했다. 사용자4179탭은 수정하지 않았고 시험코드/메모 원복과viewport reset을 확인했다. 진짜200%·실제기기·OS IME·스크린리더는 미검증이다.
+
+## 2026-10-15 M2 공통01–11 연결
+
+공통01–11의 상세5단계·고정퀴즈·실습을확정순서로연결했다. 실제교재/실습연결11강과계획52강을구분하며12이후는준비중이다. 기존07 ID/contentRevision을보존하고선수06을연결했다. 10개신규과제의코드·메모·성취는각ID/개정별로분리한다.
+
+Windows Node22.17.0의커밋대상분리검사PASS:구문70·테스트80/80·skip0·정답82/82·11개오답/11개TODO거부·11예제예상출력대조PASS. 실제IAB Chrome155 qualification 08:57:49.933–08:57:54.100Z에서11강정답82/82·각negative거부와runtime6조건PASS. 브라우저DOM결과의11개정답본문SHA256과검사ID를현재소스와대조했다. executionVerified:true는해당실제검증증거 docs/execution/에연결한다.
+
+독립내용/검사코드리뷰PASS. 05기본값객체별칭은거부하고독립된동결결과는허용하며,08예외와문자열반환을구분하도록검사를보강했다. 신규10예제45줄의고정expected와원본교재/주석일치를독립확인했다. 보고서외109개Gitindex파일snapshot aggregate aa63e3104b9f242ef2e8312cb1808ddb49084487e9783174ab937f20029e2b99. 실제검사본work/m2-review와예정커밋소스를분리했고M3·M4작성중파일은제외했다.
+
+M1원격커밋9b44b54ede21580d29715677fe5028275a4a54ed의 [CI](https://github.com/jbsim999/JS-edu/actions/runs/38709012887)는Windows/Ubuntu×Node22/24전부success. M2의원격결과는후속확인한다. 패키징/병합/외부배포는하지않았다.
+
 M1 최종 검증: 커밋할 Git index만 work/m1-review로 분리해 Windows Node22.17.0 npm run check PASS(구문30·테스트80/80·skip0·제작자 정답7/7/오답·TODO거부/예제일치). 독립 코드·기능·12장 실제 합성 시각 검수 PASS. docs/runtime-verification-evidence.json의 Git index39파일 SHA256과 작업파일(LF정규화)·분리검사본 39/39를 독립 대조했다. aggregate a1b2d5d5cadf915462eb45b95d5a4aeee3a698b5e0a7c29e8ddf09f33e96a725. 후속 미연결 파일은 이 검증 대상에서 제외했다.
 
 ## 2026-10-15 M1 실제 실행·채점 검증

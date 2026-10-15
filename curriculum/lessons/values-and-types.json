@@ -1,0 +1,169 @@
+{
+  "id": "values-and-types",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "값과 타입: 0·false·빈 문자열을 누락으로 잃지 않기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "8개 언어 타입과 typeof의 예외 표기를 구분한다.",
+    "누락·undefined·null과 유효한 falsy 값을 구분한다.",
+    "식별자·바인딩·값과 원시값/객체 복사의 차이를 추적한다."
+  ],
+  "prerequisites": [
+    "language-host-boundaries"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §6.1 ECMAScript Language Types · §6.1.1~7",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=49",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §13.5.3 typeof Operator",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=305",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "values-and-types-exercise",
+  "steps": {
+    "theory": "재시도 횟수 0과 알림 설정 false를 보냈는데 서버가 기본값으로 바꿨다. 값이 '거짓으로 변환된다'는 것과 입력이 '없다'는 것은 다르다. ECMAScript 값의 타입은 Undefined·Null·Boolean·String·Symbol·Number·BigInt·Object다. typeof는 진단 도구지만 typeof null은 'object', 함수는 'function'을 반환한다. 함수와 배열의 언어 타입은 Object다.\n\n식별자는 코드에 쓴 이름이고 바인딩은 이름과 값을 연결한다. let a='A'; let b=a; b='B'에서 a는 'A' 그대로다. 원시값 자체를 수정한 것이 아니라 b에 다른 값을 연결했다. const x={n:1}; const y=x; y.n=2에서는 두 바인딩이 같은 객체 값을 가리키므로 x.n도 2다. 이 관계를 주소 화살표로 그릴 수 있으나 '원시값은 반드시 스택, 객체는 반드시 힙'이라는 엔진의 메모리 배치 보장으로 읽지 않는다.\n\nundefined는 초기값 미지정·없는 프로퍼티·명시적 값 등 여러 경로에서 생긴다. null은 별개의 값이다. 업무 의미를 '미입력'이나 '삭제 요청'으로 정하는 것은 API 계약이며 언어가 자동 결정하지 않는다.",
+    "example": "입력 객체의 zero/off/blank는 모두 present다. unset은 자체 필드가 있으면서 Undefined 타입이고 absent는 필드가 없으므로 missing이다. empty는 Null 타입으로 따로 출력한다. 예제 후반의 A B 2는 원시값 재할당과 공유 객체 변경의 차이를 보여 준다. Symbol('id')의 설명이 같아도 매번 만든 Symbol은 서로 다르며, 1n은 Number가 아닌 BigInt다. 독립 파일의 출력 주석을 먼저 예측한 다음 실행 결과와 대조한다.",
+    "quiz": "q1은 typeof 표기와 언어 타입을, q2는 자체 필드 존재와 값 읽기를, q3은 바인딩 재할당과 객체 변경을 구분한다. q4는 Symbol 동일성과 BigInt를 확인한다. 이 강의는 깊은 복사나 freeze 구현까지 다루지 않으며, 공유 참조의 변경·불변 갱신은 12강에서 이어간다.",
+    "practice": "교육용 프로필 수정 API에서 note 누락은 기존 값 유지, note:null은 명시 삭제, note:''는 빈 문자열 저장으로 정의해 보자. if (!note) 하나로 처리하면 세 의도가 합쳐진다. 수신 경계에서 존재 여부·타입·업무 유효성을 차례로 검사한다. NaN도 Number 타입이므로 '타입이 number'라는 결과는 유효한 금액이라는 뜻이 아니다. 이 검증은 다음 강의의 정규화·범위 정책과 연결한다. 메모에는 undefined를 저장/전송할 때 생길 수 있는 손실과 null 정책의 대안을 적는다.",
+    "lab": "classifyInput(record, key)를 구현한다. record는 객체이고 key는 문자열이다. Object.hasOwn(record,key)로 자체 필드를 확인하고 {presence, type, primitive}를 반환한다. presence는 present/missing이다. type은 undefined/null/boolean/string/symbol/number/bigint/object의 소문자 값이며 함수와 배열도 object로 분류한다. primitive는 object일 때만 false다. 누락은 {presence:'missing',type:'undefined',primitive:true}, 존재하는 undefined는 present다. 상속 필드는 missing으로 취급하고 입력을 변경하지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-types-and-typeof",
+        "prompt": "typeof null === \"object\"일 때 null의 ECMAScript 언어 타입은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Object",
+            "explanation": "typeof의 역사적인 표기와 언어 타입 분류를 같다고 보면 안 된다."
+          },
+          {
+            "id": "b",
+            "text": "Null",
+            "explanation": "Null 타입의 값은 null 하나다. 원시값이며 객체 프로퍼티에 직접 접근할 수 없다."
+          },
+          {
+            "id": "c",
+            "text": "Undefined",
+            "explanation": "null과 undefined는 서로 다른 원시 타입이다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-missing-and-value",
+        "prompt": "입력 { enabled:false, note:undefined }에서 누락과 존재하는 undefined를 구분하려면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "if (input[key])를 사용한다.",
+            "explanation": "false·0·빈 문자열도 같은 분기로 들어가 유효한 값을 잃는다."
+          },
+          {
+            "id": "b",
+            "text": "input[key] === undefined만 검사한다.",
+            "explanation": "없는 키를 읽은 결과와 존재하는 undefined의 읽기 결과가 같을 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "자체 필드 존재 여부와 읽은 값의 타입을 따로 검사한다.",
+            "explanation": "Object.hasOwn으로 자체 필드의 존재를 확인한 뒤 값을 분류한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q3-value-and-binding",
+        "prompt": "let a=\"A\"; let b=a; b=\"B\"; const x={n:1}; const y=x; y.n=2; 이후 a와 x.n은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "\"A\", 2",
+            "explanation": "문자열 재할당은 b의 바인딩을 바꾸고, 객체 프로퍼티 변경은 x와 y가 가리키는 동일 객체에 반영된다."
+          },
+          {
+            "id": "b",
+            "text": "\"B\", 2",
+            "explanation": "a와 b가 같은 원시값을 처음 가졌다는 것이 바인딩까지 공유함을 뜻하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "\"A\", 1",
+            "explanation": "const는 x의 재할당을 막으며 객체 내용을 자동 복사하거나 고정하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-symbol-bigint",
+        "prompt": "Symbol(\"x\") === Symbol(\"x\")와 typeof 0n의 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "true, \"number\"",
+            "explanation": "Symbol 설명 문자열은 동일성 키가 아니며 BigInt는 Number와 별도 타입이다."
+          },
+          {
+            "id": "b",
+            "text": "false, \"bigint\"",
+            "explanation": "새 Symbol 둘은 별개의 원시값이고 0n은 BigInt다."
+          },
+          {
+            "id": "c",
+            "text": "false, \"object\"",
+            "explanation": "Symbol과 BigInt는 원시값이다. 박싱된 Object(0n)과 구별한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-types-and-typeof",
+        "q4-symbol-bigint"
+      ],
+      "caseIds": [
+        "symbol-bigint",
+        "objects-and-callables",
+        "nan-still-number"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-missing-and-value"
+      ],
+      "caseIds": [
+        "falsy-present",
+        "absence-null-undefined",
+        "own-field-only"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-value-and-binding"
+      ],
+      "caseIds": [
+        "null-prototype-and-preservation"
+      ]
+    }
+  ]
+}

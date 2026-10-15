@@ -1,0 +1,66 @@
+{
+  "id": "scope-tdz-and-declarations-exercise",
+  "lessonId": "scope-tdz-and-declarations",
+  "contentRevision": "draft-1",
+  "graderRevision": "scope-tdz-and-declarations-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "values는 string/유한 number/boolean의 조밀한 배열이며 prefix는 문자열이다.",
+    "values와 같은 길이의 인수 없는 함수 배열을 반환한다.",
+    "각 함수는 생성 당시 prefix+\"[\"+index+\"]=\"+value 문자열을 반환한다.",
+    "원본 values를 나중에 변경해도 읽기 결과는 보존하고 다른 생성 호출과 상태를 공유하지 않는다.",
+    "빈 입력은 []; 원본 배열을 변경하지 않고 읽기 함수를 여러 번 호출해도 결과가 같다."
+  ],
+  "template": "export function createScopedReaders(values, prefix) {\n  // TODO: 각 읽기 함수가 생성 당시 인덱스와 값을 보존하게 만드세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/scope-tdz-and-declarations.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "반복별 인덱스와 값을 읽는다",
+    "빈 입력에서 초기화 오류 없이 빈 배열을 반환한다",
+    "원본 배열 변경 후에도 생성 당시 원시값을 보존한다",
+    "다른 호출의 prefix와 반복 환경이 섞이지 않는다",
+    "빈 문자열·0·false도 생성 당시 값으로 읽는다",
+    "입력을 변경하지 않고 읽기 함수를 만든다",
+    "읽기 함수를 늦게 역순·반복 호출해도 결과가 유지된다"
+  ],
+  "rubric": [
+    "초기화된 바인딩 사용",
+    "반복·호출별 상태 분리",
+    "생성 당시 값과 원본 보존"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createScopedReaders",
+    "parameters": [
+      "values",
+      "prefix"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function createScopedReaders(values, prefix) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 각 읽기 함수가 생성 당시 인덱스와 값을 보존하게 만드세요.\n"
+  },
+  "graderFile": "curriculum/checks/scope-tdz-and-declarations.json",
+  "referenceFile": "reference/scope-tdz-and-declarations.mjs",
+  "incorrectFile": "reference/incorrect/scope-tdz-and-declarations.mjs",
+  "exampleFile": "curriculum/examples/scope-tdz-and-declarations.mjs",
+  "exampleExpectedLogs": [
+    "[\"row[0]=A\",\"row[1]=B\"]",
+    "[\"undefined\",\"ReferenceError\",\"function-ready\"]",
+    "definition"
+  ],
+  "verificationRecord": "docs/execution/scope-tdz-and-declarations-exercise.json"
+}

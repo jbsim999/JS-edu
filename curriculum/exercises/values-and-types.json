@@ -1,0 +1,66 @@
+{
+  "id": "values-and-types-exercise",
+  "lessonId": "values-and-types",
+  "contentRevision": "draft-1",
+  "graderRevision": "values-and-types-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "record는 객체, key는 문자열이다. 입력을 변경하지 않는다.",
+    "상속 필드는 제외하고 자체 필드만 present로 분류한다.",
+    "{presence, type, primitive}를 반환한다.",
+    "언어 타입은 소문자 undefined/null/boolean/string/symbol/number/bigint/object다. 함수·배열도 object다.",
+    "missing은 type:undefined, primitive:true로 반환하되 presence로 명시 undefined와 구분한다."
+  ],
+  "template": "export function classifyInput(record, key) {\n  // TODO: 존재 여부와 언어 타입을 따로 분류하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/values-and-types.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "0·false·빈 문자열을 존재하는 값으로 보존한다",
+    "누락·명시 undefined·null을 구별한다",
+    "Symbol과 BigInt는 원시값이다",
+    "배열·함수·박싱 객체를 Object 타입으로 분류한다",
+    "상속된 필드는 입력 자체의 필드로 취급하지 않는다",
+    "원형 없는 입력과 고정 입력을 읽기만 한다",
+    "NaN과 무한대도 언어 타입은 Number다"
+  ],
+  "rubric": [
+    "언어 타입 분류",
+    "누락과 유효값 구분",
+    "입력 읽기와 변경 분리"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "classifyInput",
+    "parameters": [
+      "record",
+      "key"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function classifyInput(record, key) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 존재 여부와 언어 타입을 따로 분류하세요.\n"
+  },
+  "graderFile": "curriculum/checks/values-and-types.json",
+  "referenceFile": "reference/values-and-types.mjs",
+  "incorrectFile": "reference/incorrect/values-and-types.mjs",
+  "exampleFile": "curriculum/examples/values-and-types.mjs",
+  "exampleExpectedLogs": [
+    "[{\"presence\":\"present\",\"type\":\"number\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"boolean\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"string\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"null\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"undefined\",\"primitive\":true},{\"presence\":\"missing\",\"type\":\"undefined\",\"primitive\":true}]",
+    "object function bigint symbol",
+    "A B 2"
+  ],
+  "verificationRecord": "docs/execution/values-and-types-exercise.json"
+}

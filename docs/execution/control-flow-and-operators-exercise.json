@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "exerciseId": "control-flow-and-operators-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "control-flow-and-operators-checks-v1",
+  "executedTests": 9,
+  "checkedAt": "2026-10-15T08:57:54.100Z",
+  "startedAt": "2026-10-15T08:57:49.933Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:d176c1f273a21edb34073030cee75c333beef45d1909b76d7e2003439d85570f",
+  "referenceChecks": [
+    "valid-falsy",
+    "missing-settings-once",
+    "nullish-options",
+    "partial-nullish-fields",
+    "read-each-field-once",
+    "propagate-loader-failure",
+    "no-input-mutation",
+    "fresh-result-from-defaults",
+    "null-ui"
+  ],
+  "referenceChecksPassed": 9,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

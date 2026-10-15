@@ -1,14 +1,156 @@
 {
   "lessons": [
     {
-      "id": "bindings-and-closures",
-      "file": "curriculum/lessons/bindings-and-closures.json",
-      "prerequisites": [],
-      "exerciseId": "independent-counter",
-      "order": 7,
-      "title": "바인딩과 클로저",
+      "id": "language-host-boundaries",
+      "order": 1,
+      "displayNumber": "01",
+      "title": "언어·엔진·호스트·Script/Module·strict mode",
       "track": "common",
-      "unit": "함수와 상태 캡슐화"
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "언어와 실행 환경",
+      "file": "curriculum/lessons/language-host-boundaries.json",
+      "prerequisites": [],
+      "exerciseId": "language-host-boundaries-exercise"
+    },
+    {
+      "id": "values-and-types",
+      "order": 2,
+      "displayNumber": "02",
+      "title": "원시값·객체·typeof·null/undefined·Symbol·BigInt",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "값과 타입",
+      "file": "curriculum/lessons/values-and-types.json",
+      "prerequisites": [
+        "language-host-boundaries"
+      ],
+      "exerciseId": "values-and-types-exercise"
+    },
+    {
+      "id": "coercion-and-equality",
+      "order": 3,
+      "displayNumber": "03",
+      "title": "명시/암묵 변환·===·Object.is·SameValueZero",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "변환과 동등성",
+      "file": "curriculum/lessons/coercion-and-equality.json",
+      "prerequisites": [
+        "values-and-types"
+      ],
+      "exerciseId": "coercion-and-equality-exercise"
+    },
+    {
+      "id": "numbers-and-precision",
+      "order": 4,
+      "displayNumber": "04",
+      "title": "부동소수·안전 정수·BigInt·반올림",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "숫자와 정밀도",
+      "file": "curriculum/lessons/numbers-and-precision.json",
+      "prerequisites": [
+        "coercion-and-equality"
+      ],
+      "exerciseId": "numbers-and-precision-exercise"
+    },
+    {
+      "id": "control-flow-and-operators",
+      "order": 5,
+      "displayNumber": "05",
+      "title": "truthiness·단락·??/?.·평가 순서·ASI",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "분기와 연산자",
+      "file": "curriculum/lessons/control-flow-and-operators.json",
+      "prerequisites": [
+        "coercion-and-equality"
+      ],
+      "exerciseId": "control-flow-and-operators-exercise"
+    },
+    {
+      "id": "scope-tdz-and-declarations",
+      "order": 6,
+      "displayNumber": "06",
+      "title": "let/const/var·스코프·TDZ·호이스팅·실행 컨텍스트·환경 레코드",
+      "track": "common",
+      "unit": "1단원 의미 모델과 바인딩 6강",
+      "shortTitle": "스코프와 선언",
+      "file": "curriculum/lessons/scope-tdz-and-declarations.json",
+      "prerequisites": [
+        "control-flow-and-operators"
+      ],
+      "exerciseId": "scope-tdz-and-declarations-exercise"
+    },
+    {
+      "id": "bindings-and-closures",
+      "order": 7,
+      "displayNumber": "07",
+      "title": "클로저·바인딩·독립 환경·도달 가능성·정보 은닉",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "바인딩과 클로저",
+      "file": "curriculum/lessons/bindings-and-closures.json",
+      "prerequisites": [
+        "scope-tdz-and-declarations"
+      ],
+      "exerciseId": "independent-counter"
+    },
+    {
+      "id": "function-parameters-and-contracts",
+      "order": 8,
+      "displayNumber": "08",
+      "title": "함수 형태·기본값·rest·destructuring·반환 계약",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "함수 인자와 계약",
+      "file": "curriculum/lessons/function-parameters-and-contracts.json",
+      "prerequisites": [
+        "bindings-and-closures"
+      ],
+      "exerciseId": "function-parameters-and-contracts-exercise"
+    },
+    {
+      "id": "this-and-arrow-functions",
+      "order": 9,
+      "displayNumber": "09",
+      "title": "호스트/strict/module별 this·일반/메서드/콜백/new·call/apply/bind·thisArg·화살표",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "this와 화살표 함수",
+      "file": "curriculum/lessons/this-and-arrow-functions.json",
+      "prerequisites": [
+        "function-parameters-and-contracts"
+      ],
+      "exerciseId": "this-and-arrow-functions-exercise"
+    },
+    {
+      "id": "higher-order-functions",
+      "order": 10,
+      "displayNumber": "10",
+      "title": "콜백의 제어권·합성·부분 적용·커링·부수 효과",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "콜백과 함수 합성",
+      "file": "curriculum/lessons/higher-order-functions.json",
+      "prerequisites": [
+        "this-and-arrow-functions"
+      ],
+      "exerciseId": "higher-order-functions-exercise"
+    },
+    {
+      "id": "call-stack-and-completion",
+      "order": 11,
+      "displayNumber": "11",
+      "title": "스택·return/throw·finally·재귀와 종료 조건",
+      "track": "common",
+      "unit": "2단원 함수와 상태 캡슐화 5강",
+      "shortTitle": "호출 스택과 정리",
+      "file": "curriculum/lessons/call-stack-and-completion.json",
+      "prerequisites": [
+        "higher-order-functions"
+      ],
+      "exerciseId": "call-stack-and-completion-exercise"
     }
   ],
   "roadmap": [

@@ -1,0 +1,68 @@
+{
+  "id": "control-flow-and-operators-exercise",
+  "lessonId": "control-flow-and-operators",
+  "contentRevision": "draft-1",
+  "graderRevision": "control-flow-and-operators-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "options는 null/undefined 또는 객체다. retries, ui.enabled, ui.label은 유효한 값 또는 nullish다.",
+    "읽기 순서는 retries → ui → enabled → label이며 각 프로퍼티를 한 번만 읽는다.",
+    "null/undefined만 기본값으로 대체하고 0/false/빈 문자열은 유지한다.",
+    "기본값이 필요한 필드가 하나 이상일 때 loadDefaults()를 정확히 한 번 호출한다. 반환된 기본값은 완전한 {retries,enabled,label}이다.",
+    "새 {retries,enabled,label} 객체를 반환한다. 입력과 기본값은 변경하지 않고 로더 오류는 그대로 전파한다."
+  ],
+  "template": "export function resolveSettings(options, loadDefaults) {\n  // TODO: 한 번씩 읽고, 필요한 기본값만 한 번 가져오세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/control-flow-and-operators.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "0·false·빈 문자열을 유지하고 로더를 호출하지 않는다",
+    "여러 필드가 없어도 기본값 로더는 한 번만 호출한다",
+    "null/undefined 옵션을 기본값으로 해석한다",
+    "nullish 필드만 대체한다",
+    "getter를 정해진 순서로 한 번씩만 읽는다",
+    "기본값 로더의 오류를 삼키거나 재호출하지 않는다",
+    "옵션과 기본값 객체를 변경하지 않는다",
+    "중간 ui가 null이면 나머지 값만 기본값으로 채운다"
+  ],
+  "rubric": [
+    "falsy 보존과 nullish 대체",
+    "프로퍼티·로더 평가 순서와 횟수",
+    "반환·오류 전파·원본 보존"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "resolveSettings",
+    "parameters": [
+      "options",
+      "loadDefaults"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function resolveSettings(options, loadDefaults) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 한 번씩 읽고, 필요한 기본값만 한 번 가져오세요.\n"
+  },
+  "graderFile": "curriculum/checks/control-flow-and-operators.json",
+  "referenceFile": "reference/control-flow-and-operators.mjs",
+  "incorrectFile": "reference/incorrect/control-flow-and-operators.mjs",
+  "exampleFile": "curriculum/examples/control-flow-and-operators.mjs",
+  "exampleExpectedLogs": [
+    "{\"retries\":0,\"enabled\":false,\"label\":\"\"} 0",
+    "{\"retries\":3,\"enabled\":false,\"label\":\"기본\"} 1",
+    "undefined 0",
+    "undefined"
+  ],
+  "verificationRecord": "docs/execution/control-flow-and-operators-exercise.json"
+}

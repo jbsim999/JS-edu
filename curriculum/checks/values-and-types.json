@@ -1,0 +1,149 @@
+{
+  "exerciseId": "values-and-types-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "values-and-types-checks-v1",
+  "cases": [
+    {
+      "id": "falsy-present",
+      "label": "0·false·빈 문자열을 존재하는 값으로 보존한다",
+      "probe": "const record={zero:0,off:false,blank:''}; observe(['zero','off','blank'].map(key=>submission.classifyInput(record,key)));",
+      "expected": [
+        {
+          "presence": "present",
+          "type": "number",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "boolean",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "string",
+          "primitive": true
+        }
+      ]
+    },
+    {
+      "id": "absence-null-undefined",
+      "label": "누락·명시 undefined·null을 구별한다",
+      "probe": "const record={unset:undefined,empty:null}; observe(['absent','unset','empty'].map(key=>submission.classifyInput(record,key)));",
+      "expected": [
+        {
+          "presence": "missing",
+          "type": "undefined",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "undefined",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "null",
+          "primitive": true
+        }
+      ]
+    },
+    {
+      "id": "symbol-bigint",
+      "label": "Symbol과 BigInt는 원시값이다",
+      "probe": "observe([Symbol('id'),0n,12345678901234567890n].map(value=>submission.classifyInput({value},'value')));",
+      "expected": [
+        {
+          "presence": "present",
+          "type": "symbol",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "bigint",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "bigint",
+          "primitive": true
+        }
+      ]
+    },
+    {
+      "id": "objects-and-callables",
+      "label": "배열·함수·박싱 객체를 Object 타입으로 분류한다",
+      "probe": "observe([[],{},()=>1,Object(3)].map(value=>submission.classifyInput({value},'value')));",
+      "expected": [
+        {
+          "presence": "present",
+          "type": "object",
+          "primitive": false
+        },
+        {
+          "presence": "present",
+          "type": "object",
+          "primitive": false
+        },
+        {
+          "presence": "present",
+          "type": "object",
+          "primitive": false
+        },
+        {
+          "presence": "present",
+          "type": "object",
+          "primitive": false
+        }
+      ]
+    },
+    {
+      "id": "own-field-only",
+      "label": "상속된 필드는 입력 자체의 필드로 취급하지 않는다",
+      "probe": "const record=Object.create({amount:0}); observe(submission.classifyInput(record,'amount'));",
+      "expected": {
+        "presence": "missing",
+        "type": "undefined",
+        "primitive": true
+      }
+    },
+    {
+      "id": "null-prototype-and-preservation",
+      "label": "원형 없는 입력과 고정 입력을 읽기만 한다",
+      "probe": "const record=Object.create(null); record.hasOwnProperty=false; Object.freeze(record); observe({classification:submission.classifyInput(record,'hasOwnProperty'),keys:Object.keys(record),value:record.hasOwnProperty});",
+      "expected": {
+        "classification": {
+          "presence": "present",
+          "type": "boolean",
+          "primitive": true
+        },
+        "keys": [
+          "hasOwnProperty"
+        ],
+        "value": false
+      }
+    },
+    {
+      "id": "nan-still-number",
+      "label": "NaN과 무한대도 언어 타입은 Number다",
+      "probe": "observe([NaN,Infinity,-0].map(value=>submission.classifyInput({value},'value')));",
+      "expected": [
+        {
+          "presence": "present",
+          "type": "number",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "number",
+          "primitive": true
+        },
+        {
+          "presence": "present",
+          "type": "number",
+          "primitive": true
+        }
+      ]
+    }
+  ],
+  "observationMode": "callback"
+}

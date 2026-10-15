@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "call-stack-and-completion-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "call-stack-and-completion-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-15T08:57:54.100Z",
+  "startedAt": "2026-10-15T08:57:49.933Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:734308f3932fd63de2f2b53eaf2222f8129f8dfdb690d3851e6980aac852d5d3",
+  "referenceChecks": [
+    "ordered-traversal",
+    "empty-input",
+    "early-stop",
+    "work-error-priority",
+    "cleanup-only-error",
+    "depth-limit",
+    "deep-supported-input",
+    "falsy-throw"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

@@ -1,0 +1,212 @@
+{
+  "id": "higher-order-functions",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "고차 함수와 콜백 제어권: 순서·인수·this·횟수를 계약으로 만들기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "콜백 호출자가 결정하는 시점·인수·this와 동기·비동기 계약을 구분한다.",
+    "파이프라인의 실행 순서와 부수 효과 횟수를 추적하고 오류를 전파한다.",
+    "부분 적용과 이항 커링을 구분하고 지연 실행·인수 순서·독립 상태를 구현한다."
+  ],
+  "prerequisites": [
+    "this-and-arrow-functions"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2015",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §7.3.13 Call · §20.2.3.2 Function.prototype.bind",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=472",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §23.1.3.21 Array.prototype.map: callback argument and this contract",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=630",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN glossary — Callback function",
+      "url": "https://developer.mozilla.org/en-US/docs/Glossary/Callback_function",
+      "edition": "MDN glossary / checked current document",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN glossary — First-class function",
+      "url": "https://developer.mozilla.org/en-US/docs/Glossary/First-class_Function",
+      "edition": "MDN glossary / checked current document",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN Function.prototype.bind — Partially applied functions",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind",
+      "edition": "MDN reference / checked current document",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "higher-order-functions-exercise",
+  "steps": {
+    "theory": "정규화 함수를 목록 처리기에 전달했는데 예상보다 자주 실행되거나 this가 사라졌다. 고차 함수는 함수를 인수로 받거나 반환하는 함수다. 콜백은 다른 함수에 작업을 맡기기 위해 전달한 함수 값이다. 전달만 했을 때와 실제 호출했을 때를 구분해야 실행 시점을 추적할 수 있다. '콜백'이라는 이름만으로 비동기임을 알 수 없다. map의 콜백은 map 호출 중 동기적으로 실행되고, Promise.then의 반응은 현재 동기 실행 뒤 별도 작업 순서에서 이어진다. 비동기 제어는 27–28강에서 확장한다.\n\n호출자는 언제, 몇 번, 어떤 인수로, 어떤 this로 호출할지 결정한다. map은 원소 외에도 index와 원본 배열을 전달하므로 parseInt를 그대로 넘기면 index가 radix 자리에 들어간다. 필요한 인수만 넘기는 래퍼를 만들지, 더 넓은 인수 계약을 허용할지 정한다. 메서드를 전달한 경우도 함수 값이므로 원래 receiver는 자동 보존되지 않는다. 콜백 반환값을 기다리는지, 모으는지, 무시하는지도 API 계약이다.\n\n함수 합성은 한 함수의 결과를 다음 함수의 입력으로 연결한다. 이번 pipe는 왼쪽에서 오른쪽으로 동기 단항 콜백을 각 한 번 호출한다. pipe(double, addOne)(3)은 3→6→7이다. pipe를 만드는 시점에는 double도 addOne도 실행하지 않는다. 빈 pipe는 입력 그대로를 반환한다. 중간 단계가 던지면 뒤 단계는 실행하지 않고 같은 던진 값을 전달한다. 콜백이 외부 배열에 로그를 남기는 부수 효과는 함수 순서와 반복 실행의 차이를 드러낸다.\n\n부분 적용은 여러 인수 중 앞부분을 미리 정하는 것이다. partial(join,'A')('B','C')는 join('A','B','C')에 해당한다. 커링은 호출 형태를 단계별 함수로 바꾼다. curry2(add)(2)(5)는 add(2,5)다. 이번 curry2는 이항 함수만을 대상으로 한다. 함수의 length로 기본값·rest까지 추정하는 범용 커링은 구현하지 않는다. 둘 다 클로저를 이용하지만 같은 연산은 아니며, 첫 인수를 받았다는 이유로 원래 함수를 미리 실행하면 안 된다.",
+    "example": "curriculum/examples/higher-order-functions.mjs에서 log는 파이프라인을 구성한 직후 []다. run(3)을 호출하면 double:3 다음 add:6이 기록되고 결과는 7이다. 다시 run(4)를 호출하면 새 입력의 경로를 한 번 더 실행한다. 앞 호출의 중간값이 다음 호출에 섞이지 않는다.\n\n같은 파일의 partial(join,'A')는 'B','C'를 받을 때 A/B/C를 반환한다. curry2(pair)('A')는 아직 pair를 호출하지 않으며 다음 인수 'B'를 받으면 A:B를 반환한다. 마지막 파이프라인은 첫 단계 뒤 두 번째 단계에서 오류가 나므로 세 번째 단계의 로그가 없다. return 없이 다음 함수를 호출만 하는 구현은 값이 undefined로 끊기므로 결과와 로그를 함께 관찰한다.",
+    "quiz": "콜백 정의, 합성 순서, 부분 적용/커링의 차이를 코드로 판단한다. 콜백이 비동기인지 또는 this를 갖는지를 이름으로 추측하지 않는다. 틀린 선택지는 호출 횟수나 인수 순서 중 무엇을 바꾸는지 설명한다.",
+    "practice": "교육용 보고서 처리에서 normalize→validate→format을 연결한다고 가정한다. validate가 실패했는데 오류를 잡아 빈 문자열을 반환하면 format은 성공 데이터처럼 처리한다. 실패를 복구할 책임이 없다면 같은 오류를 전달하고 후속 작업을 중단한다. 반대로 재시도 가능한 작업이라면 부수 효과의 중복을 막을 별도 계약이 필요하다. 함수 합성 자체는 멱등성을 만들어 주지 않는다.\n\n미리 만든 부분 적용 함수를 재사용할 때 leading.push(...trailing)로 저장 인수를 수정하면 두 번째 호출에 첫 호출의 인수가 누적된다. 호출별 새 인수 목록을 만들고 원래 leading을 보존해야 한다. receiver도 도구 생성 당시 객체로 고정하되 화살표 함수가 그 receiver를 무시하는 언어 규칙은 바꾸지 않는다. 과도한 작은 래퍼는 호출 경로와 오류 위치를 읽기 어렵게 할 수 있어 이름과 관찰 로그를 적절히 둔다. 속도 개선은 측정 없이 주장하지 않는다.\n\n설계 메모에는 콜백 시점·인수·this·반환·오류 정책을 다섯 문장으로 적는다. 이 과제의 pipe는 동기 전용이다. async 콜백을 넣어 자동으로 await된다고 가정하면 안 되며 비동기 합성은 별도 설계가 필요하다.",
+    "lab": "createFunctionalTools(receiver)는 새 객체 {pipe,partial,curry2}를 반환한다. pipe(...stages)는 input을 받는 함수를 반환하고, 실행 시 stages를 왼쪽부터 각 한 번씩 stage.call(receiver,currentValue)로 호출한다. 각 stage에 인수는 정확히 한 개다. 단계가 없으면 같은 input을 반환한다.\n\npartial(fn,...leading)은 (...trailing)을 받는 함수를 반환하고, 실행 시 fn에 leading 뒤 trailing 순서의 인수를 주며 this는 receiver로 고정한다. 저장한 leading을 변경하지 않아 재사용 가능한 함수여야 한다. curry2(fn)은 first를 받고 다시 second를 받는 함수를 만들며 마지막 단계에서만 fn.call(receiver,first,second)를 실행한다. 어느 함수도 구성 시 콜백을 미리 실행하지 않는다.\n\n모든 콜백은 동기 함수라는 전제이며 Promise를 기다리는 기능은 범위 밖이다. 콜백이 던진 값은 그대로 전파하고 pipe의 남은 단계를 실행하지 않는다. 검사에는 지연 시점, 인수 개수와 순서, fixed receiver, 재사용, 빈 pipe, 원래 예외 보존이 포함된다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-callback-control",
+        "prompt": "함수를 콜백으로 전달한 사실만으로 알 수 있는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "반드시 나중에 비동기로 실행된다.",
+            "explanation": "map처럼 호출 중 실행하는 동기 콜백도 있다."
+          },
+          {
+            "id": "b",
+            "text": "호출하는 함수의 시점·인수·this·반환 계약을 확인해야 한다.",
+            "explanation": "전달한 것은 함수 값이며 실제 호출 방법은 호출자가 정한다."
+          },
+          {
+            "id": "c",
+            "text": "원래 객체의 this가 자동 보존된다.",
+            "explanation": "메서드에서 꺼낸 함수도 일반 값이다. 필요한 경우 bind나 래퍼가 필요하다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-compose-order",
+        "prompt": "왼쪽부터 실행하는 pipe(x=>x*2, x=>x+1)(3)의 결과와 호출 횟수는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "8, 각 한 번",
+            "explanation": "오른쪽 단계를 먼저 실행한 결과다. 계약은 왼쪽부터다."
+          },
+          {
+            "id": "b",
+            "text": "7, 각 한 번",
+            "explanation": "3→6→7이며 함수 생성 때는 실행하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "7, 각 두 번",
+            "explanation": "값을 계산하거나 로그를 찍기 위해 콜백을 반복 호출하면 부수 효과 계약을 깨뜨린다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-partial-curry",
+        "prompt": "partial(fn,a)(b,c)와 curry2(fn)(a)(b)의 차이는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "부분 적용은 앞 인수를 고정하고, 이항 커링은 두 인수 호출을 두 단계로 나눈다.",
+            "explanation": "둘 다 함수를 반환할 수 있지만 입력을 고정하는 것과 호출 형태를 변환하는 것은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "두 표현은 언제나 동일한 세 인수를 fn에 넘긴다.",
+            "explanation": "첫 표현은 a,b,c이고 두 번째는 a,b다."
+          },
+          {
+            "id": "c",
+            "text": "커링은 첫 단계에서 fn(a)를 실행한 결과를 저장한다.",
+            "explanation": "이번 이항 커링은 두 번째 인수가 도착할 때까지 fn을 실행하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-error-propagation",
+        "prompt": "pipe의 두 번째 콜백이 던졌다. 동기 실패 전파 계약에 맞는 동작은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "남은 콜백도 실행한 뒤 빈 값을 반환한다.",
+            "explanation": "실패 뒤 부수 효과를 만들고 성공처럼 보이는 결과를 반환한다."
+          },
+          {
+            "id": "b",
+            "text": "남은 콜백을 중단하고 같은 던진 값을 호출자에게 전달한다.",
+            "explanation": "복구 책임이 없는 합성기는 원래 실패와 실행 순서를 보존한다."
+          },
+          {
+            "id": "c",
+            "text": "두 번째 콜백만 무제한 재시도한다.",
+            "explanation": "재시도 상한과 멱등성 계약 없이 반복하면 실패·부수 효과가 커진다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q5-sync-vs-async",
+        "prompt": "이 과제의 동기 pipe에 async 함수를 넣었다. 무엇을 가정할 수 있을까?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "자동으로 Promise가 완료된 뒤 다음 단계가 실행된다.",
+            "explanation": "동기 합성기는 await 계약을 구현하지 않았다."
+          },
+          {
+            "id": "b",
+            "text": "동기 전용 입력 계약을 벗어난다. 비동기 합성은 별도로 정의해야 한다.",
+            "explanation": "콜백 종류만 바꾼다고 호출자에게 대기·취소·오류 수집 동작이 생기지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "async 함수는 콜백으로 전달 자체가 불가능하다.",
+            "explanation": "함수 값으로 전달할 수 있다. 문제는 호출자의 처리 계약이다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-callback-control",
+        "q5-sync-vs-async"
+      ],
+      "caseIds": [
+        "deferred-pipeline",
+        "fixed-receiver-and-arity"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-compose-order",
+        "q4-error-propagation"
+      ],
+      "caseIds": [
+        "deferred-pipeline",
+        "pipeline-error",
+        "empty-pipeline"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-partial-curry"
+      ],
+      "caseIds": [
+        "partial-order-and-reuse",
+        "curry-defers",
+        "independent-tools",
+        "adapted-error"
+      ]
+    }
+  ]
+}

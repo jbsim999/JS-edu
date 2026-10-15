@@ -1,0 +1,176 @@
+{
+  "id": "function-parameters-and-contracts",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "함수의 입력과 반환 계약: 생략·undefined·null을 구분하기",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "함수 선언·표현식·화살표와 기본값·rest·구조 분해의 평가 조건을 설명한다.",
+    "생략·undefined·null·0에 서로 다른 입력 정책을 적용한다.",
+    "옵션을 변경하지 않고 정상 반환과 예외 경로를 일관되게 구현한다."
+  ],
+  "prerequisites": [
+    "bindings-and-closures"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2015",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §15.1 Parameter Lists · §15.2 Function Definitions · §15.3 Arrow Function Definitions",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=355",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §14.3.3 Destructuring Binding Patterns",
+      "url": "https://262.ecma-international.org/17.0/#sec-destructuring-binding-patterns",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "MDN JavaScript reference — Default parameters",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters",
+      "edition": "MDN reference / checked current document",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "function-parameters-and-contracts-exercise",
+  "steps": {
+    "theory": "요약 함수의 배율을 0으로 보냈는데 결과가 원래 합계로 나왔다. options.scale || 1이 0을 '값 없음'으로 취급했기 때문이다. 입력 계약은 함수가 받는 값의 범위, 생략의 의미, 원본 변경 여부, 결과와 실패 방식을 함께 정하는 약속이다. 이번 과제는 scale:0을 유효한 입력으로 보존하고 null은 잘못된 타입으로 거부한다. 이 정책은 언어의 자동 보정이 아니라 우리가 정하는 API 정책이다.\n\n함수 선언 function sum(){}은 선언 인스턴스화와 연결된다. const sum = function(){}은 함수 값을 변수에 넣으며 변수의 초기화 전에는 호출할 수 없다. 화살표는 짧은 함수 표현식이지만 자체 this·arguments와 생성자 능력이 없으므로 모든 function의 대체 문법은 아니다. 함수가 다른 함수의 인수나 반환값이 될 수 있다는 점은 세 형태에 공통이다.\n\nfunction choose(value = 10){}의 기본값은 인수가 생략되거나 undefined일 때 평가된다. null·0·false·빈 문자열은 그대로 전달된다. function read({scale = 1} = {}){}에는 '인수 전체의 기본값'과 'scale 프로퍼티의 기본값' 두 단계가 있다. read()와 read({})는 가능하지만 read(null)은 구조 분해 전에 TypeError가 난다. 기본값 식은 호출 때마다 필요한 경우에 평가되며, 뒤쪽 매개변수를 초기화 전에 참조하면 TDZ 문제가 생길 수 있다. 기본값 식에서 함수 본문의 let·const·var 선언을 사용할 수 있다고 가정하지 않는다.\n\nrest인 ...tags는 남은 인수로 새 배열을 만든다. 함수 호출의 ...array는 그 배열을 인수 목록으로 펼치는 spread다. 같은 점 세 개라도 방향이 다르다. 구조 분해는 프로퍼티 값을 변수로 꺼내는 동작이며 깊은 복사나 입력 검증이 아니다. 객체·배열을 인수로 받아 내부를 변경하면 호출자도 그 변경을 관찰한다. 모든 정상 경로의 반환 형태를 같게 만들고 잘못된 입력은 합의한 예외로 구분한다. return 뒤 줄바꿈은 자동 세미콜론 삽입으로 값을 반환하지 않을 수 있으므로 반환식과 return을 같은 줄에서 시작한다.",
+    "example": "curriculum/examples/function-parameters-and-contracts.mjs를 실행한다. 기본값 함수의 세 번 호출은 10, 10, null을 반환하고 기본값 식은 두 번만 평가된다. [4, 6], {scale:0, offset:2, label:''}, 'report', 'zero'를 요약한 결과는 {label:'', count:2, total:2, tags:['report','zero']}다. 계산 순서는 합계 10 → scale 0을 곱해 0 → offset 2를 한 번 더해 2다. offset은 원소마다 적용하지 않는다.\n\n같은 파일에서 구조 분해 기본값을 가진 함수에 null을 넘기면 TypeError를 관찰한다. 원본 values와 options는 호출 뒤 그대로다. rest가 새 배열을 만들더라도 그 원소가 객체라면 객체까지 복사되는 것은 아니다. 마지막 두 화살표는 괄호로 감싼 객체를 반환하는 경우와 return 없는 블록의 차이를 보여 준다. 예제의 값은 순수 ECMAScript 의미를 설명하며 console 출력 매체는 호스트가 제공한다.",
+    "quiz": "기본값 적용 시점, rest와 spread의 방향, 입력 계약을 분리해 판단한다. 각 문항에서 정답뿐 아니라 오답 설명도 읽고 '값 없음'을 falsy 전체로 확장했는지 확인한다. 반환 형태가 같다는 것은 성공과 실패를 모두 같은 값으로 숨기라는 뜻이 아니다.",
+    "practice": "교육용 보고서에서 같은 options 객체를 미리보기와 내보내기가 공유한다고 가정한다. 함수가 options.scale = options.scale || 1로 덮어쓰면 0 설정을 잃고 다른 화면의 결과까지 바뀐다. 구조 분해로 지역 기본값을 만들고 출력에 새 객체와 새 tags 배열을 두면 호출 간 결합이 줄어든다. 얕은 복사로 충분한 현재 입력과, 중첩 객체 소유권까지 정해야 하는 입력을 구분한다.\n\n검증 비용도 계약에 포함한다. 이번 과제는 values가 유한한 숫자 배열이고 tags가 문자열이라는 입력 전제를 제공한다. 실제 외부 JSON 경계에서는 배열 종류·원소·크기까지 검증해야 한다. 무조건 값을 Number로 바꾸는 정책은 null이나 빈 문자열을 뜻하지 않게 0으로 만들 수 있다. 설계 메모에는 scale:null을 거부하는 이유, 빈 values에서 offset을 반환하는 이유, 외부 입력 검증을 둘 위치를 적는다.",
+    "lab": "summarizeValues(values, options = {}, ...tags)의 본문만 편집한다. options는 생략/undefined이면 기본 객체를 쓰고 null·배열·객체가 아닌 값이면 TypeError를 던진다. {scale = 1, offset = 0, label = 'total'}을 꺼낸다. scale·offset은 유한한 number, label은 string이어야 하며 잘못되면 TypeError다. 알 수 없는 옵션은 무시한다.\n\n{label, count: values.length, total: sum(values) * scale + offset, tags} 형태의 새 결과를 반환한다. 빈 values의 합은 0이며 0 배율과 빈 label을 보존한다. tags는 남은 문자열 인수의 순서와 중복을 유지한다. values·options는 바꾸지 않는다. 검사에는 기본값, null, falsy, 잘못된 타입, 빈 입력, 동결된 원본이 포함된다. 정답의 문구나 특정 반복문 형태를 맞추는 과제가 아니다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-default-trigger",
+        "prompt": "function choose(x = 10){ return x; }에서 choose(undefined), choose(null), choose(0)의 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "10, null, 0",
+            "explanation": "기본값은 undefined일 때 적용된다. null과 0은 명시된 값이다."
+          },
+          {
+            "id": "b",
+            "text": "10, 10, 10",
+            "explanation": "모든 falsy 값이 기본값을 유발하지 않는다. || 기반 보정과 매개변수 기본값은 다르다."
+          },
+          {
+            "id": "c",
+            "text": "undefined, null, 0",
+            "explanation": "undefined는 기본값 식을 평가하게 한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-rest-spread",
+        "prompt": "collect(...items)로 호출하고 function collect(...values)로 선언했다. 설명으로 맞는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "호출은 배열을 인수로 펼치고, 선언은 남은 인수를 새 배열로 모은다.",
+            "explanation": "앞은 spread, 뒤는 rest다. 원소 객체의 깊은 복사까지 수행하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "둘 다 같은 배열 객체를 그대로 넘긴다.",
+            "explanation": "rest 매개변수 배열은 새 배열이다. 중첩 객체 공유와 배열 자체의 동일성을 구분한다."
+          },
+          {
+            "id": "c",
+            "text": "rest 매개변수는 항상 인수 하나만 받는다.",
+            "explanation": "남은 인수 수에 따라 0개 이상의 원소를 모은다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-null-destructuring",
+        "prompt": "function read({scale = 1} = {}) { return scale; }에 read(null)을 호출하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "1을 반환한다.",
+            "explanation": "null은 undefined가 아니므로 바깥 기본값 {}가 적용되지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "null을 구조 분해할 수 없어 TypeError가 난다.",
+            "explanation": "프로퍼티 기본값과 객체 자체의 허용 범위는 별도다."
+          },
+          {
+            "id": "c",
+            "text": "scale이라는 전역 변수를 만든다.",
+            "explanation": "매개변수 바인딩이며 전역 변수 생성과 관계없다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-options-contract",
+        "prompt": "scale:0을 허용하고 options를 공유한다. 함수의 기본값 처리로 알맞은 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "options.scale = options.scale || 1로 수정한다.",
+            "explanation": "0을 1로 바꾸고 호출자의 공유 객체까지 변경한다."
+          },
+          {
+            "id": "b",
+            "text": "지역 바인딩에 기본값을 두고 타입을 검증한 뒤 새 결과를 반환한다.",
+            "explanation": "명시한 0과 원본 객체를 보존하며 반환·실패 정책을 일관되게 구현한다."
+          },
+          {
+            "id": "c",
+            "text": "모든 오류에서 undefined를 반환한다.",
+            "explanation": "성공 결과가 누락된 경우와 잘못된 입력을 구분하기 어려워진다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q2-rest-spread",
+        "q3-null-destructuring"
+      ],
+      "caseIds": [
+        "rest-order-and-immutable"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q1-default-trigger",
+        "q3-null-destructuring"
+      ],
+      "caseIds": [
+        "default-options",
+        "falsy-values",
+        "null-policy"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-options-contract"
+      ],
+      "caseIds": [
+        "empty-and-undefined-fields",
+        "invalid-types",
+        "rest-order-and-immutable"
+      ]
+    }
+  ]
+}

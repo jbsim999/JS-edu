@@ -1,0 +1,148 @@
+{
+  "exerciseId": "control-flow-and-operators-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "control-flow-and-operators-checks-v1",
+  "cases": [
+    {
+      "id": "valid-falsy",
+      "label": "0·false·빈 문자열을 유지하고 로더를 호출하지 않는다",
+      "probe": "let calls=0; const result=submission.resolveSettings({retries:0,ui:{enabled:false,label:''}},()=>{calls++;return {retries:3,enabled:true,label:'기본'};}); observe({result,calls});",
+      "expected": {
+        "result": {
+          "retries": 0,
+          "enabled": false,
+          "label": ""
+        },
+        "calls": 0
+      }
+    },
+    {
+      "id": "missing-settings-once",
+      "label": "여러 필드가 없어도 기본값 로더는 한 번만 호출한다",
+      "probe": "let calls=0; const result=submission.resolveSettings({},()=>{calls++;return {retries:3,enabled:true,label:'기본'};}); observe({result,calls});",
+      "expected": {
+        "result": {
+          "retries": 3,
+          "enabled": true,
+          "label": "기본"
+        },
+        "calls": 1
+      }
+    },
+    {
+      "id": "nullish-options",
+      "label": "null/undefined 옵션을 기본값으로 해석한다",
+      "probe": "observe([null,undefined].map(options=>{let calls=0;const result=submission.resolveSettings(options,()=>{calls++;return {retries:3,enabled:true,label:'기본'};});return {result,calls};}));",
+      "expected": [
+        {
+          "result": {
+            "retries": 3,
+            "enabled": true,
+            "label": "기본"
+          },
+          "calls": 1
+        },
+        {
+          "result": {
+            "retries": 3,
+            "enabled": true,
+            "label": "기본"
+          },
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "id": "partial-nullish-fields",
+      "label": "nullish 필드만 대체한다",
+      "probe": "let calls=0; const result=submission.resolveSettings({retries:null,ui:{enabled:false,label:'사용자'}},()=>{calls++;return {retries:3,enabled:true,label:'기본'};}); observe({result,calls});",
+      "expected": {
+        "result": {
+          "retries": 3,
+          "enabled": false,
+          "label": "사용자"
+        },
+        "calls": 1
+      }
+    },
+    {
+      "id": "read-each-field-once",
+      "label": "getter를 정해진 순서로 한 번씩만 읽는다",
+      "probe": "const events=[]; const options={get retries(){events.push('retries');return 0;},get ui(){events.push('ui');return {get enabled(){events.push('enabled');return false;},get label(){events.push('label');return null;}};}}; const result=submission.resolveSettings(options,()=>{events.push('defaults');return {retries:3,enabled:true,label:'기본'};}); observe({result,events});",
+      "expected": {
+        "result": {
+          "retries": 0,
+          "enabled": false,
+          "label": "기본"
+        },
+        "events": [
+          "retries",
+          "ui",
+          "enabled",
+          "label",
+          "defaults"
+        ]
+      }
+    },
+    {
+      "id": "propagate-loader-failure",
+      "label": "기본값 로더의 오류를 삼키거나 재호출하지 않는다",
+      "probe": "let calls=0; const failure=new Error('fixture-defaults'); let thrown=false; try{submission.resolveSettings({},()=>{calls++;throw failure;});}catch(error){thrown=error===failure;} observe({thrown,calls});",
+      "expected": {
+        "thrown": true,
+        "calls": 1
+      }
+    },
+    {
+      "id": "no-input-mutation",
+      "label": "옵션과 기본값 객체를 변경하지 않는다",
+      "probe": "const defaults=Object.freeze({retries:3,enabled:true,label:'기본'}); const options=Object.freeze({retries:2,ui:Object.freeze({enabled:true,label:'사용자'})}); const result=submission.resolveSettings(options,()=>defaults); observe({result,options,defaults});",
+      "expected": {
+        "result": {
+          "retries": 2,
+          "enabled": true,
+          "label": "사용자"
+        },
+        "options": {
+          "retries": 2,
+          "ui": {
+            "enabled": true,
+            "label": "사용자"
+          }
+        },
+        "defaults": {
+          "retries": 3,
+          "enabled": true,
+          "label": "기본"
+        }
+      }
+    },
+    {
+      "id": "fresh-result-from-defaults",
+      "label": "기본값을 써도 새 결과 객체를 반환하고 원본과 상태를 분리한다",
+      "probe": "const defaults={retries:3,enabled:true,label:'기본'}; const result=submission.resolveSettings({},()=>defaults); const fresh=result!==defaults; try { result.retries=99; } catch {} observe({fresh,defaults});",
+      "expected": {
+        "fresh": true,
+        "defaults": {
+          "retries": 3,
+          "enabled": true,
+          "label": "기본"
+        }
+      }
+    },
+    {
+      "id": "null-ui",
+      "label": "중간 ui가 null이면 나머지 값만 기본값으로 채운다",
+      "probe": "let calls=0;const result=submission.resolveSettings({retries:1,ui:null},()=>{calls++;return {retries:3,enabled:true,label:'기본'};});observe({result,calls});",
+      "expected": {
+        "result": {
+          "retries": 1,
+          "enabled": true,
+          "label": "기본"
+        },
+        "calls": 1
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

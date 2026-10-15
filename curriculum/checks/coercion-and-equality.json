@@ -1,0 +1,220 @@
+{
+  "exerciseId": "coercion-and-equality-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "coercion-and-equality-checks-v1",
+  "cases": [
+    {
+      "id": "decimal-strings",
+      "label": "정해진 십진 문자열 문법을 처리한다",
+      "probe": "observe([' 12.50 ','+.5','-2.','003',3.25].map(value=>submission.normalizeNumber(value)));",
+      "expected": [
+        {
+          "ok": true,
+          "value": 12.5
+        },
+        {
+          "ok": true,
+          "value": 0.5
+        },
+        {
+          "ok": true,
+          "value": -2
+        },
+        {
+          "ok": true,
+          "value": 3
+        },
+        {
+          "ok": true,
+          "value": 3.25
+        }
+      ]
+    },
+    {
+      "id": "zero-policy",
+      "label": "숫자·문자열 -0을 +0으로 정규화한다",
+      "probe": "observe([0,-0,'0','-0','-.0'].map(value=>{ const result=submission.normalizeNumber(value); return {ok:result.ok,value:result.value,negativeZero:Object.is(result.value,-0)}; }));",
+      "expected": [
+        {
+          "ok": true,
+          "value": 0,
+          "negativeZero": false
+        },
+        {
+          "ok": true,
+          "value": 0,
+          "negativeZero": false
+        },
+        {
+          "ok": true,
+          "value": 0,
+          "negativeZero": false
+        },
+        {
+          "ok": true,
+          "value": 0,
+          "negativeZero": false
+        },
+        {
+          "ok": true,
+          "value": 0,
+          "negativeZero": false
+        }
+      ]
+    },
+    {
+      "id": "empty-and-grammar",
+      "label": "빈 문자열·접두 기수·지수·부분 숫자를 거부한다",
+      "probe": "observe(['', '  ','0x10','1e3','12px','1_000','.','+'].map(value=>submission.normalizeNumber(value)));",
+      "expected": [
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        }
+      ]
+    },
+    {
+      "id": "non-finite",
+      "label": "NaN·무한대와 변환 범위 초과를 거부한다",
+      "probe": "observe([NaN,Infinity,-Infinity,'9'.repeat(400)].map(value=>submission.normalizeNumber(value)));",
+      "expected": [
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        },
+        {
+          "ok": false,
+          "reason": "invalid"
+        }
+      ]
+    },
+    {
+      "id": "missing-and-types",
+      "label": "누락과 허용하지 않은 타입을 구분한다",
+      "probe": "observe([null,undefined,true,false,0n,Symbol('x'),[],{}].map(value=>submission.normalizeNumber(value)));",
+      "expected": [
+        {
+          "ok": false,
+          "reason": "missing"
+        },
+        {
+          "ok": false,
+          "reason": "missing"
+        },
+        {
+          "ok": false,
+          "reason": "type"
+        },
+        {
+          "ok": false,
+          "reason": "type"
+        },
+        {
+          "ok": false,
+          "reason": "type"
+        },
+        {
+          "ok": false,
+          "reason": "type"
+        },
+        {
+          "ok": false,
+          "reason": "type"
+        },
+        {
+          "ok": false,
+          "reason": "type"
+        }
+      ]
+    },
+    {
+      "id": "no-object-coercion",
+      "label": "객체 변환 훅을 실행하지 않는다",
+      "probe": "let calls=0; const input={valueOf(){calls++;return 7;},toString(){calls++;return '7';}}; const result=submission.normalizeNumber(input); observe({result,calls});",
+      "expected": {
+        "result": {
+          "ok": false,
+          "reason": "type"
+        },
+        "calls": 0
+      }
+    },
+    {
+      "id": "repeat-consistency",
+      "label": "같은 입력을 반복해도 결과와 입력이 바뀌지 않는다",
+      "probe": "const input=Object.freeze(['-1.25','0',' 8 ']); observe({first:input.map(submission.normalizeNumber),second:input.map(submission.normalizeNumber),input});",
+      "expected": {
+        "first": [
+          {
+            "ok": true,
+            "value": -1.25
+          },
+          {
+            "ok": true,
+            "value": 0
+          },
+          {
+            "ok": true,
+            "value": 8
+          }
+        ],
+        "second": [
+          {
+            "ok": true,
+            "value": -1.25
+          },
+          {
+            "ok": true,
+            "value": 0
+          },
+          {
+            "ok": true,
+            "value": 8
+          }
+        ],
+        "input": [
+          "-1.25",
+          "0",
+          " 8 "
+        ]
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

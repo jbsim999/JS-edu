@@ -1,0 +1,365 @@
+{
+  "exerciseId": "this-and-arrow-functions-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "this-and-arrow-functions-checks-v1",
+  "cases": [
+    {
+      "id": "ordinary-method-explicit",
+      "label": "일반·메서드·명시 receiver를 실제 호출한다",
+      "probe": "function callback(...values){ return [this === undefined ? 'unbound' : this.tag, values[0] ?? null, values[1] ?? null, values.length]; } observe(submission.compareInvocations(callback,{tag:'chosen'},[4,7]));",
+      "expected": {
+        "ordinary": [
+          "unbound",
+          4,
+          7,
+          2
+        ],
+        "method": [
+          "method",
+          4,
+          7,
+          2
+        ],
+        "call": [
+          "chosen",
+          4,
+          7,
+          2
+        ],
+        "apply": [
+          "chosen",
+          4,
+          7,
+          2
+        ],
+        "bound": [
+          "chosen",
+          4,
+          7,
+          2
+        ],
+        "mapped": [
+          [
+            "chosen",
+            4,
+            0,
+            3
+          ],
+          [
+            "chosen",
+            7,
+            1,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "lexical-arrow",
+      "label": "화살표는 외부 this를 유지한다",
+      "probe": "function make(){ return (...values)=>[this.tag,values[0] ?? null,values[1] ?? null,values.length]; } const callback=make.call({tag:'lexical'}); observe(submission.compareInvocations(callback,{tag:'attempted'},[2]));",
+      "expected": {
+        "ordinary": [
+          "lexical",
+          2,
+          null,
+          1
+        ],
+        "method": [
+          "lexical",
+          2,
+          null,
+          1
+        ],
+        "call": [
+          "lexical",
+          2,
+          null,
+          1
+        ],
+        "apply": [
+          "lexical",
+          2,
+          null,
+          1
+        ],
+        "bound": [
+          "lexical",
+          2,
+          null,
+          1
+        ],
+        "mapped": [
+          [
+            "lexical",
+            2,
+            0,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "already-bound",
+      "label": "이미 bind된 함수의 receiver는 교체되지 않는다",
+      "probe": "function callback(...values){ return [this === undefined ? 'unbound' : this.tag, values[0] ?? null, values[1] ?? null, values.length]; } const bound=callback.bind({tag:'original'}); observe(submission.compareInvocations(bound,{tag:'attempted'},[5,8]));",
+      "expected": {
+        "ordinary": [
+          "original",
+          5,
+          8,
+          2
+        ],
+        "method": [
+          "original",
+          5,
+          8,
+          2
+        ],
+        "call": [
+          "original",
+          5,
+          8,
+          2
+        ],
+        "apply": [
+          "original",
+          5,
+          8,
+          2
+        ],
+        "bound": [
+          "original",
+          5,
+          8,
+          2
+        ],
+        "mapped": [
+          [
+            "original",
+            5,
+            0,
+            3
+          ],
+          [
+            "original",
+            8,
+            1,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "argument-forwarding",
+      "label": "bind의 앞 인수와 map의 세 인수를 보존한다",
+      "probe": "function callback(...values){ return [this === undefined ? 'unbound' : this.tag,values.length,...values.slice(0,2)]; } observe(submission.compareInvocations(callback,{tag:'ordered'},['a','b','c']));",
+      "expected": {
+        "ordinary": [
+          "unbound",
+          3,
+          "a",
+          "b"
+        ],
+        "method": [
+          "method",
+          3,
+          "a",
+          "b"
+        ],
+        "call": [
+          "ordered",
+          3,
+          "a",
+          "b"
+        ],
+        "apply": [
+          "ordered",
+          3,
+          "a",
+          "b"
+        ],
+        "bound": [
+          "ordered",
+          3,
+          "a",
+          "b"
+        ],
+        "mapped": [
+          [
+            "ordered",
+            3,
+            "a",
+            0
+          ],
+          [
+            "ordered",
+            3,
+            "b",
+            1
+          ],
+          [
+            "ordered",
+            3,
+            "c",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-args",
+      "label": "빈 인수와 빈 map 결과를 처리한다",
+      "probe": "function callback(...values){ return [this === undefined ? 'unbound' : this.tag, values[0] ?? null, values[1] ?? null, values.length]; } observe(submission.compareInvocations(callback,{tag:'empty'},[]));",
+      "expected": {
+        "ordinary": [
+          "unbound",
+          null,
+          null,
+          0
+        ],
+        "method": [
+          "method",
+          null,
+          null,
+          0
+        ],
+        "call": [
+          "empty",
+          null,
+          null,
+          0
+        ],
+        "apply": [
+          "empty",
+          null,
+          null,
+          0
+        ],
+        "bound": [
+          "empty",
+          null,
+          null,
+          0
+        ],
+        "mapped": []
+      }
+    },
+    {
+      "id": "inputs-unchanged",
+      "label": "receiver와 인수 목록을 변경하지 않는다",
+      "probe": "function callback(...values){ return [this === undefined ? 'unbound' : this.tag, values[0] ?? null, values[1] ?? null, values.length]; } const receiver=Object.freeze({tag:'frozen'}); const args=Object.freeze([9]); const result=submission.compareInvocations(callback,receiver,args); observe({result,receiver,args});",
+      "expected": {
+        "result": {
+          "ordinary": [
+            "unbound",
+            9,
+            null,
+            1
+          ],
+          "method": [
+            "method",
+            9,
+            null,
+            1
+          ],
+          "call": [
+            "frozen",
+            9,
+            null,
+            1
+          ],
+          "apply": [
+            "frozen",
+            9,
+            null,
+            1
+          ],
+          "bound": [
+            "frozen",
+            9,
+            null,
+            1
+          ],
+          "mapped": [
+            [
+              "frozen",
+              9,
+              0,
+              3
+            ]
+          ]
+        },
+        "receiver": {
+          "tag": "frozen"
+        },
+        "args": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "error-stops-calls",
+      "label": "콜백 예외 이후의 호출을 중단한다",
+      "probe": "const log=[]; const thrown={code:'planned'}; function callback(){ log.push(this === undefined ? 'unbound' : this.tag); throw thrown; } try { submission.compareInvocations(callback,{tag:'later'},[1,2]); } catch(error) { error.observed='caught'; } observe({log,thrown});",
+      "expected": {
+        "log": [
+          "unbound"
+        ],
+        "thrown": {
+          "code": "planned",
+          "observed": "caught"
+        }
+      }
+    },
+    {
+      "id": "call-order-and-count",
+      "label": "각 호출의 순서와 횟수를 유지한다",
+      "probe": "const log=[]; function callback(...values){log.push([this === undefined ? 'unbound' : this.tag,values.length]);return log.length;} const result=submission.compareInvocations(callback,{tag:'chosen'},[4,7]); observe({result,log});",
+      "expected": {
+        "result": {
+          "ordinary": 1,
+          "method": 2,
+          "call": 3,
+          "apply": 4,
+          "bound": 5,
+          "mapped": [
+            6,
+            7
+          ]
+        },
+        "log": [
+          [
+            "unbound",
+            2
+          ],
+          [
+            "method",
+            2
+          ],
+          [
+            "chosen",
+            2
+          ],
+          [
+            "chosen",
+            2
+          ],
+          [
+            "chosen",
+            2
+          ],
+          [
+            "chosen",
+            3
+          ],
+          [
+            "chosen",
+            3
+          ]
+        ]
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

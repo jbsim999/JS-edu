@@ -1,6 +1,406 @@
 {
   "exercises": [
     {
+      "id": "language-host-boundaries-exercise",
+      "lessonId": "language-host-boundaries",
+      "contentRevision": "draft-1",
+      "graderRevision": "language-host-boundaries-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "requested/provided는 문자열 배열이며 입력을 변경하지 않는다.",
+        "Promise/Map/JSON은 language, document/fetch는 web, node:fs/node:path는 node, setTimeout은 host다.",
+        "그 외 이름은 unknown이며 available:false다.",
+        "{name, layer, available} 목록을 요청 순서대로 반환하고 중복을 유지한다.",
+        "알려진 이름이 provided에 있을 때만 available:true다."
+      ],
+      "template": "export function classifyApis(requested, provided) {\n  // TODO: 표준 소속과 제공 여부를 따로 판단하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/language-host-boundaries.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "언어·문서·파일 API를 구분한다",
+        "표준 소속과 제공 여부를 독립적으로 판단한다",
+        "알 수 없는 API를 지원한다고 추측하지 않는다",
+        "빈 진단은 빈 목록이다",
+        "요청 순서와 중복을 보존한다",
+        "환경 프로필과 요청을 변경하지 않는다"
+      ],
+      "rubric": [
+        "표준·호스트 분류",
+        "미지원·미지정 구분",
+        "입력 순서와 원본 보존"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "classifyApis",
+        "parameters": [
+          "requested",
+          "provided"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function classifyApis(requested, provided) {\n",
+        "suffix": "}\n",
+        "initialBody": "  // TODO: 표준 소속과 제공 여부를 따로 판단하세요.\n"
+      },
+      "graderFile": "curriculum/checks/language-host-boundaries.json",
+      "referenceFile": "reference/language-host-boundaries.mjs",
+      "incorrectFile": "reference/incorrect/language-host-boundaries.mjs",
+      "exampleFile": "curriculum/examples/language-host-boundaries.mjs",
+      "exampleExpectedLogs": [
+        "[{\"name\":\"Promise\",\"layer\":\"language\",\"available\":true},{\"name\":\"document\",\"layer\":\"web\",\"available\":false},{\"name\":\"node:fs\",\"layer\":\"node\",\"available\":false}]",
+        "[{\"name\":\"fetch\",\"layer\":\"web\",\"available\":true}]",
+        "true"
+      ],
+      "verificationRecord": "docs/execution/language-host-boundaries-exercise.json"
+    },
+    {
+      "id": "values-and-types-exercise",
+      "lessonId": "values-and-types",
+      "contentRevision": "draft-1",
+      "graderRevision": "values-and-types-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "record는 객체, key는 문자열이다. 입력을 변경하지 않는다.",
+        "상속 필드는 제외하고 자체 필드만 present로 분류한다.",
+        "{presence, type, primitive}를 반환한다.",
+        "언어 타입은 소문자 undefined/null/boolean/string/symbol/number/bigint/object다. 함수·배열도 object다.",
+        "missing은 type:undefined, primitive:true로 반환하되 presence로 명시 undefined와 구분한다."
+      ],
+      "template": "export function classifyInput(record, key) {\n  // TODO: 존재 여부와 언어 타입을 따로 분류하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/values-and-types.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "0·false·빈 문자열을 존재하는 값으로 보존한다",
+        "누락·명시 undefined·null을 구별한다",
+        "Symbol과 BigInt는 원시값이다",
+        "배열·함수·박싱 객체를 Object 타입으로 분류한다",
+        "상속된 필드는 입력 자체의 필드로 취급하지 않는다",
+        "원형 없는 입력과 고정 입력을 읽기만 한다",
+        "NaN과 무한대도 언어 타입은 Number다"
+      ],
+      "rubric": [
+        "언어 타입 분류",
+        "누락과 유효값 구분",
+        "입력 읽기와 변경 분리"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "classifyInput",
+        "parameters": [
+          "record",
+          "key"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function classifyInput(record, key) {\n",
+        "suffix": "}\n",
+        "initialBody": "  // TODO: 존재 여부와 언어 타입을 따로 분류하세요.\n"
+      },
+      "graderFile": "curriculum/checks/values-and-types.json",
+      "referenceFile": "reference/values-and-types.mjs",
+      "incorrectFile": "reference/incorrect/values-and-types.mjs",
+      "exampleFile": "curriculum/examples/values-and-types.mjs",
+      "exampleExpectedLogs": [
+        "[{\"presence\":\"present\",\"type\":\"number\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"boolean\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"string\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"null\",\"primitive\":true},{\"presence\":\"present\",\"type\":\"undefined\",\"primitive\":true},{\"presence\":\"missing\",\"type\":\"undefined\",\"primitive\":true}]",
+        "object function bigint symbol",
+        "A B 2"
+      ],
+      "verificationRecord": "docs/execution/values-and-types-exercise.json"
+    },
+    {
+      "id": "coercion-and-equality-exercise",
+      "lessonId": "coercion-and-equality",
+      "contentRevision": "draft-1",
+      "graderRevision": "coercion-and-equality-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "null/undefined→{ok:false,reason:\"missing\"}; number/string 외 타입→reason:\"type\".",
+        "문자열은 trim 후 십진수 전체 문법만 허용한다. 부호·소수점 허용, 지수·기수접두사·빈 문자열 거부.",
+        "허용 예: 12, -2., +.5, 003 / 거부 예: 1e3, 0x10, 12px, 공백만 있는 문자열.",
+        "유한하지 않은 결과는 {ok:false,reason:\"invalid\"}다.",
+        "성공은 {ok:true,value}이며 -0은 +0으로 정규화한다. 객체 변환 훅은 실행하지 않는다."
+      ],
+      "template": "export function normalizeNumber(input) {\n  // TODO: 타입·문법·유한성·부호 있는 0을 차례로 처리하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/coercion-and-equality.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "정해진 십진 문자열 문법을 처리한다",
+        "숫자·문자열 -0을 +0으로 정규화한다",
+        "빈 문자열·접두 기수·지수·부분 숫자를 거부한다",
+        "NaN·무한대와 변환 범위 초과를 거부한다",
+        "누락과 허용하지 않은 타입을 구분한다",
+        "객체 변환 훅을 실행하지 않는다",
+        "같은 입력을 반복해도 결과와 입력이 바뀌지 않는다"
+      ],
+      "rubric": [
+        "전체 입력 문법과 오류 분류",
+        "NaN·무한대·-0 정책",
+        "객체 변환 부수 효과 방지"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "normalizeNumber",
+        "parameters": [
+          "input"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function normalizeNumber(input) {\n",
+        "suffix": "}\n",
+        "initialBody": "  // TODO: 타입·문법·유한성·부호 있는 0을 차례로 처리하세요.\n"
+      },
+      "graderFile": "curriculum/checks/coercion-and-equality.json",
+      "referenceFile": "reference/coercion-and-equality.mjs",
+      "incorrectFile": "reference/incorrect/coercion-and-equality.mjs",
+      "exampleFile": "curriculum/examples/coercion-and-equality.mjs",
+      "exampleExpectedLogs": [
+        "[{\"ok\":true,\"value\":12.5},{\"ok\":false,\"reason\":\"invalid\"},{\"ok\":false,\"reason\":\"invalid\"},{\"ok\":true,\"value\":0},{\"ok\":false,\"reason\":\"missing\"},{\"ok\":false,\"reason\":\"type\"}]",
+        "21 3 0",
+        "false true false true",
+        "false"
+      ],
+      "verificationRecord": "docs/execution/coercion-and-equality-exercise.json"
+    },
+    {
+      "id": "numbers-and-precision-exercise",
+      "lessonId": "numbers-and-precision",
+      "contentRevision": "draft-1",
+      "graderRevision": "numbers-and-precision-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "lines는 {unitPrice,quantity} 객체 배열이며 빈 배열은 {ok:true,kind:\"number\",total:\"0\"}다.",
+        "검사 우선순위: 전체 필드의 number/bigint 타입(type) → 전체 필드의 같은 타입 여부(mixed) → 값과 계산의 범위(range).",
+        "모든 값은 0 이상이다. Number는 입력·곱·누적 합이 모두 안전 정수여야 하며 소수를 임의 반올림하지 않는다.",
+        "BigInt는 Number로 변환하지 않고 정확히 계산한다.",
+        "성공 {ok:true,kind,total:String(합계)}, 실패 {ok:false,reason}; 입력 원본을 변경하지 않는다."
+      ],
+      "template": "export function calculateAmount(lines) {\n  // TODO: 타입·혼합·범위를 검사한 뒤 정수 단위로 계산하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/numbers-and-precision.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "최소 화폐 단위의 정수로 곱셈·합산한다",
+        "빈 목록과 0 수량을 처리한다",
+        "안전 정수 경계는 유지하고 곱셈·합계 초과는 거부한다",
+        "안전 정수보다 큰 BigInt 금액을 손실 없이 계산한다",
+        "필드 간·행 간 Number/BigInt 혼합을 거부한다",
+        "소수·음수·NaN·무한대·unsafe 정수를 거부한다",
+        "문자열·불리언·누락은 타입 오류로 보고한다",
+        "행과 원본 목록을 변경하지 않는다",
+        "BigInt의 0도 BigInt 경로를 유지한다"
+      ],
+      "rubric": [
+        "최소 단위와 정수 계약",
+        "입력·중간 결과의 범위 검사",
+        "혼합 거부와 BigInt 정밀도"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "calculateAmount",
+        "parameters": [
+          "lines"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function calculateAmount(lines) {\n",
+        "suffix": "}\n",
+        "initialBody": "  // TODO: 타입·혼합·범위를 검사한 뒤 정수 단위로 계산하세요.\n"
+      },
+      "graderFile": "curriculum/checks/numbers-and-precision.json",
+      "referenceFile": "reference/numbers-and-precision.mjs",
+      "incorrectFile": "reference/incorrect/numbers-and-precision.mjs",
+      "exampleFile": "curriculum/examples/numbers-and-precision.mjs",
+      "exampleExpectedLogs": [
+        "false",
+        "{\"ok\":true,\"kind\":\"number\",\"total\":\"598\"}",
+        "{\"ok\":true,\"kind\":\"bigint\",\"total\":\"18014398509481986\"}",
+        "{\"ok\":false,\"reason\":\"mixed\"}",
+        "{\"ok\":false,\"reason\":\"range\"}"
+      ],
+      "verificationRecord": "docs/execution/numbers-and-precision-exercise.json"
+    },
+    {
+      "id": "control-flow-and-operators-exercise",
+      "lessonId": "control-flow-and-operators",
+      "contentRevision": "draft-1",
+      "graderRevision": "control-flow-and-operators-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "options는 null/undefined 또는 객체다. retries, ui.enabled, ui.label은 유효한 값 또는 nullish다.",
+        "읽기 순서는 retries → ui → enabled → label이며 각 프로퍼티를 한 번만 읽는다.",
+        "null/undefined만 기본값으로 대체하고 0/false/빈 문자열은 유지한다.",
+        "기본값이 필요한 필드가 하나 이상일 때 loadDefaults()를 정확히 한 번 호출한다. 반환된 기본값은 완전한 {retries,enabled,label}이다.",
+        "새 {retries,enabled,label} 객체를 반환한다. 입력과 기본값은 변경하지 않고 로더 오류는 그대로 전파한다."
+      ],
+      "template": "export function resolveSettings(options, loadDefaults) {\n  // TODO: 한 번씩 읽고, 필요한 기본값만 한 번 가져오세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/control-flow-and-operators.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "0·false·빈 문자열을 유지하고 로더를 호출하지 않는다",
+        "여러 필드가 없어도 기본값 로더는 한 번만 호출한다",
+        "null/undefined 옵션을 기본값으로 해석한다",
+        "nullish 필드만 대체한다",
+        "getter를 정해진 순서로 한 번씩만 읽는다",
+        "기본값 로더의 오류를 삼키거나 재호출하지 않는다",
+        "옵션과 기본값 객체를 변경하지 않는다",
+        "중간 ui가 null이면 나머지 값만 기본값으로 채운다"
+      ],
+      "rubric": [
+        "falsy 보존과 nullish 대체",
+        "프로퍼티·로더 평가 순서와 횟수",
+        "반환·오류 전파·원본 보존"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "resolveSettings",
+        "parameters": [
+          "options",
+          "loadDefaults"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function resolveSettings(options, loadDefaults) {\n",
+        "suffix": "}\n",
+        "initialBody": "  // TODO: 한 번씩 읽고, 필요한 기본값만 한 번 가져오세요.\n"
+      },
+      "graderFile": "curriculum/checks/control-flow-and-operators.json",
+      "referenceFile": "reference/control-flow-and-operators.mjs",
+      "incorrectFile": "reference/incorrect/control-flow-and-operators.mjs",
+      "exampleFile": "curriculum/examples/control-flow-and-operators.mjs",
+      "exampleExpectedLogs": [
+        "{\"retries\":0,\"enabled\":false,\"label\":\"\"} 0",
+        "{\"retries\":3,\"enabled\":false,\"label\":\"기본\"} 1",
+        "undefined 0",
+        "undefined"
+      ],
+      "verificationRecord": "docs/execution/control-flow-and-operators-exercise.json"
+    },
+    {
+      "id": "scope-tdz-and-declarations-exercise",
+      "lessonId": "scope-tdz-and-declarations",
+      "contentRevision": "draft-1",
+      "graderRevision": "scope-tdz-and-declarations-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "values는 string/유한 number/boolean의 조밀한 배열이며 prefix는 문자열이다.",
+        "values와 같은 길이의 인수 없는 함수 배열을 반환한다.",
+        "각 함수는 생성 당시 prefix+\"[\"+index+\"]=\"+value 문자열을 반환한다.",
+        "원본 values를 나중에 변경해도 읽기 결과는 보존하고 다른 생성 호출과 상태를 공유하지 않는다.",
+        "빈 입력은 []; 원본 배열을 변경하지 않고 읽기 함수를 여러 번 호출해도 결과가 같다."
+      ],
+      "template": "export function createScopedReaders(values, prefix) {\n  // TODO: 각 읽기 함수가 생성 당시 인덱스와 값을 보존하게 만드세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/scope-tdz-and-declarations.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "반복별 인덱스와 값을 읽는다",
+        "빈 입력에서 초기화 오류 없이 빈 배열을 반환한다",
+        "원본 배열 변경 후에도 생성 당시 원시값을 보존한다",
+        "다른 호출의 prefix와 반복 환경이 섞이지 않는다",
+        "빈 문자열·0·false도 생성 당시 값으로 읽는다",
+        "입력을 변경하지 않고 읽기 함수를 만든다",
+        "읽기 함수를 늦게 역순·반복 호출해도 결과가 유지된다"
+      ],
+      "rubric": [
+        "초기화된 바인딩 사용",
+        "반복·호출별 상태 분리",
+        "생성 당시 값과 원본 보존"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "createScopedReaders",
+        "parameters": [
+          "values",
+          "prefix"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function createScopedReaders(values, prefix) {\n",
+        "suffix": "}\n",
+        "initialBody": "  // TODO: 각 읽기 함수가 생성 당시 인덱스와 값을 보존하게 만드세요.\n"
+      },
+      "graderFile": "curriculum/checks/scope-tdz-and-declarations.json",
+      "referenceFile": "reference/scope-tdz-and-declarations.mjs",
+      "incorrectFile": "reference/incorrect/scope-tdz-and-declarations.mjs",
+      "exampleFile": "curriculum/examples/scope-tdz-and-declarations.mjs",
+      "exampleExpectedLogs": [
+        "[\"row[0]=A\",\"row[1]=B\"]",
+        "[\"undefined\",\"ReferenceError\",\"function-ready\"]",
+        "definition"
+      ],
+      "verificationRecord": "docs/execution/scope-tdz-and-declarations-exercise.json"
+    },
+    {
       "id": "independent-counter",
       "lessonId": "bindings-and-closures",
       "contentRevision": "draft-1",
@@ -59,6 +459,291 @@
       "referenceFile": "reference/independent-counter.mjs",
       "incorrectFile": "reference/incorrect/independent-counter.mjs",
       "verificationRecord": "docs/execution/independent-counter.json"
+    },
+    {
+      "id": "function-parameters-and-contracts-exercise",
+      "lessonId": "function-parameters-and-contracts",
+      "contentRevision": "draft-1",
+      "graderRevision": "function-parameters-and-contracts-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "values는 유한한 숫자 배열, tags는 문자열 인수이며 원본을 변경하지 않습니다.",
+        "options가 undefined이면 기본 객체를 쓰고 null·배열·객체가 아닌 값은 TypeError로 거부합니다.",
+        "scale/offset/label의 undefined 기본값은 각각 1/0/total입니다. scale·offset은 유한한 number, label은 string이어야 합니다.",
+        "새 객체 {label, count, total, tags}를 반환합니다. total은 sum(values) * scale + offset이며 offset은 한 번만 더합니다.",
+        "빈 values 합계는 0입니다. scale:0·빈 label과 tags의 순서·중복을 보존합니다. 알 수 없는 옵션은 무시합니다."
+      ],
+      "template": "export function summarizeValues(values, options = {}, ...tags) {\n  // TODO: 옵션의 기본값·타입과 원본 보존을 확인한 뒤 요약을 반환하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/function-parameters-and-contracts.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "생략된 옵션과 rest 기본값",
+        "빈 입력과 프로퍼티 undefined 기본값",
+        "0과 빈 문자열을 보존한다",
+        "null과 비객체 옵션을 정상값으로 보정하지 않는다",
+        "옵션 타입과 유한성을 검사한다",
+        "원본을 보존하고 rest 인수 순서를 유지한다"
+      ],
+      "rubric": [
+        "기본값과 null/0 정책",
+        "원본 보존과 rest 인수",
+        "전체 반환·실패 경로"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "summarizeValues",
+        "parameters": [
+          "values",
+          "options = {}",
+          "...tags"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function summarizeValues(values, options = {}, ...tags) {\n",
+        "suffix": "\n}\n",
+        "initialBody": "  // TODO: 옵션의 기본값·타입과 원본 보존을 확인한 뒤 요약을 반환하세요."
+      },
+      "graderFile": "curriculum/checks/function-parameters-and-contracts.json",
+      "referenceFile": "reference/function-parameters-and-contracts.mjs",
+      "incorrectFile": "reference/incorrect/function-parameters-and-contracts.mjs",
+      "exampleFile": "curriculum/examples/function-parameters-and-contracts.mjs",
+      "exampleExpectedLogs": [
+        "10 10 null 2",
+        "{\"label\":\"\",\"count\":2,\"total\":2,\"tags\":[\"report\",\"zero\"]}",
+        "[4,6] {\"scale\":0,\"offset\":2,\"label\":\"\"}",
+        "TypeError",
+        "3 undefined"
+      ],
+      "verificationRecord": "docs/execution/function-parameters-and-contracts-exercise.json"
+    },
+    {
+      "id": "this-and-arrow-functions-exercise",
+      "lessonId": "this-and-arrow-functions",
+      "contentRevision": "draft-1",
+      "graderRevision": "this-and-arrow-functions-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "callback·receiver·args를 받고 ordinary,method,call,apply,bound,mapped 순서로 호출합니다.",
+        "method만 새 {tag:'method', callback} 객체에서 호출합니다. ordinary는 plain call입니다.",
+        "call/apply는 지정 receiver를 사용합니다. bound는 receiver와 args를 bind한 함수를 인수 없이 호출합니다.",
+        "mapped는 args.map(callback,receiver)이며 콜백에 value,index,array가 전달됩니다.",
+        "각 실제 반환값을 같은 이름의 결과 프로퍼티에 저장합니다. receiver와 args는 변경하지 않습니다.",
+        "콜백이 던지면 즉시 같은 값을 전달하고 이후 호출을 중단합니다."
+      ],
+      "template": "export function compareInvocations(callback, receiver, args) {\n  // TODO: 호출 방식별 결과를 순서대로 모으고 receiver와 args를 보존하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/this-and-arrow-functions.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "일반·메서드·명시 receiver를 실제 호출한다",
+        "화살표는 외부 this를 유지한다",
+        "이미 bind된 함수의 receiver는 교체되지 않는다",
+        "bind의 앞 인수와 map의 세 인수를 보존한다",
+        "빈 인수와 빈 map 결과를 처리한다",
+        "receiver와 인수 목록을 변경하지 않는다",
+        "콜백 예외 이후의 호출을 중단한다",
+        "각 호출의 순서와 횟수를 유지한다"
+      ],
+      "rubric": [
+        "일반·메서드 receiver",
+        "명시 바인딩과 인수 계약",
+        "화살표·bind 예외",
+        "원본과 오류 전파"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "compareInvocations",
+        "parameters": [
+          "callback",
+          "receiver",
+          "args"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function compareInvocations(callback, receiver, args) {\n",
+        "suffix": "\n}\n",
+        "initialBody": "  // TODO: 호출 방식별 결과를 순서대로 모으고 receiver와 args를 보존하세요."
+      },
+      "graderFile": "curriculum/checks/this-and-arrow-functions.json",
+      "referenceFile": "reference/this-and-arrow-functions.mjs",
+      "incorrectFile": "reference/incorrect/this-and-arrow-functions.mjs",
+      "exampleFile": "curriculum/examples/this-and-arrow-functions.mjs",
+      "exampleExpectedLogs": [
+        "account unbound other",
+        "item:fixed:A",
+        "outer",
+        "[3,6]",
+        "new-name undefined",
+        "TypeError"
+      ],
+      "verificationRecord": "docs/execution/this-and-arrow-functions-exercise.json"
+    },
+    {
+      "id": "higher-order-functions-exercise",
+      "lessonId": "higher-order-functions",
+      "contentRevision": "draft-1",
+      "graderRevision": "higher-order-functions-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "{pipe,partial,curry2}를 새 객체에 담아 반환합니다. 모든 콜백은 동기 함수입니다.",
+        "pipe(...stages)는 입력을 받는 함수를 반환하며 왼쪽부터 각 stage를 한 번씩 고정 receiver와 단일 값으로 호출합니다. 빈 pipe는 입력 그대로를 반환합니다.",
+        "partial(fn,...leading)은 나중의 trailing을 뒤에 붙여 고정 receiver로 fn을 호출하는 함수를 반환합니다. 저장 인수를 변경하지 않습니다.",
+        "curry2(fn)은 first => second => 결과 형태이며 마지막 단계에서만 fn에 정확히 first,second를 전달합니다.",
+        "구성 시 콜백을 실행하지 않습니다. 모든 원래 예외를 전파하고 pipe는 오류 뒤 단계를 수행하지 않습니다."
+      ],
+      "template": "export function createFunctionalTools(receiver) {\n  // TODO: 지연 실행하는 pipe, partial, curry2를 새 객체에 담아 반환하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/higher-order-functions.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "구성 시 실행하지 않고 왼쪽부터 각 한 번 호출한다",
+        "빈 pipe는 입력을 그대로 돌려준다",
+        "stage에는 고정 receiver와 값 하나만 전달한다",
+        "부분 적용 인수의 순서와 재사용 상태를 보존한다",
+        "커링은 두 번째 인수에서 원함수를 한 번 실행한다",
+        "오류 뒤 단계를 실행하지 않고 같은 던진 값을 전파한다",
+        "다른 도구의 receiver와 부분 인수가 섞이지 않는다",
+        "부분 적용과 커링에서도 원래 예외를 보존한다"
+      ],
+      "rubric": [
+        "시점·순서·횟수",
+        "고정 receiver와 인수 계약",
+        "부분 적용·커링 분리",
+        "동기 오류 전파"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "createFunctionalTools",
+        "parameters": [
+          "receiver"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function createFunctionalTools(receiver) {\n",
+        "suffix": "\n}\n",
+        "initialBody": "  // TODO: 지연 실행하는 pipe, partial, curry2를 새 객체에 담아 반환하세요."
+      },
+      "graderFile": "curriculum/checks/higher-order-functions.json",
+      "referenceFile": "reference/higher-order-functions.mjs",
+      "incorrectFile": "reference/incorrect/higher-order-functions.mjs",
+      "exampleFile": "curriculum/examples/higher-order-functions.mjs",
+      "exampleExpectedLogs": [
+        "[]",
+        "7 [\"double:3\",\"add:6\"]",
+        "9",
+        "A/B/C",
+        "0",
+        "A:B 1",
+        "stop [\"first\",\"fail\"]"
+      ],
+      "verificationRecord": "docs/execution/higher-order-functions-exercise.json"
+    },
+    {
+      "id": "call-stack-and-completion-exercise",
+      "lessonId": "call-stack-and-completion",
+      "contentRevision": "draft-1",
+      "graderRevision": "call-stack-and-completion-checks-v1",
+      "mode": "body",
+      "instructions": [
+        "nodes는 숫자/배열로 이뤄진 유한·비순환 배열, maxDepth는 0~128 정수입니다. 루트 깊이는 0입니다.",
+        "왼쪽부터 깊이 우선으로 숫자마다 visit(value)를 한 번 호출하고 반환한 숫자를 새 결과 배열에 담습니다. null이면 해당 결과를 제외하고 전체 순회를 종료합니다.",
+        "하위 배열 깊이가 maxDepth보다 크면 RangeError를 던집니다. 입력을 변경하지 않습니다.",
+        "정상·빈 입력·조기 종료·예외 모두 cleanup()을 인수 없이 정확히 한 번 호출합니다. cleanup의 정상 반환값은 무시합니다.",
+        "작업/깊이 오류가 이미 있으면 cleanup 오류가 생겨도 원래 던진 값을 보존합니다. 작업 성공 뒤 cleanup만 던지면 그 값을 전달합니다.",
+        "throw undefined와 같은 falsy 예외도 보존합니다. 콜백은 동기이며 비동기 정리와 입력 전제 밖 타입 검증은 범위 밖입니다."
+      ],
+      "template": "export function processNested(nodes, visit, cleanup, maxDepth = 32) {\n  // TODO: 깊이·조기 종료·원래 오류를 보존하며 cleanup을 정확히 한 번 실행하세요.\n}\n",
+      "profileId": "ecmascript-2026",
+      "profileByVersion": {
+        "ES2026": "ecmascript-2026"
+      },
+      "files": [
+        {
+          "id": "main",
+          "path": "starter/call-stack-and-completion.mjs",
+          "editable": true
+        }
+      ],
+      "testFiles": [],
+      "behaviorCriteria": [
+        "왼쪽부터 깊이 우선 방문하고 정리 반환값을 무시한다",
+        "빈 입력에서도 정리한다",
+        "null 반환은 전체 순회를 끝내고 정리한다",
+        "정리도 실패할 때 원래 작업 오류를 보존한다",
+        "작업 성공 뒤 정리 오류를 전달한다",
+        "약속한 깊이 초과를 중단하고 정리한다",
+        "허용한 깊이의 입력을 빠짐없이 처리한다",
+        "throw undefined를 정상 경로로 바꾸지 않는다"
+      ],
+      "rubric": [
+        "스택·깊이와 종료",
+        "방문 순서·횟수",
+        "정리 보장과 반환 보존",
+        "오류 우선순위·falsy 예외"
+      ],
+      "executionVerified": true,
+      "runner": {
+        "kind": "function-body",
+        "exportName": "processNested",
+        "parameters": [
+          "nodes",
+          "visit",
+          "cleanup",
+          "maxDepth = 32"
+        ],
+        "async": false
+      },
+      "editable": {
+        "prefix": "export function processNested(nodes, visit, cleanup, maxDepth = 32) {\n",
+        "suffix": "\n}\n",
+        "initialBody": "  // TODO: 깊이·조기 종료·원래 오류를 보존하며 cleanup을 정확히 한 번 실행하세요."
+      },
+      "graderFile": "curriculum/checks/call-stack-and-completion.json",
+      "referenceFile": "reference/call-stack-and-completion.mjs",
+      "incorrectFile": "reference/incorrect/call-stack-and-completion.mjs",
+      "exampleFile": "curriculum/examples/call-stack-and-completion.mjs",
+      "exampleExpectedLogs": [
+        "[\"outer:start\",\"inner\",\"outer:value:4\",\"outer:cleanup\",\"caller:value:4\"]",
+        "masked",
+        "work",
+        "6",
+        "RangeError"
+      ],
+      "verificationRecord": "docs/execution/call-stack-and-completion-exercise.json"
     }
   ]
 }

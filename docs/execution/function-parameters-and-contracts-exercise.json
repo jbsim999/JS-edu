@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "exerciseId": "function-parameters-and-contracts-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "function-parameters-and-contracts-checks-v1",
+  "executedTests": 6,
+  "checkedAt": "2026-10-15T08:57:54.100Z",
+  "startedAt": "2026-10-15T08:57:49.933Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:b28bac67eb8ab897fad2a9b1d150b4d1cefa88f96ac423af0e15f6390cb789ed",
+  "referenceChecks": [
+    "default-options",
+    "empty-and-undefined-fields",
+    "falsy-values",
+    "null-policy",
+    "invalid-types",
+    "rest-order-and-immutable"
+  ],
+  "referenceChecksPassed": 6,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

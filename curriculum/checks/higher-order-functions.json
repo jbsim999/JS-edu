@@ -1,0 +1,152 @@
+{
+  "exerciseId": "higher-order-functions-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "higher-order-functions-checks-v1",
+  "cases": [
+    {
+      "id": "deferred-pipeline",
+      "label": "구성 시 실행하지 않고 왼쪽부터 각 한 번 호출한다",
+      "probe": "const log=[]; const tools=submission.createFunctionalTools({}); const run=tools.pipe(value=>{log.push(['double',value]); return value*2;},value=>{log.push(['add',value]); return value+1;}); const before=[...log]; const first=run(3); const second=run(4); observe({before,first,second,log});",
+      "expected": {
+        "before": [],
+        "first": 7,
+        "second": 9,
+        "log": [
+          [
+            "double",
+            3
+          ],
+          [
+            "add",
+            6
+          ],
+          [
+            "double",
+            4
+          ],
+          [
+            "add",
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-pipeline",
+      "label": "빈 pipe는 입력을 그대로 돌려준다",
+      "probe": "const tools=submission.createFunctionalTools({}); const input={value:7}; const result=tools.pipe()(input); result.observed='same-input'; observe(input);",
+      "expected": {
+        "value": 7,
+        "observed": "same-input"
+      }
+    },
+    {
+      "id": "fixed-receiver-and-arity",
+      "label": "stage에는 고정 receiver와 값 하나만 전달한다",
+      "probe": "const log=[]; const tools=submission.createFunctionalTools({factor:3}); const run=tools.pipe(function(value){log.push([this.factor,arguments.length]); return value*this.factor;},function(value){log.push([this.factor,arguments.length]); return value+this.factor;}); const result=run.call({factor:99},2); observe({result,log});",
+      "expected": {
+        "result": 9,
+        "log": [
+          [
+            3,
+            1
+          ],
+          [
+            3,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "partial-order-and-reuse",
+      "label": "부분 적용 인수의 순서와 재사용 상태를 보존한다",
+      "probe": "const log=[]; const tools=submission.createFunctionalTools({tag:'fixed'}); function join(...parts){log.push([this.tag,...parts]); return parts.join('/');} const adapted=tools.partial(join,'A','B'); const before=[...log]; const first=adapted.call({tag:'other'},'C'); const second=adapted('D','E'); observe({before,first,second,log});",
+      "expected": {
+        "before": [],
+        "first": "A/B/C",
+        "second": "A/B/D/E",
+        "log": [
+          [
+            "fixed",
+            "A",
+            "B",
+            "C"
+          ],
+          [
+            "fixed",
+            "A",
+            "B",
+            "D",
+            "E"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "curry-defers",
+      "label": "커링은 두 번째 인수에서 원함수를 한 번 실행한다",
+      "probe": "const log=[]; const tools=submission.createFunctionalTools({tag:'curried'}); const pair=tools.curry2(function(a,b){log.push([this.tag,a,b,arguments.length]); return a+':'+b;}); const waiting=pair('A'); const before=[...log]; const first=waiting('B'); const second=pair('C')('D'); observe({before,first,second,log});",
+      "expected": {
+        "before": [],
+        "first": "A:B",
+        "second": "C:D",
+        "log": [
+          [
+            "curried",
+            "A",
+            "B",
+            2
+          ],
+          [
+            "curried",
+            "C",
+            "D",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "pipeline-error",
+      "label": "오류 뒤 단계를 실행하지 않고 같은 던진 값을 전파한다",
+      "probe": "const log=[]; const thrown={code:'planned'}; const tools=submission.createFunctionalTools({}); const run=tools.pipe(value=>{log.push('first'); return value+1;},()=>{log.push('fail'); throw thrown;},()=>{log.push('unexpected'); return 99;}); try {run(1);} catch(error){error.observed='caught';} observe({log,thrown});",
+      "expected": {
+        "log": [
+          "first",
+          "fail"
+        ],
+        "thrown": {
+          "code": "planned",
+          "observed": "caught"
+        }
+      }
+    },
+    {
+      "id": "independent-tools",
+      "label": "다른 도구의 receiver와 부분 인수가 섞이지 않는다",
+      "probe": "const a=submission.createFunctionalTools({tag:'a'}); const b=submission.createFunctionalTools({tag:'b'}); function format(value){return this.tag+':'+value;} const fromA=a.partial(format); const fromB=b.partial(format); observe([fromA(1),fromB(2),fromA(3)]);",
+      "expected": [
+        "a:1",
+        "b:2",
+        "a:3"
+      ]
+    },
+    {
+      "id": "adapted-error",
+      "label": "부분 적용과 커링에서도 원래 예외를 보존한다",
+      "probe": "const tools=submission.createFunctionalTools({}); const first={code:'partial'}; const second={code:'curry'}; try{tools.partial(()=>{throw first;})('x');}catch(error){error.observed='caught';} try{tools.curry2(()=>{throw second;})('x')('y');}catch(error){error.observed='caught';} observe([first,second]);",
+      "expected": [
+        {
+          "code": "partial",
+          "observed": "caught"
+        },
+        {
+          "code": "curry",
+          "observed": "caught"
+        }
+      ]
+    }
+  ],
+  "observationMode": "callback"
+}

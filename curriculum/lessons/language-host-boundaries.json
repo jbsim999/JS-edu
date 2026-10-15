@@ -1,0 +1,151 @@
+{
+  "id": "language-host-boundaries",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "언어·엔진·호스트: 같은 JavaScript가 다른 곳에서 실패하는 이유",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "언어 규칙과 호스트 API의 출처를 구분한다.",
+    "Script·Module과 strict mode를 실행 조건으로 설명한다.",
+    "실행 프로필의 제공 여부를 분류 결과와 별도로 표시한다."
+  ],
+  "prerequisites": [],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §4.2 Hosts and Implementations · §11.2.2 Strict Mode Code",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=247",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js — Differences between Node.js and the Browser",
+      "url": "https://nodejs.org/learn/getting-started/differences-between-nodejs-and-the-browser",
+      "edition": "Node.js Learn / current document",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML §8.7 Timers",
+      "url": "https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#timers",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG Fetch — fetch method",
+      "url": "https://fetch.spec.whatwg.org/#fetch-method",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "language-host-boundaries-exercise",
+  "steps": {
+    "theory": "브라우저에서 동작한 함수를 Node나 Worker로 옮겼는데 document가 없다는 오류가 난다. JavaScript 엔진은 구문과 값·함수의 의미를 구현하고, 호스트는 문서·파일·일정 같은 주변 기능을 제공한다. Promise·Map·JSON은 ECMAScript, document는 웹 문서, node:fs는 Node API다. fetch가 여러 호스트에 있다는 사실은 Fetch 표준 소속을 바꾸지 않는다. setTimeout도 ECMAScript 내장 함수가 아니라 호스트 기능이다.\n\n이 차이를 확인할 때 코드의 Script/Module 파싱 목표도 적는다. Module은 항상 strict이며 Script는 'use strict' 같은 조건을 확인한다. strict 함수 f(){'use strict'; return this;}를 f()로 호출하면 undefined다. 여기서 객체의 메서드로 f를 호출하는 반례는 receiver를 바꾸므로 09강에서 따로 추적한다. '같은 언어니까 같은 전역 객체와 API가 있다'는 가정 대신, 계산 로직과 호스트 접근을 분리한다.",
+    "example": "독립 예제는 workerProfile에 Promise·Map·JSON·fetch·setTimeout만 있다고 가정한다. ['Promise','document','node:fs']를 진단하면 language/true, web/false, node/false 순서다. 이 목록은 현재 브라우저를 탐지한 결과가 아니라 고정 fixture다. 다음 예제에서 제공 목록에 fetch가 있어도 소속은 web 그대로다. 마지막 strict 일반 호출은 this가 undefined임을 비교해 true를 출력한다. 파일의 예상 출력과 실행 기록은 따로 확인한다.",
+    "quiz": "표준 소속, 소스 형식, 실제 제공 기능을 각각 판단한다. fetch를 Node에서 봤다는 관찰로 ECMAScript API라고 결론 내리지 않는다. Module이 strict라는 규칙과 DOM이 제공되는 호스트인지는 서로 다른 축이다. q1~q3에서 이 세 축을 섞은 오답의 이유까지 읽는다.",
+    "practice": "교육용 데이터 요약기를 웹과 CLI에 같이 사용한다고 가정한다. 합계 계산 함수가 document나 node:fs를 직접 읽으면 다른 호스트에서 다시 작성해야 한다. 입력 데이터를 인수로 받고 파일/화면 처리를 어댑터에 두는 설계를 비교한다. 지원 판정에는 '이름이 있다', '요청 기능이 구현됐다', '권한과 제품 정책이 허용한다'를 구분한다. 이번 진단은 제공 목록에 따른 이름 수준 판정이며 엔진 전체의 ES2026 준수 인증이 아니다. 설계 메모에는 옮길 계산 기능 한 개와 호스트에 남길 기능 한 개, 미지원 안내 방법을 적는다.",
+    "lab": "classifyApis(requested, provided) 본문을 구현한다. 두 인수는 문자열 배열이며 요청 순서와 중복을 유지한다. 각 결과는 {name, layer, available}이다. Promise/Map/JSON→language, document/fetch→web, node:fs/node:path→node, setTimeout→host, 나머지→unknown으로 분류한다. 알려진 이름이 provided에 있을 때만 available:true다. 알 수 없는 이름은 제공 목록에 있어도 false다. 원본 배열을 바꾸지 않는다. 실제 DOM·파일·네트워크 접근은 이 과제의 입력과 결과에 포함하지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-standard-owner",
+        "prompt": "Node에서도 fetch를 호출할 수 있다. 이것만으로 fetch가 ECMAScript 표준 API라는 결론을 내릴 수 있을까?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그렇다. 여러 호스트에 있으면 언어 표준이다.",
+            "explanation": "여러 호스트가 같은 외부 표준을 구현할 수도 있다. 제공 여부가 표준 소속을 바꾸지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "아니다. Fetch 표준의 API를 Node가 제공하는 것이다.",
+            "explanation": "API의 규범적 출처와 현재 호스트의 지원을 따로 확인한다."
+          },
+          {
+            "id": "c",
+            "text": "아니다. Node에서는 fetch라는 이름을 사용할 수 없다.",
+            "explanation": "Node는 fetch를 제공한다. 버전·권한·실행 정책을 별도로 확인해야 한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-module-strict",
+        "prompt": "같은 코드 조각을 Script와 Module로 읽으면 어떤 규칙이 맞는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Module은 항상 strict mode이며 Script는 지시문 등 조건을 확인한다.",
+            "explanation": "파싱 목표와 strict 여부는 코드 의미에 영향을 준다. 파일 확장자만으로 모든 호스트의 처리 방법을 단정하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "모든 Script도 자동으로 strict mode다.",
+            "explanation": "일반 Script 전체가 자동 strict가 되는 것은 아니다."
+          },
+          {
+            "id": "c",
+            "text": "Module에서는 DOM을 사용할 수 없다.",
+            "explanation": "Module은 언어 소스 형식이다. DOM 제공 여부는 호스트가 결정한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-engine-host",
+        "prompt": "Worker에서 계산 함수는 실행되지만 document는 없다. 가장 적절한 다음 조치는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "같은 엔진이므로 document를 강제로 사용한다.",
+            "explanation": "엔진이 같아도 Worker와 문서의 호스트 기능은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "계산과 화면 처리를 분리하고 문서가 필요한 작업을 지원 불가로 표시한다.",
+            "explanation": "실행 프로필에 없는 능력을 요청 단계에서 명시하면 실패를 학습자 코드 탓으로 돌리지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "예상 HTML 문자열을 실제 DOM 실행 결과로 표시한다.",
+            "explanation": "예상 문자열은 문서 API의 실제 실행을 증명하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-standard-owner"
+      ],
+      "caseIds": [
+        "language-web-node"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-module-strict"
+      ],
+      "caseIds": []
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-engine-host"
+      ],
+      "caseIds": [
+        "observed-support",
+        "unknown-is-explicit"
+      ]
+    }
+  ]
+}

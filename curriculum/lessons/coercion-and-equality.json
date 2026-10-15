@@ -1,0 +1,170 @@
+{
+  "id": "coercion-and-equality",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "변환과 동등성: 숫자를 받기 전에 정해야 할 정책",
+  "track": "language-model",
+  "level": "transition",
+  "goals": [
+    "명시 변환과 유효성 검사를 분리하고 불필요한 객체 변환을 막는다.",
+    "===·Object.is·SameValueZero의 NaN·부호 있는 0 차이를 설명한다.",
+    "숫자 문자열·누락·잘못된 값에 일관된 결과 계약을 구현한다."
+  ],
+  "prerequisites": [
+    "values-and-types"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 §7.1.1 ToPrimitive · §7.1.4 ToNumber",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=88",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "ECMA-262 §7.2.9 SameValue · §7.2.10 SameValueZero · §7.2.14 IsStrictlyEqual",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf#page=99",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "coercion-and-equality-exercise",
+  "steps": {
+    "theory": "텍스트 입력 '2'에 1을 더했더니 21이 됐다. +는 피연산자 변환 후 문자열 연결이 될 수 있으므로 계산 경계에서 변환 정책을 먼저 정한다. Number('2')+1은 3이지만 Number('')도 0이다. 명시적으로 변환했다고 해서 누락·문법·허용 범위를 검증한 것은 아니다.\n\n비교 역시 한 규칙이 아니다. ===는 타입 변환을 하지 않지만 NaN===NaN은 false이고 -0===0은 true다. Object.is는 NaN을 같다고 보고 두 0을 구별한다. Array.prototype.includes의 SameValueZero는 NaN은 같게, 두 0도 같게 본다. 객체 둘은 내용이 같다는 이유만으로 이 비교에서 같아지지 않는다.\n\n이번 입력 경계는 number 또는 공백을 제거한 십진 문자열만 허용한다. 소수점과 부호는 허용하되 지수·16진수·단위 문자는 거부하고 -0은 +0으로 합친다. 이는 제품의 교육용 정책이며 JavaScript가 Number('1e3')을 거부한다는 뜻은 아니다. 객체는 변환 전에 거부해 valueOf/toString 부수 효과를 실행하지 않는다.",
+    "example": "첫 출력에서 ' 12.50 '는 12.5로, '-0'은 +0으로 바뀐다. 빈 문자열과 '0x10'은 invalid, null은 missing, false는 type 오류다. 다음 줄의 21/3/0은 암묵 변환과 명시 변환이 각각 무엇을 하는지 비교한다. 마지막 비교열 false/true/false/true를 ===·SameValue·SameValueZero에 연결하라. 출력의 JSON은 -0을 구분하지 못하므로 실제 검사에서는 Object.is로 부호를 관찰한다.",
+    "quiz": "q1과 q4는 변환을 실행하기 전에 필요한 검사를 판단한다. q2와 q3은 같은 입력 쌍도 비교 알고리즘에 따라 결과가 달라지는 이유를 확인한다. '===를 쓰면 모든 특수값 문제가 해결된다'와 'Number를 쓰면 입력 검증이 끝난다'를 각각 반례로 설명한다.",
+    "practice": "교육용 검색 필터가 URL의 가격 범위를 문자열로 받는다고 가정한다. parseFloat('12원')처럼 접두 숫자만 인정할지, 전체 입력을 거부할지 먼저 합의해야 한다. 여기서는 잘못된 데이터가 조용히 일부 금액으로 저장되는 일을 막기 위해 전체 문법을 확인한다. Number로 표현한 소수는 근삿값일 수 있으므로 이 함수는 정확한 돈 계산을 보장하지 않는다. 다음 강의에서 최소 화폐 단위의 정수 계약을 추가한다. 메모에는 빈 문자열·NaN·-0을 한 정책으로 합칠 때 잃는 정보를 적는다.",
+    "lab": "normalizeNumber(input)를 구현한다. null/undefined는 {ok:false,reason:'missing'}, number/string 이외는 reason:'type'이다. 문자열은 trim 후 [선택 부호][정수 또는 소수] 전체 문법만 허용한다: 12, -2., +.5, 003은 허용하고 빈 문자열·1e3·0x10·12px는 invalid다. Number 변환 결과가 유한하지 않아도 invalid다. 성공은 {ok:true,value:number}이며 -0을 +0으로 바꾼다. 객체의 valueOf/toString을 호출하지 않는다. 소수의 십진 정확성은 이 과제의 보장에 포함되지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-explicit-conversion",
+        "prompt": "Number(\"\")는 0이다. 수량 입력에서 빈 문자열을 거부하려면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Number 변환 전에 허용 문법과 공백 정책을 확인한다.",
+            "explanation": "명시 변환도 업무 유효성 검사가 아니다. trim 후 비어 있는지와 전체 문자열 문법을 검사한다."
+          },
+          {
+            "id": "b",
+            "text": "Number 결과가 number 타입이면 허용한다.",
+            "explanation": "NaN도 number이며 빈 문자열은 0으로 변환돼 구별 정보가 사라진다."
+          },
+          {
+            "id": "c",
+            "text": "parseInt를 쓰면 항상 전체 입력을 검사한다.",
+            "explanation": "parseInt는 유효한 접두 부분만 읽을 수 있어 12px 같은 입력 정책을 대신하지 못한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-nan-equality",
+        "prompt": "NaN === NaN, Object.is(NaN,NaN), [NaN].includes(NaN)의 결과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "false, true, true",
+            "explanation": "엄격 동등성은 NaN을 같다고 보지 않는다. Object.is는 SameValue, includes는 SameValueZero 규칙을 사용한다."
+          },
+          {
+            "id": "b",
+            "text": "false, false, false",
+            "explanation": "모든 비교가 ===의 Number 규칙을 그대로 쓰지는 않는다."
+          },
+          {
+            "id": "c",
+            "text": "true, true, true",
+            "explanation": "===는 타입 변환을 하지 않아도 NaN 자기 자신 비교는 false다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-signed-zero",
+        "prompt": "Object.is(-0,0)과 [-0].includes(0)의 결과를 정규화 정책에 어떻게 반영할까?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "둘 다 false이므로 -0은 숫자가 아니다.",
+            "explanation": "-0은 Number다. 비교 방식과 Number 타입을 혼동한 해석이다."
+          },
+          {
+            "id": "b",
+            "text": "false와 true다. 부호 있는 0을 구분할 업무인지 먼저 정한다.",
+            "explanation": "SameValue는 두 0을 구분하지만 SameValueZero는 합친다. 이 실습은 일관된 저장을 위해 +0으로 합친다."
+          },
+          {
+            "id": "c",
+            "text": "둘 다 true이므로 -0을 검출할 수 없다.",
+            "explanation": "Object.is를 사용하면 -0을 구별할 수 있다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-coercion-effects",
+        "prompt": "정규화할 값이 { valueOf(){ send(); return 1; } }이다. 숫자/문자열만 허용하는 경계의 바람직한 처리는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "먼저 Number(value)를 시도한다.",
+            "explanation": "객체의 변환 훅이 먼저 실행되면 허용하지 않은 입력으로 부수 효과가 생긴다."
+          },
+          {
+            "id": "b",
+            "text": "타입을 검사해 객체를 거부한다.",
+            "explanation": "필요 없는 사용자 변환 훅을 호출하지 않고 계약 밖 입력을 명시적으로 처리한다."
+          },
+          {
+            "id": "c",
+            "text": "value == 1을 검사하면 부수 효과가 없다.",
+            "explanation": "느슨한 동등 비교도 객체를 원시값으로 변환하면서 사용자 코드를 실행할 수 있다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-explicit-conversion",
+        "q4-coercion-effects"
+      ],
+      "caseIds": [
+        "empty-and-grammar",
+        "no-object-coercion"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-nan-equality",
+        "q3-signed-zero"
+      ],
+      "caseIds": [
+        "zero-policy",
+        "non-finite"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q1-explicit-conversion"
+      ],
+      "caseIds": [
+        "decimal-strings",
+        "missing-and-types",
+        "repeat-consistency"
+      ]
+    }
+  ]
+}

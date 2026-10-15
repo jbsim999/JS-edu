@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "exerciseId": "language-host-boundaries-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "language-host-boundaries-checks-v1",
+  "executedTests": 6,
+  "checkedAt": "2026-10-15T08:57:54.100Z",
+  "startedAt": "2026-10-15T08:57:49.933Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:12be862a03ec8aa7b9fb962d647d480beef7a181a807ac0dc86664f9cb591e58",
+  "referenceChecks": [
+    "language-web-node",
+    "observed-support",
+    "unknown-is-explicit",
+    "empty-request",
+    "order-and-duplicates",
+    "inputs-unchanged"
+  ],
+  "referenceChecksPassed": 6,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

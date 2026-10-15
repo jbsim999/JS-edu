@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "exerciseId": "scope-tdz-and-declarations-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "scope-tdz-and-declarations-checks-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-15T08:57:54.100Z",
+  "startedAt": "2026-10-15T08:57:49.933Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:61f3a618b2b402e99ae9566a6122bbddd1e76b700634d393cb27c2d2b84f3911",
+  "referenceChecks": [
+    "per-iteration-index",
+    "empty-input",
+    "snapshot-values",
+    "separate-invocations",
+    "falsy-elements",
+    "frozen-input",
+    "deferred-repeated-order"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}

@@ -10,7 +10,9 @@
     "클로저가 생성 당시 값의 복사본이 아니라 외부 바인딩을 사용함을 설명한다.",
     "독립된 함수 호출이 만든 상태를 분리한다."
   ],
-  "prerequisites": [],
+  "prerequisites": [
+    "scope-tdz-and-declarations"
+  ],
   "supportedVersions": [
     "ES2026"
   ],
@@ -28,21 +30,72 @@
   "quiz": {
     "revision": "counter-quiz-v1",
     "questions": [
-      { "id": "independent-binding", "prompt": "a()를 두 번 호출한 뒤 별도로 만든 b()를 호출했습니다. b의 호출이 a의 다음 증가값을 바꾸나요?", "choices": [
-        { "id": "independent", "text": "바꾸지 않는다. 서로 다른 호출 환경의 바인딩을 사용한다.", "explanation": "각 createCounter 호출은 자신의 count를 만들고 반환 함수는 해당 바인딩을 사용합니다." },
-        { "id": "shared", "text": "바꾼다. 모든 반환 함수가 전역 count를 공유한다.", "explanation": "count를 함수 본문 안에서 선언했다면 전역 상태가 아닙니다. 전역으로 옮기면 다른 계약이 됩니다." },
-        { "id": "copied", "text": "둘 다 생성 당시 숫자만 복사하므로 증가하지 않는다.", "explanation": "반환 함수는 외부 바인딩을 갱신할 수 있습니다. 매번 생성 시점의 값만 읽는 복사본이 아닙니다." }
-      ], "correctChoiceId": "independent" },
-      { "id": "binding-not-snapshot", "prompt": "let value = 1; const read = () => value; value = 3; 이후 read()는 무엇을 반환하나요?", "choices": [
-        { "id": "one", "text": "1", "explanation": "클로저를 생성 시 값의 스냅숏으로 해석한 답입니다. 이 함수는 호출 시 현재 바인딩을 읽습니다." },
-        { "id": "three", "text": "3", "explanation": "read는 외부 value 바인딩에 연결돼 있으므로 변경된 값 3을 읽습니다." },
-        { "id": "undefined", "text": "undefined", "explanation": "바깥 코드가 진행됐다는 이유로 바인딩이 자동으로 사라지지는 않습니다." }
-      ], "correctChoiceId": "three" },
-      { "id": "const-and-mutation", "prompt": "const state = { count: 0 }; 이후 state.count += 1은 가능한가요?", "choices": [
-        { "id": "mutable", "text": "가능하다. 바인딩의 재할당과 객체 내용 변경은 다르다.", "explanation": "const는 state에 다른 값을 재할당하는 일을 막습니다. 객체의 모든 변경을 막지는 않습니다." },
-        { "id": "frozen", "text": "불가능하다. const는 중첩 객체도 동결한다.", "explanation": "const는 객체 동결 연산이 아닙니다. Object.freeze조차 기본적으로 얕게 작용합니다." },
-        { "id": "new", "text": "새 객체를 자동으로 만들어 state를 재할당한다.", "explanation": "프로퍼티 증가가 자동으로 불변 갱신을 수행하지는 않습니다." }
-      ], "correctChoiceId": "mutable" }
+      {
+        "id": "independent-binding",
+        "prompt": "a()를 두 번 호출한 뒤 별도로 만든 b()를 호출했습니다. b의 호출이 a의 다음 증가값을 바꾸나요?",
+        "choices": [
+          {
+            "id": "independent",
+            "text": "바꾸지 않는다. 서로 다른 호출 환경의 바인딩을 사용한다.",
+            "explanation": "각 createCounter 호출은 자신의 count를 만들고 반환 함수는 해당 바인딩을 사용합니다."
+          },
+          {
+            "id": "shared",
+            "text": "바꾼다. 모든 반환 함수가 전역 count를 공유한다.",
+            "explanation": "count를 함수 본문 안에서 선언했다면 전역 상태가 아닙니다. 전역으로 옮기면 다른 계약이 됩니다."
+          },
+          {
+            "id": "copied",
+            "text": "둘 다 생성 당시 숫자만 복사하므로 증가하지 않는다.",
+            "explanation": "반환 함수는 외부 바인딩을 갱신할 수 있습니다. 매번 생성 시점의 값만 읽는 복사본이 아닙니다."
+          }
+        ],
+        "correctChoiceId": "independent"
+      },
+      {
+        "id": "binding-not-snapshot",
+        "prompt": "let value = 1; const read = () => value; value = 3; 이후 read()는 무엇을 반환하나요?",
+        "choices": [
+          {
+            "id": "one",
+            "text": "1",
+            "explanation": "클로저를 생성 시 값의 스냅숏으로 해석한 답입니다. 이 함수는 호출 시 현재 바인딩을 읽습니다."
+          },
+          {
+            "id": "three",
+            "text": "3",
+            "explanation": "read는 외부 value 바인딩에 연결돼 있으므로 변경된 값 3을 읽습니다."
+          },
+          {
+            "id": "undefined",
+            "text": "undefined",
+            "explanation": "바깥 코드가 진행됐다는 이유로 바인딩이 자동으로 사라지지는 않습니다."
+          }
+        ],
+        "correctChoiceId": "three"
+      },
+      {
+        "id": "const-and-mutation",
+        "prompt": "const state = { count: 0 }; 이후 state.count += 1은 가능한가요?",
+        "choices": [
+          {
+            "id": "mutable",
+            "text": "가능하다. 바인딩의 재할당과 객체 내용 변경은 다르다.",
+            "explanation": "const는 state에 다른 값을 재할당하는 일을 막습니다. 객체의 모든 변경을 막지는 않습니다."
+          },
+          {
+            "id": "frozen",
+            "text": "불가능하다. const는 중첩 객체도 동결한다.",
+            "explanation": "const는 객체 동결 연산이 아닙니다. Object.freeze조차 기본적으로 얕게 작용합니다."
+          },
+          {
+            "id": "new",
+            "text": "새 객체를 자동으로 만들어 state를 재할당한다.",
+            "explanation": "프로퍼티 증가가 자동으로 불변 갱신을 수행하지는 않습니다."
+          }
+        ],
+        "correctChoiceId": "mutable"
+      }
     ]
   },
   "steps": {

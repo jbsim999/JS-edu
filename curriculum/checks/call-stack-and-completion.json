@@ -1,0 +1,154 @@
+{
+  "exerciseId": "call-stack-and-completion-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "call-stack-and-completion-checks-v1",
+  "cases": [
+    {
+      "id": "ordered-traversal",
+      "label": "왼쪽부터 깊이 우선 방문하고 정리 반환값을 무시한다",
+      "probe": "const log=[]; const nodes=Object.freeze([1,Object.freeze([2,Object.freeze([]),3]),4]); const result=submission.processNested(nodes,function(value){log.push(['visit',value,this === undefined ? 'unbound' : this.tag,arguments.length]);return value*2;},function(){log.push(['cleanup',arguments.length]);return 999;}); observe({result,log,nodes});",
+      "expected": {
+        "result": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "log": [
+          [
+            "visit",
+            1,
+            "unbound",
+            1
+          ],
+          [
+            "visit",
+            2,
+            "unbound",
+            1
+          ],
+          [
+            "visit",
+            3,
+            "unbound",
+            1
+          ],
+          [
+            "visit",
+            4,
+            "unbound",
+            1
+          ],
+          [
+            "cleanup",
+            0
+          ]
+        ],
+        "nodes": [
+          1,
+          [
+            2,
+            [],
+            3
+          ],
+          4
+        ]
+      }
+    },
+    {
+      "id": "empty-input",
+      "label": "빈 입력에서도 정리한다",
+      "probe": "const log=[]; const result=submission.processNested([],value=>{log.push(value);return value;},()=>{log.push('cleanup');}); observe({result,log});",
+      "expected": {
+        "result": [],
+        "log": [
+          "cleanup"
+        ]
+      }
+    },
+    {
+      "id": "early-stop",
+      "label": "null 반환은 전체 순회를 끝내고 정리한다",
+      "probe": "const log=[]; const result=submission.processNested([1,[2,3],4],value=>{log.push(value);return value===2?null:value*10;},()=>{log.push('cleanup');}); observe({result,log});",
+      "expected": {
+        "result": [
+          10
+        ],
+        "log": [
+          1,
+          2,
+          "cleanup"
+        ]
+      }
+    },
+    {
+      "id": "work-error-priority",
+      "label": "정리도 실패할 때 원래 작업 오류를 보존한다",
+      "probe": "const log=[]; const thrown={code:'work'}; try{submission.processNested([1,2,3],value=>{log.push(value);if(value===2)throw thrown;return value;},()=>{log.push('cleanup');throw {code:'cleanup'};});}catch(error){error.observed='caught';} observe({log,thrown});",
+      "expected": {
+        "log": [
+          1,
+          2,
+          "cleanup"
+        ],
+        "thrown": {
+          "code": "work",
+          "observed": "caught"
+        }
+      }
+    },
+    {
+      "id": "cleanup-only-error",
+      "label": "작업 성공 뒤 정리 오류를 전달한다",
+      "probe": "const log=[]; const thrown={code:'cleanup'}; try{submission.processNested([2],value=>{log.push(value);return value*2;},()=>{log.push('cleanup');throw thrown;});}catch(error){error.observed='caught';} observe({log,thrown});",
+      "expected": {
+        "log": [
+          2,
+          "cleanup"
+        ],
+        "thrown": {
+          "code": "cleanup",
+          "observed": "caught"
+        }
+      }
+    },
+    {
+      "id": "depth-limit",
+      "label": "약속한 깊이 초과를 중단하고 정리한다",
+      "probe": "const log=[]; let errorName='not-thrown'; try{submission.processNested([1,[[2]],3],value=>{log.push(value);return value;},()=>{log.push('cleanup');},1);}catch(error){errorName=error.name;} observe({errorName,log});",
+      "expected": {
+        "errorName": "RangeError",
+        "log": [
+          1,
+          "cleanup"
+        ]
+      }
+    },
+    {
+      "id": "deep-supported-input",
+      "label": "허용한 깊이의 입력을 빠짐없이 처리한다",
+      "probe": "let nodes=[5]; for(let depth=0;depth<64;depth++)nodes=[nodes]; const log=[]; const result=submission.processNested(nodes,value=>{log.push(value);return value*2;},()=>{log.push('cleanup');},64); observe({result,log});",
+      "expected": {
+        "result": [
+          10
+        ],
+        "log": [
+          5,
+          "cleanup"
+        ]
+      }
+    },
+    {
+      "id": "falsy-throw",
+      "label": "throw undefined를 정상 경로로 바꾸지 않는다",
+      "probe": "const log=[]; let observed='returned'; try{submission.processNested([1],()=>{throw undefined;},()=>{log.push('cleanup');throw new Error('later');});}catch(error){observed=typeof error;} observe({observed,log});",
+      "expected": {
+        "observed": "undefined",
+        "log": [
+          "cleanup"
+        ]
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

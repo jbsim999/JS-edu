@@ -1,0 +1,71 @@
+{
+  "id": "higher-order-functions-exercise",
+  "lessonId": "higher-order-functions",
+  "contentRevision": "draft-1",
+  "graderRevision": "higher-order-functions-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "{pipe,partial,curry2}를 새 객체에 담아 반환합니다. 모든 콜백은 동기 함수입니다.",
+    "pipe(...stages)는 입력을 받는 함수를 반환하며 왼쪽부터 각 stage를 한 번씩 고정 receiver와 단일 값으로 호출합니다. 빈 pipe는 입력 그대로를 반환합니다.",
+    "partial(fn,...leading)은 나중의 trailing을 뒤에 붙여 고정 receiver로 fn을 호출하는 함수를 반환합니다. 저장 인수를 변경하지 않습니다.",
+    "curry2(fn)은 first => second => 결과 형태이며 마지막 단계에서만 fn에 정확히 first,second를 전달합니다.",
+    "구성 시 콜백을 실행하지 않습니다. 모든 원래 예외를 전파하고 pipe는 오류 뒤 단계를 수행하지 않습니다."
+  ],
+  "template": "export function createFunctionalTools(receiver) {\n  // TODO: 지연 실행하는 pipe, partial, curry2를 새 객체에 담아 반환하세요.\n}\n",
+  "profileId": "ecmascript-2026",
+  "profileByVersion": {
+    "ES2026": "ecmascript-2026"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/higher-order-functions.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "구성 시 실행하지 않고 왼쪽부터 각 한 번 호출한다",
+    "빈 pipe는 입력을 그대로 돌려준다",
+    "stage에는 고정 receiver와 값 하나만 전달한다",
+    "부분 적용 인수의 순서와 재사용 상태를 보존한다",
+    "커링은 두 번째 인수에서 원함수를 한 번 실행한다",
+    "오류 뒤 단계를 실행하지 않고 같은 던진 값을 전파한다",
+    "다른 도구의 receiver와 부분 인수가 섞이지 않는다",
+    "부분 적용과 커링에서도 원래 예외를 보존한다"
+  ],
+  "rubric": [
+    "시점·순서·횟수",
+    "고정 receiver와 인수 계약",
+    "부분 적용·커링 분리",
+    "동기 오류 전파"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createFunctionalTools",
+    "parameters": [
+      "receiver"
+    ],
+    "async": false
+  },
+  "editable": {
+    "prefix": "export function createFunctionalTools(receiver) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 지연 실행하는 pipe, partial, curry2를 새 객체에 담아 반환하세요."
+  },
+  "graderFile": "curriculum/checks/higher-order-functions.json",
+  "referenceFile": "reference/higher-order-functions.mjs",
+  "incorrectFile": "reference/incorrect/higher-order-functions.mjs",
+  "exampleFile": "curriculum/examples/higher-order-functions.mjs",
+  "exampleExpectedLogs": [
+    "[]",
+    "7 [\"double:3\",\"add:6\"]",
+    "9",
+    "A/B/C",
+    "0",
+    "A:B 1",
+    "stop [\"first\",\"fail\"]"
+  ],
+  "verificationRecord": "docs/execution/higher-order-functions-exercise.json"
+}

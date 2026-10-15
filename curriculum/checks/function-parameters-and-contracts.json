@@ -1,0 +1,137 @@
+{
+  "exerciseId": "function-parameters-and-contracts-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "function-parameters-and-contracts-checks-v1",
+  "cases": [
+    {
+      "id": "default-options",
+      "label": "생략된 옵션과 rest 기본값",
+      "probe": "observe([submission.summarizeValues([2,5,-1]),submission.summarizeValues([0],undefined,'explicit')]);",
+      "expected": [
+        {
+          "label": "total",
+          "count": 3,
+          "total": 6,
+          "tags": []
+        },
+        {
+          "label": "total",
+          "count": 1,
+          "total": 0,
+          "tags": [
+            "explicit"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "empty-and-undefined-fields",
+      "label": "빈 입력과 프로퍼티 undefined 기본값",
+      "probe": "observe(submission.summarizeValues([], {scale:undefined, offset:4, label:undefined}, 'empty'));",
+      "expected": {
+        "label": "total",
+        "count": 0,
+        "total": 4,
+        "tags": [
+          "empty"
+        ]
+      }
+    },
+    {
+      "id": "falsy-values",
+      "label": "0과 빈 문자열을 보존한다",
+      "probe": "observe(submission.summarizeValues([4,6], {scale:0, offset:2, label:''}, 'report', 'zero'));",
+      "expected": {
+        "label": "",
+        "count": 2,
+        "total": 2,
+        "tags": [
+          "report",
+          "zero"
+        ]
+      }
+    },
+    {
+      "id": "null-policy",
+      "label": "null과 비객체 옵션을 정상값으로 보정하지 않는다",
+      "probe": "const outcomes=[]; for (const options of [null, {scale:null}, {offset:null}, {label:null}, 0, []]) { try { outcomes.push({threw:false,value:submission.summarizeValues([1], options)}); } catch (error) { outcomes.push({threw:true,name:error.name}); } } observe(outcomes);",
+      "expected": [
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        }
+      ]
+    },
+    {
+      "id": "invalid-types",
+      "label": "옵션 타입과 유한성을 검사한다",
+      "probe": "const outcomes=[]; for (const options of [{scale:'2'}, {scale:Infinity}, {offset:NaN}, {label:8}]) { try { outcomes.push({threw:false,value:submission.summarizeValues([1], options)}); } catch (error) { outcomes.push({threw:true,name:error.name}); } } observe(outcomes);",
+      "expected": [
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        },
+        {
+          "threw": true,
+          "name": "TypeError"
+        }
+      ]
+    },
+    {
+      "id": "rest-order-and-immutable",
+      "label": "원본을 보존하고 rest 인수 순서를 유지한다",
+      "probe": "const values=Object.freeze([3,-1]); const options=Object.freeze({scale:2,offset:-3,label:'net',unused:7}); const result=submission.summarizeValues(values,options,'a','b','a'); observe({result,values,options});",
+      "expected": {
+        "result": {
+          "label": "net",
+          "count": 2,
+          "total": 1,
+          "tags": [
+            "a",
+            "b",
+            "a"
+          ]
+        },
+        "values": [
+          3,
+          -1
+        ],
+        "options": {
+          "scale": 2,
+          "offset": -3,
+          "label": "net",
+          "unused": 7
+        }
+      }
+    }
+  ],
+  "observationMode": "callback"
+}

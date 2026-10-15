@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "exerciseId": "values-and-types-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "values-and-types-checks-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-15T08:57:54.100Z",
+  "startedAt": "2026-10-15T08:57:49.933Z",
+  "actualRuntime": "Chrome155 / Windows / Dedicated Worker",
+  "method": "Actual browser qualification on the loopback developer server",
+  "referenceSourceFingerprint": "sha256:09e32af420e61ec369aec704e7a0759d72b7aec7d71c291d85013c63826ea1c0",
+  "referenceChecks": [
+    "falsy-present",
+    "absence-null-undefined",
+    "symbol-bigint",
+    "objects-and-callables",
+    "own-field-only",
+    "null-prototype-and-preservation",
+    "nan-still-number"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "scope": "Public self-study behavior checks; not certification or OS isolation"
+}
