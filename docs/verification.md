@@ -1,5 +1,23 @@
 # 검증 기록
 
+## 2026-10-15 승인 스타일 제품 화면 통합
+
+수행: 승인한 피스타치오 프리미엄 디자인을 web/에 적용했다. 다크/라이트·효과 설정, 7개 개념 탐색·5단계, 28개 용어 검색/상세, 실제 교재 초안·예제 연결, 읽기 전용 함수 선언+본문 편집, 개정/과제/파일별 코드·메모 저장, 초기화 확인과 실패 보호를 구현했다. 기존 prototype/스타일 후보와 교재·과제 ID/개정·실행 불가 계약은 보존했다. 서버는 로컬 공개 파일 allowlist, GET/HEAD, Host 검사, CSP를 적용했다.
+
+변경 범위: web/index.html·app.mjs·styles.css·glossary-data.mjs·features/workspace-state.mjs·serve.mjs 신규, package.json의 dev/검사 명령·서버/저장 회귀 테스트·관련 안내 갱신. 교재/과제/프로필과 저장/실행 어댑터는 변경하지 않았다. sourceSnapshot은 docs/product-ui-verification-evidence.json의 22개 실제 파일을 대상으로 하며 보고서·인계 문서는 제외한다. 이전 sourceSnapshot과 시안 증거는 과거 이력이다.
+
+실제 검사: Windows 네이티브 Node22.17.0 `npm run check` PASS(구조 수업1/초안1·구문17·테스트15/15, 실패0/skip0). sandbox 최초 서버 테스트는 loopback EACCES였고, 동일 테스트를 네이티브로 재실행한 뒤 전체 검사를 통과했다. 신규 테스트는 코드·메모·개정/namespace 분리, 저장 실패 후 재시도, 손상값 자동 보존과 명시 초기화, 읽기/삭제 실패·설정 보존, 실제 서버 공개/비공개 경로·nosniff 헤더·HEAD·405·Host·CSP를 확인한다. `git diff --check` PASS. 독립 아키텍처·코드 검토 PASS, 부팅 실패 guard와 CTA 조사 문구 수정도 재검토했다.
+
+독립 기능 QA: 실제 IAB UI/DOM·합성 화면15장. 목차/단계/URL/뒤로/앞으로/재로드, 함수 본문만 편집·Tab 이탈, 즉시 이동 후 코드/메모 복원, 초기화 취소/Escape와 focus·열린 초기화창에서 뒤로가기·분리 초기화, 한영/빈결과 검색·모달 Tab순환/Escape/복귀·검색어 유지·브레이크포인트 focus, light/dark×효과ON/OFF 및 설정 복원 PASS. console warning/error 0개. 320×740(305/305),360×740(345/345),390×844(375/375),768×1024(753/753),1280×720(1265/1265),1440×900(1425/1425)에서 문서 client/scroll 폭 일치. 740×360·1280×480에서 초기화 버튼 접근,640×360 유효공간 대체에서 용어 상세 스크롤/닫기를 확인했다. QA 입력은 UI 초기화 후 starter/빈메모로 복원했다.
+
+미검증: 실제 기기·진짜 브라우저200%/글자2배·OS IME·스크린리더·클립보드·브라우저 저장 실패 주입·blur 미지원 브라우저·누른 순간의 지속 효과. 640×360은 공간 대체 검사이며 실제200%/글자확대 검증으로 표시하지 않는다. 실제 코드 실행/제출·교육 정확성 전체·배포/설치형 검사는 아니다. available:false/executionVerified:false 유지. 실제 수업은 초안1개이고 나머지6개는 미리보기다.
+
+시각 검수 중 320×740 light/효과ON에서 LexicalEnvironment 상세의 이중 세로 스크롤(P2)을 발견했다. 숨김 링크 설명의 위치 기준을 내부 스크롤 영역으로 제한하고 utility-dialog 외부 overflow만 차단했다. reset-dialog는 제외했다. 독립 정적 검토 PASS. 동일 조건 재검수에서 dialog client/scroll 740/740·top0, inner client675/scroll987·끝312, toolbarTop0·하단 빈 공간 없음, 검색 복귀·닫기 PASS를 확인했다. 수정 후 네이티브 전체 검사도 15/15 PASS다.
+
+독립 시각 최종 검수 PASS: 실제 합성 pixels로 1440×900 dark/light×효과ON/OFF,320×740 light+목차/사전/긴용어상세,390×844 dark+본문편집/하단CTA,360×800 dark,768×1024 light+용어집,844×390 dark+스크롤/상세하단,최종1280×720 dark를 확인했다. 얇은 반사광/접지·주변 그림자·현재 목차의 더 약한 동일 재질·실제 반투명 사전과 가독성이 승인안의 방향을 유지한다. 수정 P2 재현 조건까지 재검수했고 console warning/error0. 총괄도 최종 소스를 새로 불러와 실제 light 및 dark 데스크톱 화면을 직접 확인했다.
+
+최종 판정 PASS — 기록한 로컬 첫 제품 UI 범위. sourceSnapshot 22개 SHA256 전부 일치, aggregate 43027b4a0d5e410dc667d7f915b5e4f5bf6a5f0151d573e35376acfc0b34779e. 사용자 검토용4179 개발 서버만 의도적으로 유지한다. 임시 QA 탭 종료 재요청은 세션이 이미 사용 불가라 종료 여부 미확인으로 기록했으며 다른 사용자 탭은 건드리지 않았다. 커밋·푸시·호스팅 없음.
+
 확인일: 2026-10-14. 초기 구조에 대한 검사이며 교육 내용 승인·학습 제출·UI·패키징 검증과 다르다.
 
 | 실제 검사 | 결과 | 범위 |
@@ -19,6 +37,68 @@
 
 원격 검증 소스는 2803adf62ccea040c58746d670754430d2bee6af이며 [CI 실행 38500101310](https://github.com/jbsim999/JS-edu/actions/runs/38500101310)의 네 job이 모두 success였다. 초기 main 반영 SHA와 로컬 소스 SHA가 일치했다. 후속 인계 문서 갱신은 검증한 코드·데이터를 변경하지 않는다.
 
-현재 소스의 경로·크기·SHA256은 [verification-evidence.json](verification-evidence.json)에 기록한다. 자기 참조를 피하려고 이 검증 기록·현재 상태·증거 JSON은 hash 범위에서 제외한다. Git 커밋/ref는 원격 반영 후 현재 상태 문서에서 확인한다. scaffold-manifest.json은 수정 전 생성기 출력만 기록하므로 현재 소스 검증 증거가 아니다.
+초기 검증 당시 소스의 경로·크기·SHA256은 [verification-evidence.json](verification-evidence.json)에 기록했다. 자기 참조를 피하려고 이 검증 기록·현재 상태·증거 JSON은 hash 범위에서 제외했다. Git 커밋/ref는 현재 상태 문서에서 확인한다. scaffold-manifest.json은 수정 전 생성기 출력만 기록하므로 현재 소스 검증 증거가 아니다.
 
 미검증: 대표 예제 예상 출력, 교재 내용 승인, 실제 학습 실행/제출·grader, ES2026 기능별 호환성, UI/접근성/반응형, 실제 기기, 설치·서명·배포·릴리스. Windows 개발 골격 검사를 전체 교육 제품 PASS로 확대하지 않는다.
+
+## 2026-10-14 상세 기획과 공개 전환
+
+수행: 공식 언어/호스트 독립 조사 2개와 상세 로드맵 작성. 변경 파일은 docs/roadmap.md, docs/plan.md, docs/project-state.md, 이 기록이다. 코딩·카탈로그·프로필·어댑터에는 변경이 없다. 새 문서를 커밋/푸시하지 않았다.
+
+공개 전환: GitHub CLI로 jbsim999/JS-edu의 PRIVATE·ADMIN 권한을 조회한 뒤 사용자의 명시적 요청에 따라 공개 전환했다. 후속 조회 결과 visibility:PUBLIC, isPrivate:false, 기본 브랜치 main이었다. 연결 앱은 접근 404, 기본 샌드박스 CLI는 연결 실패했으므로 허용된 네이티브 CLI로 수행·재확인했다. 인증 정보는 출력/문서에 기록하지 않았다.
+
+기획 근거: ES2026 정식판 HTML은 도구 용량 제한이 있어 공식 PDF 조항을 확인했다. ECMA-402·TC39·WHATWG·Node 원문을 읽은 조사 결과와 교육 설계를 구분했다. 상세 출처·과제·평가·실행 경계는 docs/roadmap.md에 있다.
+
+기존 검사 증거는 초기 코드 검증 이력으로 유지한다. 문서만 바뀐 이번 작업에서 npm run check를 성공 근거로 재사용하거나 재실행하지 않았다. 초기 snapshot을 새 문서의 현재 검증 증거로 사용하지 않는다.
+
+문서 검사: 표에서 공통32·브라우저8·Node8·통합4=52와 ID 중복0·기존 수업 ID 보존을 확인했다. git diff --check PASS, 변경 파일은 위 4개 문서뿐이다. 독립 리뷰어가 수량·선수 참조/순환·정식판 API7개 조항·기존 계약·평가/실행 경계를 검토했다. Map.prototype 표기(P3)와 평가 주체·공통 Node 추적·초기 snapshot 표현을 보완한 뒤 재검토 PASS, 신규 결함 없음. 이 판정은 상세 기획의 정적 검토이며 수업 실행이나 UI 통과가 아니다.
+
+재검토한 docs/roadmap.md SHA256: 84738c0c2651347e97d402c65ee940a84ccbf00de7653f634e6fcccef37ae0ee. 연구자는 읽기 전용 공식 조사, 총괄은 문서 작성·공개 전환·정적 검사, 리뷰어는 읽기 전용 독립 검토를 맡았다.
+
+미검증: 새로운 수업/진단/평가의 실제 실행·호환성·학습 효과, UI·실기기, 최종 실행 제공자·정확한 브라우저 버전·자원 상한, 설치/배포. 판정: 저장소 공개 전환 PASS, 제품 기능 미구현.
+
+## 2026-10-14 이용자 목차 보강과 용어집 화면 시안
+
+승인 범위: 사용자가 기획과 작동하는 화면 시안을 선택했다. 제품 curriculum·과제·프로필·runner·진도는 연결/변경하지 않았다. docs/roadmap.md·plan.md·frontend-structure.md 증보, requested-topics-audit.md·ui-ux-plan.md 신규, prototypes/learning-workspace/ 6파일 신규, 현재 기록 갱신. 커밋/푸시/배포 없음.
+
+전수 대조: 요청번호71개·중복0, 기존 명시28/부분36/미명시7. 최종 로드맵에 모두 핵심 절/실습으로 연결했고 32/8/8/4 계획 강의 수를 유지했다. 연구자는 공식 정식판·호스트 문서를 읽고 메모리 내 의미11검사 PASS를 보고했으나 그 검사와 제품 grader 검증을 구분한다.
+
+| 실제 검사 | 최종 결과와 범위 |
+| --- | --- |
+| npm run check | PASS: 연결 단원1/초안1·mjs구문11·기존회귀9·실패/skip0. Node22.17.0 Windows native |
+| 용어 데이터 | 28개·ID/별명/검색/개정/범위 검사 PASS, 초성/본문검색 미지원 명시 |
+| 독립 코드 검토 | 71항목/명세·기존 계약·용어 정의·XSS출력·URL·단일dialog·loopback allowlist 검토와 최종 재검토 PASS |
+| Chrome 기능 QA | Chrome154.0.8037.99 headless: 검색·상세·URL/history·invalidID·모달·키보드·query/scroll/focus·단계·비활성실행 PASS |
+| 반응형 | 320/360/390/768/1024/1280/1440, 844×390, 1024×500에서 전체가로넘침·버튼가림 없음 |
+| 확대 대체 | 글자2배(1440/390)·720×450 유효뷰포트, 총괄720×500/DPR2 캡처 PASS. 실제browserzoom 아님 |
+| 수정 회귀 | 모바일 Escape검색어삭제와 상세Tab이탈 P2 수정, 관련10조건 및 마지막8조건 PASS |
+| 작은 품질 보완 | 접히는사이드 focus·320/360 단어/도식·250ms안정발표/IME취소 수정 후 PASS |
+| 실제 합성 시각 | 총괄15장 캡처·pageErrors0. 별도 visual 담당이 전체/태블릿/확대대체/긴용어/미연결/최신좁은4장 직접 검수 후 PASS |
+
+처음 sandbox Chrome의 로컬접속 거부와 native Chrome→sandbox서버 timeout은 환경 경계였다. 소유한 sandbox 서버를 닫고 포함 serve.mjs와 검증 Chrome을 native 환경에서 실행해 해결했다. 제품 결함과 구분한다. 승인 자동 심사의 거절은 없었다.
+
+QA의 root CSS zoom:2 대체는 dialog의 dvh까지2배 키워 화면밖 결과를 냈다. 실제 브라우저 확대와 다른 방식의 한계로 보존하며 전체 확대 PASS의 증거로 사용하지 않는다. 정상 뷰포트·글자 확대·유효뷰포트 대체를 별도로 기록했다. 실제 browser200%는 미검증이다.
+
+QA 근거: artifacts/ui-preview/qa/report-core.json(수정 전 실패 보존), report-state.json, report-layout.json, report-regression.json, report-accessibility.json, report-final.json(최종8조건). 마지막 검사 전후5개시안 파일hash 동일. favicon.ico404만 관찰, JavaScript pageerror0. 총괄 캡처는 artifacts/ui-preview/*.png. 초기 실패 PNG를 최종 결함으로 표시하지 않는다.
+
+최종 소스 hash와 범위는 [ui-preview-evidence.json](ui-preview-evidence.json)에 기록한다. 초기 verification-evidence.json과 scaffold-manifest.json은 현재 증보/시안의 검증 증거가 아니다. 최종 app hash1555b289a944108aad9d11ff0881dc35d447a0ea3418a56600e78e559d7dc997는 QA·코드 리뷰·총괄 조회가 일치한다.
+
+역할: 연구자(읽기 전용 조사), UX(기획 문서), 프런트(시안6파일), 총괄(로드맵/대조/통합/필수검사/캡처), 독립 리뷰어(정적 검토), QA(실행 검사/증거), visual(합성 화면)이 단독 파일/브라우저 소유권을 지켰다. 검증용 브라우저·임시 서버는 종료했다. 사용자 검토용 localhost4178 시안 서버만 유지한다.
+
+미검증: 실제 모바일·OS 한국어IME·스크린리더·다른 브라우저·실제browser200%, 사용자 시각 선호/학습 효과, 제품 저장·실행·채점·전체 용어DB·배포. 최종 판정: 기획 통합/작동 시안 PASS, 교육 제품·학습 제출은 미구현.
+
+## 2026-10-14 정식 표시명 및 스타일 시안 보완
+
+제품 표시명 JavaScript-edu를 설정/소개/워드마크/제목/접근성 이름/관련 문서에 반영했다. npm 내부 name, namespace, 학습 ID/contentRevision, 실행 불가 상태와 실제 원격 URL은 유지했다. 이전 시안 hash 기록은 변경 전 이력이며 이번 9파일의 현재 hash는 [branding-verification-evidence.json](branding-verification-evidence.json)에 별도로 기록했다.
+
+최초 sandbox npm run check는 구조·구문11·테스트8이 통과하고 junction 생성만 EPERM이었다. 해당 테스트를 native에서 따로 재실행해 1/1 통과했고, 총괄이 이어 native npm run check 전체를 실행해 구조 PASS(단원1/초안1), 구문11 PASS, 테스트9/9 PASS(exit0)를 확인했다. git diff --check와 별도 스타일 시안 인라인 스크립트 구문 검사도 통과했다.
+
+독립 코드 검수: 표시명 변경을 되돌린 app/serve SHA가 이전 검증본과 같아 로직 보존을 확인했다. 새 스타일에서 다크 기본 그림자 선택자가 hover/active보다 우선하는 P3를 발견해 명시 선택자로 수정했다. 재검토 PASS, 총괄은 브라우저에서 다크 CTA 일반/hover의 실제 computed boxShadow 차이를 확인했다. 누른 순간의 지속 상태는 캡처하지 않았다.
+
+시각 참고 근거: [Fluent 2 Elevation](https://fluent2.microsoft.design/elevation)의 방향/key 및 ambient 그림자와 [Material](https://fluent2.microsoft.design/material)의 재질 구분을 확인했다. 개별 색·반사선·수치는 본 프로젝트의 설계 선택이며 공식 라이브러리 도입이나 고정 내비게이션 전체의 Acrylic 채택 권장으로 해석하지 않는다.
+
+독립 시각 검수는 별도 소유 IAB에서 최신 pistachio-premium 시안의 데스크톱 light/dark × 효과 ON/OFF, 320×760 dark·390×844 light·768×1024 light, CTA 펼침과 용어집을 직접 보고 PASS 판정했다. 4px 고형 밑면 제거·목차 선택 면의 반사선/반투명/표시·긴 브랜드의 좁은 폭 배치를 확인했다. 재사용 검수 세션의 IAB 소멸/Chrome 연결 실패는 환경 제한으로 기록하고 이전 시안 PASS를 전용하지 않았다. 새 독립 세션에서 실제 화면을 다시 확인했다.
+
+총괄은 기존 4178 시안의 320/390 정식 명칭·제목·헤더를 별도 탭에서 확인했다. 320px 문서 client/scrollWidth는305/305, 390px은375/375이며 브랜드 오른쪽170.83px과 액션 왼쪽225px은 겹치지 않았다. 브라우저 에뮬레이션이며 실제 기기가 아니다. 효과/테마 비교는 대화 내 별도 스타일 시안에서만 제공하고 기존 제품 CSS에는 적용하지 않았다.
+
+미확인: host Tweak의 실제 슬라이더·호스트 상태 저장, pressed 지속 상태, browser200%·실제 기기·스크린리더·학습 효과. 사용자 시각 승인과 교육 제품 구현/실행기 검증은 별도다. 변경 범위 판정 PASS, 커밋/푸시/배포 없음. 검수용 탭/viewport/4189 서버는 종료하며 사용자 검토용 4178 서버는 유지한다.

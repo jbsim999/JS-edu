@@ -1,4 +1,4 @@
-# JS-edu 작업 지침
+# JavaScript-edu 작업 지침
 
 한국어로 간결하게 소통한다. 재개 시 docs/project-state.md, education.config.json, CONTRIBUTING.md와 실제 Git 상태를 먼저 읽는다. 사용자 요청 단계와 승인 범위를 유지한다.
 

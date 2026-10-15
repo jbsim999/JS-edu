@@ -1,4 +1,4 @@
-# JS-edu 협업 규칙
+# JavaScript-edu 협업 규칙
 
 junbo-github-conventions의 기본안을 이 초기 저장소에 적용한다. 커밋 형식은 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ko/v1.0.0/)을 따르며 타입·scope·브랜치 목록은 이 프로젝트의 선택이다.
 

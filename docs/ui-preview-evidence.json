@@ -1,0 +1,92 @@
+{
+  "kind": "planning-and-ui-preview-verification",
+  "checkedAt": "2026-10-14",
+  "status": "PASS",
+  "scope": "Detailed planning and standalone working UI preview only",
+  "lessonCatalogCount": 1,
+  "glossaryPreviewCount": 28,
+  "actualLearnerCodeExecutionVerified": false,
+  "userVisualPreferenceApproved": false,
+  "checks": {
+    "projectCheck": "PASS: structure 1 draft, mjs syntax 11, tests 9",
+    "requestedTopics": "71 unique, baseline 28 included / 36 partial / 7 missing, all mapped in plan",
+    "browser": "Chrome 154.0.8037.99 headless Windows",
+    "independentCodeReview": "PASS after fixes",
+    "independentFunctionalQa": "PASS, final 8 targeted regression conditions",
+    "independentVisualReview": "PASS after narrow screen fixes",
+    "screenshots": 15
+  },
+  "limitations": [
+    "Actual mobile device not tested",
+    "OS Korean IME not tested; synthetic composition only",
+    "Screen reader not tested",
+    "Other browsers not tested",
+    "Actual browser 200 percent zoom not tested; text-size and effective-viewport substitutes only",
+    "Curriculum runner and grader not connected"
+  ],
+  "qaReportPaths": [
+    "artifacts/ui-preview/qa/report-core.json",
+    "artifacts/ui-preview/qa/report-state.json",
+    "artifacts/ui-preview/qa/report-layout.json",
+    "artifacts/ui-preview/qa/report-regression.json",
+    "artifacts/ui-preview/qa/report-accessibility.json",
+    "artifacts/ui-preview/qa/report-final.json"
+  ],
+  "files": [
+    {
+      "path": "docs/roadmap.md",
+      "bytes": 37984,
+      "sha256": "23383c14578844c297d1c6131699f1499dd81cf5d930fc071d71bfd6d83b788f"
+    },
+    {
+      "path": "docs/requested-topics-audit.md",
+      "bytes": 13258,
+      "sha256": "277068f320a8bc144b9cb2b833504e583356889e109ccace08eda1cdc0706cfd"
+    },
+    {
+      "path": "docs/ui-ux-plan.md",
+      "bytes": 29222,
+      "sha256": "fa756e46ee0c2bbad97157ef5d996ab8fde451cce8e017fd7e3b6892027a1c8f"
+    },
+    {
+      "path": "docs/plan.md",
+      "bytes": 3946,
+      "sha256": "ce54fde3fe911f7e240e8ffebaba6abb91e4ee05adf70694a8ac41c70fb67680"
+    },
+    {
+      "path": "docs/frontend-structure.md",
+      "bytes": 1432,
+      "sha256": "bf994de8ff57cedb18795dfefa05b8923193efc5e3b343ec0f0c14eda45a1095"
+    },
+    {
+      "path": "prototypes/learning-workspace/index.html",
+      "bytes": 5943,
+      "sha256": "de7acedd42f41378c578ec2c9fa43be049d79a63be80f0994b22f872b37a0cb2"
+    },
+    {
+      "path": "prototypes/learning-workspace/styles.css",
+      "bytes": 21704,
+      "sha256": "28415bd95a6eb9358567972dcb978c0bc50775bd85b03688242271a7c0d89b67"
+    },
+    {
+      "path": "prototypes/learning-workspace/app.mjs",
+      "bytes": 38763,
+      "sha256": "1555b289a944108aad9d11ff0881dc35d447a0ea3418a56600e78e559d7dc997"
+    },
+    {
+      "path": "prototypes/learning-workspace/glossary-data.mjs",
+      "bytes": 22427,
+      "sha256": "0a85cf825ac89846dd0897278d66c365efc358e100ffe9defac5a61158305991"
+    },
+    {
+      "path": "prototypes/learning-workspace/serve.mjs",
+      "bytes": 2276,
+      "sha256": "e7e4b6401209c81d99265337b2e12410ef88c971b67a5b7e202fe5393eae49dd"
+    },
+    {
+      "path": "prototypes/learning-workspace/README.md",
+      "bytes": 4257,
+      "sha256": "08f64c1bfa77e21743d11c6d0ee26bbdd1da2f879f98041e9e36d335fa60aa60"
+    }
+  ]
+}

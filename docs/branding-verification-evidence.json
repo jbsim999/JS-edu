@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-14",
+  "scope": "product-display-name-and-style-preview",
+  "productDisplayName": "JavaScript-edu",
+  "internalName": "js-edu",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "78f1a5fc72ddf587fb91ee4660eddf21a0bd8ec4c50596ae19a570efebce8c75"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "9406921675d416960aac74ea2a07f15dca67397729d33803a7f550274c9931aa"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0330ab561618a509712f5c096dff3799cbe15d2a797a794d3467af25d36a4bac"
+    },
+    {
+      "path": "education.config.json",
+      "sha256": "3ce9bb4a16a1ec8fb59003266498b760a2a022bfb4876148e10e740b03699506"
+    },
+    {
+      "path": "package.json",
+      "sha256": "c6bcea0f80d631d3cb3497956a9eec04825da2f808bc8e718d0fb01fb12dafa9"
+    },
+    {
+      "path": "docs/ui-ux-plan.md",
+      "sha256": "958ca2125131a9adc7383c574a12e95797eedb232dc2084516d60d1a81673fd3"
+    },
+    {
+      "path": "prototypes/learning-workspace/index.html",
+      "sha256": "cc8978e0c3f0a68c017bfb729d53397d3f86d3c98f5a6f3c34476382663f5e36"
+    },
+    {
+      "path": "prototypes/learning-workspace/app.mjs",
+      "sha256": "bdc26bbfba8b2cf28d7aef5ca1a08c2a1fe56bc6d7ec05d0b476e1e9dbece951"
+    },
+    {
+      "path": "prototypes/learning-workspace/serve.mjs",
+      "sha256": "55e3750ac5428c0f56fbc4a16599fe3859b6de0e42c53d09ddb7e189c983c8e2"
+    }
+  ],
+  "visual": {
+    "file": "pistachio-premium.html",
+    "sha256": "3b81e96823f638e601380c70e69d8196231ef1afd75287a59b5223dd9aabf7df",
+    "externalToRepository": true
+  },
+  "checks": {
+    "environment": "Windows native Node.js 22.17.0",
+    "command": "npm run check",
+    "structure": "PASS: lessons1/drafts1",
+    "syntax": "PASS:11",
+    "tests": "PASS:9/9",
+    "diffWhitespace": "PASS",
+    "independentCodeReview": "PASS after dark hover/active specificity repair",
+    "independentVisualReview": "PASS:desktop light/dark and effects ON/OFF,320/390/768",
+    "originalPrototypeNameCheck": "PASS:320/390 header,title,overflow",
+    "darkDefaultAndHoverShadow": "Verified different computed boxShadow in browser",
+    "heldPressedShadow": "Not captured",
+    "hostTweakControls": "Not verified",
+    "realDeviceAndBrowser200Percent": "Not verified",
+    "executionAvailable": false,
+    "executionVerified": false
+  }
+}

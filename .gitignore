@@ -3,6 +3,7 @@ build/
 dist/
 work/
 coverage/
+artifacts/
 *.log
 .env
 .env.*

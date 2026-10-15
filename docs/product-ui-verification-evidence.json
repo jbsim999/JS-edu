@@ -1,0 +1,154 @@
+{
+  "checkedAt": "2026-10-15",
+  "scope": "First product learning UI; no learner execution or grading",
+  "baseCommit": "d9047786540dced4c3d1baf0a02ec033395596a1",
+  "tree": "local uncommitted working tree",
+  "sourceSnapshotSha256": "43027b4a0d5e410dc667d7f915b5e4f5bf6a5f0151d573e35376acfc0b34779e",
+  "sourceSnapshotFormat": "UTF-8 sorted path TAB sha256 LF",
+  "sources": [
+    {
+      "path": "curriculum/catalog.json",
+      "sha256": "2738f42cbd5803084d26d2a5ed7d7a3329d353b5b2e098ba246adea8be355f31"
+    },
+    {
+      "path": "curriculum/examples/bindings-and-closures.mjs",
+      "sha256": "c23d76ab3637a093e83c8edaa5182b0f8ebc25c2332582ed30d4ecb80527ebad"
+    },
+    {
+      "path": "curriculum/exercises.json",
+      "sha256": "cbf4e744bd7f427e897bacfcf773cec38d2b18eb71c449703e1d388cb393c696"
+    },
+    {
+      "path": "curriculum/lessons/bindings-and-closures.json",
+      "sha256": "440a04adcc80b92248d4b794a45c8e116da077a64ca589f1834c41c2210816fa"
+    },
+    {
+      "path": "education.config.json",
+      "sha256": "3ce9bb4a16a1ec8fb59003266498b760a2a022bfb4876148e10e740b03699506"
+    },
+    {
+      "path": "package.json",
+      "sha256": "7a4f5610a5587fbeac11690c55f53807f6e5e63ae744e188ce2c92b42e5ea3ba"
+    },
+    {
+      "path": "runtime/profiles.json",
+      "sha256": "9fbff9c56f71669ab0fb8b657d35257456514141bcf263ea0eb85757399827e6"
+    },
+    {
+      "path": "scripts/check-syntax.mjs",
+      "sha256": "eed20105dc37720d988f1aecfaf78fee2c81d1e8a85f0c1587c24d851cff7431"
+    },
+    {
+      "path": "scripts/validate-project.mjs",
+      "sha256": "8e01eeae9ee659913bcd00dfd7cb11f0447921a9e207ce1a560e16c1e2dbfe94"
+    },
+    {
+      "path": "starter/create-counter.mjs",
+      "sha256": "51634e7f75a78a116e07a4b59d2d2495b3797f8cb6999f33858169e3ca936c3c"
+    },
+    {
+      "path": "tests/adapters.test.mjs",
+      "sha256": "17d5802a8f6ddb46dea2b8c8d2abbc851dbb581d77cdcda517fb6226886ba659"
+    },
+    {
+      "path": "tests/learning-server.test.mjs",
+      "sha256": "5da75141003929779dddc707bc53cb2da554e2afa55c781ae8fc97a88b538311"
+    },
+    {
+      "path": "tests/validator.test.mjs",
+      "sha256": "cf003cf2bf786ff5bdb39fdcdc46e8db1afc294645c0370fb547db05d77d7a57"
+    },
+    {
+      "path": "tests/workspace-state.test.mjs",
+      "sha256": "3d4fb98bdf768bd5cdc4e7acaa19efd806276d6ee5b0cce8e2a732c544973b27"
+    },
+    {
+      "path": "web/adapters/runner.mjs",
+      "sha256": "ff09cdf4ee5046df4906276fb1178e6b9754829723a4e5b352ff38235e3e4556"
+    },
+    {
+      "path": "web/adapters/storage.mjs",
+      "sha256": "7ad11540382c4501f486fdb96d29fba602143969dbedd6a998d460d6b496e7b3"
+    },
+    {
+      "path": "web/app.mjs",
+      "sha256": "a5a2162b161039d8b40c0937aede7c7de9b6f5214229d1370fbba0cbe6e7886a"
+    },
+    {
+      "path": "web/features/workspace-state.mjs",
+      "sha256": "e0234293e5c710c40b3d3c31359903e1443faeb78194a0343acaa751e7cb24ac"
+    },
+    {
+      "path": "web/glossary-data.mjs",
+      "sha256": "26378d433ec271a4d95751a9b749f1a01c8922648b923ff121277d7f051f0532"
+    },
+    {
+      "path": "web/index.html",
+      "sha256": "70a1d7cbb73eb43006b00ac8aea1fdeab774aeea7f31b643ddfb7fc75efecadc"
+    },
+    {
+      "path": "web/serve.mjs",
+      "sha256": "00020582256403ce6affc3b9b469e457202c66164f2577927ad9b56f79c6f773"
+    },
+    {
+      "path": "web/styles.css",
+      "sha256": "0658a852e5755fe44dbeb8b4a5175b3e445fc5b35036f170ff8fb054179b0b49"
+    }
+  ],
+  "checks": {
+    "command": "npm run check",
+    "environment": "Windows native / Node.js 22.17.0",
+    "structure": "PASS: 1 lesson, 1 draft",
+    "syntax": "PASS: 17 files",
+    "tests": "PASS: 15/15, failed 0, skipped 0",
+    "whitespace": "git diff --check PASS",
+    "sandboxFirstServerAttempt": "EACCES loopback connection; identical test passed natively, followed by full native check"
+  },
+  "reviews": {
+    "architecture": "PASS read-only",
+    "code": "PASS independent static review including boot guard, CTA wording and utility dialog scroll containment fix",
+    "browserQA": "PASS independent IAB UI/DOM/pixels: navigation, persistence, reset, glossary, focus, settings; 15 composed screens; warning/error logs 0",
+    "visual": "PASS independent composed pixels; exact 320x740 P2 reproduction fixed and retested; root also viewed final desktop light/dark; warning/error logs 0"
+  },
+  "limitations": [
+    "Actual learner runtime and trusted submission grader unavailable",
+    "Only one curriculum lesson draft; six concept previews",
+    "Browser-local state only; no device sync or achievement migration",
+    "No commits, pushes, hosting or installer publication",
+    "No real-device, true browser 200% or text 2x test; half-area substitute only",
+    "No OS IME, screen reader, clipboard, browser storage fault injection, no-blur browser or held pressed-state validation"
+  ],
+  "browserChecks": {
+    "viewports": [
+      "320x740:305/305",
+      "360x740:345/345",
+      "390x844:375/375",
+      "768x1024:753/753",
+      "1280x720:1265/1265",
+      "1440x900:1425/1425",
+      "740x360 and 1280x480:reset actions visible",
+      "640x360:half-area alternative only"
+    ],
+    "themeEffects": "light/dark x on/off",
+    "storage": "UI immediate navigation, back/reload, independent reset, persisted settings; quota/corrupt/read/delete failure covered by unit tests, not browser injection",
+    "cleanup": "QA code/starter and note/empty restored via UI; dark/effects ON; own tab handed off"
+  },
+  "fixes": [
+    "P3 Korean step CTA wording corrected and UI rechecked",
+    "P2 320x740 utility dialog double-scroll fixed: outer overflow hidden and inner containing block; independent static review PASS; visual retest dialog740/740/top0, inner675/987/max312, toolbarTop0, no bottom blank, return/close PASS"
+  ],
+  "visualChecks": {
+    "viewports": [
+      "1440x900:dark/light x effectsON/OFF",
+      "320x740:light/toc/glossary/long detail",
+      "390x844:dark/body editor/footer CTA",
+      "360x800:dark",
+      "768x1024:light/glossary",
+      "844x390:dark/scroll/detail bottom",
+      "1280x720:final dark"
+    ],
+    "finalState": "dark/effectsON; viewport reset; no modal/query; QA starter and blank note restored",
+    "scope": "Actual composed IAB pixels, not real device or actual 200% zoom",
+    "root": "Viewed desktop light and final reloaded dark, no console warnings/errors"
+  }
+}

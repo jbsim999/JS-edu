@@ -1,6 +1,6 @@
 {
   "name": "js-edu",
-  "title": "JS-edu",
+  "title": "JavaScript-edu",
   "language": "javascript",
   "audience": [
     "other-language-experienced",
@@ -14,6 +14,6 @@
   ],
   "executionMode": "unavailable",
   "sourcePolicy": "Official language/API/tool documentation; job-post observations recorded separately",
-  "displayName": "JS-edu",
+  "displayName": "JavaScript-edu",
   "contentRevisionPolicy": "Achievement and drafts must include contentRevision; migration is not implemented."
 }

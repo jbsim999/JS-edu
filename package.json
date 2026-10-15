@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "JS-edu JavaScript education project scaffold",
+  "description": "JavaScript-edu JavaScript education project scaffold",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
+    "dev": "node web/serve.mjs",
     "validate": "node scripts/validate-project.mjs .",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "test": "node --test tests/adapters.test.mjs tests/validator.test.mjs",
+    "test": "node --test tests/adapters.test.mjs tests/validator.test.mjs tests/learning-server.test.mjs tests/workspace-state.test.mjs",
     "check": "npm run validate && npm run check:syntax && npm test"
   }
 }
