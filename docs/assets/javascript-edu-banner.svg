@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="350" viewBox="0 0 1200 350" role="img" aria-labelledby="title desc">
+  <title id="title">JavaScript-edu</title>
+  <desc id="desc">원리를 이해하고, 코드로 확인하는 JavaScript. 52 lessons, 55 exercises, Browser and Node.js.</desc>
+  <defs>
+    <linearGradient id="paper" x2="1" y2="1"><stop stop-color="#f3f6eb"/><stop offset="1" stop-color="#dce7c7"/></linearGradient>
+    <linearGradient id="lemon" x2="0" y2="1"><stop stop-color="#f9e9a6"/><stop offset="1" stop-color="#e5ce78"/></linearGradient>
+  </defs>
+  <rect width="1200" height="350" rx="26" fill="url(#paper)"/>
+  <path d="M0 304H1200" stroke="#b3c39c"/>
+  <g font-family="Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <rect x="54" y="49" width="62" height="62" rx="19" fill="url(#lemon)" stroke="#cdb568"/>
+    <path d="M65 56H101" stroke="#fff7d4" stroke-width="2" stroke-linecap="round"/>
+    <text x="85" y="90" fill="#54431e" font-size="25" font-weight="700" text-anchor="middle">JS</text>
+    <text x="139" y="90" fill="#314837" font-size="37" font-weight="700" letter-spacing="-1">JavaScript-edu</text>
+    <text x="56" y="168" fill="#253b2d" font-size="30" font-weight="600">원리를 이해하고, 코드로 확인하는 JavaScript.</text>
+    <text x="57" y="214" fill="#53694d" font-size="18">52강 교재 · 55개 코딩 실습 · 브라우저와 Node.js</text>
+    <text x="57" y="333" fill="#52664a" font-size="13" letter-spacing="2">READ. THINK. WRITE. RUN.</text>
+    <rect x="833" y="49" width="310" height="211" rx="19" fill="#24382b"/>
+    <path d="M849 50H1126" stroke="#5c7357"/>
+    <circle cx="854" cy="70" r="4" fill="#e8d68d"/><circle cx="869" cy="70" r="4" fill="#a8c78f"/><circle cx="884" cy="70" r="4" fill="#7c9b70"/>
+    <g font-family="Consolas, Menlo, monospace" font-size="17">
+      <text x="855" y="119" fill="#d5b8f2">const <tspan fill="#ecf1df">learn = () =&gt; {</tspan></text>
+      <text x="872" y="155" fill="#9ed5df">  read<tspan fill="#ecf1df">();</tspan></text>
+      <text x="872" y="190" fill="#9ed5df">  tryIt<tspan fill="#ecf1df">();</tspan></text>
+      <text x="855" y="229" fill="#ecf1df">};</text>
+    </g>
+  </g>
+</svg>

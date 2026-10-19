@@ -1,5 +1,11 @@
 # 검증 기록
 
+## 2026-10-19 main 반영 전 원격 결과와 README
+
+정확한 소스 c591eed의 일반 CI4개·고정Node2개와 desktop Windows/Mac arm64가 success다. Mac Intel의 실패는 고정 unsigned 진단의 `In architecture: x86_64` 추가 줄이며, CPU가 일치하는 해당 suffix만 `--all-architectures`에서 인정하는 보완 회귀1/1 PASS다. 서명 변조·다른CPU·추가오류·timeout거부는 유지한다. [원격 실행과 원시 기록](code-mac-ci-verification.md)을 따른다. 이 후속 두 파일은 이전504지문/전체검사와 구분하며 최종 통합 CI로 추가 검사한다.
+
+README는 사용자 지정 java-edu의 구조를 참고해 재작성하고 자체 SVG 배너·검증용 Windows 앱의 실제 PNG를 추가한다. 다운로드 링크·공개배포·Mac Intel 통과를 꾸며 넣지 않는다. 사용자가 비치명 문제로 main 반영을 보류하지 말라고 승인했으며 강제 푸시·보호 우회는 허용하지 않는다.
+
 ## 2026-10-19 0.1.1 CI 보완 / Windows 후보 native PASS
 
 보완 후 Windows/Node24.22.0 `npm run check` exit0 PASS: 구조52·구문317·회귀316중311PASS/Unix5skip/FAIL0, 제작자33실습271조건·예제33PASS/호스트22skip(PARTIAL). 전후504입력 SHA256 `4a764b271ca9292825f3b9d1b410110e0f398afdaeeaebe625a4a7e2ca1f104b` 동일. 첫043 소스와 원격 FAIL은 [후속 검증 기록](code-mac-ci-verification.md)에 분리한다. 이전503입력 기록의 원시는 `code-mac-check-043.log`, `code-mac-check-source-043.json`이며 최신 로그와 혼용하지 않는다.

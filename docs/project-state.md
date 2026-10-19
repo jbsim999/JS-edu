@@ -1,5 +1,11 @@
 # 현재 상태
 
+## 2026-10-19 main 반영 승인 / README 개편
+
+사용자가 비치명 검사 오류가 있더라도 main 커밋·푸시를 진행하도록 승인했다. java-edu README를 참고해 배너·실제 화면·기능·52강 과정·실행/저장·개발/검증·문서 안내를 정리한다. 제품/교육 소스는 보존하고 Mac 검증 상태는 구분한다.
+
+소스 c591eed의 일반4+고정Node2 CI와 Windows x64·Mac arm64의 최종ZIP/native CI는 success다. Intel만 codesign의 정확한 CPU 진단 한 줄로 문자열 비교가 실패했으며 좁은 보완 회귀1/1 PASS다. 통합 소스의 Intel 최종 native는 후속 CI로 확인한다. [상세 결과](code-mac-ci-verification.md). 공개 Release·서명·공증은 미수행이며 기존0.1.0 패키지와 학습 데이터는 보존한다.
+
 ## 2026-10-19 0.1.1 원격 검사 보완 후 로컬 PASS
 
 첫043d8f6의 데스크톱 CI는 하네스 ready 경합과 Mac 원본 bundle 서명 상태에서 FAIL이었다. 원본 바이트/서명 상태를 보존하고 실제 존재하는 코드 서명 검증 범위를 분리했다. Windows22 DOM 감사 fixture 경합도 재현·보완했다. [원격 검증 보완](code-mac-ci-verification.md)에 실패 원시와 변경 이유를 기록한다.

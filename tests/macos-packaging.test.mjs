@@ -58,9 +58,15 @@ test('original bundle signature failure stays explicit and unrelated native code
   const failed = message => ({ args: [filename], exitCode: 1, signal: null, stdout: '', stderr: `${filename}: ${message}\n` });
   const unsigned = failed('code object is not signed at all');
   assert.equal(assertPinnedBundleResult('x64', unsigned, unsigned), 'UNSIGNED');
+  const withCpu = (result, cpu) => ({ ...result, args: ['--all-architectures', filename], stderr: result.stderr + `In architecture: ${cpu}\n` });
+  assert.equal(assertPinnedBundleResult('x64', unsigned, withCpu(unsigned, 'x86_64')), 'UNSIGNED');
+  assert.throws(() => assertPinnedBundleResult('x64', unsigned, withCpu(unsigned, 'arm64')));
+  assert.throws(() => assertPinnedBundleResult('x64', unsigned, { ...withCpu(unsigned, 'x86_64'), args: [filename] }));
   const display = { args: [filename], exitCode: 0, signal: null, stdout: '', stderr: 'Signature=adhoc\nInfo.plist=not bound\nSealed Resources=none\n' };
   const unsealed = failed('code has no resources but signature indicates they must be present');
   assert.equal(assertPinnedBundleResult('arm64', display, unsealed), 'FAIL_UNSEALED_ORIGINAL_BUNDLE');
+  assert.equal(assertPinnedBundleResult('arm64', display, withCpu(unsealed, 'arm64')), 'FAIL_UNSEALED_ORIGINAL_BUNDLE');
+  assert.throws(() => assertPinnedBundleResult('arm64', display, withCpu(unsealed, 'x86_64')));
   for (const bad of [failed('invalid signature (code or signature have been modified)'), { ...unsealed, exitCode: null, signal: 'SIGTERM' }, { ...unsealed, error: 'ETIMEDOUT' }, { ...unsealed, exitCode: 0 }, { ...unsealed, stderr: unsealed.stderr + 'additional unexpected failure\n' }]) assert.throws(() => assertPinnedBundleResult('arm64', display, bad));
   assert.throws(() => assertPinnedBundleResult('arm64', { ...display, stderr: display.stderr.replace('none', 'version=2 files=100') }, unsealed));
   assert.throws(() => assertPinnedBundleResult('x64', unsigned, unsealed));

@@ -61,14 +61,22 @@ function codesign(args) {
 }
 const text = result => `${result.stdout}${result.stderr}`;
 const ordinaryFailure = result => result.exitCode === 1 && !result.signal && !result.error;
-const exactFailure = (result, message) => ordinaryFailure(result) && text(result).trim() === `${result.args.at(-1)}: ${message}`;
+const exactFailure = (result, message, architecture) => {
+  if (!ordinaryFailure(result)) return false;
+  const expected = `${result.args.at(-1)}: ${message}`;
+  const output = text(result).trim();
+  // --all-architectures may append this one CPU diagnostic. Keep all other
+  // errors strict, and require the suffix to match the independently pinned CPU.
+  const nativeCpu = { x64: 'x86_64', arm64: 'arm64' }[architecture];
+  return output === expected || (nativeCpu && result.args.includes('--all-architectures') && output === `${expected}\nIn architecture: ${nativeCpu}`);
+};
 
 export function assertPinnedBundleResult(architecture, display, verification) {
   if (architecture === 'x64') {
-    if (!exactFailure(display, unsignedMessage) || !exactFailure(verification, unsignedMessage)) throw new Error('Pinned x64 bundle no longer has the observed original unsigned state.');
+    if (!exactFailure(display, unsignedMessage) || !exactFailure(verification, unsignedMessage, architecture)) throw new Error('Pinned x64 bundle no longer has the observed original unsigned state.');
     return 'UNSIGNED';
   }
-  if (architecture !== 'arm64' || display.exitCode !== 0 || display.signal || display.error || !/^Signature=adhoc$/mu.test(text(display)) || !/^Info.plist=not bound$/mu.test(text(display)) || !/^Sealed Resources=none$/mu.test(text(display)) || !exactFailure(verification, unsealedBundleMessage)) throw new Error('Pinned ARM bundle signature differs from the observed unsealed upstream bundle; inspect the raw diagnostic.');
+  if (architecture !== 'arm64' || display.exitCode !== 0 || display.signal || display.error || !/^Signature=adhoc$/mu.test(text(display)) || !/^Info.plist=not bound$/mu.test(text(display)) || !/^Sealed Resources=none$/mu.test(text(display)) || !exactFailure(verification, unsealedBundleMessage, architecture)) throw new Error('Pinned ARM bundle signature differs from the observed unsealed upstream bundle; inspect the raw diagnostic.');
   return 'FAIL_UNSEALED_ORIGINAL_BUNDLE';
 }
 
@@ -103,7 +111,7 @@ export async function inspectOriginalElectronSignatures(vendorRoot, { architectu
         if (image.display.exitCode !== 0 || image.display.error || image.display.signal || !/^Signature=adhoc$/mu.test(text(image.display)) || image.verification.exitCode !== 0 || image.verification.error || image.verification.signal) throw new Error(`Native code-only signature verification failed: ${entry.path}`);
         image.status = 'PASS_CODE_SIGNATURE_ONLY';
       } else {
-        if (!exactFailure(image.display, unsignedMessage) || !exactFailure(image.verification, unsignedMessage)) throw new Error(`Original unsigned image changed state: ${entry.path}`);
+        if (!exactFailure(image.display, unsignedMessage) || !exactFailure(image.verification, unsignedMessage, architecture)) throw new Error(`Original unsigned image changed state: ${entry.path}`);
         image.status = 'UNSIGNED';
       }
       if (await sha256File(filename) !== hash || await sha256File(copied) !== hash) throw new Error('Original or inspection copy changed during codesign verification.');
