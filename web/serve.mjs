@@ -9,7 +9,7 @@ import { createNodeExecution } from './server/node-execution.mjs';
 const projectRoot = new URL('../', import.meta.url);
 const routes = new Map([
   ['/', ['web/index.html', 'text/html; charset=utf-8']],
-  ...['index.html', 'styles.css', 'code-theme.css', 'app.mjs', 'vendor/prism/prism.mjs', 'features/code-theme.mjs', 'glossary-data.mjs', 'glossary-expanded.mjs', 'adapters/storage.mjs', 'adapters/runner.mjs', 'features/workspace-state.mjs',
+  ...['index.html', 'styles.css', 'code-theme.css', 'app.mjs', 'vendor/prism/prism.mjs', 'features/code-theme.mjs', 'features/inline-code.mjs', 'glossary-data.mjs', 'glossary-expanded.mjs', 'adapters/storage.mjs', 'adapters/runner.mjs', 'features/workspace-state.mjs',
     'features/learning-data.mjs', 'features/execution-state.mjs', 'features/learning-progress.mjs',
     'features/module-workspace-state.mjs', 'execution/module-runner.mjs', 'execution/dom-runner.mjs', 'execution/node-runner.mjs',
     'execution/browser-runner.mjs', 'execution/protocol.mjs', 'execution/worker.js'].map(file => [

@@ -3,8 +3,57 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { highlightCode, codeLanguage, highlightingLimit } from '../web/features/code-theme.mjs';
+import { learningText } from '../web/features/inline-code.mjs';
 
 const textOf = html => html.replace(/<[^>]*>/gu, '').replace(/&(amp|lt|gt|quot|#39|#13);/gu, (_, name) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#13': '\r' })[name]);
+
+test('inline code keeps typeof expressions together and preserves surrounding Korean prose', () => {
+  const source = 'typeof는 진단 도구지만 typeof null은 "object"다. Promise·Map·JSON과 node:fs를 비교한다.';
+  const html = learningText(source);
+  assert.equal(textOf(html), source);
+  assert.match(html, /<code class="inline-code"><span class="token keyword">typeof<\/span> <span class="token keyword">null<\/span><\/code>/u);
+  const snippets = [...html.matchAll(/<code class="inline-code">([\s\S]*?)<\/code>/gu)].map(match => textOf(match[1]));
+  for (const name of ['typeof', 'typeof null', '"object"', 'Promise', 'Map', 'JSON', 'node:fs']) assert.ok(snippets.includes(name), name);
+  assert.doesNotMatch(html, /<code[^>]*>[^<]*진단/u);
+});
+
+test('inline display never turns HTML into elements or rewrites whitespace, quotes or template characters', () => {
+  for (const source of ['document.querySelector("<img>")와 <script>alert(1)</script>', 'typeof\u00a0null\r\nMap\u202f설명 😀', '`값 ${value}`와 Object.hasOwn(item, "id")', 'return "</code><img src=x onerror=alert(1)>"']) {
+    const html = learningText(source);
+    assert.equal(textOf(html), source);
+    assert.doesNotMatch(html, /<img|<script|onerror="/u);
+  }
+});
+
+test('ordinary product names and explanatory abbreviations remain prose', () => {
+  const source = 'JavaScript와 Node.js, TDZ(Temporal Dead Zone)를 설명합니다. 약속과 지도는 일반 문장입니다.';
+  assert.equal(learningText(source), source);
+  assert.equal(textOf(learningText('typeofValue와 myMap을 바꾸지 않는다.')), 'typeofValue와 myMap을 바꾸지 않는다.');
+});
+
+test('all existing lesson and glossary text keeps its exact visible characters after inline rendering', async () => {
+  const catalog = JSON.parse(await readFile(new URL('../curriculum/catalog.json', import.meta.url)));
+  const { glossary } = await import('../web/glossary-data.mjs');
+  const strings = [];
+  const collect = value => {
+    if (typeof value === 'string') strings.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
+  };
+  for (const lesson of catalog.lessons) collect(JSON.parse(await readFile(new URL(`../${lesson.file}`, import.meta.url))));
+  collect(glossary);
+  for (const value of strings) assert.equal(textOf(learningText(value)), value);
+  assert.ok(strings.length > 3000);
+});
+
+test('inline code has an independently legible dark palette on either page theme', async () => {
+  const css = await readFile(new URL('../web/code-theme.css', import.meta.url), 'utf8');
+  const rules = /\.inline-code\s*\{([^}]+)\}/u.exec(css)[1];
+  const background = /background:\s*(#[a-f\d]{6})/u.exec(rules)[1];
+  const colors = [...rules.matchAll(/--syntax-[\w-]+:\s*(#[a-f\d]{6})/gu)].map(match => match[1]);
+  const luminance = hex => hex.slice(1).match(/../gu).map(part => parseInt(part, 16) / 255).map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4).reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);
+  for (const color of colors) assert.ok((luminance(color) + .05) / (luminance(background) + .05) >= 4.5, color);
+});
 
 test('code highlighting distinguishes JavaScript syntax without changing the source or activating markup', () => {
   const source = 'class Counter { next() { const label = `값 ${42}`; return /ok/.test(label); } }\n// </code><img src=x onerror=alert(1)>\n';

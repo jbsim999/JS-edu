@@ -9,6 +9,7 @@ import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, 
 import { createWorkspaceState, readPreferences, writePreferences } from "./features/workspace-state.mjs";
 import { createModuleWorkspaceState } from "./features/module-workspace-state.mjs";
 import { highlightCode, codeLanguage, attachCodeEditor, syncCodeEditor } from "./features/code-theme.mjs";
+import { learningText } from "./features/inline-code.mjs";
 
 const steps = [
   { id: "theory", name: "이론" },
@@ -110,7 +111,7 @@ function currentQuiz() {
 }
 
 function textParagraphs(text) {
-  return String(text || "").split(/\n\s*\n/u).filter(Boolean).map(part => `<p>${escapeHtml(part)}</p>`).join("");
+  return String(text || "").split(/\n\s*\n/u).filter(Boolean).map(part => `<p>${learningText(part)}</p>`).join("");
 }
 
 function fieldMessage(record) {
@@ -167,13 +168,13 @@ function codeBlock(code, filename = "example.js") {
 }
 
 function questionBlock(question) {
-  return `<dl class="learning-question"><dt>시작 질문</dt><dd>${escapeHtml(question)}</dd></dl>`;
+  return `<dl class="learning-question"><dt>시작 질문</dt><dd>${learningText(question)}</dd></dl>`;
 }
 
 function officialSource() {
   const entry = currentEntry();
   const prerequisites = (entry.lesson.prerequisites || []).map(id => lessons.find(item => item.id === id)).filter(Boolean);
-  return `<details class="lesson-source"><summary>학습 목표와 공식 자료</summary><ul>${entry.lesson.goals.map(goal => `<li>${escapeHtml(goal)}</li>`).join("")}</ul>${prerequisites.length ? `<p>먼저 읽을 강의: ${prerequisites.map(item => `<button type="button" class="inline-term" data-lesson="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`).join(" · ")}</p>` : ""}${entry.lesson.sources.map(source => {
+  return `<details class="lesson-source"><summary>학습 목표와 공식 자료</summary><ul>${entry.lesson.goals.map(goal => `<li>${learningText(goal)}</li>`).join("")}</ul>${prerequisites.length ? `<p>먼저 읽을 강의: ${prerequisites.map(item => `<button type="button" class="inline-term" data-lesson="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`).join(" · ")}</p>` : ""}${entry.lesson.sources.map(source => {
     let url;
     try { url = new URL(source.url); } catch { return ""; }
     return url.protocol === "https:" ? `<a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)} ↗ <span class="sr-only">(새 탭)</span></a>` : "";
@@ -232,9 +233,9 @@ function codingContent() {
   const entry = currentEntry();
   const { exercise, file: sourceFile, editable } = entry;
   if (!exercise || (!entry.moduleWorkspace && (!editable || !sourceFile))) return `<span class="section-number">05 / 직접 코딩</span>${textParagraphs(entry.lesson.steps.lab)}<p class="sample-note">이 강의의 편집 과제를 준비하고 있습니다.</p>`;
-  return `<span class="section-number">05 / 직접 코딩</span><h2>${escapeHtml(exercise.title || "조건을 만족하는 코드를 완성하세요")}</h2>${textParagraphs(entry.lesson.steps.lab)}<ul class="reading-list">${exercise.instructions.map(text => `<li>${escapeHtml(text)}</li>`).join("")}</ul>
+  return `<span class="section-number">05 / 직접 코딩</span><h2>${escapeHtml(exercise.title || "조건을 만족하는 코드를 완성하세요")}</h2>${textParagraphs(entry.lesson.steps.lab)}<ul class="reading-list">${exercise.instructions.map(text => `<li>${learningText(text)}</li>`).join("")}</ul>
     ${editorContent()}
-    <details><summary>구현할 때 확인할 조건</summary><ul class="reading-list">${exercise.behaviorCriteria.map(text => `<li>${escapeHtml(text)}</li>`).join("")}</ul></details>${executionContent()}`;
+    <details><summary>구현할 때 확인할 조건</summary><ul class="reading-list">${exercise.behaviorCriteria.map(text => `<li>${learningText(text)}</li>`).join("")}</ul></details>${executionContent()}`;
 }
 
 function editorContent() {
@@ -284,7 +285,7 @@ function quizContent() {
   const questions = currentEntry().lesson.quiz?.questions || [];
   if (!questions.length) return `${textParagraphs(currentEntry().lesson.steps.quiz)}<p class="sample-note">객관식 판정은 준비 중입니다. 읽기만으로 통과하지 않습니다.</p>`;
   const saved = currentQuiz();
-  return `<form id="lesson-quiz"><div class="quiz-questions">${questions.map((question, index) => `<fieldset class="quiz-question"><legend>${index + 1}. ${escapeHtml(question.prompt)}</legend>${question.choices.map(choice => `<label class="quiz-choice"><input type="radio" name="question-${escapeHtml(question.id)}" data-question="${escapeHtml(question.id)}" value="${escapeHtml(choice.id)}"${saved?.answers?.[question.id] === choice.id ? " checked" : ""}><span>${escapeHtml(choice.text)}</span></label>`).join("")}</fieldset>`).join("")}</div><button class="primary-button" type="submit">답안 확인</button><div id="quiz-feedback" class="quiz-feedback" role="status"></div></form>`;
+  return `<form id="lesson-quiz"><div class="quiz-questions">${questions.map((question, index) => `<fieldset class="quiz-question"><legend>${index + 1}. ${learningText(question.prompt)}</legend>${question.choices.map(choice => `<label class="quiz-choice"><input type="radio" name="question-${escapeHtml(question.id)}" data-question="${escapeHtml(question.id)}" value="${escapeHtml(choice.id)}"${saved?.answers?.[question.id] === choice.id ? " checked" : ""}><span>${learningText(choice.text)}</span></label>`).join("")}</fieldset>`).join("")}</div><button class="primary-button" type="submit">답안 확인</button><div id="quiz-feedback" class="quiz-feedback" role="status"></div></form>`;
 }
 
 function lessonContent(step) {
@@ -508,7 +509,7 @@ function renderQuizFeedback() {
   output.innerHTML = `<p><strong>${assessment.passed ? "퀴즈 통과" : "해설을 읽고 다시 생각해 보세요"}</strong> · ${assessment.checks.filter(check => check.passed).length} / ${questions.length}</p><ol>${questions.map(question => {
     const choice = question.choices.find(item => item.id === quiz.answers[question.id]);
     const correct = question.choices.find(item => item.id === question.correctChoiceId);
-    return `<li>${choice ? escapeHtml(choice.explanation || (choice.id === question.correctChoiceId ? "올바른 답입니다." : "다른 선택을 검토해 보세요.")) : "선택하지 않은 문제입니다."}${choice?.id !== question.correctChoiceId && correct ? `<p>정답: ${escapeHtml(correct.text)}<br>${escapeHtml(correct.explanation || "")}</p>` : ""}</li>`;
+    return `<li>${choice ? learningText(choice.explanation || (choice.id === question.correctChoiceId ? "올바른 답입니다." : "다른 선택을 검토해 보세요.")) : "선택하지 않은 문제입니다."}${choice?.id !== question.correctChoiceId && correct ? `<p>정답: ${learningText(correct.text)}<br>${learningText(correct.explanation || "")}</p>` : ""}</li>`;
   }).join("")}</ol>`;
 }
 
@@ -611,7 +612,7 @@ function renderSearch() {
   for (const entry of results) {
     const row = document.createElement("li");
     row.className = "glossary-result";
-    row.innerHTML = `<h3>${escapeHtml(entry.name)}<span class="glossary-english" lang="en">${escapeHtml(entry.english)}</span></h3><p>${escapeHtml(entry.summary)}</p><button type="button" class="detail-button" data-term="${entry.id}" aria-label="${escapeHtml(entry.name)} 자세히 보기" aria-haspopup="dialog">자세히 보기<span aria-hidden="true">↗</span></button>`;
+    row.innerHTML = `<h3>${escapeHtml(entry.name)}<span class="glossary-english" lang="en">${escapeHtml(entry.english)}</span></h3><p>${learningText(entry.summary)}</p><button type="button" class="detail-button" data-term="${entry.id}" aria-label="${escapeHtml(entry.name)} 자세히 보기" aria-haspopup="dialog">자세히 보기<span aria-hidden="true">↗</span></button>`;
     elements.results.append(row);
   }
 }
@@ -692,7 +693,7 @@ function renderTerm(id) {
     setDialogMode("term");
     return;
   }
-  elements.termView.innerHTML = `<section class="term-detail"><p class="section-eyebrow">GLOSSARY / 용어 설명</p><h2 id="term-title" tabindex="-1">${escapeHtml(entry.name)}</h2><p class="term-english" lang="en">${escapeHtml(entry.english)}</p><p class="term-definition">${escapeHtml(entry.definition)}</p><h3>짧은 코드로 읽기</h3><pre tabindex="0" aria-label="${escapeHtml(entry.name)} 설명용 코드"><code class="syntax-code">${highlightCode(entry.example)}</code></pre><p class="code-note">직접 작성한 설명용 예제 · 실행 결과 아님</p><h3>이렇게 오해하기 쉬워요</h3><p class="term-misconception">${escapeHtml(entry.misconception)}</p><h3>연결된 개념으로 이동</h3><ul class="related-lessons">${entry.lessons.map(lessonId => {
+  elements.termView.innerHTML = `<section class="term-detail"><p class="section-eyebrow">GLOSSARY / 용어 설명</p><h2 id="term-title" tabindex="-1">${escapeHtml(entry.name)}</h2><p class="term-english" lang="en">${escapeHtml(entry.english)}</p><p class="term-definition">${learningText(entry.definition)}</p><h3>짧은 코드로 읽기</h3><pre tabindex="0" aria-label="${escapeHtml(entry.name)} 설명용 코드"><code class="syntax-code">${highlightCode(entry.example)}</code></pre><p class="code-note">직접 작성한 설명용 예제 · 실행 결과 아님</p><h3>이렇게 오해하기 쉬워요</h3><p class="term-misconception">${learningText(entry.misconception)}</p><h3>연결된 개념으로 이동</h3><ul class="related-lessons">${entry.lessons.map(lessonId => {
     const lesson = lessons.find(item => item.id === (conceptAliases[lessonId] || lessonId));
     return lesson ? `<li><button type="button" class="plain-button" data-lesson="${escapeHtml(lesson.id)}">${escapeHtml(lesson.name)} <span aria-hidden="true">↗</span></button></li>` : "";
   }).join("")}</ul><div class="term-source"><p>개념의 근거와 더 읽을 자료</p><a href="${escapeHtml(entry.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.source.title)} ↗ <span class="sr-only">(새 탭)</span></a><p>이 설명은 원문을 그대로 옮긴 것이 아닌 학습용 요약입니다.</p></div></section>`;

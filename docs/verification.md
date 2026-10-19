@@ -1,5 +1,69 @@
 # 검증 기록
 
+## 2026-10-19 한국어·기술 내용 재검수 / 본문 코드 표시
+
+사용자 요청: 교재 전체의 문맥·기술 내용 검토, `humanize-korean` 설치·재검수, 본문 속 코드의 시각적 구분. 교재 검토와 표시 기능 구현을 분리했다. 교재 JSON·과제 계약·정답·contentRevision은 변경하지 않았다. 아래의 수정안은 검토 결과이며 적용 완료가 아니다.
+
+### 스킬 설치와 검토 범위
+
+[커뮤니티 humanize-korean](https://github.com/nathankim0/humanize-korean)의 커밋 `b51aa5985be0a94a645788f1395b29a118bc9c33`을 공식 skill-installer의 Git 방식으로 사용자 스킬 폴더에 설치했다. 설치된 14개 파일을 원격 Git blob SHA-1과 전수 대조했다(LF 정규화). MIT LICENSE·THIRD_PARTY_NOTICES도 보존했다. 외부 스킬의 Python 코드는 실행하지 않았다. 현재 작업에서는 설치된 SKILL.md와 관련 룰북을 직접 읽어 적용했다. 다음 세션의 자동 발견과 현재 수동 적용을 구분한다.
+
+두 독립 검토자가 공통 01–32강과 브라우저·Node·통합 33–52강 및 C02–C04 Node 변형을 나누어 재독했다. 총괄은 문제 제기 문단과 82개 용어를 검토했다. 목표·이론·예시·실습 설명·퀴즈의 자연스러움과 기술 계약을 확인했다. 문체의 반복만으로 AI 작성 여부를 판정하지 않았다. 실행 환경·입력 조건·부정·오류 경계·코드·식별자는 보존 대상으로 삼았다.
+
+### 우선 수정할 내용
+
+| 우선 | 위치 | 확인 내용과 권고 |
+| --- | --- | --- |
+| P2 | `language-host-boundaries.json`, 이론 | `Promise·Map·JSON은 ECMAScript`는 객체와 표준의 관계를 생략한다. ECMAScript를 먼저 정의하고 언어 내장 객체와 실행 환경 API를 설명한다. 브라우저 페이지(Window)와 브라우저 Web Worker를 구분한다. `일정`은 타이머라는 기능을 드러내지 못한다. |
+| P2 | `esm-and-live-bindings.json`, 예시 | 설명에는 이벤트 3개지만 실제 예제·정답·검사는 `reader:initial-resolved`를 포함한 4개다. 독립 검토자가 예제를 실행해 확인했다. 설명을 현재 코드에 맞춘다. |
+| P2 | `bindings-and-closures.json`, 실습 계약 | 모든 유한 Number가 호출마다 정확히 1씩 증가한다는 보장은 성립하지 않는다. MAX_VALUE·MAX_SAFE_INTEGER 경계에서 정밀도 문제가 있다. Number 연산 의미를 명시하거나 별도의 범위 정책을 먼저 정한다. 정상 소수 입력을 임의로 거부하지 않는다. |
+| P2 | `cancellation-and-stale-results.json`, 취소 계약 | cancel의 동기 abort 리스너가 새 start를 호출하면 새 작업의 pending은 true다. 무조건 pending=false라고 읽히는 설명을 보완한다. 이 재진입은 실제 재현했으며 현재 참조 구현을 결함으로 판정하지 않았다. |
+| P2 | C02·C04, 제공 범위 | Node 변형을 후속 단계/미제공으로 적었으나 현재 Node 변형·실행 프로필·설치 패키지가 제공된다. 오래된 설명을 갱신한다. C01의 browser 한정 제공 문구는 해당 강의의 범위와 맞으므로 같은 오류로 묶지 않는다. |
+| P2 | 12·23강, 학습 순서 | 복사 심화에서 다음 13강의 descriptor 개념을, 23강에서 27–28강의 Promise·await 개념을 먼저 요구한다. 짧은 선행 설명 또는 심화 부분의 재배치가 필요하다. 단순 선수 ID 추가는 순환 관계를 만들 수 있다. |
+| P2 | Node N05–N08, 퀴즈 | 16문항 연속 정답 위치가 첫 선택지다. 화면도 선택지를 섞지 않는다. 정답의 사실 오류는 아니지만 추측을 쉽게 하므로 선택지 배치를 다양화한다. |
+| P3 | `node-outbound-requests-and-cancellation.json` | `헤더에 503`은 상태 코드와 헤더를 혼동한다. `응답 상태 코드가 503`으로 바로잡는다. maxBytes는 수신 본문 바이트 합의 상한이며 전체 요청 메모리 예산을 보장하지 않는다. |
+| P3 | `scope-tdz-and-declarations.json` | var의 초기화와 대입식 실행을 한 구절에 섞었다. 일반적인 지역 var의 undefined 초기화와 이후 대입을 구분하되 모든 이름 충돌 상황에 확대하지 않는다. |
+| P3 | 32강·B01·B04, 학습/제작 설명 | 고정 검사 게이트·실행 기록 관리·문항 제작 설명이 학습 본문에 섞인다. 실제 실행과 예상 결과의 구분은 보존하고 제작 절차는 검증 주석으로 이동한다. |
+| P3 | `higher-order-functions.json` | 앞 인자를 고정하는 것은 이 과제의 부분 적용 정책이다. 일반적인 부분 적용 정의와 과제 정책을 구분한다. |
+| P3 | C03·N05·Node 출처 | fixture·worker 루프 등은 첫 등장에 뜻을 설명한다. C03 worker 함수가 실제 Worker 스레드라는 오해를 막는다. 고정 Node 버전을 설명하는 링크는 이동하는 latest 문서와 구분한다. |
+| P3 | 용어집 GC·Fetch | GC는 도달 가능성을 바탕으로 메모리를 회수하며 파일·소켓 등 모든 자원 정리를 보장하지 않는다. `fetch('/products')`는 브라우저 페이지 예제임을 표시한다. Node 24.22에서 상대 URL 단독 호출은 ERR_INVALID_URL을 원인으로 실패하는 것을 실제 확인했다. |
+
+정책 확인을 남긴 항목: Promise 강의의 featureSince가 주제의 도입 연도인지 예제 전체의 최소 구문 버전인지, C02의 json 실패 분류가 파싱 실패만 뜻하는지 본문 읽기 단계를 뜻하는지다. 정의가 불명확한 상태에서 구현 버그로 확정하지 않았다.
+
+### 문장만 다듬을 대표 사례
+
+`humanize-korean` 기준을 보수적으로 적용했다. 아래 예시는 기술 사실을 새로 추가하는 교정과 구분한 문체 수정 제안이다.
+
+| 원문 | 제안 | 규칙 |
+| --- | --- | --- |
+| FileHandle을 얻은 함수가 close 책임을 갖고, 실패도 finally에서 정리한다. | FileHandle을 얻은 함수가 close를 맡으며, 실패했을 때도 finally에서 자원을 정리한다. | S-17 |
+| then에 붙인 반응은 지금 실행 중인 자바스크립트를 끼어들어 실행하지 않는다. | then에 등록한 반응은 현재 실행 중인 자바스크립트에 끼어들지 않는다. | S-14·문법/비문 |
+| assertion은 기대한 조건이 틀리면 실패를 드러내는 주장이다. | assertion은 기대한 조건이 맞는지 확인하고, 틀리면 실패를 드러낸다. | S-17·M-2 |
+| 동시에 여러 컨트롤러를 같은 root에 소유시키는 사용은 이 과제의 범위 밖이다. | 같은 root를 여러 컨트롤러가 동시에 관리하는 경우는 이 과제에서 다루지 않는다. | S-17·S-25 |
+| 교육용 상품 조회 경계는 자동 재시도를 하지 않는다. | 이 과제의 상품 조회 함수는 자동으로 재시도하지 않는다. | S-27·M-2 |
+
+문제 제기 문단의 수정 방향은 다음과 같다. 이는 ECMAScript·Window·Worker의 공식 정의를 확인한 **기술 설명 보완안**이며 순수 윤문만으로 추가한 사실이 아니다.
+
+> 브라우저 페이지에서 document를 사용하던 코드를 Node.js나 브라우저의 Web Worker로 옮기면 document가 정의되지 않았다는 오류가 날 수 있다. document는 웹페이지를 다루도록 제공되는 객체이며, Node.js와 Web Worker는 이 객체를 제공하지 않기 때문이다.
+>
+> ECMAScript는 JavaScript의 문법과 기본 동작을 정한 표준이다. Promise·Map·JSON은 이 표준에 정의된 내장 객체다. 반면 document와 node:fs는 코드가 실행되는 환경에서 제공하는 기능이다. document는 브라우저 페이지에서 문서를 다룰 때, node:fs는 Node.js에서 파일을 다룰 때 사용한다.
+>
+> setTimeout도 ECMAScript 내장 함수가 아니라 실행 환경이 제공하는 타이머다. fetch는 Fetch 표준에 정의되어 있으며, 브라우저와 Node.js 등 여러 환경에서 제공하더라도 ECMAScript 내장 기능이 되는 것은 아니다.
+
+주요 공식 근거: [ECMA-262 17판 §4.2](https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf), [Window.document](https://html.spec.whatwg.org/multipage/nav-history-apis.html#dom-document-2), [WorkerGlobalScope](https://html.spec.whatwg.org/multipage/workers.html#the-workerglobalscope-common-interface), [Node 24.22 globals](https://github.com/nodejs/node/blob/v24.22.0/doc/api/globals.md), [Fetch Response](https://fetch.spec.whatwg.org/#response-class), [V8 메모리·리스너 정리](https://v8.dev/features/weak-references).
+
+판정: **검토 완료 / 교재 수정 필요**. 전체 내용이 기술적으로 무결하다는 PASS가 아니다. 코드 검사 통과를 교재 설명의 정확성 근거로 대체하지 않았다. 교재 원문과 학습 기록은 보존했다.
+
+공통 강의 문체 분류: 우선 보완 01·06·12·21·23·26·27·29·30·31·32, 국소 점검 04·07·08·13·15·18·22·24, 대체로 유지 02·03·05·09·10·11·14·16·17·19·20·25·28. 이 분류는 문체 재작성 범위이며 기술 결함의 유무·학습 제출 PASS와 다르다. 29–32강의 일부 이론과 07강 퀴즈에서는 다체·습니다체 혼용도 확인했다(ST-1).
+
+### 본문 코드 표시 구현
+
+Windows 고정 Node24.22.0의 `npm run check` 종료 코드 0: 구조 검증·구문318개 PASS, 테스트321개 중316 PASS/5skip/0fail, 기본 교재검사33실습271조건·예제33 PASS/호스트22skip. 이 기본 검사는 호스트 실행을 생략하도록 설정된 명령이므로 이번 검사에서55실습 전체를 실행했다고 표시하지 않는다. 전체 로그는 artifacts/inline-code-full-check.log에 보존한다.
+
+`web/features/inline-code.mjs`에서 기존 교재의 알려진 키워드·API·호출·멤버식·typeof 표현을 표시용 code 요소로 감쌌다. 원문 문자를 이스케이프하고 기존 구문 강조기를 사용한다. `web/app.mjs`의 학습 본문·목표·문제·선택지·해설·실습 설명·사전 설명에 연결했다. 저장 값·문항 ID·채점 데이터·에디터 입력은 바꾸지 않는다. 밝은/어두운 페이지 모두 별도의 어두운 코드 배경과 4.5:1 이상 대비를 사용하며, 짧은 표현은 줄 경계에서 쪼개지지 않는다. 표기 없는 원문에 대한 보수적 패턴 인식이므로 임의의 모든 변수나 코드를 의미적으로 식별하지는 않는다.
+
+실제 검사: 코드 테마 단위 10/10 PASS(전체 52강·82개 용어의 표시 문자 보존 포함), 별도 Chrome155 실제 합성 화면·동작 14그룹 PASS. 밝은/어두운 테마, 퀴즈 정답 선택·해설, 실습 입력 유지, 사전 팝업, 320/360/390/768/1280 및 짧은 높이, forced-colors, 키보드 Tab을 확인했다. 720px 뷰포트와 CSS 200% 확대 조합의 대체 검사도 합성 화면으로 확인했다. 이 대체 검사는 실제 브라우저 확대나 네이티브 앱 200% 검사와 다르며, 데스크톱 미디어 쿼리를 유지하는 단독 CSS zoom은 실제 확대 대체로 채택하지 않았다. 총괄이 실제 light/dark/360 합성 이미지를 보고 줄바꿈을 보완한 뒤 다시 검사했다. 독립 코드 검토에서 주요 결함 없음. artifacts/inline-code-qa/report.json과 이미지가 로컬 증거다. 이 검사는 브라우저 에뮬레이션이며 실제 모바일 기기·OS IME·스크린리더·네이티브 앱의 이번 소스에 대한 실제 200% 검사는 수행하지 않았다. 기존 v0.1.1 패키지와 이전 네이티브 검증 이력은 이번 UI 변경 전 소스다.
+
 ## 2026-10-19 0.1.1 최종3CPU·공개 다운로드 PASS
 
 소스 ec4a38e의 [데스크톱39213893601](https://github.com/jbsim999/JS-edu/actions/runs/39213893601) 3job, [일반39213893641](https://github.com/jbsim999/JS-edu/actions/runs/39213893641) 4job, [고정Node39213893519](https://github.com/jbsim999/JS-edu/actions/runs/39213893519) 2job 모두 success다. 각 앱의55실습471조건·코드 원문/토큰·최종해제/vendor 전체 대조·정상/강제종료·저장/이동·실제200% PASS, Mac 두 CPU는 LaunchServices/Unix5회귀도 실제 PASS다. 총괄은 Mac 두 CPU의 실제 합성 화면을 확인했고 독립 검토가 최종3ZIP 및 manifest/native 식별자를 직접 대조했다. 전체 bundle 서명·공증·다운로드 후 Gatekeeper 승인으로 확대하지 않는다.
