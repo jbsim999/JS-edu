@@ -51,7 +51,16 @@ export function launchLearningService({ executable, projectRoot, port, startupTi
             killer.once('error', () => { clearTimeout(killTimer); child.kill(); resolve(); });
             killer.once('close', () => { clearTimeout(killTimer); resolve(); });
           });
-        } else child.kill();
+        } else {
+          // SIGTERM can be handled (or ignored) by a stalled service. After the
+          // graceful deadline, reclaim this exact owned PID with SIGKILL and
+          // wait for its exit. This is not a claim about arbitrary descendants.
+          child.kill('SIGKILL');
+          let forcedTimer;
+          await Promise.race([exit, new Promise(resolve => { forcedTimer = setTimeout(resolve, 3000); })]);
+          clearTimeout(forcedTimer);
+          if (!exited) return { ok: false, error: '종료 제한 시간이 지났으며 소유 실행기 프로세스의 종료도 확인하지 못했습니다.' };
+        }
         return { ok: false, error: '종료 제한 시간 안에 실행기 정리를 확인하지 못했습니다.' };
       }
       return { ok: result.code === 0 && closedMessage?.ok === true, error: closedMessage?.error };

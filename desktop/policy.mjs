@@ -59,6 +59,6 @@ export function serviceEnvironment(environment = process.env) {
   // The explicit environment excludes preload hooks, tokens and Electron switches.
   // Windows libuv can supplement required variables such as PATH from its parent;
   // every executable used by the service is selected by an absolute path.
-  return Object.fromEntries(['SystemRoot', 'WINDIR', 'TEMP', 'TMP', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA']
+  return Object.fromEntries(['SystemRoot', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR', 'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA']
     .filter(key => typeof environment[key] === 'string').map(key => [key, environment[key]]));
 }

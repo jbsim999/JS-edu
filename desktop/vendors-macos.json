@@ -1,0 +1,40 @@
+{
+  "minimumOs": "macOS 13.5 Ventura (Node 24.22.0 vendor minimum); actual native CI runs on macOS 15; minimum OS itself is not tested",
+  "minimumOsSource": "https://github.com/nodejs/node/blob/v24.22.0/BUILDING.md#platform-list",
+  "electron": {
+    "version": "44.9.0",
+    "checksumUrl": "https://github.com/electron/electron/releases/download/v44.9.0/SHASUMS256.txt",
+    "releaseUrl": "https://releases.electronjs.org/release/v44.9.0",
+    "licenseUrl": "https://github.com/electron/electron/blob/v44.9.0/LICENSE",
+    "licenseFiles": ["LICENSE", "LICENSES.chromium.html"],
+    "chromium": "152.0.7977.167",
+    "embeddedNode": "24.22.0",
+    "distribution": "Complete official macOS ZIP including untouched Electron.app, framework links, original signatures and notices",
+    "x64": {
+      "archive": "electron-v44.9.0-darwin-x64.zip",
+      "downloadUrl": "https://github.com/electron/electron/releases/download/v44.9.0/electron-v44.9.0-darwin-x64.zip",
+      "sha256": "fd9d60a1d6cbe98105c3cdd345f7dcca0961364650e6fbbf49d13e58b0f34786"
+    },
+    "arm64": {
+      "archive": "electron-v44.9.0-darwin-arm64.zip",
+      "downloadUrl": "https://github.com/electron/electron/releases/download/v44.9.0/electron-v44.9.0-darwin-arm64.zip",
+      "sha256": "12d873a5ae98a6598e730402e9278c5d132e97ea1a4405a7713bec2a3e83921f"
+    }
+  },
+  "node": {
+    "version": "24.22.0",
+    "checksumUrl": "https://nodejs.org/dist/v24.22.0/SHASUMS256.txt",
+    "licenseUrl": "https://github.com/nodejs/node/blob/v24.22.0/LICENSE",
+    "distribution": "Complete official macOS tar.gz including include, lib, share, npm/Corepack links and all notices",
+    "x64": {
+      "archive": "node-v24.22.0-darwin-x64.tar.gz",
+      "downloadUrl": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-darwin-x64.tar.gz",
+      "sha256": "495e3f273c645f3c4677d438304cdfc701729ea5dec5728f5c8e76a2dece4b91"
+    },
+    "arm64": {
+      "archive": "node-v24.22.0-darwin-arm64.tar.gz",
+      "downloadUrl": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-darwin-arm64.tar.gz",
+      "sha256": "6a9724d9b50a5f22b4816cded441b5a8d9ddae546191a5e5b7efa5a5e2ee26d5"
+    }
+  }
+}

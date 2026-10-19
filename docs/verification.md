@@ -1,5 +1,11 @@
 # 검증 기록
 
+## 2026-10-19 코드 문법 테마 / macOS 구현 검증 중
+
+새0.1.1 코드 테마 개별5회귀 PASS, 별도 Chrome155 실제 화면11묶음 PASS(`artifacts/code-theme-qa/report.json`). 총괄이 light/dark·360px·사전 합성 화면을 직접 확인했다. 기존0.1.0의 성공을 새 패키지 검증 근거로 대체하지 않는다. Mac 공식 원본 네 개 SHA/실제 CPU 대조와 Windows에서 플랫폼 회귀19PASS/Unix3skip을 구분한다. CPU별 native CI와 최종 ZIP·전체 소스 검사는 완료 후 별도 기록한다.
+
+최종 동결 소스의 Windows 필수 전체 검사는 PASS(exit0): 구조52·구문316·회귀313중308PASS/Unix5skip/FAIL0, 제작자33과제271조건·예제33PASS와 호스트22skip(PARTIAL). `artifacts/code-mac-check.log`와 전후503입력 지문 `db0479e7d7888a414938f9c07e548b9c6121c39bdb936984f11439aa876d53b2`를 연결한다. 독립 정적 검토가 원본 동결20파일·POSIX 그룹 경계·암호화/AAD·macOS13.5·코드 원문 보존을 대조해 PASS·미해결 P1/P2 없음으로 판정했다. Unix5개의 실제 실행과 최종 CPU별 native/ZIP 승인은 이 로컬 검사에 포함하지 않는다. 최소OS13.5 보정 이전에 중단한 실행은 `code-mac-check-before-minos.log`로 구분하며 성공 근거로 사용하지 않는다.
+
 ## 2026-10-19 최종 Windows ZIP/native/독립 검토 PASS
 
 소스 `23154a3c3cc2f718469a3e03e158bc5db041c6b2`의 clean 최종ZIP 315,315,450바이트·SHA256 `9e9be81a981502ac6a3bcbfd2e56b5d1f8ed8a12c3cb085386e555b0e38d493e`, 원본vendor73+1994와 최종해제2410파일 전체 일치. 최종native 05:17:59.011–05:20:31.884 UTC PASS:55실습471조건·negative110·DOM예제11·runtime16·실제200%·동의/취소/복원·저장실패두선택·정상/강제종료정리·실제EXE와한글이동본각8/8·WM_CLOSE/exit0·마지막TEMP0·모든phase후원본/이동본과author117입력불변. 독립 검토도 검사ID·HEAD486파일·ZIP/manifest/native지문을 대조해PASS,미해결P1/P2없음. 자세한 범위/미검증은 [최종 기록](desktop-packaging-verification.md)과 [근거 요약](desktop-packaging-evidence.json)을 따른다. 미서명 로컬 산출물이며 원격CI/공개게시는 별도다. 아래는 당시 상태의 보존 이력이다.

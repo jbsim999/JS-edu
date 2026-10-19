@@ -4,6 +4,8 @@ import { randomUUID, createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inventory, copyInventory, compareInventories, sha256File, verifyFinalPackage } from './desktop-integrity.mjs';
+import { unixInventory, copyUnixInventory, compareUnixInventories, verifyMacFinalPackage } from './macos-integrity.mjs';
+import { requireNativeMac, closeOwnedMacApplication, inspectVendorSignature, findOwnedMacApplication } from './macos-platform.mjs';
 import { createNodeRunner, fingerprintSource, serializeNodeSource } from '../web/execution/node-runner.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -16,20 +18,28 @@ while (args.length) {
   options[option] = args.shift();
 }
 if (!options['--output-dir'] || !options['--manifest']) throw new Error('An external final ZIP manifest and fresh output directory are required.');
-if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Native Windows x64 is required.');
+const isMac = process.platform === 'darwin';
+const nativeMac = isMac ? requireNativeMac() : undefined;
+if (!isMac && (process.platform !== 'win32' || process.arch !== 'x64')) throw new Error('Native Windows x64 or macOS x64/arm64 is required.');
+const packageInventory = isMac ? unixInventory : inventory;
+const copyPackageInventory = isMac ? copyUnixInventory : copyInventory;
+const comparePackageInventories = isMac ? compareUnixInventories : compareInventories;
+const verifyPackage = isMac ? verifyMacFinalPackage : verifyFinalPackage;
 const output = path.resolve(options['--output-dir']);
 const finalManifestFile = path.resolve(options['--manifest']);
-const verifiedPackage = await verifyFinalPackage(packageRoot, finalManifestFile);
+const verifiedPackage = await verifyPackage(packageRoot, finalManifestFile);
+if (verifiedPackage.target?.platform !== process.platform || verifiedPackage.target?.architecture !== process.arch) throw new Error('The final package target must match this native CPU.');
 await mkdir(path.dirname(output), { recursive: true });
 await mkdir(output, { recursive: false });
 await mkdir(path.join(output, 'temp'));
 await writeFile(path.join(output, '.owned-by-desktop-smoke'), randomUUID());
-const packageBefore = await inventory(packageRoot);
+const packageBefore = await packageInventory(packageRoot);
 const build = JSON.parse(await readFile(path.join(packageRoot, 'BUILD-INFO.json'), 'utf8'));
+const appRelativePath = isMac ? build.appRelativePath : 'resources/app';
 const sourceManifest = JSON.parse(await readFile(path.join(packageRoot, 'integrity', 'source.json'), 'utf8'));
 for (const entry of sourceManifest.files.filter(item => item.type === 'file')) if (await sha256File(path.join(root, entry.path)) !== entry.sha256) throw new Error(`Author inputs differ from packaged source: ${entry.path}`);
 async function authorInputs() {
-  const names = ['scripts/check-desktop-smoke.mjs', 'scripts/desktop-smoke-main.mjs', 'scripts/desktop-integrity.mjs',
+  const names = ['scripts/check-desktop-smoke.mjs', 'scripts/desktop-smoke-main.mjs', 'scripts/desktop-integrity.mjs', 'scripts/macos-integrity.mjs', 'scripts/macos-platform.mjs',
     ...(await readdir(path.join(root, 'web', 'execution'))).filter(name => name.startsWith('qualification')).map(name => `web/execution/${name}`),
     ...(await inventory(path.join(root, 'reference'))).filter(item => item.type === 'file').map(item => `reference/${item.path}`)].sort();
   return Promise.all(names.map(async filename => ({ path: filename, type: 'file', size: (await stat(path.join(root, filename))).size, sha256: await sha256File(path.join(root, filename)) })));
@@ -37,28 +47,31 @@ async function authorInputs() {
 const authorBefore = await authorInputs();
 const authorCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim();
 if (!build.sourceDirty && authorCommit !== build.sourceCommit) throw new Error('Final package verification requires the matching author source commit.');
-const executable = path.join(packageRoot, 'JavaScript-edu.exe');
+const executable = path.join(packageRoot, isMac ? build.executableRelativePath : 'JavaScript-edu.exe');
 await stat(executable);
 // A packaged Electron always uses resources/app and ignores an external app arg.
 // Use a full byte-verified copy of its original vendor distribution for the author
 // test main, which imports the unchanged application module from the actual ZIP.
 const electronManifest = JSON.parse(await readFile(path.join(packageRoot, 'integrity', 'electron.json'), 'utf8'));
 const nativeHost = path.join(output, 'native-test-host');
-await copyInventory(packageRoot, nativeHost, electronManifest.files);
-if (await sha256File(executable) !== await sha256File(path.join(nativeHost, 'electron.exe'))) throw new Error('Test native host differs from the final executable.');
+const vendorRoot = isMac ? path.join(packageRoot, build.electronRelativeRoot) : packageRoot;
+await copyPackageInventory(vendorRoot, nativeHost, electronManifest.files);
+const electronEntry = isMac ? 'Electron.app/Contents/MacOS/Electron' : 'electron.exe';
+const nativeExecutable = path.join(nativeHost, electronEntry);
+if (await sha256File(isMac ? path.join(vendorRoot, electronEntry) : executable) !== await sha256File(nativeExecutable)) throw new Error('Test native host differs from the final Electron executable.');
 const report = { status: 'RUNNING', startedAt: new Date().toISOString(), packageRoot, zipSha256: verifiedPackage.sha256, externalManifestSha256: await sha256File(finalManifestFile), sourceCommit: build.sourceCommit, sourceDirty: build.sourceDirty, sourceFilesSha256: build.sourceFilesSha256,
-  authorInputs: { sourceCommit: authorCommit, files: authorBefore, digest: createHash('sha256').update(JSON.stringify(authorBefore)).digest('hex'), verifiedUnchanged: false }, phases: [], native: { platform: process.platform, architecture: process.arch }, limits: ['Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.', 'Windows process execution tested; no Job Object guarantee', 'A dedicated QA profile is retained; existing APPDATA user profile is not touched'] };
+  authorInputs: { sourceCommit: authorCommit, files: authorBefore, digest: createHash('sha256').update(JSON.stringify(authorBefore)).digest('hex'), verifiedUnchanged: false }, phases: [], native: nativeMac || { platform: process.platform, architecture: process.arch }, limits: ['Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.', 'Native process execution is tested; no OS security sandbox or universal process-tree guarantee', 'A dedicated QA profile is retained; existing user profiles are not touched', ...(isMac ? ['Unsigned wrapper; no Developer ID signing, notarization or downloaded-archive Gatekeeper approval.'] : [])] };
 const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 function environment(phase) {
   const clean = { ...process.env, JS_EDU_SMOKE_PACKAGE: packageRoot, JS_EDU_SMOKE_AUTHOR: root, JS_EDU_SMOKE_OUTPUT: output, JS_EDU_SMOKE_PHASE: phase,
-    PATH: path.join(process.env.SystemRoot || 'C:\\Windows', 'System32'), TEMP: path.join(output, 'temp'), TMP: path.join(output, 'temp') };
+    PATH: isMac ? '/usr/bin:/bin:/usr/sbin:/sbin' : path.join(process.env.SystemRoot || 'C:\\Windows', 'System32'), TEMP: path.join(output, 'temp'), TMP: path.join(output, 'temp'), ...(isMac ? { TMPDIR: path.join(output, 'temp') } : {}) };
   delete clean.NODE_OPTIONS; delete clean.NODE_PATH; delete clean.ELECTRON_RUN_AS_NODE;
   return clean;
 }
 function start(phase) {
   // This is the intentional QA GUI, not a hidden background helper. SW_HIDE can
   // suppress the first native window even after Electron window.show().
-  const child = spawn(path.join(nativeHost, 'electron.exe'), [path.join(root, 'scripts', 'desktop-smoke-main.mjs')], { cwd: packageRoot, env: environment(phase), windowsHide: false, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(nativeExecutable, [path.join(root, 'scripts', 'desktop-smoke-main.mjs')], { cwd: packageRoot, env: environment(phase), windowsHide: false, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
   let stdout = '', stderr = '';
   child.stdout.on('data', chunk => { stdout = (stdout + chunk.toString()).slice(-16000); });
   child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-16000); });
@@ -82,8 +95,12 @@ async function waitForExit(operation, timeout = 20000) {
   try { return await Promise.race([operation.exit, new Promise((resolve, reject) => { timer = setTimeout(() => reject(new Error('Native application did not exit before the shutdown deadline.')), timeout); })]); }
   finally { clearTimeout(timer); }
 }
-async function productionEntry(applicationDirectory, entryDirectory, expectedOrigin) {
-  const entryProcess = spawn(path.join(applicationDirectory, 'JavaScript-edu.exe'), [], { cwd: applicationDirectory, env: { ...environment('entry'), JS_EDU_USER_DATA_DIR: entryDirectory }, windowsHide: false, shell: false, stdio: 'ignore' });
+async function productionEntry(applicationDirectory, entryDirectory, expectedOrigin, launchServices = false) {
+  const entryEnvironment = { ...environment('entry'), JS_EDU_USER_DATA_DIR: entryDirectory };
+  const entryExecutable = path.join(applicationDirectory, isMac ? build.executableRelativePath : 'JavaScript-edu.exe');
+  const launchArguments = launchServices ? ['-W', '-n', ...['JS_EDU_USER_DATA_DIR', 'PATH', 'TMPDIR', 'TEMP', 'TMP'].flatMap(key => ['--env', `${key}=${entryEnvironment[key]}`]), '--env', 'NODE_OPTIONS=', '--env', 'NODE_PATH=', path.join(applicationDirectory, 'JavaScript-edu.app')] : [];
+  const entryProcess = spawn(launchServices ? '/usr/bin/open' : entryExecutable, launchArguments, { cwd: applicationDirectory, env: entryEnvironment, windowsHide: false, shell: false, stdio: 'ignore' });
+  let appPid = launchServices ? undefined : entryProcess.pid;
   const entryExit = new Promise((resolve, reject) => { entryProcess.once('error', reject); entryProcess.once('exit', code => resolve(code)); });
   let entryOrigin;
   try {
@@ -96,10 +113,14 @@ async function productionEntry(applicationDirectory, entryDirectory, expectedOri
       } catch { await pause(100); }
     }
     if (!entryOrigin || (expectedOrigin && entryOrigin !== expectedOrigin)) throw new Error('Final production EXE did not initialize or preserve its selected origin.');
+    if (launchServices) {
+      appPid = findOwnedMacApplication(path.join(applicationDirectory, build.electronRelativeRoot, 'Electron.app/Contents/MacOS/Electron'));
+      if (!appPid) throw new Error('LaunchServices did not start the exact owned vendor executable.');
+    }
     const config = await (await fetch(`${entryOrigin}/_node/config`, { signal: AbortSignal.timeout(5000) })).json();
     const browser = await (await fetch(`${entryOrigin}/_browser/config`, { signal: AbortSignal.timeout(5000) })).json();
     if (!config.available || config.runtimeVersion !== '24.22.0') throw new Error('Final production EXE did not use the bundled Node runtime.');
-    const catalog = JSON.parse(await readFile(path.join(applicationDirectory, 'resources', 'app', 'curriculum', 'exercises.json'), 'utf8'));
+    const catalog = JSON.parse(await readFile(path.join(applicationDirectory, appRelativePath, 'curriculum', 'exercises.json'), 'utf8'));
     const exercise = catalog.exercises.find(item => item.lessonId === 'node-esm-packages-and-cli');
     const reference = await readFile(path.join(root, exercise.referenceFile), 'utf8');
     const source = serializeNodeSource({ entry: exercise.workspace.entry, files: Object.fromEntries(exercise.workspace.files.map(file => [file.path, file.path === exercise.workspace.entry ? reference : file.source])) });
@@ -108,21 +129,23 @@ async function productionEntry(applicationDirectory, entryDirectory, expectedOri
     const request = { requestId: `entry-${randomUUID()}`, lessonId: exercise.lessonId, exerciseId: exercise.id, contentRevision: exercise.contentRevision, targetVersion: 'ES2026', source, sourceFingerprint: await fingerprintSource(source), consent: true };
     const submission = await runner.submit(request);
     await runner.cancel();
-    const grader = JSON.parse(await readFile(path.join(applicationDirectory, 'resources', 'app', exercise.graderFile), 'utf8'));
+    const grader = JSON.parse(await readFile(path.join(applicationDirectory, appRelativePath, exercise.graderFile), 'utf8'));
     if (submission.status !== 'success' || submission.checks.length !== grader.cases.length || submission.checks.some((item, index) => !item.passed || item.id !== grader.cases[index].id) || submission.cleanupWarning || submission.cleanupPending || submission.outputTruncated) throw new Error('Production EXE native submission failed.');
     // Only this owned process receives WM_CLOSE. Wait for its actual native window,
     // since the service can be ready before the window has finished painting.
     let closed = false;
     const closeDeadline = Date.now() + 10000;
     while (!closed && Date.now() < closeDeadline) {
-      closed = execFileSync('pwsh.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', `(Get-Process -Id ${entryProcess.pid} -ErrorAction Stop).CloseMainWindow()`], { encoding: 'utf8', windowsHide: true }).trim() === 'True';
+      closed = isMac ? closeOwnedMacApplication(appPid) : execFileSync('pwsh.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', `(Get-Process -Id ${entryProcess.pid} -ErrorAction Stop).CloseMainWindow()`], { encoding: 'utf8', windowsHide: true }).trim() === 'True';
       if (!closed) await pause(150);
     }
     if (!closed) throw new Error('Final EXE native window was not available for normal close.');
     const code = await waitForExit({ exit: entryExit });
-    if (code !== 0 || !await closedPort(entryOrigin) || !await closedPort(browser.origin)) throw new Error('Final production EXE did not shut down normally.');
-    return { passed: true, code, actualRuntime: config.actualRuntime, origin: entryOrigin, nativeCloseMainWindow: true, isolatedUserData: entryDirectory, applicationDirectory, nativeSubmissionChecks: submission.checks.length };
+    if (code !== 0 || (launchServices && alive(appPid)) || !await closedPort(entryOrigin) || !await closedPort(browser.origin)) throw new Error('Final production entry did not shut down normally.');
+    return { passed: true, code, actualRuntime: config.actualRuntime, origin: entryOrigin, nativeCloseMainWindow: !isMac, nativeAppKitTermination: isMac, launchServices, ownedApplicationPid: appPid, isolatedUserData: entryDirectory, applicationDirectory, nativeSubmissionChecks: submission.checks.length };
   } finally {
+    if (launchServices && !appPid) appPid = findOwnedMacApplication(path.join(applicationDirectory, build.electronRelativeRoot, 'Electron.app/Contents/MacOS/Electron'));
+    if (launchServices && appPid && alive(appPid)) { try { process.kill(appPid, 'SIGTERM'); } catch {} }
     if (entryProcess.exitCode === null) { entryProcess.kill(); await waitForExit({ exit: entryExit }).catch(() => {}); }
   }
 }
@@ -172,8 +195,9 @@ try {
   active = start('force-parent');
   const force = await waitForReport('force-parent', 'READY_TO_KILL', 30000);
   if (force.status !== 'READY_TO_KILL') throw new Error(force.error || 'Forced-parent test did not start.');
-  active.child.kill();
+  active.child.kill(isMac ? 'SIGKILL' : undefined);
   const forceExit = await waitForExit(active);
+  if (isMac && forceExit.signal !== 'SIGKILL') throw new Error('The macOS parent was not actually terminated with SIGKILL.');
   const deadline = Date.now() + 15000;
   while (alive(force.servicePid) && Date.now() < deadline) await pause(100);
   if (alive(force.servicePid) || !await closedPort(force.origin) || !await closedPort(force.browserOrigin)) throw new Error('IPC-disconnect cleanup left the native service or ports active.');
@@ -188,15 +212,17 @@ try {
   report.productionEntry = await productionEntry(packageRoot, entryDirectory);
   const relocated = path.join(output, '이동 검사 & 자료', 'JavaScript-edu');
   await mkdir(path.dirname(relocated), { recursive: true });
-  await copyInventory(packageRoot, relocated, packageBefore);
-  await verifyFinalPackage(relocated, finalManifestFile);
+  await copyPackageInventory(packageRoot, relocated, packageBefore);
+  await verifyPackage(relocated, finalManifestFile);
   report.relocatedProductionEntry = await productionEntry(relocated, entryDirectory, report.productionEntry.origin);
-  compareInventories(packageBefore, await inventory(relocated), 'Relocated package unchanged after native execution');
+  if (isMac) report.launchServicesEntry = await productionEntry(relocated, entryDirectory, report.productionEntry.origin, true);
+  comparePackageInventories(packageBefore, await packageInventory(relocated), 'Relocated package unchanged after native execution');
   const finalRemaining = (await readdir(path.join(output, 'temp'))).filter(name => name.startsWith('javascript-edu-node-'));
   if (finalRemaining.length) throw new Error(`Owned learner temp directories remain after production and relocation: ${finalRemaining.join(', ')}`);
   report.learnerTemporaryCleanupConfirmed = true;
-  compareInventories(packageBefore, await inventory(packageRoot), 'Package unchanged after ALL native phases');
-  await verifyFinalPackage(packageRoot, finalManifestFile);
+  comparePackageInventories(packageBefore, await packageInventory(packageRoot), 'Package unchanged after ALL native phases');
+  await verifyPackage(packageRoot, finalManifestFile);
+  if (isMac) report.finalVendorSignatures = { electron: inspectVendorSignature(path.join(vendorRoot, 'Electron.app'), { bundle: true }), node: inspectVendorSignature(path.join(packageRoot, build.runtimePath)) };
   if (await sha256File(finalManifestFile) !== report.externalManifestSha256) throw new Error('External package manifest changed during the native test.');
   compareInventories(authorBefore, await authorInputs(), 'Author-only verification inputs unchanged');
   if (execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim() !== authorCommit) throw new Error('Author commit changed during the native test.');

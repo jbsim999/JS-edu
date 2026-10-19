@@ -15,8 +15,10 @@ const output = process.env.JS_EDU_SMOKE_OUTPUT;
 const phase = process.env.JS_EDU_SMOKE_PHASE;
 if (![packageRoot, authorRoot, output].every(value => value && path.isAbsolute(value)) || !['qualify', 'restore', 'discard', 'force-parent', 'secondary'].includes(phase)) throw new Error('Author smoke configuration is required.');
 const resultFile = path.join(output, `${phase}.json`);
-const report = { status: 'RUNNING', phase, startedAt: new Date().toISOString(), host: { platform: process.platform, architecture: process.arch, versions: process.versions }, tests: [], screenshots: [], limitations: ['Native Windows application automation; not a physical mobile test, OS IME test or screen-reader session.', 'Page zoom uses actual Electron webContents.setZoomFactor, not viewport emulation.', 'No Windows Job Object or OS security sandbox for learner Node code.'] };
-const { startDesktop } = await import(pathToFileURL(path.join(packageRoot, 'resources', 'app', 'desktop', 'application.mjs')));
+const buildInfo = JSON.parse(await readFile(path.join(packageRoot, 'BUILD-INFO.json'), 'utf8'));
+const appRoot = path.join(packageRoot, process.platform === 'darwin' ? buildInfo.appRelativePath : 'resources/app');
+const report = { status: 'RUNNING', phase, startedAt: new Date().toISOString(), host: { platform: process.platform, architecture: process.arch, versions: process.versions }, tests: [], screenshots: [], limitations: ['Native desktop application automation; not a physical mobile test, OS IME test or screen-reader session.', 'Page zoom uses actual Electron webContents.setZoomFactor, not viewport emulation.', 'No OS security sandbox or universal process-tree isolation guarantee for learner Node code.'] };
+const { startDesktop } = await import(pathToFileURL(path.join(appRoot, 'desktop', 'application.mjs')));
 let controller;
 const check = (name, passed, details) => { report.tests.push({ name, passed: Boolean(passed), ...(details === undefined ? {} : { details }) }); assert.ok(passed, name); };
 const persist = () => writeFileSync(resultFile, JSON.stringify(report, null, 2));
@@ -83,7 +85,7 @@ async function browserQualification(exercises) {
 async function nodeQualification(exercises) {
   const inputs = [];
   for (const exercise of exercises.filter(item => item.hostRequirements?.includes('node-native'))) {
-    inputs.push({ exercise, reference: await readFile(path.join(authorRoot, exercise.referenceFile), 'utf8'), incorrect: await readFile(path.join(authorRoot, exercise.incorrectFile), 'utf8'), grader: JSON.parse(await readFile(path.join(packageRoot, 'resources', 'app', exercise.graderFile), 'utf8')) });
+    inputs.push({ exercise, reference: await readFile(path.join(authorRoot, exercise.referenceFile), 'utf8'), incorrect: await readFile(path.join(authorRoot, exercise.incorrectFile), 'utf8'), grader: JSON.parse(await readFile(path.join(appRoot, exercise.graderFile), 'utf8')) });
   }
   const result = await evaluate(`(async () => {
     const inputs=${JSON.stringify(inputs)};
@@ -127,7 +129,7 @@ try {
     app.once('will-quit', () => { report.shutdown = controller.service.diagnostics(); report.completedAt = new Date().toISOString(); persist(); });
     persist();
     await waitFor('!document.querySelector("#boot-note") && document.querySelectorAll("#step-tabs button").length === 5');
-    const exercises = JSON.parse(await readFile(path.join(packageRoot, 'resources', 'app', 'curriculum', 'exercises.json'), 'utf8')).exercises;
+    const exercises = JSON.parse(await readFile(path.join(appRoot, 'curriculum', 'exercises.json'), 'utf8')).exercises;
     const nodeExercise = exercises.find(exercise => exercise.lessonId === 'node-esm-packages-and-cli');
     const nodeReference = await readFile(path.join(authorRoot, nodeExercise.referenceFile), 'utf8');
     const note = '데스크톱 복원 검사 — 한글 메모와 레몬 🍋';
@@ -155,6 +157,9 @@ try {
       await waitFor('!document.querySelector("#utility-dialog").open');
       check('200 percent glossary Escape restores opener focus', await evaluate('document.activeElement?.id === "open-glossary"'));
       controller.window.webContents.setZoomFactor(1);
+      await navigate('bindings-and-closures', 'example');
+      check('Packaged offline examples have syntax tokens', await evaluate('Boolean(document.querySelector(".syntax-code .token"))'));
+      await capture('desktop-code-example-light');
       await browserQualification(exercises);
       await nodeQualification(exercises);
       await navigate(nodeExercise.lessonId);
@@ -178,6 +183,8 @@ try {
       await evaluate('globalThis.fetch=globalThis.__desktopOriginalFetch; delete globalThis.__desktopOriginalFetch; delete globalThis.__desktopCancellation');
       check('UI cancel restores actions and preserves input without cleanup warnings', await evaluate('document.querySelector("#code-editor").value === "while (true) {}" && !document.querySelector("[data-execute=run]").disabled && !document.querySelector("[data-execute=submit]").disabled && !document.querySelector("#execution-announcement").textContent.includes("확인하지 못했습니다")'));
       await input('#code-editor', nodeReference);
+      await frames();
+      check('Packaged editor syntax mirror preserves editable source', await evaluate(`(() => { const editor=document.querySelector('#code-editor'); const mirror=document.querySelector('.code-mirror'); return editor.dataset.codeAttached==='true' && Boolean(mirror.querySelector('.token')) && [editor.value, editor.value+'\\n'].includes(mirror.textContent); })()`));
       await execute('run', 'success');
       await execute('submit', 'success');
       check('UI records actual current-code pass', await evaluate('document.querySelector("#learning-achievement").textContent.includes("코딩 통과")'));

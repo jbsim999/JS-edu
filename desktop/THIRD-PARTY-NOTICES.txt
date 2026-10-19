@@ -1,5 +1,11 @@
 JavaScript-edu third-party distributions
 
+PrismJS 1.30.0 (offline syntax tokens)
+Official source: https://github.com/PrismJS/prism/tree/v1.30.0
+MIT license and component provenance: resources/app/web/vendor/prism/LICENSE.md
+and resources/app/web/vendor/prism/provenance.json. Original grammar components
+are retained in a token-only module; application token rendering preserves source text.
+
 Electron 44.9.0
 Official release: https://github.com/electron/electron/releases/tag/v44.9.0
 Electron is MIT-licensed. The complete official Windows x64 distribution is preserved.

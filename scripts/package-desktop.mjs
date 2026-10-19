@@ -7,6 +7,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inventory, copyInventory, compareInventories, extractZip, sha256File, verifyArchive, selectPackageSource, assertHeadSourceBytes } from './desktop-integrity.mjs';
+import { desktopRuntimeTarget } from '../desktop/runtime-target.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const json = value => `${JSON.stringify(value, null, 2)}\n`;
@@ -28,6 +29,10 @@ async function downloadArchive(vendor, filename) {
 }
 
 export async function packageDesktop({ outputDirectory = path.join(root, 'dist'), electronArchive, nodeArchive, allowDirty = false } = {}) {
+  if (process.platform === 'darwin') {
+    const { packageDesktopMac } = await import('./package-desktop-macos.mjs');
+    return packageDesktopMac({ outputDirectory, electronArchive, nodeArchive, allowDirty });
+  }
   if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 native packaging is required; other host/CPU results are not equivalent.');
   const configuration = JSON.parse(await readFile(path.join(root, 'desktop', 'vendors.json'), 'utf8'));
   const sourcePackage = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
@@ -38,7 +43,7 @@ export async function packageDesktop({ outputDirectory = path.join(root, 'dist')
     if (!match || match[1] === '120000') throw new Error('The source tree contains an unsupported object/link.');
     return [match[3], match[2]];
   }));
-  const desktopSourceNames = ['application.mjs', 'main.mjs', 'policy.mjs', 'service.mjs', 'service-client.mjs', 'README.md', 'vendors.json'];
+  const desktopSourceNames = ['application.mjs', 'main.mjs', 'policy.mjs', 'runtime-target.mjs', 'service.mjs', 'service-client.mjs', 'README.md', 'vendors.json'];
   const candidatePaths = new Set(desktopSourceNames.map(name => `desktop/${name}`));
   let sourceDirty = execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=normal'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim().length !== 0;
   if (sourceDirty && !allowDirty) throw new Error('Commit the reviewed source before final packaging. --allow-dirty creates an explicitly marked local candidate only.');
@@ -91,7 +96,7 @@ export async function packageDesktop({ outputDirectory = path.join(root, 'dist')
   await copyFile(path.join(root, 'education.config.json'), path.join(appRoot, 'education.config.json'));
   sourceEntries.push({ path: 'education.config.json', type: 'file', size: (await stat(path.join(root, 'education.config.json'))).size, sha256: await sha256File(path.join(root, 'education.config.json')) });
   await writeFile(path.join(appRoot, 'package.json'), json({ name: sourcePackage.name, productName: 'JavaScript-edu', version: sourcePackage.version, private: true, type: 'module', main: 'desktop/main.mjs' }));
-  await writeFile(path.join(appRoot, 'desktop', 'runtime-config.json'), json({ nodeVersion: '24.22.0', nodeRelativePath: '../vendor/node/node-v24.22.0-win-x64/node.exe' }));
+  await writeFile(path.join(appRoot, 'desktop', 'runtime-config.json'), json(desktopRuntimeTarget('win32', 'x64')));
   await mkdir(path.join(build, 'integrity'));
   await writeFile(path.join(build, 'integrity', 'electron.json'), json({ ...electronIdentity, version: configuration.electron.version, source: configuration.electron.downloadUrl, files: electronManifest }));
   await writeFile(path.join(build, 'integrity', 'node.json'), json({ ...nodeIdentity, version: configuration.node.version, source: configuration.node.downloadUrl, files: nodeManifest }));

@@ -1,6 +1,6 @@
 {
   "name": "js-edu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "JavaScript-edu local lessons, native exercises and behavior grading",
@@ -11,7 +11,7 @@
     "dev": "node web/serve.mjs",
     "validate": "node scripts/validate-project.mjs .",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "test": "node --test tests/adapters.test.mjs tests/validator.test.mjs tests/learning-server.test.mjs tests/workspace-state.test.mjs tests/runtime-worker.test.mjs tests/learning-ui-state.test.mjs tests/curriculum-contract.test.mjs tests/module-runtime.test.mjs tests/module-workspace.test.mjs tests/module-server-integration.test.mjs tests/module-workspace-state.test.mjs tests/module-curriculum-contract.test.mjs tests/dom-runtime.test.mjs tests/browser-host-integration.test.mjs tests/glossary-data.test.mjs tests/qualification-completion.test.mjs tests/node-runtime.test.mjs tests/node-curriculum-verifier.test.mjs tests/node-fixtures.test.mjs tests/node-exercise-contract.test.mjs tests/lesson-host-contract.test.mjs tests/desktop-packaging.test.mjs",
+    "test": "node --test tests/adapters.test.mjs tests/validator.test.mjs tests/learning-server.test.mjs tests/workspace-state.test.mjs tests/runtime-worker.test.mjs tests/learning-ui-state.test.mjs tests/curriculum-contract.test.mjs tests/module-runtime.test.mjs tests/module-workspace.test.mjs tests/module-server-integration.test.mjs tests/module-workspace-state.test.mjs tests/module-curriculum-contract.test.mjs tests/dom-runtime.test.mjs tests/browser-host-integration.test.mjs tests/glossary-data.test.mjs tests/qualification-completion.test.mjs tests/node-runtime.test.mjs tests/node-curriculum-verifier.test.mjs tests/node-fixtures.test.mjs tests/node-exercise-contract.test.mjs tests/lesson-host-contract.test.mjs tests/desktop-packaging.test.mjs tests/code-theme.test.mjs tests/macos-packaging.test.mjs tests/desktop-artifact-transfer.test.mjs",
     "check:curriculum": "node scripts/verify-curriculum.mjs . --allow-host-skips",
     "check": "npm run validate && npm run check:syntax && npm test && npm run check:curriculum",
     "check:node": "node scripts/verify-node-curriculum.mjs . --lesson node-esm-packages-and-cli --lesson node-files-and-paths --lesson node-buffers-and-streams --lesson node-http-and-validation --lesson node-outbound-requests-and-cancellation --lesson node-events-and-lifecycle --lesson node-workers-and-resource-limits --lesson node-testing-and-delivery --lesson capstone-host-product-node --lesson capstone-failure-and-scale-node --lesson capstone-acceptance-review-node",

@@ -8,6 +8,7 @@ import { createExecutionRouter, createExecutionState, submissionPassed } from ".
 import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, quizForRevision } from "./features/learning-progress.mjs";
 import { createWorkspaceState, readPreferences, writePreferences } from "./features/workspace-state.mjs";
 import { createModuleWorkspaceState } from "./features/module-workspace-state.mjs";
+import { highlightCode, codeLanguage, attachCodeEditor, syncCodeEditor } from "./features/code-theme.mjs";
 
 const steps = [
   { id: "theory", name: "이론" },
@@ -62,6 +63,7 @@ let resetOpener = null;
 let executionInitiator = null;
 let navigationLayoutFrame = null;
 let navigationRevealPending = false;
+let detachCodeEditor = () => {};
 const moduleWorkspaces = new WeakMap();
 const nodeConsents = new Set();
 
@@ -160,7 +162,7 @@ function termButton(id, label) {
 
 function codeBlock(code, filename = "example.js") {
   return `<div class="code-caption"><span>${escapeHtml(filename)}</span><span>읽기 전용 예제</span></div>
-    <pre tabindex="0" aria-label="${escapeHtml(filename)} 코드. 긴 줄은 가로로 스크롤할 수 있습니다."><code>${escapeHtml(code)}</code></pre>
+    <pre tabindex="0" aria-label="${escapeHtml(filename)} 코드. 긴 줄은 가로로 스크롤할 수 있습니다."><code class="syntax-code">${highlightCode(code, codeLanguage(filename))}</code></pre>
     <p class="code-note">코드와 주석은 설명용입니다. 이 화면에서 실행한 결과가 아닙니다.</p>`;
 }
 
@@ -248,7 +250,7 @@ function editorContent() {
   const fileTabs = module ? `<div class="module-file-tabs" role="tablist" aria-label="과제 파일">${module.files.map((file, index) => `<button type="button" class="module-file-tab" role="tab" id="module-file-${index}" data-module-file="${escapeHtml(file.path)}" aria-controls="module-file-panel" aria-selected="${index === selectedIndex}" tabindex="${index === selectedIndex ? 0 : -1}"><span>${escapeHtml(file.path)}</span><small>${file.editable ? "편집 가능" : "읽기 전용"}${file.entry ? " · 시작 파일" : ""}</small></button>`).join("")}</div>` : "";
   return `<section class="editor-section" id="code-workspace" aria-labelledby="editor-title"><div class="editor-toolbar"><div><h3 id="editor-title">${module ? "모듈 파일" : "함수 본문"}</h3><p>${escapeHtml(filename)}</p></div><div class="editor-actions"><button type="button" class="plain-button" id="copy-code">${module ? "현재 파일 복사" : "전체 코드 복사"}</button>${readOnly ? "" : `<button type="button" class="plain-button" data-reset-field="code">${module ? "현재 파일 초기화" : "초기화"}</button>`}</div></div>
     <p class="editor-help" id="editor-help">${help}</p>${fileTabs}
-    <div class="body-editor${module ? " module-editor" : ""}"${module ? ` id="module-file-panel" role="tabpanel" aria-labelledby="module-file-${selectedIndex}"` : ""}>${module ? "" : `<pre class="editor-fixed" aria-label="읽기 전용 함수 선언">${escapeHtml(entry.editable.prefix)}</pre>`}<label class="sr-only" for="code-editor">${escapeHtml(module ? `${filename}${readOnly ? " 읽기 전용 코드" : " 코드"}` : `${entry.exercise.runner?.exportName || "과제"} 함수 본문`)}</label><textarea id="code-editor" data-draft="code"${module ? ` data-module-path="${escapeHtml(filename)}"` : ""}${readOnly ? " readonly" : ""} rows="12" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="editor-help code-save-status"></textarea>${module ? "" : `<pre class="editor-fixed" aria-label="읽기 전용 함수 닫기">${escapeHtml(entry.editable.suffix)}</pre>`}</div>
+    <div class="body-editor${module ? " module-editor" : ""}"${module ? ` id="module-file-panel" role="tabpanel" aria-labelledby="module-file-${selectedIndex}"` : ""}>${module ? "" : `<pre class="editor-fixed syntax-code" aria-label="읽기 전용 함수 선언">${highlightCode(entry.editable.prefix)}</pre>`}<label class="sr-only" for="code-editor">${escapeHtml(module ? `${filename}${readOnly ? " 읽기 전용 코드" : " 코드"}` : `${entry.exercise.runner?.exportName || "과제"} 함수 본문`)}</label><div class="code-input"><pre class="code-mirror" aria-hidden="true"><code></code></pre><textarea id="code-editor" data-draft="code" data-language="${codeLanguage(filename)}" wrap="off"${module ? ` data-module-path="${escapeHtml(filename)}"` : ""}${readOnly ? " readonly" : ""} rows="12" maxlength="200000" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="editor-help code-save-status"></textarea></div>${module ? "" : `<pre class="editor-fixed syntax-code" aria-label="읽기 전용 함수 닫기">${highlightCode(entry.editable.suffix)}</pre>`}</div>
     <p id="code-save-status" class="save-status" role="status"></p><button id="code-save-retry" type="button" class="plain-button" data-save-field="code" hidden>저장 다시 시도</button><p id="copy-status" class="save-status" role="status"></p></section>`;
 }
 
@@ -267,8 +269,10 @@ function selectModuleFile(path) {
   if (module.selectedPath() !== path) {
     flushDrafts();
     module.select(path);
+    detachCodeEditor();
     byId("code-workspace").outerHTML = editorContent();
     byId("code-editor").value = field("code").value;
+    detachCodeEditor = attachCodeEditor(byId("code-editor"));
     updateFieldStatus("code");
   }
   const tab = byId(`module-file-${module.files.findIndex(file => file.path === path)}`);
@@ -432,11 +436,13 @@ function renderPanel() {
   const currentIndex = steps.findIndex(item => item.id === route.step);
   elements.tabs.innerHTML = steps.map(item => `<button class="step-tab" type="button" role="tab" id="step-${item.id}" aria-controls="lesson-panel" aria-selected="${item.id === route.step}" tabindex="${item.id === route.step ? 0 : -1}" data-step="${item.id}">${item.name}</button>`).join("");
   elements.panel.setAttribute("aria-labelledby", `step-${route.step}`);
+  detachCodeEditor();
   elements.panel.innerHTML = lessonContent(route.step);
   elements.panel.querySelectorAll("[data-draft]").forEach(input => {
     input.value = field(input.dataset.draft).value;
     updateFieldStatus(input.dataset.draft);
   });
+  detachCodeEditor = attachCodeEditor(byId("code-editor"));
   const next = steps[(currentIndex + 1) % steps.length];
   const following = lessons[lessons.findIndex(item => item.id === entry.id) + 1];
   elements.footer.innerHTML = `<span>학습 단계 ${currentIndex + 1} / ${steps.length}</span>${currentIndex === steps.length - 1 && following ? `<button type="button" class="next-step" data-lesson="${escapeHtml(following.id)}">다음 강의<span aria-hidden="true">→</span></button>` : `<button type="button" class="next-step" data-step="${next.id}">${currentIndex === steps.length - 1 ? "이론으로 돌아가기" : `다음: ${next.name}`}<span aria-hidden="true">→</span></button>`}`;
@@ -488,7 +494,7 @@ function renderExecution() {
     ? `<p class="check-summary">${checks.length ? `${checks.length}개 중 ${passed}개 통과${submissionPassed(result) ? " · 현재 코드 통과" : ""}` : "완료된 검사 없음 · 통과로 기록하지 않습니다"}</p>` : "";
   const streams = [["stdout · 표준 출력", result.stdout], ["stderr · 오류 출력", result.stderr], ["문법 진단", result.compilerOutput]]
     .filter(([, text]) => text).map(([name, text]) => `<details class="output-detail" open><summary>${name}</summary><pre tabindex="0"><code>${escapeHtml(text)}</code></pre></details>`).join("");
-  output.innerHTML = `<div class="execution-outcome" data-status="${escapeHtml(result.status)}"><h4>${escapeHtml(messages[result.status] || "실행 결과를 확인해 주세요")}</h4>${checkSummary}${state.kind === "run" && Object.hasOwn(result, "runValue") ? `<p class="code-note">호출 결과</p><pre tabindex="0"><code>${escapeHtml(formatValue(result.runValue))}</code></pre>` : ""}${checks.length ? `<ol class="behavior-checks">${checks.map(check => `<li data-passed="${check.passed === true}"><div><strong>${check.passed === true ? "통과" : "확인 필요"}</strong><span>${escapeHtml(check.label || check.id)}</span></div>${check.passed !== true ? `<details><summary>기대값과 실제값 보기</summary><p class="code-note">기대값</p><pre tabindex="0">${escapeHtml(formatValue(check.expected))}</pre><p class="code-note">실제값</p><pre tabindex="0">${escapeHtml(formatValue(check.actual))}</pre>${check.error ? `<p>${escapeHtml(check.error)}</p>` : ""}</details>` : ""}</li>`).join("")}</ol>` : ""}${streams}${result.cleanupWarning || result.cleanupPending ? `<p class="field-warning">${escapeHtml(result.cleanupWarning || "임시 실행 파일을 정리하고 있습니다.")}</p>` : ""}${result.outputTruncated ? '<p class="field-warning">출력 한도에 도달해 나머지 출력을 생략했습니다.</p>' : ""}${Number.isFinite(result.durationMs) ? `<p class="code-note">실행 시간 ${Math.round(result.durationMs)}ms</p>` : ""}</div>`;
+  output.innerHTML = `<div class="execution-outcome" data-status="${escapeHtml(result.status)}"><h4>${escapeHtml(messages[result.status] || "실행 결과를 확인해 주세요")}</h4>${checkSummary}${state.kind === "run" && Object.hasOwn(result, "runValue") ? `<p class="code-note">호출 결과</p><pre tabindex="0"><code class="syntax-code">${highlightCode(formatValue(result.runValue), "json")}</code></pre>` : ""}${checks.length ? `<ol class="behavior-checks">${checks.map(check => `<li data-passed="${check.passed === true}"><div><strong>${check.passed === true ? "통과" : "확인 필요"}</strong><span>${escapeHtml(check.label || check.id)}</span></div>${check.passed !== true ? `<details><summary>기대값과 실제값 보기</summary><p class="code-note">기대값</p><pre tabindex="0" class="syntax-code">${highlightCode(formatValue(check.expected), "json")}</pre><p class="code-note">실제값</p><pre tabindex="0" class="syntax-code">${highlightCode(formatValue(check.actual), "json")}</pre>${check.error ? `<p>${escapeHtml(check.error)}</p>` : ""}</details>` : ""}</li>`).join("")}</ol>` : ""}${streams}${result.cleanupWarning || result.cleanupPending ? `<p class="field-warning">${escapeHtml(result.cleanupWarning || "임시 실행 파일을 정리하고 있습니다.")}</p>` : ""}${result.outputTruncated ? '<p class="field-warning">출력 한도에 도달해 나머지 출력을 생략했습니다.</p>' : ""}${Number.isFinite(result.durationMs) ? `<p class="code-note">실행 시간 ${Math.round(result.durationMs)}ms</p>` : ""}</div>`;
   byId("execution-announcement").textContent = `${messages[result.status] || "실행 결과 수신"}${checks.length ? `, ${checks.length}개 중 ${passed}개 통과` : ""}`;
 }
 
@@ -686,7 +692,7 @@ function renderTerm(id) {
     setDialogMode("term");
     return;
   }
-  elements.termView.innerHTML = `<section class="term-detail"><p class="section-eyebrow">GLOSSARY / 용어 설명</p><h2 id="term-title" tabindex="-1">${escapeHtml(entry.name)}</h2><p class="term-english" lang="en">${escapeHtml(entry.english)}</p><p class="term-definition">${escapeHtml(entry.definition)}</p><h3>짧은 코드로 읽기</h3><pre tabindex="0" aria-label="${escapeHtml(entry.name)} 설명용 코드"><code>${escapeHtml(entry.example)}</code></pre><p class="code-note">직접 작성한 설명용 예제 · 실행 결과 아님</p><h3>이렇게 오해하기 쉬워요</h3><p class="term-misconception">${escapeHtml(entry.misconception)}</p><h3>연결된 개념으로 이동</h3><ul class="related-lessons">${entry.lessons.map(lessonId => {
+  elements.termView.innerHTML = `<section class="term-detail"><p class="section-eyebrow">GLOSSARY / 용어 설명</p><h2 id="term-title" tabindex="-1">${escapeHtml(entry.name)}</h2><p class="term-english" lang="en">${escapeHtml(entry.english)}</p><p class="term-definition">${escapeHtml(entry.definition)}</p><h3>짧은 코드로 읽기</h3><pre tabindex="0" aria-label="${escapeHtml(entry.name)} 설명용 코드"><code class="syntax-code">${highlightCode(entry.example)}</code></pre><p class="code-note">직접 작성한 설명용 예제 · 실행 결과 아님</p><h3>이렇게 오해하기 쉬워요</h3><p class="term-misconception">${escapeHtml(entry.misconception)}</p><h3>연결된 개념으로 이동</h3><ul class="related-lessons">${entry.lessons.map(lessonId => {
     const lesson = lessons.find(item => item.id === (conceptAliases[lessonId] || lessonId));
     return lesson ? `<li><button type="button" class="plain-button" data-lesson="${escapeHtml(lesson.id)}">${escapeHtml(lesson.name)} <span aria-hidden="true">↗</span></button></li>` : "";
   }).join("")}</ul><div class="term-source"><p>개념의 근거와 더 읽을 자료</p><a href="${escapeHtml(entry.source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.source.title)} ↗ <span class="sr-only">(새 탭)</span></a><p>이 설명은 원문을 그대로 옮긴 것이 아닌 학습용 요약입니다.</p></div></section>`;
@@ -1086,6 +1092,7 @@ byId("reset-dialog").querySelector("form").addEventListener("submit", event => {
   }
   const input = byId(pendingReset === "code" ? "code-editor" : "lesson-note");
   if (input) input.value = result.record.value;
+  if (pendingReset === "code") syncCodeEditor(input);
   if (pendingReset === "code") {
     executionState.invalidate("처음 코드로 돌아왔습니다. 현재 코드의 제출 검사를 다시 실행해 주세요.");
     progress.update(progressIdentity(currentEntry(), route.version), { submission: null });

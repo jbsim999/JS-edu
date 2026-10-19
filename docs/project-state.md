@@ -1,5 +1,13 @@
 # 현재 상태
 
+## 2026-10-19 코드 문법 테마와 macOS 추가 패키징
+
+사용자가 Windows0.1.0의 정상 실행을 확인한 뒤 코드 예시/편집 문법 테마, macOS Intel·Apple Silicon 패키징과 완료 후 main 반영을 승인했다. 패키징 스킬의 원본 전체 보존·실제 네이티브 검증·최종 해제본 대조를 적용한다. 버전은0.1.1로 올리고 기존0.1.0 ZIP과 학습 데이터를 보존한다. 공개 Release 게시 권한을 추가하지 않는다.
+
+코드 테마는 개별5회귀와 별도 Chrome155의11묶음(실제 카운터 제출/한글 복원/색상·선택·스크롤·고대비/320–1440·짧은 창/JSON·용어집/특수 공백·CRLF 원문 보존) PASS다. 최종 소스 필수 검사도 구조52·구문316·회귀313중308PASS/Unix5skip/FAIL0, 제작자33과제271조건·예제33PASS/호스트22skip(PARTIAL)로 통과했다. 검사 전후503파일 지문은 `db0479e7d7888a414938f9c07e548b9c6121c39bdb936984f11439aa876d53b2`로 동일하며 정적 독립 검토도 PASS·미해결 P1/P2 없음이다.
+
+[코드 계약](code-theme.md), [Mac 패키징 계약](macos-packaging-implementation.md), [비공개 수신자 전송](desktop-private-transfer.md)을 따른다. Mac 공식 네 원본의 SHA/실제 CPU를 확인했고 최소OS는 포함 Node24.22.0에 맞춰13.5다. 최종 Mac native·서명·ZIP·LaunchServices 및 Unix5개 실제 검사는 후속 CI로 확정한다. main에는 최종 검증 후 반영한다. 아래는 기존0.1.0과 과정별 보존 이력이다.
+
 ## 2026-10-19 최종 Windows 로컬 패키지 PASS
 
 최종 ZIP은 `dist/JavaScript-edu-0.1.0-win-x64.zip`(315,315,450바이트), SHA256 `9e9be81a981502ac6a3bcbfd2e56b5d1f8ed8a12c3cb085386e555b0e38d493e`다. 빌드 소스는 `23154a3c3cc2f718469a3e03e158bc5db041c6b2`, sourceDirty:false이며 후속 문서 커밋과 구분한다. 원본 vendor73+1994와 최종해제2410파일을 독립 대조했다.

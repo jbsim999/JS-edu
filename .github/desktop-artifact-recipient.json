@@ -1,0 +1,5 @@
+{
+  "purpose": "Single-recipient packaging transfer; not a publisher signing key",
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA4CWuS94km0dLKWQkgtdl\nsH7p8Mitk+huU91uk+LI4vdMy4OKzSnCe5TdQMbACHlHID9oyPS72jcIyBb6xRt/\nb6sOVa56fHFFq+qZTCQpEJrYFRzIBbEXZUnq3tzP9miAm8T/t9WhFsXRybJLXH+r\nkb6+ycMrKkyioZB/VC/Wb2OFhUfv98ol0T7UhFZd79CxniXbZ9Odd+Gb41gvGWT9\nk6GbtRc8HV+78xPRqtk8sVPinEpcoAgZyAOHFDDJUKK147cwkwtzWzYq5jJHX10W\n66lALurpTJAkii6NvTF0BwZkfFNZM6ruwlweOX28FT2W5jX9Cu4aM962pQcCoQDQ\nNoRFvZ1uViGeazeUWYI3r5LZxJx8Je0ChgdtdnnSsW58tkg0Xi+xSNZXJeMGCa5g\nmv5Y+nqKRhuQo7vXniIYlnjU2tHetmb57MkL45KIJ1jkXIbqzBHVYlGcUQkmZc/q\nfcRBQJIcRIK4TV9Dl4dqgoo+TTNkx1JpbPWwgSVprqP1AgMBAAE=\n-----END PUBLIC KEY-----\n",
+  "fingerprint": "1ee2cb9e21f86b1c0c4c0e658213f1a34e479a7f920fe105d96258feab7cba5b"
+}

@@ -30,3 +30,92 @@ jobs:
           if ($packageReport.sourceDirty -or $packageReport.status -ne 'PASS' -or $packageReport.sourceCommit -ne $env:GITHUB_SHA) { throw 'A clean verified package from this checkout is required.' }
           node scripts/check-desktop-smoke.mjs $packageReport.extractedPath --manifest $manifestPath --output-dir 'artifacts/desktop-ci-smoke'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/desktop-artifact-transfer.mjs seal $manifestPath '.github/desktop-artifact-recipient.json' 'artifacts/desktop-sealed'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Retain verified Windows ZIP and matching evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: JavaScript-edu-win-x64-${{ github.sha }}
+          retention-days: 14
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            artifacts/desktop-sealed/*.sealed
+            artifacts/desktop-sealed/*.sealed.json
+            dist/*.manifest.json
+            dist/*.sha256
+            artifacts/desktop-ci-smoke/*.json
+            artifacts/desktop-ci-smoke/*.png
+      - name: Retain Windows failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JavaScript-edu-win-x64-failed-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            artifacts/desktop-ci-smoke/*.json
+            artifacts/desktop-ci-smoke/*.png
+  macos-portable:
+    name: portable extraction and native app (macOS ${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel
+            arch: x64
+          - os: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.0'
+          architecture: ${{ matrix.arch }}
+      - name: Verify native CPU and platform regression tests
+        env:
+          EXPECTED_CPU: ${{ matrix.arch }}
+        run: |
+          node --input-type=module -e "import assert from 'node:assert/strict'; import {requireNativeMac} from './scripts/macos-platform.mjs'; assert.equal(requireNativeMac().architecture, process.env.EXPECTED_CPU);"
+          node --test tests/desktop-packaging.test.mjs tests/macos-packaging.test.mjs
+      - name: Build clean source and verify complete vendor bundles and final ZIP
+        run: node scripts/package-desktop.mjs
+      - name: Verify the final native app on this Mac CPU
+        run: |
+          node --input-type=module -e '
+          import {readFile} from "node:fs/promises";
+          import {execFileSync} from "node:child_process";
+          const {version}=JSON.parse(await readFile("package.json","utf8"));
+          const manifest=`dist/JavaScript-edu-${version}-mac-${process.arch}.manifest.json`;
+          const report=JSON.parse(await readFile(manifest,"utf8"));
+          if(report.sourceDirty||report.status!=="PASS"||report.sourceCommit!==process.env.GITHUB_SHA)throw new Error("Clean current-source package required");
+          execFileSync(process.execPath,["scripts/check-desktop-smoke.mjs",report.extractedPath,"--manifest",manifest,"--output-dir","artifacts/desktop-ci-smoke"],{stdio:"inherit"});
+          const smoke=JSON.parse(await readFile("artifacts/desktop-ci-smoke/desktop-smoke-report.json","utf8"));
+          if(smoke.status!=="PASS"||smoke.sourceCommit!==process.env.GITHUB_SHA||!smoke.launchServicesEntry?.passed)throw new Error("Exact-source native/LaunchServices verification required");
+          execFileSync(process.execPath,["scripts/desktop-artifact-transfer.mjs","seal",manifest,".github/desktop-artifact-recipient.json","artifacts/desktop-sealed"],{stdio:"inherit"});'
+      - name: Retain verified Mac ZIP and matching evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: JavaScript-edu-mac-${{ matrix.arch }}-${{ github.sha }}
+          retention-days: 14
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            artifacts/desktop-sealed/*.sealed
+            artifacts/desktop-sealed/*.sealed.json
+            dist/*.manifest.json
+            dist/*.sha256
+            artifacts/desktop-ci-smoke/*.json
+            artifacts/desktop-ci-smoke/*.png
+      - name: Retain failure evidence without marking a package verified
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JavaScript-edu-mac-${{ matrix.arch }}-failed-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            artifacts/desktop-ci-smoke/*.json
+            artifacts/desktop-ci-smoke/*.png

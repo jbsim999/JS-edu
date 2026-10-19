@@ -1,0 +1,54 @@
+/* Pistachio code palettes. Token color is presentation, never an execution result. */
+:root {
+  --syntax-text: #273d35; --syntax-keyword: #7542a1; --syntax-string: #32632c;
+  --syntax-function: #175d83; --syntax-number: #93491c; --syntax-comment: #596b60;
+  --syntax-property: #873c61; --syntax-operator: #4d6159; --syntax-class: #76551a;
+  --syntax-selection: #cfdfbf;
+}
+:root[data-theme="dark"] {
+  --syntax-text: #e3e9dc; --syntax-keyword: #cbb2ed; --syntax-string: #c0d99b;
+  --syntax-function: #a4d4e7; --syntax-number: #efbc8e; --syntax-comment: #a4b4a6;
+  --syntax-property: #e4b1c5; --syntax-operator: #bdcdbf; --syntax-class: #e6ce90;
+  --syntax-selection: #425b44;
+}
+.syntax-code, .code-mirror, #code-editor { color: var(--syntax-text); }
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--syntax-comment); }
+.token.keyword, .token.boolean, .token.atrule { color: var(--syntax-keyword); }
+.token.string, .token.char, .token.attr-value, .token.regex, .token.template-punctuation { color: var(--syntax-string); }
+.token.function, .token.function-variable { color: var(--syntax-function); }
+.token.number, .token.constant { color: var(--syntax-number); }
+.token.property, .token.tag, .token.selector, .token.attr-name { color: var(--syntax-property); }
+.token.class-name, .token.builtin { color: var(--syntax-class); }
+.token.operator, .token.punctuation { color: var(--syntax-operator); }
+.syntax-code::selection, .syntax-code *::selection { background: var(--syntax-selection); }
+.code-input { position: relative; min-width: 0; background: var(--paper); border-block: 1px solid var(--line); }
+.module-editor .code-input { border: 0; }
+.code-input:has(textarea[readonly]) { background: var(--code); }
+/* Both layers share every metric; wrapping is disabled so long lines scroll together. */
+.code-input #code-editor, .code-input .code-mirror {
+  margin: 0; padding: 12px 13px; border: 0; border-radius: 0;
+  font: 13px/1.8 var(--mono); font-variant-ligatures: none;
+  letter-spacing: normal; text-align: left; text-indent: 0;
+  white-space: pre; overflow-wrap: normal; word-break: normal; tab-size: 2;
+}
+.code-input #code-editor { position: relative; z-index: 1; overflow: auto; background: transparent; caret-color: var(--syntax-text); }
+.code-input .code-mirror {
+  position: absolute; inset: 0 auto auto 0; overflow: hidden; max-width: none;
+  min-height: 0; pointer-events: none; user-select: none; background: transparent;
+  box-shadow: none !important;
+}
+.code-mirror code { font: inherit; white-space: inherit; }
+.code-input.code-ready:not(.code-composing) #code-editor { color: transparent; -webkit-text-fill-color: transparent; }
+.code-input.code-ready #code-editor::selection { background: var(--syntax-selection); color: var(--syntax-text); -webkit-text-fill-color: var(--syntax-text); }
+.code-input.code-composing .code-mirror { visibility: hidden; }
+.code-input.code-composing #code-editor { color: var(--syntax-text); -webkit-text-fill-color: var(--syntax-text); }
+.module-editor .code-input #code-editor[readonly] { background: transparent; }
+.code-input #code-editor:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+@media (max-width: 767px) {
+  .code-input #code-editor, .code-input .code-mirror { font-size: 16px; }
+}
+@media (forced-colors: active) {
+  .token { color: CanvasText; }
+  .code-input .code-mirror { display: none; }
+  .code-input #code-editor { color: CanvasText !important; -webkit-text-fill-color: CanvasText !important; caret-color: CanvasText; }
+}

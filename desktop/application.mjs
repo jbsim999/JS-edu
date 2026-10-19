@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { productName, readPort, savePort, isLearningNavigation, isExternalDocumentation, isAllowedRequest } from './policy.mjs';
 import { launchLearningService } from './service-client.mjs';
+import { validateDesktopRuntime } from './runtime-target.mjs';
 
 const projectRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 
@@ -12,7 +13,7 @@ const projectRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)))
 export async function startDesktop({ userDataDirectory, show = true, reportError = message => dialog.showErrorBox(productName, message) } = {}) {
   app.setName(productName);
   app.enableSandbox();
-  app.setAppUserModelId('org.junbo.javascriptedu');
+  if (process.platform === 'win32') app.setAppUserModelId('org.junbo.javascriptedu');
   const dataDirectory = userDataDirectory ?? path.join(app.getPath('appData'), productName);
   if (!path.isAbsolute(dataDirectory)) throw new Error('사용자 데이터의 절대 경로가 필요합니다.');
   app.setPath('userData', dataDirectory);
@@ -55,7 +56,7 @@ export async function startDesktop({ userDataDirectory, show = true, reportError
   await app.whenReady();
   try {
     const config = JSON.parse(await readFile(path.join(projectRoot, 'desktop', 'runtime-config.json'), 'utf8'));
-    if (config.nodeVersion !== '24.22.0' || config.nodeRelativePath !== '../vendor/node/node-v24.22.0-win-x64/node.exe' || process.platform !== 'win32' || process.arch !== 'x64') throw new Error('이 패키지는 Windows x64와 포함 Node.js 24.22.0 전용입니다.');
+    validateDesktopRuntime(config);
     const savedPort = await readPort(dataDirectory);
     service = launchLearningService({ executable: path.resolve(projectRoot, config.nodeRelativePath), projectRoot, port: savedPort });
     const { origin, port, runtime } = await service.ready;
@@ -83,7 +84,8 @@ export async function startDesktop({ userDataDirectory, show = true, reportError
     window.webContents.on('will-attach-webview', event => event.preventDefault());
     window.webContents.on('render-process-gone', () => { if (!quitting) { reportError('학습 화면이 종료됐습니다. 앱을 다시 시작하면 저장된 초안과 진도를 이어갈 수 있습니다.'); void quit(); } });
     Menu.setApplicationMenu(Menu.buildFromTemplate([
-      { label: '파일', submenu: [{ label: '종료', accelerator: 'Alt+F4', click: () => { void quit(); } }] },
+      ...(process.platform === 'darwin' ? [{ label: productName, submenu: [{ role: 'about', label: `${productName} 정보` }, { type: 'separator' }, { role: 'hide', label: '가리기' }, { role: 'hideOthers', label: '기타 가리기' }, { role: 'unhide', label: '모두 보기' }, { type: 'separator' }, { label: '종료', accelerator: 'Cmd+Q', click: () => { void quit(); } }] }] : []),
+      { label: '파일', submenu: [{ label: '종료', accelerator: process.platform === 'darwin' ? 'Cmd+W' : 'Alt+F4', click: () => { void quit(); } }] },
       { label: '편집', submenu: [{ role: 'undo', label: '실행 취소' }, { role: 'redo', label: '다시 실행' }, { type: 'separator' }, { role: 'cut', label: '잘라내기' }, { role: 'copy', label: '복사' }, { role: 'paste', label: '붙여넣기' }, { role: 'selectAll', label: '전체 선택' }] },
       { label: '보기', submenu: [{ role: 'reload', label: '새로 고침' }, { role: 'resetZoom', label: '실제 크기' }, { role: 'zoomIn', label: '확대' }, { role: 'zoomOut', label: '축소' }, { role: 'togglefullscreen', label: '전체 화면' }] },
     ]));

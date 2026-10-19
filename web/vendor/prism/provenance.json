@@ -1,0 +1,39 @@
+{
+  "version": "1.30.0",
+  "project": "https://prismjs.com/",
+  "license": "MIT",
+  "usage": "Offline token API, no plugins. Concatenation of unmodified components with a lexical wrapper and default export.",
+  "sources": [
+    {
+      "file": "prism-core.js",
+      "url": "https://raw.githubusercontent.com/PrismJS/prism/v1.30.0/components/prism-core.js",
+      "sha256": "6fe39cc3a95b3da596218fbca3acf03f1208bc936f9fb84d08a2b4a61e2b9af7"
+    },
+    {
+      "file": "prism-markup.js",
+      "url": "https://raw.githubusercontent.com/PrismJS/prism/v1.30.0/components/prism-markup.js",
+      "sha256": "981ea1865e1dbe304b661196fac6a6103b4ab19080c58c5b5d8ef2767e905df4"
+    },
+    {
+      "file": "prism-css.js",
+      "url": "https://raw.githubusercontent.com/PrismJS/prism/v1.30.0/components/prism-css.js",
+      "sha256": "f802a0b3827470dadbbf2841cabd6832fc2d28124ded564d9a590285c627d65d"
+    },
+    {
+      "file": "prism-clike.js",
+      "url": "https://raw.githubusercontent.com/PrismJS/prism/v1.30.0/components/prism-clike.js",
+      "sha256": "6a7e077bbcb4a2259bc3152e55681f804ec8a3c2b969f234bb220df0f2d79654"
+    },
+    {
+      "file": "prism-javascript.js",
+      "url": "https://raw.githubusercontent.com/PrismJS/prism/v1.30.0/components/prism-javascript.js",
+      "sha256": "7be3e7caf699bfddcd6d94d01e9df233257477f7f521e6c6765f03bd936a2d3e"
+    },
+    {
+      "file": "prism-json.js",
+      "url": "https://raw.githubusercontent.com/PrismJS/prism/v1.30.0/components/prism-json.js",
+      "sha256": "835c44857c3f295f2c5bd70316006e455779da76287b0e14d93bbc995f658e4b"
+    }
+  ],
+  "bundleSha256": "ce679c84f09e9ecfaf9f246729050e03401bb510099d7c0dd04ed48881e5af0e"
+}

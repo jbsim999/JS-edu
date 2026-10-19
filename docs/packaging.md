@@ -1,6 +1,8 @@
 # 데스크톱 패키징
 
-2026-10-19 사용자 승인으로 마지막 패키징 단계에 진입했다. `junbo-desktop-runtime-packaging`의 전체 공급자 배포본 보존·최종 ZIP 해제 대조·네이티브 실행 계약을 적용한다. 현재 대상은 **Windows x64 포터블 ZIP**이며 macOS·ARM64·설치 프로그램·공개 릴리스는 포함하지 않는다.
+2026-10-19 사용자 승인으로 `junbo-desktop-runtime-packaging`의 전체 공급자 배포본 보존·최종 ZIP 해제 대조·네이티브 실행 계약을 적용한다. 기존0.1.0은 **Windows x64 포터블 ZIP**이고, 추가 승인된0.1.1은 **Windows x64·macOS Intel x64·Apple Silicon arm64**를 대상으로 한다. Mac 실제 검증 전에는 완료로 표시하지 않는다. 설치 프로그램·공개 릴리스는 포함하지 않는다.
+
+Mac은 전체 `JavaScript-edu.app`을 보존하는 CPU별 ZIP이며 macOS13.5 이상이 공급자 최소 조건이다([고정 Node24.22.0 지원 표](https://raw.githubusercontent.com/nodejs/node/v24.22.0/BUILDING.md)). 원본 Electron.app과 전체 Node 배포본을 수정 없이 미서명 wrapper 안에 보관하며 각 원본의 서명 유무·검증을 별도로 기록한다. 정확한 구조와 실제 네이티브 게이트는 [Mac 패키징 계약](macos-packaging-implementation.md)을 따른다. 공개 CI에 평문 ZIP을 게시하지 않으며, 지정 수신자 전송은 [전송 계약](desktop-private-transfer.md)을 따른다.
 
 ## 사용자 실행과 데이터
 

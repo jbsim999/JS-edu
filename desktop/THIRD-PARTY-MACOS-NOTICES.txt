@@ -1,0 +1,38 @@
+JavaScript-edu complete macOS vendor distributions
+
+PrismJS 1.30.0 (offline syntax tokens)
+Official source: https://github.com/PrismJS/prism/tree/v1.30.0
+MIT license and component provenance are inside
+JavaScript-edu.app/Contents/Resources/app/web/vendor/prism/.
+Original grammar components are retained in a token-only module;
+application token rendering preserves source text.
+
+Electron 44.9.0
+Official release: https://github.com/electron/electron/releases/tag/v44.9.0
+Version-pinned source: https://github.com/electron/electron/tree/v44.9.0
+Chromium: https://chromium.googlesource.com/chromium/src/+/152.0.7977.167
+The complete original Electron.app, framework links, original signature resources,
+LICENSE and LICENSES.chromium.html are inside JavaScript-edu.app/Contents/Resources/vendor/electron/.
+Electron itself is MIT-licensed; bundled Chromium components include LGPL/MPL and
+other licenses. The distribution is not entirely MIT-licensed. Read every original notice.
+
+Node.js 24.22.0, separate learner process
+Official release: https://nodejs.org/dist/v24.22.0/
+Version-pinned source: https://github.com/nodejs/node/tree/v24.22.0
+Source archive: https://nodejs.org/dist/v24.22.0/node-v24.22.0.tar.xz
+The complete node-v24.22.0-darwin-<CPU> distribution is inside
+JavaScript-edu.app/Contents/Resources/vendor/node/, including LICENSE, include,
+lib, share, npm/Corepack executables and original relative links. Read its complete LICENSE.
+
+Original vendor files, executable modes, relative link text and signatures are retained.
+The separate JavaScript-edu.app wrapper is unsigned; vendor apps are not re-signed.
+No Developer ID, notarization, downloaded-archive Gatekeeper approval or public Release
+publication is performed by this packaging workflow. CI uploads only single-recipient
+encrypted app archives and plaintext build/test evidence, not publicly usable ZIPs.
+
+Before a public binary release, provide the exact corresponding source, build/patch
+instructions and redistribution terms required by linked LGPL/MPL and other components.
+The upstream links above are references, not an attached corresponding-source archive
+or a public distribution license-compliance sign-off.
+JavaScript-edu's own code/course licensing is separate; public source visibility does
+not establish a redistribution license for application or course content.

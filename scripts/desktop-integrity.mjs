@@ -20,20 +20,24 @@ export function assertDistinctPaths(entries) {
   const components = new Map();
   for (const entry of entries) {
     const name = safeRelativePath(entry.path);
-    const lower = name.toLowerCase();
+    const lower = name.normalize('NFC').toLowerCase();
     if (names.has(lower)) throw new Error(`Duplicate or case-colliding path: ${name}`);
     names.set(lower, entry.type);
     const segments = name.split('/');
     for (let index = 1; index <= segments.length; index++) {
       const prefix = segments.slice(0, index).join('/');
-      const previous = components.get(prefix.toLowerCase());
+      const key = prefix.normalize('NFC').toLowerCase();
+      const previous = components.get(key);
       if (previous && previous !== prefix) throw new Error(`Case-colliding directory component: ${prefix}`);
-      components.set(prefix.toLowerCase(), prefix);
+      components.set(key, prefix);
     }
   }
   for (const entry of entries) {
-    const parts = entry.path.toLowerCase().split('/');
-    for (let index = 1; index < parts.length; index++) if (names.get(parts.slice(0, index).join('/')) === 'file') throw new Error(`File is also a parent directory: ${entry.path}`);
+    const parts = entry.path.normalize('NFC').toLowerCase().split('/');
+    for (let index = 1; index < parts.length; index++) {
+      const type = names.get(parts.slice(0, index).join('/'));
+      if (type && type !== 'directory') throw new Error(`File or link is also a parent directory: ${entry.path}`);
+    }
   }
 }
 
@@ -108,7 +112,7 @@ export async function copyInventory(from, to, entries) {
 
 // Windows distributions currently fit ordinary ZIP. ZIP64/encryption/links are rejected,
 // rather than guessed. A format change requires an explicit parser + extraction review.
-export async function readZipEntries(filename) {
+export async function readZipEntries(filename, { unix = false } = {}) {
   const file = await open(filename, 'r');
   try {
     const size = (await file.stat()).size;
@@ -146,7 +150,10 @@ export async function readZipEntries(filename) {
       const directoryEntry = rawName.endsWith('/');
       const name = safeRelativePath(directoryEntry ? rawName.slice(0, -1) : rawName);
       const unixType = (external >>> 16) & 0xf000;
-      if (![0, 0x4000, 0x8000].includes(unixType) || (external & 0x400)) throw new Error(`Unsupported ZIP link/reparse entry: ${name}`);
+      if (!(unix ? [0x4000, 0x8000, 0xa000] : [0, 0x4000, 0x8000]).includes(unixType) || (external & 0x400)) throw new Error(`Unsupported ZIP link/reparse entry: ${name}`);
+      if (unix && (directory.readUInt16LE(offset + 4) >>> 8) !== 3) throw new Error('Unix ZIP requires explicit Unix file metadata.');
+      if (unix && ((external >>> 16) & 0x0e00)) throw new Error('Setuid, setgid and sticky ZIP modes are not supported.');
+      if (unix && (unixType === 0x4000) !== directoryEntry) throw new Error('Unix ZIP directory type mismatch.');
       if ((directoryEntry && uncompressedSize !== 0) || (unixType === 0x4000 && !directoryEntry)) throw new Error('ZIP directory metadata mismatch.');
       uncompressedTotal += uncompressedSize;
       if (uncompressedTotal > 2 * 1024 * 1024 * 1024) throw new Error('ZIP uncompressed total is too large.');
@@ -159,7 +166,7 @@ export async function readZipEntries(filename) {
       if (decoder.decode(localName) !== rawName) throw new Error('ZIP local/central path mismatch.');
       const dataOffset = localOffset + 30 + localNameLength + header.readUInt16LE(28);
       if (dataOffset + compressedSize > directoryOffset) throw new Error('ZIP data exceeds central directory boundary.');
-      entries.push({ path: name, type: directoryEntry ? 'directory' : 'file', size: uncompressedSize, compressedSize, dataOffset, method });
+      entries.push({ path: name, type: directoryEntry ? 'directory' : unixType === 0xa000 ? 'symlink' : 'file', size: uncompressedSize, compressedSize, dataOffset, method, ...(unix ? { mode: (external >>> 16) & 0o777 } : {}) });
       offset = end;
     }
     if (entries.length !== count) throw new Error('ZIP entry count mismatch.');

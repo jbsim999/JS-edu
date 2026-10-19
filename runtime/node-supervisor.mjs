@@ -11,6 +11,13 @@ let outputLines = 0;
 let outputTruncated = false;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+// The trusted provider starts POSIX supervisors with detached:true, making this
+// fresh PID the session/process-group leader. A group with this still-live PID
+// must exist before any learner Worker starts. No caller-supplied PGID is used.
+let ownedPosixProcessGroup;
+if (process.platform !== 'win32' && process.pid > 1) {
+  try { process.kill(-process.pid, 0); ownedPosixProcessGroup = process.pid; } catch { /* Fail closed before starting a learner below. */ }
+}
 
 process.on('message', async function initialize(message) {
   if (initialized || message?.protocol !== protocol || typeof message.auth !== 'string' || !/^[a-f0-9]{64}$/.test(message.auth)) return;
@@ -27,6 +34,10 @@ process.on('message', async function initialize(message) {
     const mac = createHmac('sha256', secret).update(String(index)).update(serialize(payload)).digest('hex');
     process.send({ protocol, sequence: index, payload, mac });
   };
+  if (process.platform !== 'win32' && !ownedPosixProcessGroup) {
+    authenticatedSend({ type: 'complete', status: 'infrastructure-error', error: '독립 Node 프로세스 그룹의 소유권을 확인하지 못했습니다.' });
+    return;
+  }
   const output = (stream, value, truncated = false) => {
     if (outputTruncated) return;
     const text = typeof value === 'string' ? value : decoder.decode(value);
@@ -96,5 +107,17 @@ process.on('message', async function initialize(message) {
   // would make descendant cleanup less reliable on Windows.
 });
 
-process.on('disconnect', () => { void stopActive?.({ type: 'complete', status: 'cancelled' }); process.exit(0); });
+process.on('disconnect', () => {
+  if (process.platform !== 'win32') {
+    if (ownedPosixProcessGroup) {
+      // A killed service cannot perform its usual -supervisorPid cleanup. Kill
+      // our verified group, including this supervisor and same-group children.
+      // Descendants that explicitly create another group/session are not covered.
+      try { process.kill(-ownedPosixProcessGroup, 'SIGKILL'); return; } catch { /* Never report unsuccessful reclamation as clean shutdown. */ }
+    }
+    process.exit(1);
+  }
+  void stopActive?.({ type: 'complete', status: 'cancelled' });
+  process.exit(0);
+});
 process.on('uncaughtException', error => { authenticatedSend?.({ type: 'complete', status: 'infrastructure-error', error: String(error?.message ?? 'Node supervisor 오류').slice(0, 2000) }); });

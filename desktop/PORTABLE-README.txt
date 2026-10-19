@@ -1,4 +1,4 @@
-JavaScript-edu 0.1.0 — Windows x64 portable
+JavaScript-edu — Windows x64 portable (정확한 버전은 BUILD-INFO.json)
 
 시작하기
 1. ZIP 전체를 쓰기 가능한 일반 폴더에 해제하세요.
