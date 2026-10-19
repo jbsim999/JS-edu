@@ -5,10 +5,12 @@ import childProcess, { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { syncBuiltinESMExports } from 'node:module';
 import { PassThrough } from 'node:stream';
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import filesystem from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { Worker, MessageChannel } from 'node:worker_threads';
+import { fileURLToPath } from 'node:url';
 import { createNodeExecution } from '../web/server/node-execution.mjs';
 import { createNodeRunner, fingerprintSource, serializeNodeSource } from '../web/execution/node-runner.mjs';
 import { decodeNodeValue, encodeNodeValue, nodeLimits, validateNodeSnapshot } from '../runtime/node-contract.mjs';
@@ -29,7 +31,13 @@ const apiRequest = payload => Object.fromEntries(Object.entries(payload).filter(
 
 async function fixture(t, exercise = contract(), options = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'javascript-edu-node-api-test-'));
-  const provider = createNodeExecution({ executable, expectedVersion: options.expectedVersion ?? version, exercises: [exercise], loadGrader: options.loadGrader ?? (async () => grader(exercise, options.cases)), workspaceParent: root, caseTimeoutMs: options.caseTimeoutMs, totalTimeoutMs: options.totalTimeoutMs });
+  let workspaceParent = root;
+  if (options.workspaceParentAlias) {
+    await mkdir(path.join(root, 'canonical'));
+    workspaceParent = path.join(root, 'alias');
+    await symlink(path.join(root, 'canonical'), workspaceParent, process.platform === 'win32' ? 'junction' : 'dir');
+  }
+  const provider = createNodeExecution({ executable, expectedVersion: options.expectedVersion ?? version, exercises: [exercise], loadGrader: options.loadGrader ?? (async () => grader(exercise, options.cases)), workspaceParent, caseTimeoutMs: options.caseTimeoutMs, totalTimeoutMs: options.totalTimeoutMs });
   let origin;
   const server = createServer((req, res) => { void provider.handle(req, res, origin).then(handled => { if (!handled) { res.writeHead(404); res.end('Not found'); } }).catch(error => { res.writeHead(500); res.end(error.message); }); });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
@@ -53,7 +61,7 @@ async function fixture(t, exercise = contract(), options = {}) {
   const assertClean = async () => {
     for (const directory of await readdir(root)) if (directory.startsWith('javascript-edu-node-')) assert.deepEqual(await readdir(path.join(root, directory)), []);
   };
-  return { root, provider, origin, runner, config, post, assertClean };
+  return { root, workspaceParent, provider, origin, runner, config, post, assertClean };
 }
 
 test(`Node ${version}: real fixed binary prepares, runs, submits, and removes job files`, async t => {
@@ -207,6 +215,51 @@ test('Node native imports, CJS, top-level await, fs and streams work in the data
   const f = await fixture(t, exercise, { cases: [{ id: 'native', label: 'files and stream', probe: 'observe(await submission.read(context.workspaceRoot));', expected: [42, 'a\nb', 'a\nb'] }] });
   const result = await f.runner.submit(await request(exercise));
   assert.equal(result.status, 'success', result.stderr);
+  await f.assertClean();
+});
+
+test('Node workspace aliases use canonical paths for permission grants and cleanup', async t => {
+  const exercise = contract({ 'main.mjs': `import {realpath,writeFile,readFile} from 'node:fs/promises'; import {join} from 'node:path'; export async function read(root){const directory=await realpath(root);const file=join(directory,'note.txt');await writeFile(file,'42');return Number(await readFile(file,'utf8'));}` });
+  const f = await fixture(t, exercise, { workspaceParentAlias: true });
+  const result = await f.runner.submit(await request(exercise));
+  assert.equal(result.status, 'success', result.stderr + JSON.stringify(result.checks));
+  await f.provider.close();
+  assert.deepEqual(await readdir(path.join(f.root, 'canonical')), []);
+});
+
+test('trusted Node bootstrap remains alive until its parent terminates it after private completion', { timeout: 5000 }, async t => {
+  const root = await mkdtemp(path.join(tmpdir(), 'javascript-edu-bootstrap-test-'));
+  const bridge = path.join(root, 'bridge.mjs');
+  await writeFile(bridge, 'export const submission = {};');
+  const channel = new MessageChannel();
+  const worker = new Worker(new URL('../runtime/node-worker.mjs', import.meta.url), {
+    execArgv: ['--permission', `--allow-fs-read=${fileURLToPath(new URL('..', import.meta.url))}`, `--allow-fs-read=${root}`, `--allow-fs-write=${root}`, '--no-addons'], stdout: true, stderr: true,
+  });
+  t.after(async () => {
+    await worker.terminate(); channel.port1.close(); channel.port2.close();
+    const relative = path.relative(tmpdir(), root);
+    assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative) && path.basename(root).startsWith('javascript-edu-bootstrap-test-'));
+    await rm(root, { recursive: true, force: true });
+  });
+  let exited = false;
+  const observation = new Promise((resolve, reject) => {
+    channel.port1.once('message', resolve);
+    worker.once('error', reject);
+    worker.once('exit', code => { exited = true; reject(new Error(`Bootstrap exited before parent cleanup: ${code}`)); });
+  });
+  worker.postMessage({ protocol: 'javascript-edu-node-v1', port: channel.port2, mode: 'prepare', context: { workspaceRoot: root },
+    bridgePath: bridge, requiredFeatures: [], allowWorker: false, limits: { outputBytes: 65536, outputLines: 200 } }, [channel.port2]);
+  assert.equal((await observation).status, 'ready');
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert.equal(exited, false, 'Private completion must arrive before parent-controlled Worker termination');
+});
+
+test('Node native beforeExit can settle a probe before the private completion keepalive starts', async t => {
+  const exercise = contract({ 'main.mjs': `export async function read() { await new Promise(resolve => process.once('beforeExit', resolve)); return 42; }` });
+  const f = await fixture(t, exercise);
+  const result = await f.runner.submit(await request(exercise));
+  assert.equal(result.status, 'success', result.stderr);
+  assert.equal(result.checks[0].actual, 42);
   await f.assertClean();
 });
 

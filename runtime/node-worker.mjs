@@ -35,6 +35,7 @@ import { parentPort, MessagePort } from 'node:worker_threads';
   const writeStdout = stdout.write;
   const writeStderr = stderr.write;
   const nativeSetTimeout = setTimeout;
+  const nativeSetInterval = setInterval;
   const nativeClearTimeout = clearTimeout;
   let initialized = false;
 
@@ -62,6 +63,11 @@ import { parentPort, MessagePort } from 'node:worker_threads';
       if (finishing) return;
       if (data.type !== 'complete') { postResult(data); return; }
       finishing = true;
+      // Only hold the Worker after completion is known: an earlier ref would
+      // change native idle/exit behavior (including node:test stream completion).
+      // The supervisor receives the private result then explicitly terminates
+      // this Worker. A timer carries no observation authority, unlike port.ref().
+      apply(nativeSetInterval, undefined, [() => {}, 1000]);
       // Worker stdout uses a different internal port. A completion message may
       // overtake buffered writes, so flush both streams before parent termination.
       let pending = 2;

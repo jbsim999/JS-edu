@@ -1,0 +1,93 @@
+{
+  "baseCommit": "5c991e6a19b479d286193c79b012723ccce8c9e2",
+  "scope": "Runtime CI hardening; source only, reports excluded; Git index/work/m5-ci-review-final/current bytes match",
+  "algorithm": "SHA256 of file + NUL + sha256 + LF in sorted path order",
+  "sourceCount": 3,
+  "aggregateSha256": "3548312fb82354089a17625ed0517cbeab9b51ec968c4dec70d25d8f7fab897d",
+  "files": [
+    {
+      "file": "runtime/node-worker.mjs",
+      "sha256": "1f7c887a095609655192e37f132e794e6a0a34b3ee30801847e455b4929d2125"
+    },
+    {
+      "file": "tests/node-runtime.test.mjs",
+      "sha256": "b0ebf07e4b2f89418a04de8bac851c605afbb8bf8b35d98a82b21278d38aff7d"
+    },
+    {
+      "file": "web/server/node-execution.mjs",
+      "sha256": "e25eab979552e524e8ca2e70f679ca65e27f726ffa6cb62956e27ea1f7fdc23d"
+    }
+  ],
+  "initialRemoteFailures": {
+    "general": "https://github.com/jbsim999/JS-edu/actions/runs/39189509471",
+    "node": "https://github.com/jbsim999/JS-edu/actions/runs/39189509624"
+  },
+  "reproductions": [
+    {
+      "case": "Workspace parent junction alias",
+      "before": "runtime-error: child exited before observation",
+      "after": "Native canonical path write/read succeeds and canonical parent is empty after close"
+    },
+    {
+      "case": "Trusted bootstrap lifetime after private completion",
+      "before": "Worker exits before parent termination",
+      "after": "Worker remains alive until the supervisor terminates it; private port remains unreferenced"
+    }
+  ],
+  "actualChecks": {
+    "nativeDriver": "Windows Node22.17.0; selected learner executable Node24.22.0",
+    "syntax": 296,
+    "regressionTests": 281,
+    "regressionSkips": 0,
+    "boundaryRegressionTests": 5,
+    "node": {
+      "startedAt": "2026-10-19T02:39:24.514Z",
+      "completedAt": "2026-10-19T02:40:32.367Z",
+      "environment": {
+        "available": true,
+        "actualRuntime": "Node.js 24.22.0 (win32/x64; native process + Worker)",
+        "runtimeVersion": "24.22.0",
+        "environmentFingerprint": "javascript-edu-node-v1:sha256:0873bf3c57638bb7dec01cc63374a5cc345a342a65d6b7f5392677fd73ee70e4",
+        "limits": {
+          "files": 16,
+          "fileBytes": 102400,
+          "totalBytes": 524288,
+          "bodyBytes": 800000,
+          "bodyTimeoutMs": 5000,
+          "active": 1,
+          "pending": 1,
+          "queue": 0,
+          "caseTimeoutMs": 2500,
+          "totalTimeoutMs": 15000,
+          "outputBytes": 65536,
+          "outputLines": 200,
+          "resultBytes": 262144,
+          "heapMb": 64,
+          "hardMemoryLimit": false,
+          "networkRestricted": false
+        },
+        "limitations": "자기 PC에서 Node.js 코드를 실행합니다. fs API의 허용 경로를 임시 실습 폴더로 설정하지만 Node Permission Model은 OS 보안 샌드박스가 아니며, 기존 파일 디스크립터·링크·네트워크 접근 전체를 격리하지 않습니다. 64MB는 JavaScript 힙 설정이며 전체 메모리의 강제 상한이 아닙니다. 하위 Worker를 허용한 과제에서는 Worker 실행 옵션으로 권한 제한을 벗어날 수 있습니다. 신뢰할 수 있는 학습 코드만 실행하세요.",
+        "reason": "고정 Node 실행 파일과 임시 실습 폴더를 사용합니다."
+      },
+      "summary": {
+        "exercises": 11,
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "referenceChecks": 110,
+        "examplesRun": 11,
+        "examplesCompared": 11,
+        "exampleFailures": 0
+      },
+      "cleanupConfirmed": true,
+      "sourceInputCount": 87,
+      "sourceInputsSha256": "e096d5251af71e120f1a10871650f539a34ea905c079acbbef8fa16de044f7f9"
+    },
+    "browser": "No browser/UI source changes; M5 actual Chrome44/361 evidence remains scoped to the M5 baseline"
+  },
+  "limitations": [
+    "Public self-study checks; Node Permission Model is not an OS sandbox or network restriction",
+    "Physical devices, actual 200% zoom, OS IME and screen reader remain unverified",
+    "Packaging deferred; remote follow-up outcomes belong to the exact commit in GitHub Actions"
+  ]
+}

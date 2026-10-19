@@ -1,5 +1,7 @@
 # M5 Node 제공자와 전체 로드맵 검증
 
+> 이 문서는 첫 M5 커밋의 검증 기준선이다. 이후 원격 CI에서 발견한 실행 경계의 수정과 최신 Node 재검증은 [CI 보완 기록](runtime-ci-verification.md)을 따른다.
+
 2026-10-19 최종 로컬 검증 기록. 선행 M4는 `10fa0d7a6dae4535a2265714a7b688e5f4a43743`으로 커밋·푸시했으며 [원격 CI](https://github.com/jbsim999/JS-edu/actions/runs/39184672700)가 성공했다. M5의 확정 소스를 Git index에서 `work/m5-review-final`로 분리해 필수 검사와 실제 브라우저·Node 실행을 확인했다. 최종 독립 코드·증거 대조 판정 PASS, 미해결 P1/P2 없음. 변경 소스119개 index/분리본/작업본과 Node 입력87개·실행 기록11개 모두 불일치가 없었다.
 
 ## 범위와 실제 실행

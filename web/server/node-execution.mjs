@@ -40,6 +40,7 @@ export function createNodeExecution({ executable, expectedVersion = '24.22.0', e
   let environment;
   let base;
   let resolvedExecutable;
+  let resolvedWorkspaceParent;
   const loader = loadGrader ?? (async exercise => {
     if (typeof exercise.graderFile !== 'string' || !/^curriculum\/checks\/[a-z0-9-]+\.json$/.test(exercise.graderFile)) throw new Error('허용된 고정 Node 검사기 파일이 없습니다.');
     return JSON.parse(await readFile(new URL(exercise.graderFile, projectRoot), 'utf8'));
@@ -53,7 +54,8 @@ export function createNodeExecution({ executable, expectedVersion = '24.22.0', e
       let actualArchitecture;
       try {
         resolvedExecutable = await realpath(executable);
-        base = await mkdtemp(path.join(workspaceParent, 'javascript-edu-node-'));
+        resolvedWorkspaceParent = await realpath(workspaceParent);
+        base = await mkdtemp(path.join(resolvedWorkspaceParent, 'javascript-edu-node-'));
         const probe = `console.log(JSON.stringify({version:process.versions.node,platform:process.platform,architecture:process.arch,permission:!!process.permission,child:process.permission?.has('child'),addons:process.permission?.has('addons')}))`;
         const result = await new Promise((resolve, reject) => {
           let stdout = '';
@@ -324,7 +326,7 @@ export function createNodeExecution({ executable, expectedVersion = '24.22.0', e
     closed = true;
     if (active) await finish(active, 'cancelled');
     await preparation?.catch(() => {});
-    if (base) { assertChildPath(workspaceParent, base); await rm(base, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
+    if (base) { assertChildPath(resolvedWorkspaceParent, base); await rm(base, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); }
   }
   return Object.freeze({ handle, close, getEnvironment });
 }

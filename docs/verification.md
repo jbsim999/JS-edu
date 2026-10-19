@@ -1,5 +1,11 @@
 # 검증 기록
 
+## 2026-10-19 M5 원격 CI 후속 보완
+
+첫 M5 원격검사의 private 완료/Worker exit 경합과 Windows 임시 parent 별칭 권한 오류를 실제 로그 및 로컬 FAIL로 재현·수정했다. 완료 전 native idle을 유지하고 완료 응답 전송 구간에만 Worker 수명을 유지한다. canonical parent에서 권한/컨텍스트/삭제 경계를 파생하며 권한 범위는 넓히지 않는다.
+
+최종 index 분리본의 구문296·회귀281/281·skip0, 경계5회귀와 실제Node11과제110조건·예제11·각11starter/오답 거부·정리 PASS(02:39:24.514–02:40:32.367Z). 원본87개와 실행기록11개 일치. 변경소스3개의 index/분리본/작업본 SHA집계3548312fb82354089a17625ed0517cbeab9b51ec968c4dec70d25d8f7fab897d. [상세·독립 판정](runtime-ci-verification.md), [스냅샷](runtime-ci-verification-evidence.json)을 따른다. 브라우저/UI 변경 없이 M5기준선의 실제361조건 증거와 한계 고지를 유지한다. 후속 원격검사는 정확한 커밋의 Actions에서 확인한다.
+
 ## 2026-10-19 M5 전체 로드맵·실제 Node·호스트 화면
 
 최종 Git index 분리본에서52강 구조·구문296·회귀278/278·skip0 PASS. Windows 제작자Node22.17.0과 고정실행Node24.22.0을 구분해 실행했다. 일반 제작자33과제271검사·예제33·각33negative 거부는 PASS,DOM11+Node11의 skip22개는 PARTIAL로 유지한다. 실제 Chrome155/Windows44과제361/361·negative88·DOM예제11·실행기16조건(02:11:09.698–02:12:07.256Z), 실제Node24.22.0/Windows x64의11과제110/110·각11starter/대표 오답 거부·예제11·정리(02:12:33.218–02:13:47.014Z) PASS다. 최종55실습471행동 조건과 원본입력87개 지문을 대조했다.
