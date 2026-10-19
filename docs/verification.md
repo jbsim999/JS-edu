@@ -1,5 +1,9 @@
 # 검증 기록
 
+## 2026-10-19 Windows 소스·빌드 게이트 PASS
+
+동결 소스의 전체 검사 PASS: 구조52강·구문306·회귀294/294·fail0·skip0, 제작자33과제271조건/예제33 PASS와 호스트22 skip PARTIAL을 구분했다. 검사 입력486파일 SHA256 집계 `b3cb3e353dbcea697524e8dd46940219ea6c17dc608a0b33dfac5e440fce629a`를 전후·독립 리뷰에서 일치 확인했다. 패키징13회귀와 세P2·startup·Windows 서비스 수명 수정 검토 PASS, 미해결 P1/P2 없음. 실제 EXE 원본/한글이동본의 N01·WM_CLOSE·exit0·TEMP0 probe도 확인했다. 중간09 전체 FAIL은 보존한다. clean HEAD 최종 ZIP/full native 게이트는 후속이며 [패키지 검증](desktop-packaging-verification.md)을 따른다. 아래는 과거 시점의 보존 기록이다.
+
 ## 2026-10-19 최종 원격 검사6/6 PASS
 
 검증 코드 `646c0e1595dbe562889815eeecaffee1f0ef25f0`의 [일반 CI39191939724](https://github.com/jbsim999/JS-edu/actions/runs/39191939724) Windows/Ubuntu×Node22/24 네 job, [고정 Node CI39191939830](https://github.com/jbsim999/JS-edu/actions/runs/39191939830) Windows/Ubuntu×정확한24.22.0 두 job을 모두 success로 확인했다. 첫 실패를 재현·수정한 뒤의 결과이며 일반 CI의 조건부 host skip과 실제 고정 Node 전수 검사는 구분한다. 문서 후속 커밋은 이 결과를 기록하며 제품 코드를 바꾸지 않는다.

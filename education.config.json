@@ -10,7 +10,8 @@
     "ES2026"
   ],
   "delivery": [
-    "web-textbook"
+    "web-textbook",
+    "windows-portable"
   ],
   "executionMode": "local-multi-provider",
   "sourcePolicy": "Official language/API/tool documentation; job-post observations recorded separately",

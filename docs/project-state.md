@@ -1,5 +1,15 @@
 # 현재 상태
 
+## 2026-10-19 Windows 소스 검증 완료 / 최종 ZIP 생성 전
+
+Windows portable 구현·소스 동결·전체 검사·독립 코드 게이트 PASS다. 구조52·구문306·회귀294/294/skip0와 제작자33/271·예제33 PASS, 호스트22 skip PARTIAL을 구분했다. 입력486파일 지문집계b3cb3e353dbcea697524e8dd46940219ea6c17dc608a0b33dfac5e440fce629a를 독립 대조했다. 실제 EXE 원본·한글/공백/&이동본의 각N01 8/8·같은origin·WM_CLOSE·exit0·TEMP0 PASS. 중간09 전체FAIL은 보존하며 최종clean HEAD ZIP·전체native 게이트는 남아 있다. 소스커밋 후 최종 산출물을 만들고 검증한다. [최종 패키지 검증](desktop-packaging-verification.md), [구현 계약](desktop-packaging-implementation.md)을 따른다. 공개 바이너리 게시·서명·main 병합은 수행하지 않는다.
+
+## 2026-10-19 최종 화면 검수와 Windows 패키징 착수
+
+사용자가 남은 화면 검수를 완료하고 문제없으면 최종 패키징하도록 승인했다. 이전의 패키징 보류는 이번 단계에서 해제한다. `junbo-desktop-runtime-packaging`을 적용해 Windows x64 포터블 ZIP과 실제 포함 런타임 검증을 진행한다. main 병합·외부 배포·공개 릴리스 게시 권한은 추가하지 않는다.
+
+기존 UI의 Chrome 추가 화면 검수는 [최종 화면 검수](final-screen-verification.md) 범위 PASS다. 사용자 4179 탭과 데이터를 보존했고 별도4188 검사 서버는 종료했다. 실제 200% 확대는 최종 Electron 앱의 page zoom으로 추가 확인한다. 앱 구현·vendor 무결성·최종ZIP·기동·독립 검토가 끝나기 전 패키징 완료로 표시하지 않는다. 아래는 이전 마일스톤의 보존 이력이다.
+
 ## 2026-10-19 M5 완료 — 원격 검사6개 통과
 
 최종 검증 코드 기준은 `646c0e1595dbe562889815eeecaffee1f0ef25f0`이며 feat/runtime-and-curriculum에 푸시했다. [일반 CI39191939724](https://github.com/jbsim999/JS-edu/actions/runs/39191939724)의 Windows/Ubuntu×Node22/24 네 job과 [고정 Node CI39191939830](https://github.com/jbsim999/JS-edu/actions/runs/39191939830)의 Windows/Ubuntu×Node24.22.0 두 job이 모두 success다. 이후 문서 변경은 이 검증 결과의 인계 기록이다.

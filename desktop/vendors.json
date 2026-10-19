@@ -1,0 +1,25 @@
+{
+  "target": { "platform": "win32", "architecture": "x64", "minimumOs": "Windows 10 (supported Microsoft servicing channel); Windows 11 recommended" },
+  "electron": {
+    "version": "44.9.0",
+    "archive": "electron-v44.9.0-win32-x64.zip",
+    "downloadUrl": "https://github.com/electron/electron/releases/download/v44.9.0/electron-v44.9.0-win32-x64.zip",
+    "checksumUrl": "https://github.com/electron/electron/releases/download/v44.9.0/SHASUMS256.txt",
+    "sha256": "88e08039d0ef359bab9f674e8051fa103bd8628ea7c5a5e1daaa610a8a0c6931",
+    "releaseUrl": "https://releases.electronjs.org/release/v44.9.0",
+    "licenseUrl": "https://github.com/electron/electron/blob/v44.9.0/LICENSE",
+    "licenseFiles": ["LICENSE", "LICENSES.chromium.html"],
+    "chromium": "152.0.7977.167",
+    "embeddedNode": "24.22.0",
+    "distribution": "Official complete Windows x64 ZIP; no vendor file removed or edited"
+  },
+  "node": {
+    "version": "24.22.0",
+    "archive": "node-v24.22.0-win-x64.zip",
+    "downloadUrl": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-win-x64.zip",
+    "checksumUrl": "https://nodejs.org/dist/v24.22.0/SHASUMS256.txt",
+    "sha256": "f9683a19877e12a9b167305c8db71040d812876359de21f0d2e97c3f321f80c3",
+    "licenseUrl": "https://github.com/nodejs/node/blob/v24.22.0/LICENSE",
+    "distribution": "Official complete Windows x64 ZIP, including npm, Corepack and notices"
+  }
+}

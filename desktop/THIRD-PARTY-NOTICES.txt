@@ -1,0 +1,34 @@
+JavaScript-edu third-party distributions
+
+Electron 44.9.0
+Official release: https://github.com/electron/electron/releases/tag/v44.9.0
+Electron is MIT-licensed. The complete official Windows x64 distribution is preserved.
+The original LICENSE and LICENSES.chromium.html are at the package root.
+LICENSES.chromium.html contains notices and license text for bundled Chromium components.
+It includes the FFmpeg LGPL v2.1+ notice and other reciprocal licenses; the distribution
+must not be described as entirely MIT-licensed. ffmpeg.dll and all notices are preserved.
+Upstream source and version-pinned build context:
+https://github.com/electron/electron/tree/v44.9.0
+Chromium 152.0.7977.167: https://chromium.googlesource.com/chromium/src/+/152.0.7977.167
+
+Node.js 24.22.0 (learner runtime, separate native process)
+Official release: https://nodejs.org/dist/v24.22.0/
+The complete official Windows x64 distribution, npm and all third-party notices are preserved.
+License text: resources/vendor/node/node-v24.22.0-win-x64/LICENSE
+Node.js licensing includes MIT and the licenses of its included components; read the complete LICENSE.
+Version-pinned source: https://github.com/nodejs/node/tree/v24.22.0
+Official source archive: https://nodejs.org/dist/v24.22.0/node-v24.22.0.tar.xz
+
+The source URLs are upstream references, not a statement that a separate correspondence-source
+archive has been attached to a public JavaScript-edu release. This package is a local build;
+no public binary release or installer signing is performed by this workflow.
+Before a public binary release, confirm and provide the matching corresponding source,
+build/patch instructions and redistribution terms required by the actually linked LGPL/MPL
+and other components. Those obligations are not discharged merely by copying this notice
+or linking a repository. No public-distribution license-compliance sign-off is claimed here.
+
+Original vendor files are not edited, trimmed, or re-signed. JavaScript-edu.exe is an extra
+byte-identical copy of electron.exe so the complete vendor distribution stays intact.
+JavaScript-edu's code/course licensing is separate from these third-party licenses.
+The project currently has no project-wide redistribution license; public source visibility
+alone does not establish a license for reusing the application or course content.

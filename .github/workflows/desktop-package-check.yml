@@ -1,0 +1,32 @@
+name: desktop-package-check
+on:
+  push:
+    branches: [main, 'feat/runtime-and-curriculum']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  windows-portable:
+    name: portable extraction and native app (Windows x64)
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.0'
+      - name: Build clean source and compare final ZIP contents
+        run: |
+          pwsh --version
+          node scripts/package-desktop.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify the extracted native application
+        shell: pwsh
+        run: |
+          $packageVersion = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
+          $manifestPath = Join-Path 'dist' "JavaScript-edu-$packageVersion-win-x64.manifest.json"
+          $packageReport = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+          if ($packageReport.sourceDirty -or $packageReport.status -ne 'PASS' -or $packageReport.sourceCommit -ne $env:GITHUB_SHA) { throw 'A clean verified package from this checkout is required.' }
+          node scripts/check-desktop-smoke.mjs $packageReport.extractedPath --manifest $manifestPath --output-dir 'artifacts/desktop-ci-smoke'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
