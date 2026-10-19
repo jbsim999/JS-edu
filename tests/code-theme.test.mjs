@@ -42,8 +42,24 @@ test('marked functions, declarations, nested calls and literal backticks are eac
 
 test('ordinary product names and explanatory abbreviations remain prose', () => {
   const source = 'JavaScript와 Node.js, TDZ(Temporal Dead Zone)를 설명합니다. 약속과 지도는 일반 문장입니다.';
-  assert.equal(learningText(source), source);
+  assert.equal(textOf(learningText(source)), source);
+  assert.doesNotMatch(learningText(source), /<code/u);
   assert.equal(textOf(learningText('typeofValue와 myMap을 바꾸지 않는다.')), 'typeofValue와 myMap을 바꾸지 않는다.');
+});
+
+test('environment names and all eight specification types use consistent whole-name term surfaces', () => {
+  const source = 'Node.js와 Web Worker의 ECMAScript 타입은 Undefined·Null·Boolean·String·Symbol·Number·BigInt·Object다.';
+  const html = learningText(source);
+  const terms = [...html.matchAll(/<span class="technical-term">([^<]+)<\/span>/gu)].map(match => match[1]);
+  assert.deepEqual(terms, ['Node.js', 'Web Worker', 'ECMAScript', 'Undefined', 'Null', 'Boolean', 'String', 'Symbol', 'Number', 'BigInt', 'Object']);
+  assert.doesNotMatch(html, /<code/u);
+  assert.equal(textOf(html), source);
+  for (const code of ['Number("3")', 'Object.hasOwn(record, "id")', 'typeof null']) {
+    const rendered = learningText(code);
+    assert.doesNotMatch(rendered, /technical-term/u);
+    assert.equal(textOf(rendered), code);
+  }
+  assert.doesNotMatch(learningText('`Node.js`'), /technical-term/u, 'explicit code is authoritative');
 });
 
 test('blank lines split prose paragraphs without splitting a marked function body', () => {
@@ -112,9 +128,10 @@ test('all existing lesson and glossary text preserves visible content except exp
 
 test('inline code has an independently legible dark palette on either page theme', async () => {
   const css = await readFile(new URL('../web/code-theme.css', import.meta.url), 'utf8');
-  const rules = /\.inline-code\s*\{([^}]+)\}/u.exec(css)[1];
+  const rules = /\.inline-code, \.technical-term\s*\{([^}]+)\}/u.exec(css)[1];
   const background = /background:\s*(#[a-f\d]{6})/u.exec(rules)[1];
   const colors = [...rules.matchAll(/--syntax-[\w-]+:\s*(#[a-f\d]{6})/gu)].map(match => match[1]);
+  colors.push(/\.technical-term\s*\{\s*color:\s*(#[a-f\d]{6})/u.exec(css)[1]);
   const luminance = hex => hex.slice(1).match(/../gu).map(part => parseInt(part, 16) / 255).map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4).reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);
   for (const color of colors) assert.ok((luminance(color) + .05) / (luminance(background) + .05) >= 4.5, color);
 });

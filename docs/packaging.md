@@ -1,5 +1,11 @@
 # 데스크톱 패키징
 
+## 0.1.2 생성과 요청된 검수 생략
+
+사용자가 이번0.1.2의 패키징 후 검수를 생략하도록 명시했다. 기본 패키징 경로는 그대로 두고 이번 생성에는 `node scripts/package-desktop.mjs --skip-final-verification`을 사용한다. 세CPU의 정확한 소스를 선택하는 수동 workflow에서는 `source_commit=<40자리SHA>`, `skip_final_verification=true`를 지정한다.
+
+이 결과는 `BUILT_UNVERIFIED`이며 최종ZIP 재해제/내용 전수대조와 네이티브 앱 실행은 `SKIPPED_BY_REQUEST`다. 공급자 원본 checksum·필수 구조·CPU·빌드 복사 보존·소스 동일성은 패키지를 생성하는 필수 단계로 유지한다. 암호화 전송도 `--allow-unverified`를 양쪽에 명시하고 상태를 인증 데이터에 포함한다. 전송 성공은 패키지 검수 통과를 뜻하지 않는다. 이번 생성 후 다운로드/소스 식별자는 [현재 상태](project-state.md)와 [검증 기록](verification.md)에 별도로 기록한다.
+
 ## 현재 공개 프리뷰 · 2026-10-19
 
 사용자가 README에서 앱을 바로 다운로드하도록 후속 승인해 [v0.1.1](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)을 게시했다. Windows x64·Mac Intel·Apple Silicon의 최종 ZIP/native CI가 모두 PASS이며, [파일·소스·CPU 검증](desktop-0.1.1-evidence.json)과 [포함 도구의 고정 소스·패치·빌드 안내](desktop-source-provenance.md)를 함께 제공한다. 단독 EXE/설치 프로그램이 아닌 전체 런타임 포함 ZIP이다. 아래 미게시·로컬 범위 문장은 이 후속 승인 이전의 빌드 계약 이력이다.

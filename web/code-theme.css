@@ -23,7 +23,7 @@
 .syntax-code::selection, .syntax-code *::selection { background: var(--syntax-selection); }
 /* Inline snippets keep a dark surface in both page themes. Their own palette
    prevents the light page's dark token colors from disappearing on that surface. */
-.inline-code {
+.inline-code, .technical-term {
   --syntax-text: #e3e9dc; --syntax-keyword: #cbb2ed; --syntax-string: #c0d99b;
   --syntax-function: #a4d4e7; --syntax-number: #efbc8e; --syntax-comment: #a4b4a6;
   --syntax-property: #e4b1c5; --syntax-operator: #bdcdbf; --syntax-class: #e6ce90;
@@ -33,6 +33,7 @@
   display: inline-block; max-width: 100%; box-sizing: border-box;
   white-space: pre-wrap; overflow-wrap: anywhere; vertical-align: baseline;
 }
+.technical-term { color: #a8d6ce; }
 .inline-code::selection, .inline-code *::selection { background: #425b44; }
 .code-input { position: relative; min-width: 0; background: var(--paper); border-block: 1px solid var(--line); }
 .module-editor .code-input { border: 0; }
@@ -65,5 +66,6 @@
   .code-input .code-mirror { display: none; }
   .code-input #code-editor { color: CanvasText !important; -webkit-text-fill-color: CanvasText !important; caret-color: CanvasText; }
   .inline-code { color: CanvasText; background: Canvas; border-color: CanvasText; }
+  .technical-term { color: CanvasText; background: Canvas; border-color: CanvasText; }
   .inline-code .token { color: CanvasText; }
 }

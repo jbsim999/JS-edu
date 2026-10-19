@@ -17,19 +17,29 @@ function checkHeader(header) {
     || !/^[a-f\d]{40}$/u.test(header.sourceCommit) || !/^[a-f\d]{64}$/u.test(header.sha256)
     || !/^[a-f\d]{64}$/u.test(header.recipientFingerprint) || !Number.isSafeInteger(header.bytes) || header.bytes < 1
     || !['win32', 'darwin'].includes(header.platform) || !['x64', 'arm64'].includes(header.architecture)
-    || !/^[A-Za-z\d._-]+\.zip$/u.test(header.filename)) throw new Error('Invalid artifact transfer identity.');
+    || !/^[A-Za-z\d._-]+\.zip$/u.test(header.filename)
+    || (header.packageStatus !== undefined && !['PASS', 'BUILT_UNVERIFIED'].includes(header.packageStatus))) throw new Error('Invalid artifact transfer identity.');
 }
 
-export async function sealArtifact(manifestPath, recipientPath, outputDirectory) {
+function transferableManifest(manifest, allowUnverified) {
+  if (manifest.sourceDirty !== false) return false;
+  if (manifest.status === 'PASS') return true;
+  return allowUnverified === true && manifest.status === 'BUILT_UNVERIFIED'
+    && manifest.scope === 'build-only-final-package-verification-skipped'
+    && manifest.finalArchiveVerification === 'SKIPPED_BY_REQUEST'
+    && manifest.nativeApplicationTest === 'SKIPPED_BY_REQUEST';
+}
+
+export async function sealArtifact(manifestPath, recipientPath, outputDirectory, { allowUnverified = false } = {}) {
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
   const recipient = JSON.parse(await readFile(recipientPath, 'utf8'));
   const publicKey = createPublicKey(recipient.publicKey);
   if (publicKey.asymmetricKeyType !== 'rsa' || publicKey.asymmetricKeyDetails.modulusLength < 3072) throw new Error('RSA public key must be at least 3072 bits.');
   const header = { schemaVersion: 1, algorithm: 'RSA-OAEP-SHA256+AES-256-GCM', sourceCommit: manifest.sourceCommit,
     platform: manifest.target?.platform, architecture: manifest.target?.architecture, filename: manifest.package,
-    bytes: manifest.bytes, sha256: manifest.sha256, recipientFingerprint: fingerprint(recipient.publicKey) };
+    bytes: manifest.bytes, sha256: manifest.sha256, recipientFingerprint: fingerprint(recipient.publicKey), packageStatus: manifest.status };
   checkHeader(header);
-  if (manifest.status !== 'PASS' || manifest.sourceDirty !== false || recipient.fingerprint !== header.recipientFingerprint) throw new Error('A clean verified archive and matching recipient are required.');
+  if (!transferableManifest(manifest, allowUnverified) || recipient.fingerprint !== header.recipientFingerprint) throw new Error('A clean verified archive (or explicitly allowed build-only archive) and matching recipient are required.');
   const source = path.join(path.dirname(manifestPath), header.filename);
   if ((await stat(source)).size !== header.bytes || await fileHash(source) !== header.sha256) throw new Error('Verified archive no longer matches the manifest.');
   await mkdir(outputDirectory, { recursive: true });
@@ -48,12 +58,12 @@ export async function sealArtifact(manifestPath, recipientPath, outputDirectory)
 
 // Encryption is not a publisher signature. The caller must obtain the expected
 // manifest from the exact trusted CI run/commit and compare it independently.
-export async function unsealArtifact(sealedFile, privateKeyFile, expectedManifestFile, outputFile) {
+export async function unsealArtifact(sealedFile, privateKeyFile, expectedManifestFile, outputFile, { allowUnverified = false } = {}) {
   const metadata = JSON.parse(await readFile(`${sealedFile}.json`, 'utf8'));
   const expected = JSON.parse(await readFile(expectedManifestFile, 'utf8'));
   checkHeader(metadata.header);
   const header = metadata.header;
-  if (expected.status !== 'PASS' || expected.sourceDirty !== false || header.sourceCommit !== expected.sourceCommit
+  if (!transferableManifest(expected, allowUnverified) || (header.packageStatus ?? 'PASS') !== expected.status || header.sourceCommit !== expected.sourceCommit
     || header.filename !== expected.package || header.sha256 !== expected.sha256 || header.bytes !== expected.bytes
     || header.platform !== expected.target?.platform || header.architecture !== expected.target?.architecture) throw new Error('Envelope does not match the independently retrieved CI manifest.');
   const privateKey = createPrivateKey(await readFile(privateKeyFile));
@@ -81,7 +91,7 @@ export async function unsealArtifact(sealedFile, privateKeyFile, expectedManifes
     await pipeline(createReadStream(sealedFile), cipher, meter, output);
     if (bytes !== header.bytes || hash.digest('hex') !== header.sha256) throw new Error('Authenticated plaintext differs from the verified CI archive.');
     await copyFile(temporary, outputFile, constants.COPYFILE_EXCL);
-    return { status: 'PASS', file: outputFile, ...header };
+    return { status: 'PASS', scope: 'authenticated-artifact-transfer-only', file: outputFile, ...header };
   } finally {
     key.fill(0);
     if (created) await rm(temporary, { force: true });
@@ -89,8 +99,10 @@ export async function unsealArtifact(sealedFile, privateKeyFile, expectedManifes
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const [mode, ...args] = process.argv.slice(2);
-  if (mode === 'seal' && args.length === 3) console.log(JSON.stringify(await sealArtifact(...args)));
-  else if (mode === 'unseal' && args.length === 4) console.log(JSON.stringify(await unsealArtifact(...args)));
-  else throw new Error('Usage: seal <manifest> <public-recipient.json> <output-directory> | unseal <sealed-file> <private-key-file> <expected-manifest> <output-zip>');
+  const [mode, ...rawArgs] = process.argv.slice(2);
+  const args = rawArgs.filter(value => value !== '--allow-unverified');
+  const options = { allowUnverified: rawArgs.includes('--allow-unverified') };
+  if (mode === 'seal' && args.length === 3) console.log(JSON.stringify(await sealArtifact(...args, options)));
+  else if (mode === 'unseal' && args.length === 4) console.log(JSON.stringify(await unsealArtifact(...args, options)));
+  else throw new Error('Usage: seal <manifest> <public-recipient.json> <output-directory> [--allow-unverified] | unseal <sealed-file> <private-key-file> <expected-manifest> <output-zip> [--allow-unverified]');
 }

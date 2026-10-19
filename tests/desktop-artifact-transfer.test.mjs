@@ -66,3 +66,25 @@ test('dirty sources, changed payloads and replaced recipient identities are refu
   await writeFile(f.recipient,JSON.stringify({publicKey:pair.publicKey,fingerprint:'0'.repeat(64)}));
   await assert.rejects(sealArtifact(f.manifestFile,f.recipient,path.join(f.root,'wrong-recipient')),/matching recipient/);
 });
+
+test('build-only transfer requires explicit opt-in at both ends and cannot be relabelled verified', async t => {
+  const f = await fixture(t);
+  const skipped = { ...f.manifest, status: 'BUILT_UNVERIFIED', scope: 'build-only-final-package-verification-skipped', finalArchiveVerification: 'SKIPPED_BY_REQUEST', nativeApplicationTest: 'SKIPPED_BY_REQUEST' };
+  await writeFile(f.manifestFile, JSON.stringify(skipped));
+  await assert.rejects(sealArtifact(f.manifestFile, f.recipient, path.join(f.root, 'default')), /clean verified/);
+  const options = { allowUnverified: true };
+  const sealed = await sealArtifact(f.manifestFile, f.recipient, path.join(f.root, 'explicit'), options);
+  const output = path.join(f.root, 'build-only.zip');
+  await assert.rejects(unsealArtifact(sealed.file, f.key, f.manifestFile, output), /independently retrieved/);
+  await writeFile(f.manifestFile, JSON.stringify(f.manifest));
+  await assert.rejects(unsealArtifact(sealed.file, f.key, f.manifestFile, output, options), /independently retrieved/);
+  await writeFile(f.manifestFile, JSON.stringify(skipped));
+  const result = await unsealArtifact(sealed.file, f.key, f.manifestFile, output, options);
+  assert.equal(result.packageStatus, 'BUILT_UNVERIFIED');
+  assert.equal(result.scope, 'authenticated-artifact-transfer-only');
+  assert.deepEqual(await readFile(output), f.bytes);
+  for (const [field, value] of [['sourceDirty', true], ['finalArchiveVerification', 'PASS'], ['scope', 'unrecognized']]) {
+    await writeFile(f.manifestFile, JSON.stringify({ ...skipped, [field]: value }));
+    await assert.rejects(sealArtifact(f.manifestFile, f.recipient, path.join(f.root, `invalid-${field}`), options), /clean verified/);
+  }
+});

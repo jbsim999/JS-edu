@@ -28,10 +28,10 @@ async function downloadArchive(vendor, filename) {
   await rename(temporary, filename);
 }
 
-export async function packageDesktop({ outputDirectory = path.join(root, 'dist'), electronArchive, nodeArchive, allowDirty = false } = {}) {
+export async function packageDesktop({ outputDirectory = path.join(root, 'dist'), electronArchive, nodeArchive, allowDirty = false, skipFinalVerification = false } = {}) {
   if (process.platform === 'darwin') {
     const { packageDesktopMac } = await import('./package-desktop-macos.mjs');
-    return packageDesktopMac({ outputDirectory, electronArchive, nodeArchive, allowDirty });
+    return packageDesktopMac({ outputDirectory, electronArchive, nodeArchive, allowDirty, skipFinalVerification });
   }
   if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 native packaging is required; other host/CPU results are not equivalent.');
   const configuration = JSON.parse(await readFile(path.join(root, 'desktop', 'vendors.json'), 'utf8'));
@@ -105,6 +105,7 @@ export async function packageDesktop({ outputDirectory = path.join(root, 'dist')
   sourceDirty ||= sourceByteChanges.length > 0;
   const buildInfo = { product: 'JavaScript-edu', version: sourcePackage.version, sourceCommit, sourceDirty,
     sourceFilesSha256: hashManifest(sourceManifest), builtAt: new Date().toISOString(),
+    finalPackageVerification: skipFinalVerification ? 'SKIPPED_BY_REQUEST' : 'Reported in the external package manifest',
     buildHost: { platform: process.platform, architecture: process.arch, node: process.versions.node },
     target: configuration.target, signing: 'Unsigned application; vendor files are byte-preserved, not re-signed',
     electron: configuration.electron, learnerNode: configuration.node,
@@ -123,23 +124,29 @@ export async function packageDesktop({ outputDirectory = path.join(root, 'dist')
 
   const command = `Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory(${quotePowerShell(build)}, ${quotePowerShell(archivePath)}, [System.IO.Compression.CompressionLevel]::Optimal, $true)`;
   execFileSync(powershell(), ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command], { windowsHide: true, stdio: 'pipe', maxBuffer: 1024 * 1024 });
-  const extractedParent = path.join(work, 'final-zip-extracted');
-  await extractZip(archivePath, extractedParent);
-  const extracted = path.join(extractedParent, baseName);
-  const extractedManifest = await inventory(extracted);
-  const comparison = compareInventories(buildManifest, extractedManifest, 'Final extracted ZIP');
-  compareInventories(electronManifest, extractedManifest.filter(item => electronManifest.some(original => original.path === item.path)), 'Final ZIP Electron vendor');
-  compareInventories(nodeManifest, await inventory(path.join(extracted, 'resources', 'vendor', 'node')), 'Final ZIP Node vendor');
+  let extracted = null, comparison = null;
+  if (!skipFinalVerification) {
+    const extractedParent = path.join(work, 'final-zip-extracted');
+    await extractZip(archivePath, extractedParent);
+    extracted = path.join(extractedParent, baseName);
+    const extractedManifest = await inventory(extracted);
+    comparison = compareInventories(buildManifest, extractedManifest, 'Final extracted ZIP');
+    compareInventories(electronManifest, extractedManifest.filter(item => electronManifest.some(original => original.path === item.path)), 'Final ZIP Electron vendor');
+    compareInventories(nodeManifest, await inventory(path.join(extracted, 'resources', 'vendor', 'node')), 'Final ZIP Node vendor');
+  }
   // Pin the complete app snapshot again after copying/archiving to catch concurrent edits.
   for (const item of [...sourceManifest, ...buildInputFiles].filter(item => item.type === 'file')) if (await sha256File(path.join(root, item.path)) !== item.sha256) throw new Error(`Source changed while packaging: ${item.path}`);
   if (execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim() !== sourceCommit) throw new Error('Source commit changed during packaging.');
   if (!allowDirty && execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=normal'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim()) throw new Error('Source tree changed during final packaging.');
   const digest = await sha256File(archivePath);
-  const report = { status: 'PASS', scope: 'final-zip-extraction-and-byte-integrity-only', package: path.basename(archivePath), sha256: digest,
+  const report = { status: skipFinalVerification ? 'BUILT_UNVERIFIED' : 'PASS',
+    scope: skipFinalVerification ? 'build-only-final-package-verification-skipped' : 'final-zip-extraction-and-byte-integrity-only',
+    finalArchiveVerification: skipFinalVerification ? 'SKIPPED_BY_REQUEST' : 'PASS',
+    package: path.basename(archivePath), sha256: digest,
     bytes: (await stat(archivePath)).size, sourceCommit, sourceDirty, sourceFilesSha256: buildInfo.sourceFilesSha256,
-    target: configuration.target, buildPath: build, extractedPath: extracted, files: comparison.files,
+    target: configuration.target, buildPath: build, extractedPath: extracted, files: comparison?.files ?? null,
     electronFiles: electronManifest.filter(item => item.type === 'file').length, nodeFiles: nodeManifest.filter(item => item.type === 'file').length,
-    nativeApplicationTest: 'Not performed by the packaging command. Run check:desktop:smoke against this exact extracted path.',
+    nativeApplicationTest: skipFinalVerification ? 'SKIPPED_BY_REQUEST' : 'Not performed by the packaging command. Run check:desktop:smoke against this exact extracted path.',
     inventory: buildManifest };
   await writeFile(path.join(output, `${baseName}.manifest.json`), json(report));
   await writeFile(path.join(output, `${baseName}.sha256`), `${digest}  ${baseName}.zip\n`);
@@ -151,8 +158,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const options = {};
   for (let index = 0; index < args.length; index++) {
     if (args[index] === '--allow-dirty') options.allowDirty = true;
+    else if (args[index] === '--skip-final-verification') options.skipFinalVerification = true;
     else if (['--output-dir', '--electron-archive', '--node-archive'].includes(args[index]) && args[index + 1]) options[({ '--output-dir': 'outputDirectory', '--electron-archive': 'electronArchive', '--node-archive': 'nodeArchive' })[args[index]]] = args[++index];
-    else throw new Error('Usage: node scripts/package-desktop.mjs [--output-dir path] [--electron-archive path] [--node-archive path] [--allow-dirty]');
+    else throw new Error('Usage: node scripts/package-desktop.mjs [--output-dir path] [--electron-archive path] [--node-archive path] [--allow-dirty] [--skip-final-verification]');
   }
   console.log(JSON.stringify(await packageDesktop(options), null, 2));
 }

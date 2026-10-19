@@ -1,5 +1,11 @@
 # 현재 상태
 
+## 2026-10-19 0.1.2 명칭 표시 통일 / 검수 생략 패키징 준비
+
+사용자 승인: 코드/명칭 표시 기준을 전체에 통일하고 README 갱신·패키징·main 커밋푸시. 이번 최종 패키징 검수는 명시적으로 생략한다. 실행 코드/값은 code+구문색상, Node.js·Web Worker·명세의8타입 이름은 이름 전체의 technical-term+동일색으로 나눴다. 기본 타입 목록·타입/변환함수 문맥 등10파일34필드도 보완했다. 52강+Node변형3개/229문항/용어82개 대상 패턴·보호 데이터 대조 PASS, 웹55경로/229문항·용어표시7묶음 PASS. Node24.22 전체 소스 검사도 PASS(구문318·테스트322PASS/5skip/0fail·기본교재33실습271조건/호스트22skip). 원시 근거는 artifacts/consistent-content-labels.json, label-consistency-qa/, content-revision-qa/, labels-012-full-check.log다.
+
+새 버전은0.1.2다. 기본 패키징 검수는 유지하고 명시 --skip-final-verification/수동 workflow skip_final_verification=true일 때만 최종ZIP 재해제·앱검사를 건너뛴다. BUILT_UNVERIFIED/SKIPPED_BY_REQUEST로 기록하며 전송도 양쪽 명시 --allow-unverified를 요구한다. 원본 배포본·복사·CPU·정확한소스SHA·암호화전송 인증은 생성/전송 필수 단계로 유지한다. 최종 ref와 세CPU 생성 결과·다운로드는 완료 후 후속 문서 커밋에 기록한다. 기존0.1.1 릴리스/사용자 데이터는 보존한다.
+
 ## 2026-10-19 전체 본문 수정 / 완전한 코드 범위
 
 사용자의 후속 승인에 따라 이전 재검수 제안을 실제 교재에 반영했다. humanize-korean 기준으로 공통32강·호스트/통합20강·Node변형3개와 용어82개를 전수 검수했다. 52강의 학습 필드1076개와 용어 설명164필드를 수정하고, 동일한 문장이 중복된 과제 안내31필드를 검수본으로 동기화했다. 완전한 함수·객체·중첩 호출을 명시 백틱 범위 하나로 표시하며 코드 내부 빈 줄도 문단 분할 대상에서 제외한다. 첫 강의에는 정상적인 function 선언과 함수 이름 f / 호출 f() / 메서드 호출 obj.f()의 차이를 설명했다.

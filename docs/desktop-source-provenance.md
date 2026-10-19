@@ -1,6 +1,6 @@
-# JavaScript-edu 0.1.1 런타임 소스
+# JavaScript-edu 0.1.2 런타임 소스
 
-0.1.1은 공식 Electron 44.9.0과 Node.js 24.22.0 배포본을 수정 없이 포함한다. 아래 소스 파일은 애플리케이션 ZIP과 같은 [v0.1.1 Release](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)에서 제공한다. 앱 ZIP의 `LICENSE`, `LICENSES.chromium.html`, Node `LICENSE`와 제3자 고지를 그대로 보존한다. 이 문서는 소스의 버전·제공 위치·확인 범위를 기록하며 모든 의존성의 법률적 인증이나 바이너리 재현 빌드 결과를 의미하지 않는다.
+0.1.2는 0.1.1과 같은 공식 Electron 44.9.0과 Node.js 24.22.0 배포본을 수정 없이 포함한다. 포함 런타임의 버전을 바꾸지 않았으므로 아래 대응 소스는 기존 [v0.1.1 Release의 소스 첨부](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)를 그대로 제공한다. 앱 ZIP의 `LICENSE`, `LICENSES.chromium.html`, Node `LICENSE`와 제3자 고지를 보존한다. 0.1.2의 제품 코드는 해당 빌드 소스 커밋의 source-context로 별도 제공한다. 이번 최종 패키지 검수는 사용자 요청으로 생략했으며, 이 문서는 검수 통과나 바이너리 재현 빌드를 인증하지 않는다.
 
 ## 첨부 원본과 무결성
 

@@ -1,5 +1,17 @@
 # 검증 기록
 
+## 2026-10-19 0.1.2 코드/명칭 기준 통일과 명시적 build-only
+
+부분 키워드 자동 인식으로 Web Worker의 Worker만 강조되고 명세 타입 Undefined/Null만 누락되는 표시 불일치를 수정했다. 실행 코드와 자연어 전문 명칭을 구분한다. 명시 code 범위의 구문 색상은 그대로 유지하고, Node.js·Web Worker·ECMAScript 및 Undefined·Null·Boolean·String·Symbol·Number·BigInt·Object 등의 전체 명칭은 별도 technical-term으로 같은 배경/고정색을 적용한다. 타입 이름과 변환 함수·실제 값은 대소문자 변경으로 섞지 않고 문맥/명시 code 범위로 나눈다. [기준](code-theme.md)을 본문과 README에 명시했다.
+
+대상52강/Node변형3개·학습문장1987필드·용어82개246설명을 점검해10파일34필드를 보완했다. 타입 목록의 의미를 풀고 타입/함수 참조·Promise 반응/작업 명칭을 정리했다. ID·개정·출처·정답·실행 계약·예상 출력과 용어 예시/별칭은 대조해 보존했다. 코드와 명칭은 표시용이며 학습자 저장/채점 값은 변경하지 않았다.
+
+실제 소스 검사: 고정 Node24.22 npm run check 종료0, 구조·구문318개 PASS, 테스트327중322PASS/5skip/0fail, 기본교재33실습271조건·예제33PASS/호스트22skip. 코드 테마15/15(전체8타입/전체환경이름·명시코드우선·member/call비분절·원문·명칭색대비 포함). Chrome155 실제 웹55경로·229문항 PASS, 추가표시7묶음 PASS(light/dark의8타입 동일 배경/색, Node.js/Web Worker 전체이름, 함수전체유지,320/390/768,forced-colors,pageerror0). 총괄은 실제타입목록과환경명칭 합성 화면을 직접 검토했다. 실제 모바일/OS IME/스크린리더/이번소스의네이티브앱 검사는 하지 않았다.
+
+사용자는 수정 후 패키징을 승인하면서 **패키징 검수 생략**을 명시했다. 이에 --skip-final-verification과 workflow_dispatch의 skip_final_verification=true를 추가했다. 기본 경로의 최종해제/네이티브검수는 유지한다. 이번 생성 결과는 BUILT_UNVERIFIED, finalArchiveVerification/nativeApplicationTest는 SKIPPED_BY_REQUEST, extractedPath는 null이다. 원본 배포본 checksum·필수 구조·CPU·복사 보존·clean source SHA·동시 변경 차단은 생성 필수로 유지한다. 전송에는 --allow-unverified를 양끝에 명시하며 상태를 AES-GCM 인증 정보에 포함한다. 거짓 PASS 승격·dirty소스·미승인 전송 거부 회귀를 포함한 전송4/4, JS구문/YAML파싱 PASS. 패키지 최종 ZIP 해제·내용 전수대조·실제 앱 실행·제출 smoke·native 200%는 요청대로 수행하지 않는다. 생성 성공을 검수 PASS로 표시하지 않는다.
+
+원시 근거: artifacts/consistent-content-labels.json, artifacts/label-consistency-qa/report.json 및 PNG, artifacts/content-revision-qa/report.json, artifacts/labels-012-full-check.log. 최종 생성물/전송/게시 식별자는 생성 완료 후 별도로 연결한다. 기존0.1.1의 검수 PASS는 그 소스/버전 이력으로만 유지한다.
+
 ## 2026-10-19 전체 교재 실제 수정 / 코드 분절 회귀 보완
 
 사용자가 전체 검수 결과를 실제 본문에 반영하도록 승인했다. 이전 절의 읽기 전용 검수에서 구현 단계로 진행했다. 대상은52강의 목표·다섯 단계 본문·퀴즈와 Node변형3개, 용어82개의 요약·정의·오해 설명이다. 자연스러운 문장은 유지했고 문장/절의 분할·설명 순서 보완이 필요해 humanize-korean의 일반 파일 편집 경로를 사용했다. 문장별 원문→수정→규칙·표시만 수정·기술 정정을 구분한 로그를 남겼다. 정규식 단어 일괄 치환으로 윤문하지 않았다.

@@ -1,6 +1,6 @@
 {
   "name": "js-edu",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "JavaScript-edu local lessons, native exercises and behavior grading",

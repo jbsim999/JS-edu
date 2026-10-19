@@ -28,7 +28,7 @@ async function download(vendor, filename) {
   await rename(temporary, filename);
 }
 
-export async function packageDesktopMac({ outputDirectory = path.join(root, 'dist'), electronArchive, nodeArchive, allowDirty = false } = {}) {
+export async function packageDesktopMac({ outputDirectory = path.join(root, 'dist'), electronArchive, nodeArchive, allowDirty = false, skipFinalVerification = false } = {}) {
   const nativeHost = requireNativeMac();
   const architecture = nativeHost.architecture;
   const configuration = JSON.parse(await readFile(path.join(root, 'desktop', 'vendors-macos.json'), 'utf8'));
@@ -116,6 +116,7 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   const byteChanges = await assertHeadSourceBytes(root, [...sourceManifest, ...buildInputFiles], headBlobs, { allowDirty });
   sourceDirty ||= byteChanges.length > 0;
   const buildInfo = { product: 'JavaScript-edu', version: sourcePackage.version, sourceCommit, sourceDirty, sourceFilesSha256: digest(sourceManifest), builtAt: new Date().toISOString(),
+    finalPackageVerification: skipFinalVerification ? 'SKIPPED_BY_REQUEST' : 'Reported in the external package manifest',
     buildHost: { ...nativeHost, node: process.versions.node }, target: { platform: 'darwin', architecture, minimumOs: configuration.minimumOs },
     signing: 'Unsigned application wrapper. Original Electron x64 images are unsigned; arm64 retains linker-only code signatures and its upstream bundle signature check remains FAIL (unsealed). Every embedded code signature is individually verified without changing vendor bytes. No complete Electron bundle signature, Developer ID signing, notarization or Gatekeeper approval claimed.',
     electron, learnerNode: node, actualNode, originalVendorVerification, independentOriginalVerification,
@@ -129,26 +130,32 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   const buildManifest = await unixInventory(build);
   compareUnixInventories(electronManifest, await unixInventory(path.join(resources, 'vendor', 'electron')), 'Built Mac Electron vendor');
   compareUnixInventories(nodeManifest, await unixInventory(path.join(resources, 'vendor', 'node')), 'Built Mac Node vendor');
-  // -y stores symbolic links as links. Zip preserves Unix modes; all final entries
-  // are independently parsed, extracted and compared before native execution.
+  // -y stores symbolic links as links and preserves Unix modes. Final extraction
+  // remains the default; a requested build-only run records that it was skipped.
   execFileSync('/usr/bin/zip', ['-q', '-r', '-y', archivePath, baseName], { cwd: work, stdio: 'pipe', maxBuffer: 1024 * 1024 });
-  const extractedParent = path.join(work, 'final-zip-extracted');
-  await extractUnixZip(archivePath, extractedParent);
-  const extracted = path.join(extractedParent, baseName);
-  const extractedManifest = await unixInventory(extracted);
-  const comparison = compareUnixInventories(buildManifest, extractedManifest, 'Final extracted Mac ZIP');
-  const finalResources = path.join(extracted, 'JavaScript-edu.app', 'Contents', 'Resources');
-  compareUnixInventories(electronManifest, await unixInventory(path.join(finalResources, 'vendor', 'electron')), 'Final Mac Electron vendor');
-  compareUnixInventories(nodeManifest, await unixInventory(path.join(finalResources, 'vendor', 'node')), 'Final Mac Node vendor');
-  const finalVendorVerification = await inspectVendors(path.join(finalResources, 'vendor', 'electron'), path.join(finalResources, 'vendor', 'node'), 'final-zip');
+  let extracted = null, comparison = null, extractedManifest = null, finalVendorVerification = null;
+  if (!skipFinalVerification) {
+    const extractedParent = path.join(work, 'final-zip-extracted');
+    await extractUnixZip(archivePath, extractedParent);
+    extracted = path.join(extractedParent, baseName);
+    extractedManifest = await unixInventory(extracted);
+    comparison = compareUnixInventories(buildManifest, extractedManifest, 'Final extracted Mac ZIP');
+    const finalResources = path.join(extracted, 'JavaScript-edu.app', 'Contents', 'Resources');
+    compareUnixInventories(electronManifest, await unixInventory(path.join(finalResources, 'vendor', 'electron')), 'Final Mac Electron vendor');
+    compareUnixInventories(nodeManifest, await unixInventory(path.join(finalResources, 'vendor', 'node')), 'Final Mac Node vendor');
+    finalVendorVerification = await inspectVendors(path.join(finalResources, 'vendor', 'electron'), path.join(finalResources, 'vendor', 'node'), 'final-zip');
+  }
   for (const item of [...sourceManifest, ...buildInputFiles].filter(item => item.type === 'file')) if (await sha256File(path.join(root, item.path)) !== item.sha256) throw new Error(`Source changed during Mac packaging: ${item.path}`);
   if (git(['rev-parse', 'HEAD']) !== sourceCommit || (!allowDirty && git(['status', '--porcelain=v1', '--untracked-files=normal']))) throw new Error('Source tree changed during final Mac packaging.');
   const hash = await sha256File(archivePath);
-  const report = { status: 'PASS', scope: 'final-zip-extraction-and-byte-integrity-only', package: path.basename(archivePath), sha256: hash, bytes: (await stat(archivePath)).size,
-    sourceCommit, sourceDirty, sourceFilesSha256: buildInfo.sourceFilesSha256, target: buildInfo.target, buildPath: build, extractedPath: extracted, files: comparison.files,
+  const report = { status: skipFinalVerification ? 'BUILT_UNVERIFIED' : 'PASS',
+    scope: skipFinalVerification ? 'build-only-final-package-verification-skipped' : 'final-zip-extraction-and-byte-integrity-only',
+    finalArchiveVerification: skipFinalVerification ? 'SKIPPED_BY_REQUEST' : 'PASS',
+    package: path.basename(archivePath), sha256: hash, bytes: (await stat(archivePath)).size,
+    sourceCommit, sourceDirty, sourceFilesSha256: buildInfo.sourceFilesSha256, target: buildInfo.target, buildPath: build, extractedPath: extracted, files: comparison?.files ?? null,
     electronFiles: electronManifest.filter(item => item.type === 'file').length, nodeFiles: nodeManifest.filter(item => item.type === 'file').length,
-    links: extractedManifest.filter(item => item.type === 'symlink').length, unixModesVerified: true, finalVendorVerification,
-    nativeApplicationTest: 'Not performed by the packaging command. Run check:desktop:smoke on this exact native CPU and extraction.', inventory: buildManifest };
+    links: extractedManifest?.filter(item => item.type === 'symlink').length ?? null, unixModesVerified: !skipFinalVerification, finalVendorVerification,
+    nativeApplicationTest: skipFinalVerification ? 'SKIPPED_BY_REQUEST' : 'Not performed by the packaging command. Run check:desktop:smoke on this exact native CPU and extraction.', inventory: buildManifest };
   await writeFile(path.join(output, `${baseName}.manifest.json`), json(report));
   await writeFile(path.join(output, `${baseName}.sha256`), `${hash}  ${baseName}.zip\n`);
   return { ...report, inventory: undefined, archivePath };

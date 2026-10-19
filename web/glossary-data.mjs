@@ -15,7 +15,7 @@ function term(id, name, english, summary, definition, example, misconception, le
 // 기존 개념 설명 28개를 재사용한다. 용어 개정은 교재 개정과 독립적이며 성취를 기록하지 않는다.
 const legacyGlossary = Object.freeze([
   term("primitive", "원시값", "Primitive value", "객체가 아닌 값. 값 자체의 일부를 바꿀 수 없습니다.",
-    "`undefined`, `null`, `boolean`, `number`, `bigint`, `string`, `symbol` 타입의 값은 원시값입니다. 변수에 다른 값을 다시 할당하는 것과 원시값 자체를 변경하는 것은 다릅니다.",
+    "Undefined·Null·Boolean·Number·BigInt·String·Symbol 타입의 값은 원시값입니다. 여기서 대문자로 시작하는 명칭은 명세의 타입 이름입니다. 변수에 다른 값을 다시 할당하는 것과 원시값 자체를 변경하는 것은 다릅니다.",
     'let name = "JS";\nname = name + "-edu";\n// 새 문자열을 name에 할당한다.',
     "문자열 변수가 바뀌었다고 해서 기존 문자열이 수정된 것은 아닙니다.", ["values"], "sec-primitive-value", ["기본형", "원시 타입", "primitive type"]),
   term("reference", "객체 참조", "Object reference", "여러 변수가 같은 객체를 가리킬 수 있다는 관계입니다.",

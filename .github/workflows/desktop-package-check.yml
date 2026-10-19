@@ -4,38 +4,70 @@ on:
     branches: [main, 'feat/runtime-and-curriculum']
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Exact source commit to package (40-character SHA; blank uses the selected ref)
+        type: string
+        required: false
+        default: ''
+      skip_final_verification:
+        description: Build only; explicitly skip final ZIP extraction and native app verification
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
+env:
+  PACKAGE_SOURCE_COMMIT: ${{ inputs.source_commit || github.sha }}
+  SKIP_FINAL_VERIFICATION: ${{ inputs.skip_final_verification || false }}
 jobs:
   windows-portable:
-    name: portable extraction and native app (Windows x64)
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip desktop verification]')
+    name: desktop package (Windows x64)
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_commit || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24.22.0'
-      - name: Build clean source and compare final ZIP contents
+      - name: Build the selected clean source
+        shell: pwsh
         run: |
+          if ($env:PACKAGE_SOURCE_COMMIT -notmatch '^[a-f0-9]{40}$' -or (git rev-parse HEAD) -ne $env:PACKAGE_SOURCE_COMMIT) { throw 'Exact source commit required.' }
           pwsh --version
-          node scripts/package-desktop.mjs
+          if ($env:SKIP_FINAL_VERIFICATION -eq 'true') { node scripts/package-desktop.mjs --skip-final-verification } else { node scripts/package-desktop.mjs }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify the extracted native application
+        if: ${{ !inputs.skip_final_verification }}
         shell: pwsh
         run: |
           $packageVersion = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
           $manifestPath = Join-Path 'dist' "JavaScript-edu-$packageVersion-win-x64.manifest.json"
           $packageReport = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-          if ($packageReport.sourceDirty -or $packageReport.status -ne 'PASS' -or $packageReport.sourceCommit -ne $env:GITHUB_SHA) { throw 'A clean verified package from this checkout is required.' }
+          if ($packageReport.sourceDirty -or $packageReport.status -ne 'PASS' -or $packageReport.sourceCommit -ne $env:PACKAGE_SOURCE_COMMIT) { throw 'A clean verified package from this checkout is required.' }
           node scripts/check-desktop-smoke.mjs $packageReport.extractedPath --manifest $manifestPath --output-dir 'artifacts/desktop-ci-smoke'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/desktop-artifact-transfer.mjs seal $manifestPath '.github/desktop-artifact-recipient.json' 'artifacts/desktop-sealed'
+      - name: Seal the package with its actual verification status
+        shell: pwsh
+        run: |
+          $packageVersion = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
+          $manifestPath = Join-Path 'dist' "JavaScript-edu-$packageVersion-win-x64.manifest.json"
+          $packageReport = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+          if ($packageReport.sourceDirty -or $packageReport.sourceCommit -ne $env:PACKAGE_SOURCE_COMMIT) { throw 'A clean package from this checkout is required.' }
+          if ($env:SKIP_FINAL_VERIFICATION -eq 'true') {
+            node scripts/desktop-artifact-transfer.mjs seal $manifestPath '.github/desktop-artifact-recipient.json' 'artifacts/desktop-sealed' --allow-unverified
+          } else {
+            node scripts/desktop-artifact-transfer.mjs seal $manifestPath '.github/desktop-artifact-recipient.json' 'artifacts/desktop-sealed'
+          }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Retain verified Windows ZIP and matching evidence
+      - name: Retain Windows ZIP and its build or verification evidence
         uses: actions/upload-artifact@v4
         with:
-          name: JavaScript-edu-win-x64-${{ github.sha }}
+          name: JavaScript-edu-win-x64-${{ inputs.source_commit || github.sha }}
           retention-days: 14
           compression-level: 0
           if-no-files-found: error
@@ -50,14 +82,15 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: JavaScript-edu-win-x64-failed-${{ github.sha }}
+          name: JavaScript-edu-win-x64-failed-${{ inputs.source_commit || github.sha }}
           retention-days: 7
           if-no-files-found: ignore
           path: |
             artifacts/desktop-ci-smoke/*.json
             artifacts/desktop-ci-smoke/*.png
   macos-portable:
-    name: portable extraction and native app (macOS ${{ matrix.arch }})
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip desktop verification]')
+    name: desktop package (macOS ${{ matrix.arch }})
     strategy:
       fail-fast: false
       matrix:
@@ -70,19 +103,26 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_commit || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24.22.0'
           architecture: ${{ matrix.arch }}
-      - name: Verify native CPU and platform regression tests
+      - name: Check the required native build CPU
         env:
           EXPECTED_CPU: ${{ matrix.arch }}
         run: |
           node --input-type=module -e "import assert from 'node:assert/strict'; import {requireNativeMac} from './scripts/macos-platform.mjs'; assert.equal(requireNativeMac().architecture, process.env.EXPECTED_CPU);"
-          node --test tests/desktop-packaging.test.mjs tests/macos-packaging.test.mjs
-      - name: Build clean source and verify complete vendor bundles and final ZIP
-        run: node scripts/package-desktop.mjs
+      - name: Run platform regression tests
+        if: ${{ !inputs.skip_final_verification }}
+        run: node --test tests/desktop-packaging.test.mjs tests/macos-packaging.test.mjs
+      - name: Build the selected clean source
+        run: |
+          node --input-type=module -e 'import assert from "node:assert/strict"; import {execFileSync} from "node:child_process"; assert.match(process.env.PACKAGE_SOURCE_COMMIT,/^[a-f0-9]{40}$/); assert.equal(execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),process.env.PACKAGE_SOURCE_COMMIT);'
+          if [ "$SKIP_FINAL_VERIFICATION" = true ]; then node scripts/package-desktop.mjs --skip-final-verification; else node scripts/package-desktop.mjs; fi
       - name: Verify the final native app on this Mac CPU
+        if: ${{ !inputs.skip_final_verification }}
         run: |
           node --input-type=module -e '
           import {readFile} from "node:fs/promises";
@@ -90,15 +130,25 @@ jobs:
           const {version}=JSON.parse(await readFile("package.json","utf8"));
           const manifest=`dist/JavaScript-edu-${version}-mac-${process.arch}.manifest.json`;
           const report=JSON.parse(await readFile(manifest,"utf8"));
-          if(report.sourceDirty||report.status!=="PASS"||report.sourceCommit!==process.env.GITHUB_SHA)throw new Error("Clean current-source package required");
+          if(report.sourceDirty||report.status!=="PASS"||report.sourceCommit!==process.env.PACKAGE_SOURCE_COMMIT)throw new Error("Clean current-source package required");
           execFileSync(process.execPath,["scripts/check-desktop-smoke.mjs",report.extractedPath,"--manifest",manifest,"--output-dir","artifacts/desktop-ci-smoke"],{stdio:"inherit"});
           const smoke=JSON.parse(await readFile("artifacts/desktop-ci-smoke/desktop-smoke-report.json","utf8"));
-          if(smoke.status!=="PASS"||smoke.sourceCommit!==process.env.GITHUB_SHA||!smoke.launchServicesEntry?.passed)throw new Error("Exact-source native/LaunchServices verification required");
-          execFileSync(process.execPath,["scripts/desktop-artifact-transfer.mjs","seal",manifest,".github/desktop-artifact-recipient.json","artifacts/desktop-sealed"],{stdio:"inherit"});'
-      - name: Retain verified Mac ZIP and matching evidence
+          if(smoke.status!=="PASS"||smoke.sourceCommit!==process.env.PACKAGE_SOURCE_COMMIT||!smoke.launchServicesEntry?.passed)throw new Error("Exact-source native/LaunchServices verification required");'
+      - name: Seal the package with its actual verification status
+        run: |
+          node --input-type=module -e '
+          import {readFile} from "node:fs/promises";
+          import {execFileSync} from "node:child_process";
+          const {version}=JSON.parse(await readFile("package.json","utf8"));
+          const manifest=`dist/JavaScript-edu-${version}-mac-${process.arch}.manifest.json`;
+          const report=JSON.parse(await readFile(manifest,"utf8"));
+          if(report.sourceDirty||report.sourceCommit!==process.env.PACKAGE_SOURCE_COMMIT)throw new Error("Clean current-source package required");
+          const flags=process.env.SKIP_FINAL_VERIFICATION==="true"?["--allow-unverified"]:[];
+          execFileSync(process.execPath,["scripts/desktop-artifact-transfer.mjs","seal",manifest,".github/desktop-artifact-recipient.json","artifacts/desktop-sealed",...flags],{stdio:"inherit"});'
+      - name: Retain Mac ZIP and its build or verification evidence
         uses: actions/upload-artifact@v4
         with:
-          name: JavaScript-edu-mac-${{ matrix.arch }}-${{ github.sha }}
+          name: JavaScript-edu-mac-${{ matrix.arch }}-${{ inputs.source_commit || github.sha }}
           retention-days: 14
           compression-level: 0
           if-no-files-found: error
@@ -114,7 +164,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: JavaScript-edu-mac-${{ matrix.arch }}-failed-${{ github.sha }}
+          name: JavaScript-edu-mac-${{ matrix.arch }}-failed-${{ inputs.source_commit || github.sha }}
           retention-days: 7
           if-no-files-found: ignore
           path: |

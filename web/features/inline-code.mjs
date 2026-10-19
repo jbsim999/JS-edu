@@ -22,7 +22,17 @@ const names = [
 const identifier = '[A-Za-z_$][\\w$]*';
 const member = `${identifier}(?:\\??\\.${identifier})*`;
 const atom = `(?:${member}|-?\\d+(?:\\.\\d+)?n?)`;
+// Proper names and specification type labels are not executable expressions.
+// Match the whole name before individual API keywords, after complete calls.
+const termNames = [
+  'Web Worker', 'Web API', 'DOM API', 'Node.js', 'JavaScript', 'ECMAScript',
+  'Promise 반응', 'Promise 작업', 'Fetch 표준', 'Script', 'Module',
+  'CommonJS', 'UTF-16', 'UTF-8', 'Undefined', 'Null', 'Boolean', 'String',
+  'Symbol', 'Number', 'BigInt', 'Object', 'ESM', 'DOM',
+];
+const termPattern = termNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')).join('|');
 const patterns = [
+  '(?<product>Node\\.js|node\\.js)',
   'node:[a-z][a-z0-9_/]*',
   `(?:typeof|void|delete|await|new)\\s+${atom}`,
   `(?:${member})\\([^\\n()]*\\)`,
@@ -30,6 +40,7 @@ const patterns = [
   `#[A-Za-z_$][\\w$]*`,
   '(?:"use strict"|\'use strict\')',
   '(?:"[A-Za-z0-9_$][\\w$-]*"|\'[A-Za-z0-9_$][\\w$-]*\')',
+  `(?<term>${termPattern})`,
   `(?:${names.join('|')})`,
   '(?:===|!==|=>|\\?\\?|\\?\\.|&&|\\|\\|)',
 ];
@@ -49,9 +60,12 @@ function unmarkedText(source) {
   const matches = new RegExp(`(?<![A-Za-z0-9_$])(?:${patterns.join('|')})(?![A-Za-z0-9_$])`, 'gu');
   let result = '', end = 0;
   for (const match of source.matchAll(matches)) {
-    if (!codeCandidate(match[0])) continue;
+    const technicalName = match.groups?.term || match.groups?.product;
+    if (!technicalName && !codeCandidate(match[0])) continue;
     result += escapeCode(source.slice(end, match.index));
-    result += `<code class="inline-code">${highlightCode(match[0])}</code>`;
+    result += technicalName
+      ? `<span class="technical-term">${escapeCode(match[0])}</span>`
+      : `<code class="inline-code">${highlightCode(match[0])}</code>`;
     end = match.index + match[0].length;
   }
   return result + escapeCode(source.slice(end));
