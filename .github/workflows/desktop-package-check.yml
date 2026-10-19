@@ -109,6 +109,7 @@ jobs:
             dist/*.sha256
             artifacts/desktop-ci-smoke/*.json
             artifacts/desktop-ci-smoke/*.png
+            artifacts/macos-vendor-diagnostics/**/*.json
       - name: Retain failure evidence without marking a package verified
         if: failure()
         uses: actions/upload-artifact@v4
@@ -119,3 +120,4 @@ jobs:
           path: |
             artifacts/desktop-ci-smoke/*.json
             artifacts/desktop-ci-smoke/*.png
+            artifacts/macos-vendor-diagnostics/**/*.json

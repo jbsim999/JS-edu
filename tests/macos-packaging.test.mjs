@@ -6,10 +6,65 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { execFileSync, spawn } from 'node:child_process';
 import { createServer, createConnection } from 'node:net';
+import { createHash } from 'node:crypto';
 import { assertDistinctPaths, readZipEntries } from '../scripts/desktop-integrity.mjs';
 import { validateUnixLinks, unixInventory, copyUnixInventory, compareUnixInventories, readTarEntries, extractUnixTarGz } from '../scripts/macos-integrity.mjs';
 import { desktopRuntimeTarget, validateDesktopRuntime } from '../desktop/runtime-target.mjs';
 import { launchLearningService } from '../desktop/service-client.mjs';
+import { inspectPinnedElectronMachO, assertPinnedBundleResult } from '../scripts/macos-signatures.mjs';
+
+function linkerImage() {
+  const codeLimit = 4113, directoryLength = 160, blobLength = 20 + directoryLength;
+  const bytes = Buffer.alloc(codeLimit + blobLength);
+  bytes.writeUInt32LE(0xfeedfacf, 0); bytes.writeUInt32LE(0x0100000c, 4);
+  bytes.writeUInt32LE(1, 16); bytes.writeUInt32LE(16, 20);
+  bytes.writeUInt32LE(0x1d, 32); bytes.writeUInt32LE(16, 36);
+  bytes.writeUInt32LE(codeLimit, 40); bytes.writeUInt32LE(blobLength, 44);
+  const blob = bytes.subarray(codeLimit), directory = blob.subarray(20);
+  blob.writeUInt32BE(0xfade0cc0); blob.writeUInt32BE(blobLength, 4); blob.writeUInt32BE(1, 8); blob.writeUInt32BE(20, 16);
+  directory.writeUInt32BE(0xfade0c02); directory.writeUInt32BE(directoryLength, 4);
+  directory.writeUInt32BE(0x20400, 8); directory.writeUInt32BE(0x20002, 12);
+  directory.writeUInt32BE(96, 16); directory.writeUInt32BE(88, 20); directory.writeUInt32BE(2, 28); directory.writeUInt32BE(codeLimit, 32);
+  directory[36] = 32; directory[37] = 2; directory[39] = 12; directory.write('fixture\0', 88);
+  for (let index = 0; index < 2; index++) createHash('sha256').update(bytes.subarray(index * 4096, Math.min((index + 1) * 4096, codeLimit))).digest().copy(directory, 96 + index * 32);
+  return bytes;
+}
+
+test('pinned linker-only image verifies every complete and final partial code page and rejects byte tampering', () => {
+  const original = linkerImage(), result = inspectPinnedElectronMachO(original, 'arm64');
+  assert.equal(result.codePagesVerified, true); assert.equal(result.codeSlots, 2); assert.equal(result.specialSlots, 0);
+  for (const offset of [64, 4112, 4113 + 20 + 96]) {
+    const modified = Buffer.from(original); modified[offset] ^= 1;
+    assert.throws(() => inspectPinnedElectronMachO(modified, 'arm64'), /hash mismatch/);
+  }
+  assert.throws(() => inspectPinnedElectronMachO(original.subarray(0, original.length - 1), 'arm64'), /signature/);
+});
+
+test('pinned Mach-O classifier refuses resource signatures, different flags, CPUs and unknown native formats', () => {
+  for (const [offset, value] of [[4113 + 20 + 12, 2], [4113 + 20 + 24, 1], [4113 + 8, 2], [4113 + 20 + 16, 0xffffffff]]) {
+    const modified = linkerImage(); modified.writeUInt32BE(value, offset);
+    assert.throws(() => inspectPinnedElectronMachO(modified, 'arm64'));
+  }
+  assert.throws(() => inspectPinnedElectronMachO(linkerImage(), 'x64'), /CPU mismatch/);
+  const unsigned = Buffer.alloc(32); unsigned.writeUInt32LE(0xfeedfacf); unsigned.writeUInt32LE(0x01000007, 4);
+  assert.equal(inspectPinnedElectronMachO(unsigned, 'x64').signed, false);
+  unsigned.writeUInt32LE(0x0100000c, 4); assert.throws(() => inspectPinnedElectronMachO(unsigned, 'arm64'), /signature/);
+  const fat = Buffer.alloc(4); fat.writeUInt32LE(0xbebafeca); assert.throws(() => inspectPinnedElectronMachO(fat, 'arm64'), /format/);
+  assert.equal(inspectPinnedElectronMachO(Buffer.from('plain resource'), 'arm64'), undefined);
+});
+
+test('original bundle signature failure stays explicit and unrelated native codesign failures never become accepted', () => {
+  const filename = '/owned/Electron.app';
+  const failed = message => ({ args: [filename], exitCode: 1, signal: null, stdout: '', stderr: `${filename}: ${message}\n` });
+  const unsigned = failed('code object is not signed at all');
+  assert.equal(assertPinnedBundleResult('x64', unsigned, unsigned), 'UNSIGNED');
+  const display = { args: [filename], exitCode: 0, signal: null, stdout: '', stderr: 'Signature=adhoc\nInfo.plist=not bound\nSealed Resources=none\n' };
+  const unsealed = failed('code has no resources but signature indicates they must be present');
+  assert.equal(assertPinnedBundleResult('arm64', display, unsealed), 'FAIL_UNSEALED_ORIGINAL_BUNDLE');
+  for (const bad of [failed('invalid signature (code or signature have been modified)'), { ...unsealed, exitCode: null, signal: 'SIGTERM' }, { ...unsealed, error: 'ETIMEDOUT' }, { ...unsealed, exitCode: 0 }, { ...unsealed, stderr: unsealed.stderr + 'additional unexpected failure\n' }]) assert.throws(() => assertPinnedBundleResult('arm64', display, bad));
+  assert.throws(() => assertPinnedBundleResult('arm64', { ...display, stderr: display.stderr.replace('none', 'version=2 files=100') }, unsealed));
+  assert.throws(() => assertPinnedBundleResult('x64', unsigned, unsealed));
+});
 
 async function directory(t) {
   const parent = await realpath(tmpdir());

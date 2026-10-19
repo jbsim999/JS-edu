@@ -2,23 +2,26 @@
 import { app, dialog } from 'electron';
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-// Electron must complete main-module evaluation before app.whenReady resolves.
-void (async () => {
+// Finish bootstrap during main-module evaluation. An unawaited async IIFE may
+// yield to Electron ready before setPath/enableSandbox run. The dynamic import
+// therefore has a real top-level await; startDesktop itself must NOT be awaited
+// at top level because it waits for ready after its synchronous initial setup.
 const packageRoot = process.env.JS_EDU_SMOKE_PACKAGE;
 const authorRoot = process.env.JS_EDU_SMOKE_AUTHOR;
 const output = process.env.JS_EDU_SMOKE_OUTPUT;
 const phase = process.env.JS_EDU_SMOKE_PHASE;
 if (![packageRoot, authorRoot, output].every(value => value && path.isAbsolute(value)) || !['qualify', 'restore', 'discard', 'force-parent', 'secondary'].includes(phase)) throw new Error('Author smoke configuration is required.');
 const resultFile = path.join(output, `${phase}.json`);
-const buildInfo = JSON.parse(await readFile(path.join(packageRoot, 'BUILD-INFO.json'), 'utf8'));
+const buildInfo = JSON.parse(readFileSync(path.join(packageRoot, 'BUILD-INFO.json'), 'utf8'));
 const appRoot = path.join(packageRoot, process.platform === 'darwin' ? buildInfo.appRelativePath : 'resources/app');
-const report = { status: 'RUNNING', phase, startedAt: new Date().toISOString(), host: { platform: process.platform, architecture: process.arch, versions: process.versions }, tests: [], screenshots: [], limitations: ['Native desktop application automation; not a physical mobile test, OS IME test or screen-reader session.', 'Page zoom uses actual Electron webContents.setZoomFactor, not viewport emulation.', 'No OS security sandbox or universal process-tree isolation guarantee for learner Node code.'] };
 const { startDesktop } = await import(pathToFileURL(path.join(appRoot, 'desktop', 'application.mjs')));
+void (async () => {
+const report = { status: 'RUNNING', phase, startedAt: new Date().toISOString(), host: { platform: process.platform, architecture: process.arch, versions: process.versions }, tests: [], screenshots: [], limitations: ['Native desktop application automation; not a physical mobile test, OS IME test or screen-reader session.', 'Page zoom uses actual Electron webContents.setZoomFactor, not viewport emulation.', 'No OS security sandbox or universal process-tree isolation guarantee for learner Node code.'] };
 let controller;
 const check = (name, passed, details) => { report.tests.push({ name, passed: Boolean(passed), ...(details === undefined ? {} : { details }) }); assert.ok(passed, name); };
 const persist = () => writeFileSync(resultFile, JSON.stringify(report, null, 2));
@@ -118,6 +121,7 @@ async function nodeQualification(exercises) {
 }
 
 try {
+  check('Application security and profile bootstrap begins before Electron ready', !app.isReady());
   controller = await startDesktop({ userDataDirectory: path.join(output, 'user-data'), show: true, reportError: message => { report.errors ??= []; report.errors.push(message); persist(); } });
   if (controller.secondary) { report.status = 'PASS'; report.secondary = true; persist(); }
   else {

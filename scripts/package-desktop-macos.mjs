@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { inventory, copyInventory, sha256File, verifyArchive, selectPackageSource, assertHeadSourceBytes } from './desktop-integrity.mjs';
 import { unixInventory, copyUnixInventory, compareUnixInventories, extractUnixZip, extractUnixTarGz } from './macos-integrity.mjs';
 import { requireNativeMac, inspectVendorSignature, assertMacBinaryArchitecture } from './macos-platform.mjs';
+import { inspectOriginalElectronSignatures } from './macos-signatures.mjs';
 import { desktopRuntimeTarget } from '../desktop/runtime-target.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -44,7 +45,7 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   }));
   let sourceDirty = git(['status', '--porcelain=v1', '--untracked-files=normal']).length > 0;
   if (sourceDirty && !allowDirty) throw new Error('Commit reviewed clean source before final Mac packaging.');
-  const buildInputNames = ['package.json', 'desktop/PORTABLE-MACOS-README.txt', 'desktop/THIRD-PARTY-MACOS-NOTICES.txt', 'scripts/package-desktop.mjs', 'scripts/package-desktop-macos.mjs', 'scripts/desktop-integrity.mjs', 'scripts/macos-integrity.mjs', 'scripts/macos-platform.mjs'];
+  const buildInputNames = ['package.json', 'desktop/PORTABLE-MACOS-README.txt', 'desktop/THIRD-PARTY-MACOS-NOTICES.txt', 'scripts/package-desktop.mjs', 'scripts/package-desktop-macos.mjs', 'scripts/desktop-integrity.mjs', 'scripts/macos-integrity.mjs', 'scripts/macos-platform.mjs', 'scripts/macos-signatures.mjs'];
   const buildInputFiles = await Promise.all(buildInputNames.map(async relative => ({ path: relative, type: 'file', size: (await stat(path.join(root, relative))).size, sha256: await sha256File(path.join(root, relative)) })));
   const output = path.resolve(outputDirectory), baseName = `JavaScript-edu-${sourcePackage.version}-mac-${architecture}`;
   const archivePath = path.join(output, `${baseName}.zip`);
@@ -57,17 +58,26 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   const electronIdentity = await verifyArchive(electronZip, electron), nodeIdentity = await verifyArchive(nodeTar, node);
   const work = path.join(root, 'work', `desktop-build-mac-${architecture}-${randomUUID()}`);
   await mkdir(work, { recursive: false });
+  const diagnostics = path.join(root, 'artifacts', 'macos-vendor-diagnostics', `${architecture}-${randomUUID()}`);
+  await mkdir(diagnostics, { recursive: true });
   const electronStage = path.join(work, 'electron'), nodeStage = path.join(work, 'node');
   const electronManifest = await extractUnixZip(electronZip, electronStage), nodeManifest = await extractUnixTarGz(nodeTar, nodeStage);
   for (const required of ['Electron.app/Contents/MacOS/Electron', 'Electron.app/Contents/Info.plist', 'Electron.app/Contents/Resources/default_app.asar', 'LICENSE', 'LICENSES.chromium.html']) if (!electronManifest.some(item => item.path === required && item.type === 'file')) throw new Error(`Incomplete Electron Mac archive: ${required}`);
   const nodeFolder = `node-v24.22.0-darwin-${architecture}`;
   for (const required of ['bin/node', 'LICENSE', 'README.md', 'lib/node_modules/npm/package.json']) if (!nodeManifest.some(item => item.path === `${nodeFolder}/${required}` && item.type === 'file')) throw new Error(`Incomplete Node Mac archive: ${required}`);
   for (const required of ['bin/node']) if (!(nodeManifest.find(item => item.path === `${nodeFolder}/${required}`).mode & 0o111)) throw new Error('Official Node lacks its executable mode.');
-  const inspectVendors = (electronRoot, nodeRoot) => ({
-    electron: { architecture: assertMacBinaryArchitecture(path.join(electronRoot, 'Electron.app/Contents/MacOS/Electron'), architecture), signature: inspectVendorSignature(path.join(electronRoot, 'Electron.app'), { bundle: true }) },
+  const inspectVendors = async (electronRoot, nodeRoot, phase) => ({
+    electron: { architecture: assertMacBinaryArchitecture(path.join(electronRoot, 'Electron.app/Contents/MacOS/Electron'), architecture), signature: await inspectOriginalElectronSignatures(electronRoot, { architecture, version: electron.version, files: electronManifest, scratchParent: work, reportPath: path.join(diagnostics, `${phase}-electron.json`) }) },
     node: { architecture: assertMacBinaryArchitecture(path.join(nodeRoot, nodeFolder, 'bin/node'), architecture), signature: inspectVendorSignature(path.join(nodeRoot, nodeFolder, 'bin/node')) },
   });
-  const originalVendorVerification = inspectVendors(electronStage, nodeStage);
+  // Independently extract the checksum-verified upstream ZIP with Apple's tool.
+  // This distinguishes an upstream unsealed bundle from a parser omission.
+  const dittoStage = path.join(work, 'electron-ditto-original');
+  execFileSync('/usr/bin/ditto', ['-x', '-k', electronZip, dittoStage], { stdio: 'pipe' });
+  const independentExtraction = compareUnixInventories(electronManifest, await unixInventory(dittoStage), 'Independent ditto original Electron extraction');
+  await writeFile(path.join(diagnostics, 'original-extraction-comparison.json'), json({ status: 'PASS', scope: 'independent-extraction-bytes-modes-links-only', extractor: '/usr/bin/ditto -x -k', archiveSha256: electronIdentity.sha256, inventory: independentExtraction }));
+  const originalVendorVerification = await inspectVendors(electronStage, nodeStage, 'parser-original');
+  const independentOriginalVerification = { extractor: '/usr/bin/ditto -x -k', archiveSha256: electronIdentity.sha256, inventory: independentExtraction, ...(await inspectVendors(dittoStage, nodeStage, 'ditto-original')) };
   const actualNode = JSON.parse(execFileSync(path.join(nodeStage, nodeFolder, 'bin/node'), ['--eval', 'console.log(JSON.stringify({version:process.versions.node,platform:process.platform,architecture:process.arch}))'], { encoding: 'utf8', env: { PATH: '/usr/bin:/bin', HOME: work, TMPDIR: work } }));
   if (actualNode.version !== node.version || actualNode.platform !== 'darwin' || actualNode.architecture !== architecture) throw new Error('Included native Node runtime is not the target version/CPU.');
   const build = path.join(work, baseName), bundle = path.join(build, 'JavaScript-edu.app');
@@ -91,8 +101,8 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   sourceEntries.push({ path: 'education.config.json', type: 'file', size: (await stat(path.join(root, 'education.config.json'))).size, sha256: await sha256File(path.join(root, 'education.config.json')) });
   await writeFile(path.join(appRoot, 'package.json'), json({ name: sourcePackage.name, productName: 'JavaScript-edu', version: sourcePackage.version, private: true, type: 'module', main: 'desktop/main.mjs' }));
   await writeFile(path.join(appRoot, 'desktop', 'runtime-config.json'), json(desktopRuntimeTarget('darwin', architecture)));
-  // The unsigned wrapper is ours. The complete signed/ad-hoc/unsigned upstream
-  // Electron.app remains a separate unmodified bundle. No re-signing or resource
+  // The unsigned wrapper is ours. The upstream Electron.app keeps its original
+  // unsigned/linker-only images and unsealed bundle. No re-signing or resource
   // insertion inside that vendor app is permitted.
   const launcher = '#!/bin/sh\nset -eu\nBASE=$(CDPATH= cd -- "$(dirname "$0")/../Resources" && pwd)\nexec "$BASE/vendor/electron/Electron.app/Contents/MacOS/Electron" "$BASE/app" "$@"\n';
   await writeFile(path.join(bundle, 'Contents', 'MacOS', 'JavaScript-edu'), launcher);
@@ -107,8 +117,8 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   sourceDirty ||= byteChanges.length > 0;
   const buildInfo = { product: 'JavaScript-edu', version: sourcePackage.version, sourceCommit, sourceDirty, sourceFilesSha256: digest(sourceManifest), builtAt: new Date().toISOString(),
     buildHost: { ...nativeHost, node: process.versions.node }, target: { platform: 'darwin', architecture, minimumOs: configuration.minimumOs },
-    signing: 'Unsigned application wrapper; original vendor signatures inspected and preserved; no Developer ID signing, notarization or Gatekeeper approval claimed',
-    electron, learnerNode: node, actualNode, originalVendorVerification,
+    signing: 'Unsigned application wrapper. Original Electron x64 images are unsigned; arm64 retains linker-only code signatures and its upstream bundle signature check remains FAIL (unsealed). Every embedded code signature is individually verified without changing vendor bytes. No complete Electron bundle signature, Developer ID signing, notarization or Gatekeeper approval claimed.',
+    electron, learnerNode: node, actualNode, originalVendorVerification, independentOriginalVerification,
     appRelativePath: 'JavaScript-edu.app/Contents/Resources/app', electronRelativeRoot: 'JavaScript-edu.app/Contents/Resources/vendor/electron',
     executableRelativePath: 'JavaScript-edu.app/Contents/MacOS/JavaScript-edu', runtimePath: `JavaScript-edu.app/Contents/Resources/vendor/node/${nodeFolder}/bin/node`,
     packageTransformations: ['Unsigned outer app wrapper launches untouched official Electron.app with separate application source argument', 'Application package.json and target-specific desktop/runtime-config.json are generated', 'Complete official Electron and Node distributions retain file bytes, executable modes and relative link text', 'Developer qualification, references, tests and repository metadata are excluded'] };
@@ -130,7 +140,7 @@ export async function packageDesktopMac({ outputDirectory = path.join(root, 'dis
   const finalResources = path.join(extracted, 'JavaScript-edu.app', 'Contents', 'Resources');
   compareUnixInventories(electronManifest, await unixInventory(path.join(finalResources, 'vendor', 'electron')), 'Final Mac Electron vendor');
   compareUnixInventories(nodeManifest, await unixInventory(path.join(finalResources, 'vendor', 'node')), 'Final Mac Node vendor');
-  const finalVendorVerification = inspectVendors(path.join(finalResources, 'vendor', 'electron'), path.join(finalResources, 'vendor', 'node'));
+  const finalVendorVerification = await inspectVendors(path.join(finalResources, 'vendor', 'electron'), path.join(finalResources, 'vendor', 'node'), 'final-zip');
   for (const item of [...sourceManifest, ...buildInputFiles].filter(item => item.type === 'file')) if (await sha256File(path.join(root, item.path)) !== item.sha256) throw new Error(`Source changed during Mac packaging: ${item.path}`);
   if (git(['rev-parse', 'HEAD']) !== sourceCommit || (!allowDirty && git(['status', '--porcelain=v1', '--untracked-files=normal']))) throw new Error('Source tree changed during final Mac packaging.');
   const hash = await sha256File(archivePath);

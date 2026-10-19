@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { inventory, copyInventory, compareInventories, sha256File, verifyFinalPackage } from './desktop-integrity.mjs';
 import { unixInventory, copyUnixInventory, compareUnixInventories, verifyMacFinalPackage } from './macos-integrity.mjs';
 import { requireNativeMac, closeOwnedMacApplication, inspectVendorSignature, findOwnedMacApplication } from './macos-platform.mjs';
+import { inspectOriginalElectronSignatures } from './macos-signatures.mjs';
 import { createNodeRunner, fingerprintSource, serializeNodeSource } from '../web/execution/node-runner.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -39,7 +40,7 @@ const appRelativePath = isMac ? build.appRelativePath : 'resources/app';
 const sourceManifest = JSON.parse(await readFile(path.join(packageRoot, 'integrity', 'source.json'), 'utf8'));
 for (const entry of sourceManifest.files.filter(item => item.type === 'file')) if (await sha256File(path.join(root, entry.path)) !== entry.sha256) throw new Error(`Author inputs differ from packaged source: ${entry.path}`);
 async function authorInputs() {
-  const names = ['scripts/check-desktop-smoke.mjs', 'scripts/desktop-smoke-main.mjs', 'scripts/desktop-integrity.mjs', 'scripts/macos-integrity.mjs', 'scripts/macos-platform.mjs',
+  const names = ['scripts/check-desktop-smoke.mjs', 'scripts/desktop-smoke-main.mjs', 'scripts/desktop-integrity.mjs', 'scripts/macos-integrity.mjs', 'scripts/macos-platform.mjs', 'scripts/macos-signatures.mjs',
     ...(await readdir(path.join(root, 'web', 'execution'))).filter(name => name.startsWith('qualification')).map(name => `web/execution/${name}`),
     ...(await inventory(path.join(root, 'reference'))).filter(item => item.type === 'file').map(item => `reference/${item.path}`)].sort();
   return Promise.all(names.map(async filename => ({ path: filename, type: 'file', size: (await stat(path.join(root, filename))).size, sha256: await sha256File(path.join(root, filename)) })));
@@ -222,7 +223,7 @@ try {
   report.learnerTemporaryCleanupConfirmed = true;
   comparePackageInventories(packageBefore, await packageInventory(packageRoot), 'Package unchanged after ALL native phases');
   await verifyPackage(packageRoot, finalManifestFile);
-  if (isMac) report.finalVendorSignatures = { electron: inspectVendorSignature(path.join(vendorRoot, 'Electron.app'), { bundle: true }), node: inspectVendorSignature(path.join(packageRoot, build.runtimePath)) };
+  if (isMac) report.finalVendorSignatures = { electron: await inspectOriginalElectronSignatures(vendorRoot, { architecture: process.arch, version: build.electron.version, files: electronManifest.files, scratchParent: output, reportPath: path.join(output, 'final-electron-signatures.json') }), node: inspectVendorSignature(path.join(packageRoot, build.runtimePath)) };
   if (await sha256File(finalManifestFile) !== report.externalManifestSha256) throw new Error('External package manifest changed during the native test.');
   compareInventories(authorBefore, await authorInputs(), 'Author-only verification inputs unchanged');
   if (execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim() !== authorCommit) throw new Error('Author commit changed during the native test.');

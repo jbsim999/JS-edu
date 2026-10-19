@@ -1,5 +1,11 @@
 # 검증 기록
 
+## 2026-10-19 0.1.1 CI 보완 / Windows 후보 native PASS
+
+보완 후 Windows/Node24.22.0 `npm run check` exit0 PASS: 구조52·구문317·회귀316중311PASS/Unix5skip/FAIL0, 제작자33실습271조건·예제33PASS/호스트22skip(PARTIAL). 전후504입력 SHA256 `4a764b271ca9292825f3b9d1b410110e0f398afdaeeaebe625a4a7e2ca1f104b` 동일. 첫043 소스와 원격 FAIL은 [후속 검증 기록](code-mac-ci-verification.md)에 분리한다. 이전503입력 기록의 원시는 `code-mac-check-043.log`, `code-mac-check-source-043.json`이며 최신 로그와 혼용하지 않는다.
+
+보완 Windows 후보 최종 해제본의 실제 native 검사 06:46:37–06:49:17 UTC PASS:55실습471조건·토큰/원문·실제200%·저장/복원·정상/강제종료·한글/공백/&이동·전후불변. 총괄 light 예시와 dark200% 합성 검수 PASS. `artifacts/code-mac-native-candidate-01/`을 따르며 sourceDirty:true인 후보를 clean 최종 패키지로 승인하지 않는다. 새 커밋의 세 플랫폼 native·최종ZIP·Mac 코드 서명과 독립 최종 검토는 남아 있다.
+
 ## 2026-10-19 코드 문법 테마 / macOS 구현 검증 중
 
 새0.1.1 코드 테마 개별5회귀 PASS, 별도 Chrome155 실제 화면11묶음 PASS(`artifacts/code-theme-qa/report.json`). 총괄이 light/dark·360px·사전 합성 화면을 직접 확인했다. 기존0.1.0의 성공을 새 패키지 검증 근거로 대체하지 않는다. Mac 공식 원본 네 개 SHA/실제 CPU 대조와 Windows에서 플랫폼 회귀19PASS/Unix3skip을 구분한다. CPU별 native CI와 최종 ZIP·전체 소스 검사는 완료 후 별도 기록한다.

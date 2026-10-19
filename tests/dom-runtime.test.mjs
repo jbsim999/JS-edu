@@ -28,6 +28,7 @@ async function fixture(t, options = {}) {
   const script = await readFile(new URL('../web/execution/dom-frame.js', import.meta.url), 'utf8');
   const frames = [];
   const audits = [];
+  const auditDeliveries = [];
   const captures = [];
   const terminations = [];
   const messageListeners = new Set();
@@ -110,14 +111,18 @@ async function fixture(t, options = {}) {
         frame.documentId = message.data.documentId;
         if (!options.holdReady && (!options.dropInitialReady || message.data.challenge)) announce(frame, { data: message.data });
       }
+      else if (options.auditDelayMs) auditDeliveries.push(new Promise(resolve => setTimeout(() => { audits.push(message); resolve(); }, options.auditDelayMs)));
       else audits.push(message);
     });
     frame.thread.on('error', error => frame.onerror?.({ error }));
   };
   const exercise = options.exercise ?? contract();
   const runner = createDomRunner({ exercises: [exercise], document, origin, MessageChannelConstructor: MessageChannel, loadHostConfig: options.loadHostConfig ?? (async () => hostConfig), loadGrader: options.loadGrader ?? (async () => checks(exercise, options.cases)), caseTimeoutMs: options.caseTimeoutMs, totalTimeoutMs: options.totalTimeoutMs, realm: options.realm ?? globalThis });
-  t.after(async () => { await runner.cancel(); for (const frame of frames) if (!frame.removed) frame.remove(); await Promise.all(terminations); });
-  return { runner, exercise, frames, audits, captures, previousFocus, document, announce, messageListeners };
+  // Worker audit events and execution MessagePort replies are independent channels.
+  // Wait for worker exit (which drains its messages), then delayed audit delivery.
+  const drainAudits = async () => { await Promise.all(terminations); await Promise.all(auditDeliveries); };
+  t.after(async () => { await runner.cancel(); for (const frame of frames) if (!frame.removed) frame.remove(); await drainAudits(); });
+  return { runner, exercise, frames, audits, drainAudits, captures, previousFocus, document, announce, messageListeners };
 }
 
 async function serverFixture(t) {
@@ -398,6 +403,7 @@ test('frame protocol preflight rejects own and inherited API getters without inv
     assert.equal(result.status, 'infrastructure-error');
     assert.deepEqual(result.missingFeatures, ['queueMicrotask']);
     assert.doesNotMatch(result.stderr, /must never execute/);
+    await f.drainAudits();
     assert.equal(f.audits.filter(item => item.type === 'feature-getter-read').length, 0);
   }
 });
@@ -468,6 +474,7 @@ test('frame protocol cleans only namespaced storage and conditionally restores t
   assert.equal(result.status, 'success');
   assert.equal(f.previousFocus.calls, 1);
   assert.equal(f.frames[0].blurCalls, 1);
+  await f.drainAudits();
   const removed = f.audits.filter(audit => audit.type === 'audit');
   assert.equal(removed.length, 2);
   assert.ok(removed.every(audit => audit.removed.startsWith('javascript-edu-dom:') && audit.remaining.includes('unrelated-keep')));
@@ -521,10 +528,11 @@ test('frame protocol whole-job deadline applies across otherwise timely cases', 
 });
 
 test('frame protocol reports blocked IndexedDB deletion and leaves unrelated names alone', async t => {
-  const f = await fixture(t, { blockedDatabase: true });
+  const f = await fixture(t, { blockedDatabase: true, auditDelayMs: 40 });
   const result = await f.runner.run(await request(f.exercise));
   assert.equal(result.status, 'success');
   assert.match(result.cleanupWarning, /삭제 완료를 확인하지 못했습니다/);
+  await f.drainAudits();
   const deleted = f.audits.filter(item => item.type === 'database-delete');
   assert.equal(deleted.length, 1);
   assert.match(deleted[0].name, /^javascript-edu-dom:[a-f0-9]{32}:blocked$/);

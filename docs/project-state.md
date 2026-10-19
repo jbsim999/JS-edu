@@ -1,5 +1,11 @@
 # 현재 상태
 
+## 2026-10-19 0.1.1 원격 검사 보완 후 로컬 PASS
+
+첫043d8f6의 데스크톱 CI는 하네스 ready 경합과 Mac 원본 bundle 서명 상태에서 FAIL이었다. 원본 바이트/서명 상태를 보존하고 실제 존재하는 코드 서명 검증 범위를 분리했다. Windows22 DOM 감사 fixture 경합도 재현·보완했다. [원격 검증 보완](code-mac-ci-verification.md)에 실패 원시와 변경 이유를 기록한다.
+
+보완 소스 전체 검사는 구조52·구문317·회귀316중311PASS/Unix5skip/FAIL0, 제작자33/271·예제33PASS/호스트22skip(PARTIAL)다. 전후504입력 SHA256은 `4a764b271ca9292825f3b9d1b410110e0f398afdaeeaebe625a4a7e2ca1f104b`로 동일하다. Windows 별도 후보의 실제 전체 native 검사도 PASS이나 sourceDirty:true이며 전달용 최종 패키지는 아니다. clean 후속 소스의 Windows/Mac x64/Mac arm64 native 검사 후 main에 반영한다. 기존 사용자0.1.0 ZIP·미리보기4179·학습 기록을 보존한다.
+
 ## 2026-10-19 코드 문법 테마와 macOS 추가 패키징
 
 사용자가 Windows0.1.0의 정상 실행을 확인한 뒤 코드 예시/편집 문법 테마, macOS Intel·Apple Silicon 패키징과 완료 후 main 반영을 승인했다. 패키징 스킬의 원본 전체 보존·실제 네이티브 검증·최종 해제본 대조를 적용한다. 버전은0.1.1로 올리고 기존0.1.0 ZIP과 학습 데이터를 보존한다. 공개 Release 게시 권한을 추가하지 않는다.
