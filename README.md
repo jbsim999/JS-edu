@@ -20,11 +20,17 @@ JavaScript-edu는 **한국어 웹 교재와 로컬 코드 실행·자동 채점�
 
 수업은 **이론 → 예시 → 문제풀이 → 실무 심화 → 직접 코딩**으로 이어집니다. ECMAScript 언어 규칙과 브라우저·Node.js API를 나누어 설명하고, 공식 자료의 출처와 실제 실행 환경을 함께 제공합니다.
 
-> **개발 상태** — 52강·55실습과 코드 문법 색상, 용어 사전, 진도 저장을 구현했습니다. Windows 0.1.0은 사용자 실행 확인을 마쳤습니다. 0.1.1 프리뷰는 코드 테마와 Mac 패키징을 추가하며 Windows·Mac Apple Silicon 네이티브 CI를 통과했습니다. Mac Intel은 패키징 검사기의 진단 문구를 보완하고 있습니다. 공개 다운로드 릴리스는 아직 게시하지 않았습니다. [현재 상태](docs/project-state.md)
+> **개발 상태** — 52강·55실습과 코드 문법 색상, 용어 사전, 진도 저장을 구현했습니다. Windows 0.1.0은 사용자 실행 확인을 마쳤습니다. 0.1.1 프리뷰는 코드 테마와 Mac 패키징을 추가하며 Windows·Mac Intel·Apple Silicon의 최종 ZIP·실제 앱 실행 검사를 모두 통과했습니다. [0.1.1 프리뷰](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)에서 자신의 OS와 CPU에 맞는 앱을 내려받으세요. [현재 상태](docs/project-state.md)
 
-## 시작하기
+## 설치하고 시작하기
 
 ### 데스크톱 앱
+
+**아래에서 자신의 컴퓨터에 맞는 앱 하나만 다운로드하세요.**
+
+**[Windows x64 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.1/JavaScript-edu-0.1.1-win-x64.zip)** · **[Mac Apple Silicon 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.1/JavaScript-edu-0.1.1-mac-arm64.zip)** · **[Mac Intel 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.1/JavaScript-edu-0.1.1-mac-x64.zip)**
+
+[릴리스와 체크섬·검증 기록](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)
 
 전달받은 ZIP은 **폴더 전체를 압축 해제**해 사용하세요. Electron과 Node.js 전체 런타임이 포함되므로 따로 설치하거나 시스템 경로를 설정할 필요가 없습니다.
 
@@ -32,7 +38,7 @@ JavaScript-edu는 **한국어 웹 교재와 로컬 코드 실행·자동 채점�
 | --- | --- | --- |
 | Windows x64 | `JavaScript-edu-<버전>-win-x64.zip` | `JavaScript-edu.exe` 실행 |
 | Mac · Apple Silicon | `JavaScript-edu-<버전>-mac-arm64.zip` | `JavaScript-edu.app` 실행 |
-| Mac · Intel | `JavaScript-edu-<버전>-mac-x64.zip` | 최종 검증 중. 완료 상태 확인 후 사용 |
+| Mac · Intel | `JavaScript-edu-<버전>-mac-x64.zip` | `JavaScript-edu.app` 실행 |
 
 1. 앱을 열고 수업과 학습 단계를 선택합니다.
 2. 예시를 읽고 **직접 코딩**에서 코드를 작성합니다.
@@ -130,7 +136,7 @@ node web/serve.mjs --port 4182 --qualification
 
 `http://127.0.0.1:4182/execution/qualification.html`을 엽니다. 정답·대표 오답 경로는 이 제작자 모드에서만 제공하며 기본 학습 서버에는 노출하지 않습니다. 검사용 명령은 신뢰하는 저장소 소스에서 실행하세요.
 
-2026-10-19 보완 소스의 로컬 전체 검사는 **구조 52강·구문 317개·회귀 311 PASS/Unix 전용 5 SKIP/실패 0**입니다. 일반 제작자 검사의 호스트 과제 생략은 PARTIAL이며, 실제 브라우저 44과제·361조건과 Node.js 11과제·110조건의 전수 실행 근거는 별도로 기록합니다. Windows·Ubuntu 일반 CI와 고정 Node CI도 통과했습니다. Mac 검사기의 진단 문구 보완과 최종 CPU별 결과는 [후속 검증 기록](docs/code-mac-ci-verification.md)을 따릅니다.
+2026-10-19 보완 소스의 로컬 전체 검사는 **구조 52강·구문 317개·회귀 311 PASS/Unix 전용 5 SKIP/실패 0**입니다. 일반 제작자 검사의 호스트 과제 생략은 PARTIAL이며, 실제 브라우저 44과제·361조건과 Node.js 11과제·110조건의 전수 실행 근거는 별도로 기록합니다. Windows·Ubuntu 일반 CI와 고정 Node CI도 통과했습니다. 최종 소스 ec4a38e의 일반·고정 Node·세 플랫폼 패키징 CI 9개가 모두 통과했습니다. 정확한 CPU별 결과는 [후속 검증 기록](docs/code-mac-ci-verification.md)을 따릅니다.
 
 ## 문서와 로드맵
 
@@ -141,6 +147,7 @@ node web/serve.mjs --port 4182 --qualification
 | 화면과 코드 색상 | [UI/UX 기획](docs/ui-ux-plan.md) · [코드 테마](docs/code-theme.md) |
 | 실행·자동 채점 경계 | [실행 설계](docs/runtime-design.md) · [Node 계약](docs/node-runtime-contract.md) |
 | Windows·Mac 패키지 | [패키징 안내](docs/packaging.md) · [Mac 구현·검증 계약](docs/macos-packaging-implementation.md) |
+| 포함 도구의 소스와 고지 | [고정 소스·패치·빌드 문맥](docs/desktop-source-provenance.md) |
 | 현재 작업과 실제 검사 | [현재 상태](docs/project-state.md) · [검증 기록](docs/verification.md) |
 | 소스 구조 | [학습 화면 구조](docs/frontend-structure.md) · [실행 프로필](runtime/) |
 
@@ -149,8 +156,8 @@ node web/serve.mjs --port 4182 --qualification
 - [x] 82개 검색형 용어 사전과 상세 팝업
 - [x] 코드 문법 색상·밝은/어두운 테마·초안과 진도 저장
 - [x] 런타임 포함 Windows 포터블 앱과 실제 실행 검사
-- [ ] macOS Intel·Apple Silicon 최종 ZIP·앱 실행 검사 완료
-- [ ] 공개 다운로드 릴리스 게시
+- [x] macOS Intel·Apple Silicon 최종 ZIP·앱 실행 검사 완료
+- [x] Windows·Mac 프리뷰 다운로드 릴리스 게시
 
 ## 기여와 문의
 

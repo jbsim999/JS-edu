@@ -1,5 +1,7 @@
 # 검증용 패키지의 단일 수신자 전송
 
+2026-10-19 후속 상태: 사용자가 README 직접 다운로드를 요청해 v0.1.1 공개 프리뷰를 승인했다. 정확한 포함 도구의 소스·패치·빌드 문맥을 별도로 제공하고, native 성공한 ZIP3개를 복호화·원본 hash 및 Release 서버 digest와 대조해 공개했다. [현재 릴리스](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1) · [소스 확인 범위](desktop-source-provenance.md). 아래는 게시 이전 검증 파일 전송과 미게시 CI 후보의 계약이며, 현재 릴리스가 비공개라는 뜻이 아니다.
+
 공개 저장소의 Actions artifact는 로그인한 다른 읽기 사용자도 다운로드할 수 있다. [GitHub 공식 설명](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts)을 기준으로, 공개 Release를 만들지 않았다는 이유만으로 평문 앱 ZIP을 비공개로 간주하지 않는다.
 
 이번 패키지는 사용자에게 로컬로 전달하는 미서명 산출물이다. CI는 native 검증이 성공한 ZIP을 `.github/desktop-artifact-recipient.json`의 공개키로 봉인한 뒤 암호문만 artifact에 올린다. 개인키는 로컬 `work/`에만 두고 Git·CI·환경 변수·로그에 넣지 않는다. 평문 manifest/checksum과 검증 JSON/PNG는 함께 보관한다. 사용자에게 제공하는 로컬 ZIP은 해당 CI 실행의 sourceCommit/CPU·검증 성공·manifest/원본 크기/SHA를 대조하고 복호화 인증을 완료한 결과다.

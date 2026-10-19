@@ -1,5 +1,13 @@
 # 현재 상태
 
+## 2026-10-19 0.1.1 공개 다운로드 / 세 플랫폼 최종 PASS
+
+사용자의 README 직접 다운로드 요청에 따라 [v0.1.1 프리뷰](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)를 게시했다. Windows x64·Mac Intel x64·Apple Silicon arm64 ZIP3개, 대응 소스4개와 체크섬·검증 JSON·출처 안내 총10첨부를 제공한다. 앱3링크는 인증 없는 실제 HTTP206/1byte 다운로드로 확인했다. README의 설치하고 시작하기에서 바로 연결한다.
+
+태그와 패키지 생성 소스는 `ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2`, sourceDirty:false다. 같은 소스의 일반4·고정Node2·데스크톱3 CI가 모두 success이며, 세 native 호스트에서 각각55실습471조건·실제200%·저장/복원·종료/이동·코드 색상/원문과 전후 패키지 불변을 확인했다. Mac LaunchServices도 두 CPU 모두 PASS다. 최종 ZIP은 GitHub 전송 artifact SHA와 인증 복호화 후 원본 SHA, Release 서버 digest를 전수 대조했다. [파일·CPU·CI 근거](desktop-0.1.1-evidence.json), [런타임 소스](desktop-source-provenance.md)를 따른다.
+
+제품 wrapper는 미서명·미공증이며 다운로드 후 Gatekeeper·SmartScreen·OS IME·실제모바일·스크린리더는 미검증이다. Mac ARM 원본의 전체 bundle 서명은 upstream resource envelope 부재로 FAIL인 채 보존하며, 개별 코드 서명과 원본 무결성 PASS를 구분한다. 기존0.1.0 ZIP과 사용자 데이터는 보존했다. 이후 README/검증 문서 커밋은 위 패키지 생성 소스와 구분한다.
+
 ## 2026-10-19 main 반영 승인 / README 개편
 
 사용자가 비치명 검사 오류가 있더라도 main 커밋·푸시를 진행하도록 승인했다. java-edu README를 참고해 배너·실제 화면·기능·52강 과정·실행/저장·개발/검증·문서 안내를 정리한다. 제품/교육 소스는 보존하고 Mac 검증 상태는 구분한다.

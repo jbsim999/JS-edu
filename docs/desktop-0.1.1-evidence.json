@@ -1,0 +1,273 @@
+{
+  "status": "PASS",
+  "version": "0.1.1",
+  "sourceCommit": "ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+  "createdAt": "2026-10-19T07:33:09.806Z",
+  "repository": "https://github.com/jbsim999/JS-edu",
+  "release": "https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1",
+  "workflows": [
+    {
+      "id": 39213893601,
+      "url": "https://github.com/jbsim999/JS-edu/actions/runs/39213893601",
+      "status": "PASS",
+      "jobs": [
+        {
+          "id": 117933187709,
+          "name": "portable extraction and native app (Windows x64)",
+          "conclusion": "success"
+        },
+        {
+          "id": 117933188106,
+          "name": "portable extraction and native app (macOS x64)",
+          "conclusion": "success"
+        },
+        {
+          "id": 117933188164,
+          "name": "portable extraction and native app (macOS arm64)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 39213893641,
+      "url": "https://github.com/jbsim999/JS-edu/actions/runs/39213893641",
+      "status": "PASS",
+      "jobs": [
+        {
+          "id": 117933187648,
+          "name": "structure-and-adapters (windows-latest, Node 24)",
+          "conclusion": "success"
+        },
+        {
+          "id": 117933187859,
+          "name": "structure-and-adapters (windows-latest, Node 22)",
+          "conclusion": "success"
+        },
+        {
+          "id": 117933188105,
+          "name": "structure-and-adapters (ubuntu-latest, Node 22)",
+          "conclusion": "success"
+        },
+        {
+          "id": 117933188108,
+          "name": "structure-and-adapters (ubuntu-latest, Node 24)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 39213893519,
+      "url": "https://github.com/jbsim999/JS-edu/actions/runs/39213893519",
+      "status": "PASS",
+      "jobs": [
+        {
+          "id": 117933187065,
+          "name": "native curriculum (windows-latest, Node 24.22.0)",
+          "conclusion": "success"
+        },
+        {
+          "id": 117933187346,
+          "name": "native curriculum (ubuntu-latest, Node 24.22.0)",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "file": "JavaScript-edu-0.1.1-win-x64.zip",
+      "target": "win-x64",
+      "sha256": "20dc12400763f395c37b00481d5762677442d1d7185bc4bcda09e0dd313ddab9",
+      "bytes": 315339335,
+      "sourceCommit": "ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+      "sourceDirty": false,
+      "ciArtifact": {
+        "id": 12168947158,
+        "name": "JavaScript-edu-win-x64-ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+        "transferArchiveDigest": "sha256:2a5381c157b69e996b93acca2e0a4a5f5cae5dea517647e60c113e06e8dd4b76"
+      },
+      "native": {
+        "status": "PASS",
+        "host": {
+          "platform": "win32",
+          "architecture": "x64"
+        },
+        "startedAt": "2026-10-19T07:08:01.678Z",
+        "completedAt": "2026-10-19T07:09:31.394Z",
+        "browser": {
+          "exercises": 44,
+          "referenceChecks": 361,
+          "negatives": 88,
+          "examples": 11,
+          "runtime": 16,
+          "sourceSha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786",
+          "fixture": "Original author qualification with HTTP reference reads replaced by fixed in-memory answers; production server routes unchanged."
+        },
+        "node": {
+          "exercises": 11,
+          "checks": 110
+        },
+        "actualZoomPercent": 200,
+        "packageUnchanged": true,
+        "normalShutdown": true,
+        "forcedParentServiceCleanup": true,
+        "relocatedProductionEntry": true,
+        "launchServices": null,
+        "electronBundleSignatureVerified": null,
+        "electronOriginalBundleState": null,
+        "electronCodeScope": null,
+        "limitations": [
+          "Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.",
+          "Native process execution is tested; no OS security sandbox or universal process-tree guarantee",
+          "A dedicated QA profile is retained; existing user profiles are not touched"
+        ]
+      }
+    },
+    {
+      "file": "JavaScript-edu-0.1.1-mac-x64.zip",
+      "target": "mac-x64",
+      "sha256": "20e0156cb1aafa38dd795028b5a6429ef5cce09d2c41a06917d30aded82c1509",
+      "bytes": 194950052,
+      "sourceCommit": "ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+      "sourceDirty": false,
+      "ciArtifact": {
+        "id": 12168554997,
+        "name": "JavaScript-edu-mac-x64-ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+        "transferArchiveDigest": "sha256:58310b67775c5ff6e0428bb61999b32365486b5851d4287a5758b6ebdd11cd86"
+      },
+      "native": {
+        "status": "PASS",
+        "host": {
+          "platform": "darwin",
+          "architecture": "x64",
+          "osVersion": "15.7.9",
+          "kernelArchitecture": "x86_64",
+          "translated": false
+        },
+        "startedAt": "2026-10-19T07:11:55.866Z",
+        "completedAt": "2026-10-19T07:15:23.355Z",
+        "browser": {
+          "exercises": 44,
+          "referenceChecks": 361,
+          "negatives": 88,
+          "examples": 11,
+          "runtime": 16,
+          "sourceSha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786",
+          "fixture": "Original author qualification with HTTP reference reads replaced by fixed in-memory answers; production server routes unchanged."
+        },
+        "node": {
+          "exercises": 11,
+          "checks": 110
+        },
+        "actualZoomPercent": 200,
+        "packageUnchanged": true,
+        "normalShutdown": true,
+        "forcedParentServiceCleanup": true,
+        "relocatedProductionEntry": true,
+        "launchServices": true,
+        "electronBundleSignatureVerified": false,
+        "electronOriginalBundleState": "UNSIGNED",
+        "electronCodeScope": "PASS_ORIGINAL_BYTES_AND_CODE_SIGNATURE_SCOPE",
+        "limitations": [
+          "Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.",
+          "Native process execution is tested; no OS security sandbox or universal process-tree guarantee",
+          "A dedicated QA profile is retained; existing user profiles are not touched",
+          "Unsigned wrapper; no Developer ID signing, notarization or downloaded-archive Gatekeeper approval."
+        ]
+      }
+    },
+    {
+      "file": "JavaScript-edu-0.1.1-mac-arm64.zip",
+      "target": "mac-arm64",
+      "sha256": "951806e4bb2018f265ece54370863bb64475d6eb9f7adbd2472dc5fd4c91662f",
+      "bytes": 189802113,
+      "sourceCommit": "ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+      "sourceDirty": false,
+      "ciArtifact": {
+        "id": 12169146222,
+        "name": "JavaScript-edu-mac-arm64-ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2",
+        "transferArchiveDigest": "sha256:84a6ff33dc6baec7e7bf0bc2c2183f9ba66efdb8d4a17d878dc3ec32f2e5d166"
+      },
+      "native": {
+        "status": "PASS",
+        "host": {
+          "platform": "darwin",
+          "architecture": "arm64",
+          "osVersion": "15.7.9",
+          "kernelArchitecture": "arm64",
+          "translated": false
+        },
+        "startedAt": "2026-10-19T07:08:25.355Z",
+        "completedAt": "2026-10-19T07:10:41.738Z",
+        "browser": {
+          "exercises": 44,
+          "referenceChecks": 361,
+          "negatives": 88,
+          "examples": 11,
+          "runtime": 16,
+          "sourceSha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786",
+          "fixture": "Original author qualification with HTTP reference reads replaced by fixed in-memory answers; production server routes unchanged."
+        },
+        "node": {
+          "exercises": 11,
+          "checks": 110
+        },
+        "actualZoomPercent": 200,
+        "packageUnchanged": true,
+        "normalShutdown": true,
+        "forcedParentServiceCleanup": true,
+        "relocatedProductionEntry": true,
+        "launchServices": true,
+        "electronBundleSignatureVerified": false,
+        "electronOriginalBundleState": "FAIL_UNSEALED_ORIGINAL_BUNDLE",
+        "electronCodeScope": "PASS_ORIGINAL_BYTES_AND_CODE_SIGNATURE_SCOPE",
+        "limitations": [
+          "Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.",
+          "Native process execution is tested; no OS security sandbox or universal process-tree guarantee",
+          "A dedicated QA profile is retained; existing user profiles are not touched",
+          "Unsigned wrapper; no Developer ID signing, notarization or downloaded-archive Gatekeeper approval."
+        ]
+      }
+    }
+  ],
+  "files": [
+    {
+      "file": "JavaScript-edu-0.1.1-win-x64.zip",
+      "bytes": 315339335,
+      "sha256": "20dc12400763f395c37b00481d5762677442d1d7185bc4bcda09e0dd313ddab9"
+    },
+    {
+      "file": "JavaScript-edu-0.1.1-mac-x64.zip",
+      "bytes": 194950052,
+      "sha256": "20e0156cb1aafa38dd795028b5a6429ef5cce09d2c41a06917d30aded82c1509"
+    },
+    {
+      "file": "JavaScript-edu-0.1.1-mac-arm64.zip",
+      "bytes": 189802113,
+      "sha256": "951806e4bb2018f265ece54370863bb64475d6eb9f7adbd2472dc5fd4c91662f"
+    },
+    {
+      "file": "electron-fd148b9908b83c8dc09924e45e6df44b83b6bfe7.tar.gz",
+      "bytes": 20558341,
+      "sha256": "bce11fc9180b4b9e92338a231171651cffdc240a360199d07dcb05f5a045a027"
+    },
+    {
+      "file": "ffmpeg-2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
+      "bytes": 18819959,
+      "sha256": "d248e0ecd449159bf465071550b3eada3645925798b780eaaa214e139995d81a"
+    },
+    {
+      "file": "node-v24.22.0.tar.xz",
+      "bytes": 57606320,
+      "sha256": "41f97cff2c666f1f8293dc5f85c65e8dd605c16b43fd9febd49ede32ee1e0329"
+    },
+    {
+      "file": "JavaScript-edu-0.1.1-source-context.zip",
+      "bytes": 41804249,
+      "sha256": "4aefbb1b291990c75e8cbbbb47be451cf001f69b2b7eacf47b6e09108070834e"
+    }
+  ],
+  "sourceContext": "See SOURCE-PROVENANCE-0.1.1.md; original source/patch/build context is provided; complete Chromium checkout and reproducible rebuild not performed.",
+  "signing": "Unsigned product wrapper; no Developer ID, notarization, downloaded Gatekeeper or SmartScreen approval claimed.",
+  "verificationScope": "Exact-source final ZIP extraction, complete vendor bytes/modes/links, native execution and behavior grading; no universal process-tree or OS security sandbox claim."
+}

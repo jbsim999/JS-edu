@@ -1,5 +1,11 @@
 # 검증 기록
 
+## 2026-10-19 0.1.1 최종3CPU·공개 다운로드 PASS
+
+소스 ec4a38e의 [데스크톱39213893601](https://github.com/jbsim999/JS-edu/actions/runs/39213893601) 3job, [일반39213893641](https://github.com/jbsim999/JS-edu/actions/runs/39213893641) 4job, [고정Node39213893519](https://github.com/jbsim999/JS-edu/actions/runs/39213893519) 2job 모두 success다. 각 앱의55실습471조건·코드 원문/토큰·최종해제/vendor 전체 대조·정상/강제종료·저장/이동·실제200% PASS, Mac 두 CPU는 LaunchServices/Unix5회귀도 실제 PASS다. 총괄은 Mac 두 CPU의 실제 합성 화면을 확인했고 독립 검토가 최종3ZIP 및 manifest/native 식별자를 직접 대조했다. 전체 bundle 서명·공증·다운로드 후 Gatekeeper 승인으로 확대하지 않는다.
+
+전송 artifact3개의 GitHub digest/크기를 실제 수신 파일과 대조하고 인증 복호화한 ZIP SHA를 원본 manifest/native report 및 Release 서버 digest에 연결했다. 앱3개+소스4개 전수7개 서버 digest 일치, 공개 asset10개와 태그/source ec4a38e를 확인한다. 인증 없는 앱3개 실제 GET range는 HTTP206/1byte PASS(`artifacts/release-0.1.1-anonymous-downloads.json`). [최종 기계 판독 근거](desktop-0.1.1-evidence.json)와 [대응 소스 확인 범위](desktop-source-provenance.md)를 따른다. 원시 CI·최종 native/PNG·receipt는 `artifacts/ci-ec4-*`, `work/final-transfer-ec4/`, `artifacts/desktop-0.1.1-received.json`에 보존한다.
+
 ## 2026-10-19 main 반영 전 원격 결과와 README
 
 정확한 소스 c591eed의 일반 CI4개·고정Node2개와 desktop Windows/Mac arm64가 success다. Mac Intel의 실패는 고정 unsigned 진단의 `In architecture: x86_64` 추가 줄이며, CPU가 일치하는 해당 suffix만 `--all-architectures`에서 인정하는 보완 회귀1/1 PASS다. 서명 변조·다른CPU·추가오류·timeout거부는 유지한다. [원격 실행과 원시 기록](code-mac-ci-verification.md)을 따른다. 이 후속 두 파일은 이전504지문/전체검사와 구분하며 최종 통합 CI로 추가 검사한다.

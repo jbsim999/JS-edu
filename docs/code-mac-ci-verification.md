@@ -1,5 +1,9 @@
 # 0.1.1 원격 검증 보완
 
+## ec4a38e 최종 결과 · PASS
+
+main 통합 소스 ec4a38e8286dee5a90cead6dcbfd11937c9bc2c2의 [데스크톱39213893601](https://github.com/jbsim999/JS-edu/actions/runs/39213893601) 세 플랫폼 job과 [일반39213893641](https://github.com/jbsim999/JS-edu/actions/runs/39213893641) 네 job, [고정Node39213893519](https://github.com/jbsim999/JS-edu/actions/runs/39213893519) 두 job이 모두 success다. Intel 진단 보완 이후의 실제 최종 native/ZIP도 PASS이며 앞선043/c591 실패는 아래 이력으로 보존한다. 공개 다운로드 요청에 따라 v0.1.1을 게시했고 [최종 파일·해시·CI](desktop-0.1.1-evidence.json)와 [대응 소스 범위](desktop-source-provenance.md)를 연결한다.
+
 ## c591eed 원격 결과와 main 반영 승인
 
 보완 커밋 `c591eed619afb6feb86fe60e629643a58f4a6775`의 [일반 CI39212689375](https://github.com/jbsim999/JS-edu/actions/runs/39212689375) 네 job과 [고정 Node CI39212689350](https://github.com/jbsim999/JS-edu/actions/runs/39212689350) 두 job은 모두 success다. [데스크톱 CI39212689233](https://github.com/jbsim999/JS-edu/actions/runs/39212689233)의 Windows x64·Mac arm64도 최종 ZIP/native 검사 및 봉인 전송까지 success다. Mac x64는 unsigned 원본의 strict 검사 진단 끝에 `In architecture: x86_64`가 붙어 예상 문자열 비교에서 FAIL이다. 실제 CPU·원본 bytes 변경을 뜻하지 않는다.
