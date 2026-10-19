@@ -7,7 +7,7 @@
   "level": "advanced",
   "goals": [
     "작업 수·응답 레코드 수·활성 수·결과 크기의 상한을 각각 적용한다.",
-    "동기 throw·reject·취소 뒤 슬롯과 DOM 수명을 정리하고 반복 실행을 분리한다.",
+    "동기 `throw`·`reject`·취소 뒤 슬롯과 DOM 수명을 정리하고 반복 실행을 분리한다.",
     "주입 시계와 대기 gate로 관측 정보를 측정하고 성능 보장과 구분한다."
   ],
   "prerequisites": [
@@ -41,17 +41,17 @@
   ],
   "exerciseId": "capstone-failure-and-scale-exercise",
   "steps": {
-    "theory": "작은 fixture에서는 잘 동작한 검색이 많은 요청을 Promise.all로 한꺼번에 시작하자 메모리와 연결을 소모한다. 제한은 하나의 숫자가 아니다. maxInputs는 배치 작업 수, maxRecords는 응답 하나의 행 수, concurrency는 동시에 기다리는 load 수, maxOutputs는 결과 보고서 하나에 보관할 항목 수다. 어떤 상한이 어느 자원을 제한하는지 구분해야 한다.\n\n이번 배치는 유효한 작업 목록을 먼저 복사하고 제한된 수의 worker 루프만 만든다. 각 worker는 다음 입력 인덱스를 가져와 load를 한 번 실행하고 core로 보고서를 만든다. 결과는 완료 순서가 아니라 입력 순서에 둔다. 실패한 슬롯은 finally에서 회수하며 뒤 작업이 진행된다. 자동 재시도는 하지 않는다. 재시도가 필요하면 멱등성·시도 수·지연·취소를 별도로 설계해야 한다.\n\nmaxRecords 검사는 응답 배열을 받은 뒤 core에 넘기기 전에 수행한다. 이 검사로 이미 수신한 HTTP 바이트나 JSON 파싱 메모리까지 제한했다고 말할 수 없다. 실제 전송 바이트 상한은 스트림·서버·전송 어댑터에서 다뤄야 한다. 결과에는 제한된 items만 보관하고 raw 배열을 모아 두지 않는다. 최대 보관 항목은 maxInputs×maxOutputs로 설명할 수 있지만 객체당 실제 메모리까지 일정한 것은 아니다.\n\n취소는 한 AbortSignal을 활성 load에 전달하고 새 작업 시작을 중지한다. 이 실습의 load는 abort에 협력해 settle해야 하며, 반환한 run은 시작한 작업의 정리까지 기다린다. 임의로 멈추지 않는 함수의 실행을 강제로 끝내는 샌드박스가 아니다. 반복 실행은 새 카운터와 runId를 사용해 앞 실행의 누적을 이어받지 않는다.",
-    "example": "예제는 실제 products/empty fixture를 concurrency=1로 읽고 같은 core를 사용한다. maxOutputs=1이므로 products의 전체 count는 2여도 표시 항목은 하나다. 두 작업 뒤 returnedItems=1이다. 예제의 now는 완료할 때마다 5를 더하는 주입 시계여서 elapsedMs=10이다.\n\n10은 실제 네트워크 지연이나 처리 성능이 아니라 측정 경로를 검증하기 위한 값이다. 고정 probe는 대기 gate를 열어 완료 순서를 바꾸고 활성 수가 2를 넘지 않는지 확인하도록 작성한다. 저자 단계에서 브라우저 실행을 하지 않았다면 이 예상값을 실측 PASS로 쓰지 않는다.",
+    "theory": "작은 시험 데이터에서는 잘 동작한 검색도 많은 요청을 `Promise.all`로 한꺼번에 시작하면 메모리와 연결을 많이 사용할 수 있다. 제한은 하나의 숫자가 아니다. `maxInputs`는 배치 작업 수, `maxRecords`는 응답 하나의 행 수, `concurrency`는 동시에 기다리는 `load` 수, `maxOutputs`는 결과 보고서 하나에 보관할 항목 수다. 어떤 상한이 어느 자원을 제한하는지 구분해야 한다.\n\n이번 배치는 유효한 작업 목록을 먼저 복사한 뒤 정해진 수의 비동기 반복 함수(`worker`)를 실행한다. 여기서 `worker`는 별도 Worker 스레드가 아니라 같은 실행 환경에서 작업을 하나씩 맡는 함수다. 각 함수는 다음 입력 인덱스를 가져와 `load()`로 데이터를 읽고 공유 도메인 함수로 보고서를 만든다. 결과는 완료 순서가 아니라 입력 순서에 둔다. 작업이 실패해도 `finally`에서 활성 작업 수를 줄여 다음 작업을 시작할 수 있게 한다. 자동 재시도는 하지 않는다. 재시도가 필요하면 멱등성·시도 수·지연·취소를 별도로 설계해야 한다.\n\n`maxRecords` 검사는 응답 배열을 받은 뒤 `core`에 넘기기 전에 수행한다. 이 검사로 이미 수신한 HTTP 바이트나 JSON 파싱 메모리까지 제한했다고 말할 수 없다. 실제 전송 바이트 상한은 스트림·서버·전송 어댑터에서 다뤄야 한다. 결과에는 제한된 `items`만 보관하고 `raw` 배열을 모아 두지 않는다. 최대 보관 항목은 `maxInputs`×`maxOutputs`로 설명할 수 있지만 객체당 실제 메모리까지 일정한 것은 아니다.\n\n취소는 한 `AbortSignal`을 활성 `load`에 전달하고 새 작업 시작을 중지한다. 이 실습의 `load`는 취소 신호를 받으면 성공 또는 실패로 완료돼야 한다. `run()`이 반환하는 `Promise`는 이미 시작한 작업이 정리를 마칠 때까지 기다린다. 임의로 멈추지 않는 함수의 실행을 강제로 끝내는 샌드박스가 아니다. 반복 실행은 새 카운터와 `runId`를 사용해 앞 실행의 누적을 이어받지 않는다.",
+    "example": "예제는 실제 products/empty fixture를 `concurrency=1`로 읽고 같은 `core`를 사용한다. `maxOutputs=1`이므로 products의 전체 `count`는 2여도 표시 항목은 하나다. 두 작업 뒤 `returnedItems=1`이다. 예제의 `now`는 완료할 때마다 5를 더하는 주입 시계여서 `elapsedMs=10`이다.\n\n10은 실제 네트워크 지연이나 처리 성능이 아니라 측정 경로를 검증하기 위한 값이다. 자동 검사에서는 대기를 직접 풀 수 있는 장치(gate)로 작업의 완료 순서를 바꾸고 활성 작업 수가 2를 넘지 않는지 확인한다. 예상 출력과 실제 브라우저 실행 결과를 비교하되 주입한 시계의 값을 성능 측정값으로 기록하지 않는다.",
     "quiz": "입력 작업 수와 응답 행 수, 동시 활성 수와 결과 보관 수를 각각 대응한다. 응답 배열 제한이 HTTP 바이트 제한을 대체하는지 판단한다. 출력 개수와 전체 집계는 C01 계약 그대로 유지한다. 취소 완료는 협력자의 정리 조건까지 포함한다.",
-    "practice": "관측 정보는 total, started, completed, failed, active, peakActive, returnedItems, elapsedMs다. completed에는 정상·실패로 settle한 작업이 포함되며 취소된 작업은 제외한다. active는 시작한 load/core 처리 경로의 현재 수이고 finally에서 감소한다. elapsedMs는 정상적인 단조 증가 주입 시계의 종료값−시작값이다. now는 유한한 숫자를 반환하고 예외를 던지지 않는 의존성 계약이다.\n\n실제 성능을 비교하려면 데이터 크기·정규화 비용·브라우저 버전·장치·동시성·워밍업·반복 횟수를 먼저 고정한다. fixture 한 번의 빠른 성공을 운영 SLO로 확대하지 않는다. 설계 메모에는 현재 상한이 보호하지 못하는 전송량, 느린 협력자에 대한 deadline 정책, 실패율과 취소율을 구분해 관찰할 이유를 적는다.",
-    "lab": "createBoundedQueryBatch(root,queryProducts,options)의 본문을 작성한다. options는 정상 동기 단조시계 now, 협력적 load(task,{signal}), concurrency=2(1–4), maxInputs=8(1–32), maxRecords=100(1–1000), maxOutputs=3(0–100)이다. 상한은 정수이며 잘못되면 RangeError다. root에 role=status/aria-live=polite output과 취소 버튼을 만든다. API는 run(tasks), cancel(), getState(), dispose()다.\n\ntasks는 최대 maxInputs개의 조밀 배열이며 각 {id,query}는 비어 있지 않은 고유 문자열 ID와 문자열 query다. 입력 오류는 load 전에 거부한다. 동시에 concurrency개 이하로 load를 호출하고 각 작업은 한 번만 시도한다. 응답이 배열이 아니거나 maxRecords를 넘으면 input 실패이며 core를 호출하지 않는다. 정상 자료는 queryProducts(records,{query:task.query,limit:maxOutputs})로 처리한다. 결과 행은 {id,status:'fulfilled',report}, 실패는 {id,status:'rejected',error:'load'|'input'|'core'}, 취소는 {id,status:'cancelled'}다.\n\nrun은 {status:'done'|'cancelled',runId,results,metrics}를 반환하며 입력 순서를 유지한다. metrics/getState 필드는 status,runId,total,started,completed,failed,active,peakActive,returnedItems,elapsedMs다. 취소하면 새 작업을 시작하지 않고 활성 load에 abort를 알린 뒤 settle을 기다린다. 다음 run은 새 metrics를 쓴다. 활성 실행 중 중복 run과 dispose 뒤 run은 InvalidStateError다. dispose는 여러 번 호출해도 안전하고 리스너·자식 DOM을 정리한다."
+    "practice": "관측 정보는 `total`, `started`, `completed`, `failed`, `active`, `peakActive`, `returnedItems`, `elapsedMs`다. `completed`에는 성공하거나 실패한 작업을 세고 취소된 작업은 제외한다. `active`는 시작한 `load`/`core` 처리 경로의 현재 수이고 `finally`에서 감소한다. `elapsedMs`는 정상적인 단조 증가 주입 시계의 종료값−시작값이다. `now`는 유한한 숫자를 반환하고 예외를 던지지 않는 의존성 계약이다.\n\n실제 성능을 비교하려면 데이터 크기·정규화 비용·브라우저 버전·장치·동시성·워밍업·반복 횟수를 먼저 고정한다. fixture 한 번의 빠른 성공을 운영 SLO로 확대하지 않는다. 설계 메모에는 현재 상한이 보호하지 못하는 전송량, 느린 협력자에 대한 deadline 정책, 실패율과 취소율을 구분해 관찰할 이유를 적는다.",
+    "lab": "`createBoundedQueryBatch(root,queryProducts,options)`의 본문을 작성한다. `options`는 정상 동기 단조시계 `now`, 협력적 `load(task,{signal})`, `concurrency=2` (허용 범위 1–4), `maxInputs=8` (허용 범위 1–32), `maxRecords=100` (허용 범위 1–1000), `maxOutputs=3` (허용 범위 0–100)이다. 상한은 정수이며 잘못되면 `RangeError`다. root에 `role=status/aria-live=polite` output과 취소 버튼을 만든다. API는 `run(tasks)`, `cancel()`, `getState()`, `dispose()`다.\n\n`tasks`는 최대 `maxInputs`개의 조밀 배열이며 각 `{id,query}`는 비어 있지 않은 고유 문자열 ID와 문자열 `query`다. 입력 오류는 `load` 전에 거부한다. 동시에 `concurrency`개 이하로 `load`를 호출하고 각 작업은 한 번만 시도한다. 응답이 배열이 아니거나 `maxRecords`를 넘으면 `input` 실패이며 `core`를 호출하지 않는다. 정상 자료는 `queryProducts(records,{query:task.query,limit:maxOutputs})`로 처리한다. 결과 행은 `{id,status:'fulfilled',report}`, 실패는 `{id,status:'rejected',error:'load'|'input'|'core'}`, 취소는 `{id,status:'cancelled'}`다.\n\n`run`은 `{status:'done'|'cancelled',runId,results,metrics}`를 반환하며 입력 순서를 유지한다. `metrics/getState` 필드는 `status`,`runId`,`total`,`started`,`completed`,`failed`,`active`,`peakActive`,`returnedItems`,`elapsedMs`다. 취소하면 새 작업을 시작하지 않고 활성 `load`에 abort를 알린 뒤 settle을 기다린다. 다음 `run`은 새 `metrics`를 쓴다. 활성 실행 중 중복 `run`과 dispose 뒤 `run`은 `InvalidStateError`다. dispose는 여러 번 호출해도 안전하고 리스너·자식 DOM을 정리한다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-bounds",
-        "prompt": "maxOutputs=1이면 입력 100만 행의 파싱 메모리도 제한되는가?",
+        "prompt": "`maxOutputs=1`이면 입력 100만 행의 파싱 메모리도 제한되는가?",
         "choices": [
           {
             "id": "a",
@@ -85,24 +85,24 @@
       },
       {
         "id": "q3-cancel",
-        "prompt": "AbortSignal을 무시하고 끝나지 않는 load는?",
+        "prompt": "`AbortSignal`을 무시하고 끝나지 않는 `load`는?",
         "choices": [
           {
             "id": "a",
-            "text": "AbortController가 함수 실행을 강제로 종료한다.",
-            "explanation": "signal은 협력적 통지이며 강제 실행 중단이 아니다."
+            "text": "`AbortController`가 함수 실행을 강제로 종료한다.",
+            "explanation": "`signal`은 협력적 통지이며 강제 실행 중단이 아니다."
           },
           {
             "id": "b",
-            "text": "이 실습의 협력적 load 전제를 위반하며 별도 격리·deadline 정책이 필요하다.",
-            "explanation": "정리까지 기다리는 run은 settle되지 않은 협력자를 자동 종료하지 않는다."
+            "text": "이 실습의 협력적 `load` 전제를 위반하며 별도 격리·deadline 정책이 필요하다.",
+            "explanation": "정리까지 기다리는 `run`은 settle되지 않은 협력자를 자동 종료하지 않는다."
           }
         ],
         "correctChoiceId": "b"
       },
       {
         "id": "q4-measurement",
-        "prompt": "주입 시계로 elapsedMs=25를 확인했다. 무엇을 입증했는가?",
+        "prompt": "주입 시계로 `elapsedMs=25`를 확인했다. 무엇을 입증했는가?",
         "choices": [
           {
             "id": "a",
@@ -163,15 +163,15 @@
     "node": {
       "exerciseId": "capstone-failure-and-scale-node-exercise",
       "steps": {
-        "theory": "파일 세 개를 처리할 때 Promise.all(tasks.map(load))는 몇 개를 동시에 시작할까? Promise.all은 이미 시작한 Promise를 모으므로 동시성 제한을 만들지 않는다. 이번 실습은 입력 인덱스를 공유하는 제한된 수의 worker 루프를 만든다. 각 루프는 한 작업의 읽기·검증·core 처리·정리가 끝나야 다음 인덱스를 가져온다. 완료 순서는 b,a,c여도 결과 배열은 입력 a,b,c 순서로 남긴다.\n\n상한은 서로 대체할 수 없다. maxInputs는 파일 작업 개수, maxFileBytes는 native 파일의 실제 읽은 바이트, maxLineBytes는 물리 행 버퍼, maxRecords는 비빈 행 수, concurrency는 활성 경로 수, maxOutputs는 report.items 보관 수다. 같은 ID의 중복 행도 파일·행 상한에 포함한다. queryProducts의 count/total은 출력 상한에 줄어들지 않는다. 주입 load가 거대한 배열을 만든 뒤 반환하면 배열 길이 검사는 이후 처리만 제한하며 그 load의 이전 할당을 취소하지 못한다.\n\n취소는 새 일을 시작하지 않는 결정과 시작한 일을 정리하는 절차다. signal을 보낸 뒤 활성 load가 settle할 때까지 기다려야 다음 실행의 자원과 겹치지 않는다. 늦은 성공은 취소된 행으로 남긴다. active는 finally에서 줄이고 completed에는 취소 행을 세지 않는다. 검증용 gate는 실제 작업 시작을 관찰해 열며, 몇 ms 안에 끝나야 한다는 성능 가정을 채점하지 않는다.",
-        "example": "예제는 실제 products.ndjson과 empty.ndjson을 두 worker로 읽고 같은 core에 limit=1을 전달한다. 입력 순서 ID와 returnedItems=1, peakActive=2를 출력한다. 읽기가 완료될 때 tick을 5씩 더하므로 elapsedMs=10이다. tick은 주입 측정 예제이며 실제 소요 시간이나 성능 보장이 아니다. finally에서 자신의 임시 폴더를 정리한다.\n\n예제 실행 제공자는 import 전에 globalThis.__javascriptEduExampleContext.workspaceRoot를 제공한다. 컨텍스트가 없으면 실행 불가 오류로 끝나며 사용자 폴더로 우회하지 않는다.",
-        "quiz": "아래 네 문제에서 입력·파일·행·활성 경로·출력 상한을 각각 적용한다. 선검증·입력 순서·실패 분류와 취소 drain을 구현한다. 주입 시계의 측정 경로와 실제 성능 증거의 범위를 구분한다.",
-        "practice": "두 load를 gate에서 기다리게 하고 두 번째를 먼저 완료해 보라. 세 번째 load는 빈 슬롯이 생겨야 시작하며 최종 결과는 원래 순서다. next run의 metrics가 누적되지 않는지 확인한다. native 파일의 큰 행·많은 중복 행·불량 UTF-8을 각각 바꿔 서로 다른 제한 지점을 재현한다. now를 0과 25로 주입한 elapsedMs=25는 측정 경로의 확인이다. 운영 처리량이나 실제 장치 성능을 주장하려면 장치·파일 크기·동시성·반복 횟수를 별도로 측정해야 한다.",
-        "lab": "main.mjs에서 createNodeQueryBatch(options)를 export한다. options는 workspaceRoot(기존 디렉터리 문자열/file URL), load(선택), now=()=>performance.now(), concurrency=2(1..4), maxInputs=8(1..32), maxFileBytes=65536(1..1048576), maxLineBytes=4096(1..65536), maxRecords=100(1..1000), maxOutputs=3(0..100)이다. 상한은 정수이며 위반은 RangeError, 의존성/타입 위반은 TypeError다. now는 정상적인 동기 단조 시계로 유한한 숫자를 반환하고 throw하지 않는 의존성이다. API는 run(tasks), cancel(), getState(), dispose()다.\n\ntasks는 0..maxInputs개 조밀 배열이다. 각 own slot의 {id,file,query}는 자기 필드여야 하며 id는 비빈 고유 문자열, file은 C02의 단일 NDJSON 파일명, query는 문자열이다. 희소 배열에 프로토타입 값이 있어도 거부한다. 전체 입력을 검증·복사한 뒤 I/O를 시작하며 과다 개수는 RangeError, 다른 위반은 TypeError다. 동시에 concurrency개 이하의 load 경로만 활성화하고 각 작업은 한 번만 시도한다. 주입 load(task,{signal,workspaceRoot,maxFileBytes,maxLineBytes,maxRecords})는 레코드 배열을 반환하는 협력자다. 전달한 task를 바꿔도 결과 id/query가 바뀌지 않아야 한다.\n\nload 생략 시 실제 파일의 lstat/realpath 경계·스트림 바이트·물리 행 바이트·비빈 행 수를 제한하고 엄격한 UTF-8/JSON NDJSON을 읽는다. LF 제외/CR 포함 행 바이트, CRLF·빈 줄·마지막 LF 생략을 지원한다. 기본 loader의 FILE/경로 실패는 load, 인코딩·JSON·상한 실패는 input이다. 주입 load가 throw/reject하면 값이 undefined여도 load다. 반환 배열/행 상한/희소 위반은 input, 고정 C01 queryProducts의 스키마·합계 실패는 core다. 정상은 queryProducts(records,{query:task.query,limit:maxOutputs})다. 바이트 상한은 native loader가 적용하며 주입 load의 외부 수신 메모리까지 제한했다고 주장하지 않는다.\n\nrun 결과는 {status:'done'|'cancelled',runId,results,metrics}이며 입력 순서대로 {id,status:'fulfilled',report}, {id,status:'rejected',error:'load'|'input'|'core'}, {id,status:'cancelled'} 중 하나다. metrics/getState는 status,runId,total,started,completed,failed,active,peakActive,returnedItems,elapsedMs를 갖는다. completed는 fulfilled/rejected만, returnedItems는 실제 보관 items 합, elapsedMs는 종료(now)-시작(now)다. 초기 idle/runId0이며 실행 중 running, 취소 대기 중 cancelling, 종료 done/cancelled, 폐기 뒤 disposed다. getState의 실행 중 elapsedMs는 현재 now-시작이다.\n\ncancel은 최초 활성 취소에서 true, 없거나 이미 취소한 경우 false다. 새 작업 시작을 멈추고 활성 signal을 abort한 다음 모든 시작한 load가 settle할 때까지 run을 기다린다. 이때 결과를 늦게 반환해도 cancelled다. 자동 재시도는 없다. 중복 run과 dispose 뒤 run은 InvalidStateError다. dispose는 멱등이며 취소·drain 중에도 disposed 상태를 유지한다. 반환 결과/상태와 입력은 참조를 공유하지 않고 동결해도 된다. 반복 run은 runId를 증가시키고 측정값을 초기화한다."
+        "theory": "파일 세 개를 처리할 때 `Promise.all(tasks.map(load))`는 몇 개를 동시에 시작할까? `Promise.all`은 이미 시작한 `Promise`를 모으므로 동시성 제한을 만들지 않는다. 이번 실습은 다음 입력 인덱스를 공유하는 비동기 반복 함수(`worker`)를 정해진 수만큼 실행한다. 여기서 `worker`는 `node:worker_threads`의 별도 스레드가 아니라 같은 실행 환경에서 다음 작업을 맡는 함수다. 각 루프는 한 작업의 읽기·검증·`core` 처리·정리가 끝나야 다음 인덱스를 가져온다. 완료 순서는 b,a,c여도 결과 배열은 입력 a,b,c 순서로 남긴다.\n\n상한은 서로 대체할 수 없다. `maxInputs`는 파일 작업 개수, `maxFileBytes`는 실제 파일에서 읽는 바이트 수, `maxLineBytes`는 한 물리 행의 바이트 수, `maxRecords`는 비어 있지 않은 행의 수, `concurrency`는 활성 경로 수, `maxOutputs`는 `report.items` 보관 수다. 같은 ID의 중복 행도 파일·행 상한에 포함한다. `queryProducts`의 `count/total`은 출력 상한에 줄어들지 않는다. 주입 `load`가 거대한 배열을 만든 뒤 반환하면 배열 길이 검사는 이후 처리만 제한하며 그 `load`의 이전 할당을 취소하지 못한다.\n\n취소는 새 일을 시작하지 않는 결정과 시작한 일을 정리하는 절차다. 취소 신호를 보낸 뒤 실행 중인 `load`가 완료될 때까지 기다려야 다음 실행의 자원과 겹치지 않는다. 늦은 성공은 취소된 행으로 남긴다. `active`는 `finally`에서 줄이고 `completed`에는 취소 행을 세지 않는다. 검증용 gate는 실제 작업 시작을 관찰해 열며, 몇 ms 안에 끝나야 한다는 성능 가정을 채점하지 않는다.",
+        "example": "예제는 실제 `products.ndjson`과 `empty.ndjson`을 두 비동기 반복 함수로 읽고 같은 `core`에 limit=1을 전달한다. 입력 순서 ID와 `returnedItems=1`, `peakActive=2`를 출력한다. 읽기가 완료될 때 tick을 5씩 더하므로 `elapsedMs=10`이다. tick은 주입 측정 예제이며 실제 소요 시간이나 성능 보장이 아니다. `finally`에서 자신의 임시 폴더를 정리한다.\n\n예제 실행 제공자는 import 전에 `globalThis.__javascriptEduExampleContext.workspaceRoot`를 제공한다. 컨텍스트가 없으면 실행 불가 오류로 끝나며 사용자 폴더로 우회하지 않는다.",
+        "quiz": "`Promise`를 모아 기다리는 것과 작업 시작 수를 제한하는 것의 차이를 확인한다. 배열 길이 검사로 제한할 수 있는 범위, 취소 뒤 정리를 기다려야 하는 이유, 주입 시계로 확인한 값의 의미도 판단한다.",
+        "practice": "두 `load()` 호출을 완료 시점을 조절하는 gate에서 기다리게 한 뒤 두 번째 호출부터 완료한다. 세 번째 `load`는 빈 슬롯이 생겨야 시작하며 최종 결과는 원래 순서다. 다음 `run()`에서 `metrics`가 이전 값부터 누적되지 않는지 확인한다. 실제 파일의 큰 행·많은 중복 행·불량 UTF-8을 각각 바꿔 서로 다른 제한 지점을 재현한다. `now`를 0과 25로 주입한 `elapsedMs=25`는 측정 경로의 확인이다. 운영 처리량이나 실제 장치 성능을 주장하려면 장치·파일 크기·동시성·반복 횟수를 별도로 측정해야 한다.",
+        "lab": "`main.mjs`에서 `createNodeQueryBatch(options)`를 export한다. `options`에는 기존 디렉터리 경로 문자열 또는 `file` URL인 `workspaceRoot`를 전달하고 필요하면 `load` 함수를 주입한다. 그 밖의 기본값과 허용 범위는 `now=()=>performance.now()`, `concurrency=2` (허용 범위 1..4), `maxInputs=8` (허용 범위 1..32), `maxFileBytes=65536` (허용 범위 1..1048576), `maxLineBytes=4096` (허용 범위 1..65536), `maxRecords=100` (허용 범위 1..1000), `maxOutputs=3` (허용 범위 0..100)이다. 상한은 정수이며 위반은 `RangeError`, 의존성/타입 위반은 `TypeError`다. `now`는 정상적인 동기 단조 시계로 유한한 숫자를 반환하고 `throw`하지 않는 의존성이다. API는 `run(tasks)`, `cancel()`, `getState()`, `dispose()`다.\n\n`tasks`는 항목 수가 0개 이상 `maxInputs`개 이하인 빈 슬롯 없는 배열이다. 각 인덱스는 배열 자체의 프로퍼티여야 한다. 항목은 자체 필드로 `{id,file,query}`를 가지며 `id`는 비어 있지 않은 고유 문자열, `file`은 C02의 단일 NDJSON 파일명, `query`는 문자열이다. 희소 배열에 프로토타입 값이 있어도 거부한다. 전체 입력을 검증·복사한 뒤 I/O를 시작하며 과다 개수는 `RangeError`, 다른 위반은 `TypeError`다. 동시에 `concurrency`개 이하의 `load` 경로만 활성화하고 각 작업은 한 번만 시도한다. 주입 `load(task,{signal,workspaceRoot,maxFileBytes,maxLineBytes,maxRecords})`는 레코드 배열을 반환하는 협력자다. 주입한 `load` 함수가 전달받은 `task`를 바꿔도 결과의 `id`와 `query`는 바뀌지 않아야 한다.\n\n`load`를 생략하면 기본 읽기 함수가 실제 파일의 lstat/realpath 경계·스트림 바이트·물리 행 바이트·비어 있지 않은 행 수를 제한하고 엄격한 UTF-8/JSON NDJSON을 읽는다. LF 제외/CR 포함 행 바이트, CRLF·빈 줄·마지막 LF 생략을 지원한다. 기본 읽기 함수의 `FILE`/경로 실패는 `load`, 인코딩·JSON·상한 실패는 `input`이다. 주입 `load`가 `throw/reject`하면 값이 `undefined`여도 `load`다. 반환 배열/행 상한/희소 위반은 `input`, 고정 C01 `queryProducts`의 스키마·합계 실패는 `core`다. 정상은 `queryProducts(records,{query:task.query,limit:maxOutputs})`다. 바이트 상한은 기본 파일 읽기 함수가 적용한다. 따로 주입한 `load`가 데이터를 받으며 이미 사용한 메모리까지 제한하는 것은 아니다.\n\n`run` 결과는 `{status:'done'|'cancelled',runId,results,metrics}`이며 입력 순서대로 `{id,status:'fulfilled',report}`, `{id,status:'rejected',error:'load'|'input'|'core'}`, `{id,status:'cancelled'}` 중 하나다. `metrics/getState`는 `status`,`runId`,`total`,`started`,`completed`,`failed`,`active`,`peakActive`,`returnedItems`,`elapsedMs`를 갖는다. `completed`는 fulfilled/rejected만, `returnedItems`는 실제 보관 `items` 합, `elapsedMs`는 종료 시점의 `now()` 값에서 시작 시점의 값을 뺀 시간이다. 초기에는 상태가 `idle`이고 `runId=0`이며 실행 중 `running`, 취소 대기 중 `cancelling`, 종료 `done`/`cancelled`, 폐기 뒤 `disposed`다. 실행 중 `getState()`가 반환하는 `elapsedMs`는 현재 `now()` 값에서 시작 시점의 값을 뺀 시간이다.\n\ncancel은 최초 활성 취소에서 `true`, 없거나 이미 취소한 경우 `false`다. 새 작업 시작을 멈추고 활성 `signal`을 abort한 다음 이미 시작한 모든 `load`가 완료될 때까지 `run()`이 기다린다. 이때 결과를 늦게 반환해도 `cancelled`다. 자동 재시도는 없다. 중복 `run`과 dispose 뒤 `run`은 `InvalidStateError`다. `dispose()`는 여러 번 호출해도 안전하며 취소한 작업의 정리를 기다리는 동안에도 `disposed` 상태를 유지한다. 반환 결과/상태와 입력은 참조를 공유하지 않고 동결해도 된다. 반복 `run`은 `runId`를 증가시키고 측정값을 초기화한다."
       },
       "goals": [
         "입력·파일·행·활성 경로·출력 상한을 각각 적용한다.",
-        "선검증·입력 순서·실패 분류와 취소 drain을 구현한다.",
+        "선검증·입력 순서·실패 분류와 취소 뒤 시작한 작업의 정리 대기을 구현한다.",
         "주입 시계의 측정 경로와 실제 성능 증거의 범위를 구분한다."
       ],
       "quiz": {
@@ -179,28 +179,28 @@
         "questions": [
           {
             "id": "c03-node-bound",
-            "prompt": "Promise.all(tasks.map(load))가 보장하는 것은?",
+            "prompt": "`Promise.all(tasks.map(load))`가 보장하는 것은?",
             "choices": [
               {
                 "id": "a",
-                "text": "concurrency=2 제한",
-                "explanation": "map 단계에서 모든 load를 이미 호출한다."
+                "text": "`concurrency=2` 제한",
+                "explanation": "map 단계에서 모든 `load`를 이미 호출한다."
               },
               {
                 "id": "b",
-                "text": "반환된 Promise들의 완료를 함께 기다림",
-                "explanation": "시작 제한은 worker 루프 등 별도 조정이 필요하다."
+                "text": "반환된 `Promise`들의 완료를 함께 기다림",
+                "explanation": "시작 제한은 `worker` 루프 등 별도 조정이 필요하다."
               }
             ],
             "correctChoiceId": "b"
           },
           {
             "id": "c03-node-bytes",
-            "prompt": "주입 load가 만든 배열의 길이 제한만으로 무엇을 보장할 수 있는가?",
+            "prompt": "주입 `load`가 만든 배열의 길이 제한만으로 무엇을 보장할 수 있는가?",
             "choices": [
               {
                 "id": "a",
-                "text": "이미 받은 파일 바이트와 load 할당까지 제한",
+                "text": "이미 받은 파일 바이트와 `load` 할당까지 제한",
                 "explanation": "배열 반환 뒤 검사로 이전 자원 사용을 되돌릴 수 없다."
               },
               {
@@ -213,7 +213,7 @@
           },
           {
             "id": "c03-node-drain",
-            "prompt": "취소 후 올바른 run 완료 시점은?",
+            "prompt": "취소 후 올바른 `run` 완료 시점은?",
             "choices": [
               {
                 "id": "a",
@@ -222,7 +222,7 @@
               },
               {
                 "id": "b",
-                "text": "시작한 load들의 settle·정리 뒤",
+                "text": "시작한 `load`가 완료되고 자원 정리가 끝난 뒤",
                 "explanation": "새 시작을 막고 기존 자원을 회수한다."
               }
             ],
@@ -230,7 +230,7 @@
           },
           {
             "id": "c03-node-clock",
-            "prompt": "주입 now가 0→25일 때 elapsedMs=25의 의미는?",
+            "prompt": "주입 `now`가 0→25일 때 `elapsedMs=25`의 의미는?",
             "choices": [
               {
                 "id": "a",

@@ -28,17 +28,17 @@
   ],
   "exerciseId": "capstone-domain-core-exercise",
   "steps": {
-    "theory": "검색 대시보드의 화면과 내보내기 도구가 같은 자료를 처리하는데 중복 수와 합계가 다르다. 어느 쪽이 맞는지 정하려면 공통 함수부터 실행 순서를 계약으로 적어야 한다. 이 프로젝트는 행 검증 → 텍스트 정규화 → ID 중복 제거 → 검색/가격 필터 → 가격/ID 정렬 → 전체 집계 → 출력 제한을 사용한다. 정규화는 id/name의 바깥 공백 제거와 NFC이며, 검색어에는 소문자 변환도 적용한다. 이를 전 세계 모든 언어의 완전한 검색 규칙이라고 확대하지 않는다.\n\n동일한 정규화 ID는 첫 행을 채택하지만 뒤 중복 행도 검증한다. 중복이란 이유로 불량 숫자를 숨기지 않는다. price는 0 이상 안전 정수이며 합계도 안전 정수여야 한다. 통화의 소수·환율·반올림은 이 계약의 범위 밖이다. items의 길이는 화면에 보여 줄 개수이고 count/total은 제한 전 전체 일치 집합이다. limit=0이어도 집계는 남는다.\n\n순수 core는 입력에서 결과를 만들며 DOM, 파일, 저장소, 현재 시각을 직접 참조하지 않는다. 새 항목과 새 배열을 만들기 때문에 화면이 결과를 수정해도 원본과 다음 호출은 바뀌지 않는다. 정렬은 가격 오름차순, 동률이면 ID의 JavaScript 문자열 비교로 고정한다. 사용자의 locale 정렬이 필요하면 그것도 명시적 다른 계약으로 추가한다.\n\nmain은 queryProducts와 serializeReport만 공개하고 reader는 검증·정규화 도우미다. 실제 import/export를 유지한다. 직렬화는 알려진 보고서의 공개 필드를 정한 키 순서로 기록한다. 이것은 임의 객체를 무손실로 복사하는 기능이 아니다. 직렬화 스키마 version=1을 후속 저장·인수 검사와 연결한다.",
-    "example": "고정 입력의 p2 두 행에서 첫 Pistachio가 채택되고 p1 Lemon이 먼저 정렬된다. limit=1은 Lemon 하나만 출력하지만 count=2, total=350이다. ' PISTA '는 'pista'로 정규화되어 Pistachio 한 항목, total=230이 된다. 빈 입력에 한글 검색어를 주면 count=0, total=0, items=[]다.\n\n예제는 원본과 항목을 동결한 채 실제 두 ESM 파일을 가져온다. 출력은 JSON 세 줄이고 브라우저·Node에서 공유할 언어 계약을 보여 준다. 이번 단계의 Node 실행은 저자용 core 검증이며 Node 조회 제품을 구현했다는 의미는 아니다.",
-    "quiz": "처리 순서 하나를 바꾸었을 때 어떤 값이 달라지는지 답한다. 검증 전 중복 제거, 제한 후 집계, 입력 sort는 모두 다른 계약을 만든다. 정규화·직렬화가 해결하는 문제와 그 밖의 locale 검색·임의 객체 복사를 구분한다.",
-    "practice": "브라우저 대시보드는 이 함수의 items로 목록을 그리고 count/total로 상태를 알린다. 이후 Node 선택 변형도 같은 함수를 쓸 수 있지만 현재 제공 변형은 브라우저다. 네트워크 응답 검증 실패를 화면의 빈 결과로 바꾸지 않는다. core의 TypeError/RangeError를 호스트 경계에서 데이터 실패로 처리한다.\n\n설계 메모에는 첫 중복을 택한 이유, ID 대소문자 정책, 출력 limit과 입력 크기 상한이 다른 이유를 적는다. limit이 작아도 이 구현은 전체 입력을 검증·정렬하므로 메모리와 계산량이 제한되는 것은 아니다. C03에서 입력 레코드 상한과 동시 작업 상한을 별도로 적용한다.",
-    "lab": "main.mjs만 편집하며 reader.mjs는 고정이다. queryProducts(records, options={})는 조밀 배열과 객체 옵션을 받는다. 모든 행을 normalizeProduct로 검증한 뒤 정규화 ID의 첫 값을 보존한다. query 기본값은 빈 문자열, maxPrice와 limit 기본값은 Infinity다. maxPrice는 NaN이 아닌 0 이상 number, limit는 Infinity 또는 0 이상 안전 정수여야 한다.\n\n이름의 소문자 값에 정규화 query가 포함되고 price<=maxPrice인 항목을 고른다. 가격·ID 순으로 새 배열을 정렬하고 전체 count·total을 계산한다. total이 안전 정수를 벗어나면 RangeError다. {version:1,query,count,total,items}를 반환하고 items에만 limit을 적용한다. serializeReport는 이 순서의 키와 각 항목의 id/name/price만 JSON으로 만든다. 전역 누적 상태와 호스트 API를 넣지 않는다."
+    "theory": "검색 대시보드의 화면과 내보내기 도구가 같은 자료를 처리하는데 중복 수와 합계가 다르다. 어느 쪽이 맞는지 정하려면 공통 함수가 데이터를 처리하는 순서부터 정해야 한다. 이 프로젝트는 행 검증 → 텍스트 정규화 → ID 중복 제거 → 검색/가격 필터 → 가격/ID 정렬 → 전체 집계 → 출력 제한을 사용한다. 정규화는 `id`/`name`의 바깥 공백 제거와 NFC이며, 검색어에는 소문자 변환도 적용한다. 이를 전 세계 모든 언어의 완전한 검색 규칙이라고 확대하지 않는다.\n\n동일한 정규화 ID는 첫 행을 채택하지만 뒤 중복 행도 검증한다. 중복이란 이유로 불량 숫자를 숨기지 않는다. `price`는 0 이상 안전 정수이며 합계도 안전 정수여야 한다. 통화의 소수·환율·반올림은 이 계약의 범위 밖이다. `items`의 길이는 화면에 보여 줄 개수이고 `count`/`total`은 제한 전 전체 일치 집합이다. `limit=0`이어도 집계는 남는다.\n\n공유 도메인 함수(core)는 입력만으로 결과를 만들며 DOM, 파일, 저장소, 현재 시각을 직접 참조하지 않는다. 새 항목과 새 배열을 만들기 때문에 화면이 결과를 수정해도 원본과 다음 호출은 바뀌지 않는다. 가격 오름차순으로 정렬하고, 가격이 같으면 JavaScript 문자열 비교로 ID를 정렬한다. 사용자의 locale 정렬이 필요하면 그것도 명시적 다른 계약으로 추가한다.\n\n`main`은 `queryProducts`와 `serializeReport`만 공개하고 `reader`는 검증·정규화 도우미다. 실제 `import/export`를 유지한다. 직렬화는 알려진 보고서의 공개 필드를 정한 키 순서로 기록한다. 이것은 임의 객체를 무손실로 복사하는 기능이 아니다. 직렬화 스키마 `version=1`을 후속 저장·인수 검사와 연결한다.",
+    "example": "고정 입력의 p2 두 행에서 첫 Pistachio가 채택되고 p1 Lemon이 먼저 정렬된다. `limit=1`은 Lemon 하나만 출력하지만 `count=2`, `total=350`이다. ' PISTA '는 'pista'로 정규화되어 Pistachio 한 항목, `total=230`이 된다. 빈 입력에 한글 검색어를 주면 `count=0`, `total=0`, `items=[]`다.\n\n예제는 원본과 항목을 동결한 채 실제 두 ESM 파일을 가져온다. 출력은 JSON 세 줄이고 브라우저·Node에서 공유할 언어 계약을 보여 준다. 이 단계에서는 공유 함수의 계산 결과를 확인한다. 파일과 HTTP를 다루는 Node 조회 제품은 통합 2의 Node 변형에서 구현한다.",
+    "quiz": "처리 순서 하나를 바꾸었을 때 어떤 값이 달라지는지 답한다. 검증 전 중복 제거, 제한 후 집계, 입력 `sort`는 모두 다른 계약을 만든다. 정규화·직렬화가 해결하는 문제와 그 밖의 locale 검색·임의 객체 복사를 구분한다.",
+    "practice": "브라우저 대시보드는 이 함수의 `items`로 목록을 그리고 `count`/`total`로 상태를 알린다. 이 단계의 실습은 브라우저에서 실행한다. 통합 2의 Node 변형에서는 같은 도메인 함수를 파일·CLI·HTTP와 연결한다. 네트워크 응답 검증 실패를 화면의 빈 결과로 바꾸지 않는다. core의 `TypeError/RangeError`를 호스트 경계에서 데이터 실패로 처리한다.\n\n설계 메모에는 첫 중복을 택한 이유, ID 대소문자 정책, 출력 `limit`과 입력 크기 상한이 다른 이유를 적는다. `limit`이 작아도 이 구현은 전체 입력을 검증·정렬하므로 메모리와 계산량이 제한되는 것은 아니다. C03에서 입력 레코드 상한과 동시 작업 상한을 별도로 적용한다.",
+    "lab": "`main.mjs`만 편집하며 `reader.mjs`는 고정이다. `queryProducts(records, options={})`는 빈 슬롯 없는 배열과 옵션 객체를 받는다. 모든 행을 `normalizeProduct`로 검증한 뒤 정규화 ID의 첫 값을 보존한다. `query` 기본값은 빈 문자열, `maxPrice`와 `limit` 기본값은 `Infinity`다. `maxPrice`는 `NaN`이 아닌 0 이상 number, `limit`는 `Infinity` 또는 0 이상의 안전 정수여야 한다.\n\n이름의 소문자 값에 정규화 `query`가 포함되고 `price<=maxPrice`인 항목을 고른다. 가격·ID 순으로 새 배열을 정렬하고 전체 `count`·`total`을 계산한다. `total`이 안전 정수를 벗어나면 `RangeError`다. `{version:1,query,count,total,items}`를 반환하고 `items`에만 `limit`을 적용한다. `serializeReport`는 이 순서의 키와 각 항목의 `id`/`name`/`price`만 JSON으로 만든다. 전역 누적 상태와 호스트 API를 넣지 않는다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-order",
-        "prompt": "중복 ID 중 첫 값을 보존한다. 같은 ID의 둘째 행이 잘못된 price라면?",
+        "prompt": "중복 ID 중 첫 값을 보존한다. 같은 ID의 둘째 행이 잘못된 `price`라면?",
         "choices": [
           {
             "id": "a",
@@ -47,7 +47,7 @@
           },
           {
             "id": "b",
-            "text": "TypeError로 거부한다.",
+            "text": "`TypeError`로 거부한다.",
             "explanation": "각 행 검증 뒤 중복 제거라는 처리 순서가 정해져 있다."
           }
         ],
@@ -55,12 +55,12 @@
       },
       {
         "id": "q2-limit",
-        "prompt": "일치 항목 20개에서 limit=3이면 count와 items.length는?",
+        "prompt": "일치 항목 20개에서 `limit=3`이면 `count`와 `items.length`는?",
         "choices": [
           {
             "id": "a",
             "text": "20과 3이다.",
-            "explanation": "count/total은 전체 일치 집합, items는 제한된 출력이다."
+            "explanation": "`count`와 `total`은 조건에 맞는 전체 항목의 개수와 합계이고 `items`는 출력 개수가 제한된 목록이다."
           },
           {
             "id": "b",
@@ -72,7 +72,7 @@
       },
       {
         "id": "q3-pure",
-        "prompt": "공유 core가 import할 때 현재 시각과 저장소를 읽으면?",
+        "prompt": "공유 core가 `import`할 때 현재 시각과 저장소를 읽으면?",
         "choices": [
           {
             "id": "a",
@@ -98,7 +98,7 @@
           },
           {
             "id": "b",
-            "text": "입력 배열을 sort하고 운영체제 기본 localeCompare만 쓴다.",
+            "text": "입력 배열을 `sort`하고 운영체제 기본 `localeCompare`만 쓴다.",
             "explanation": "원본 변경과 환경 의존 정렬 정책이 함께 들어간다."
           }
         ],

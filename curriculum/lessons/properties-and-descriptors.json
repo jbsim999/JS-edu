@@ -7,8 +7,8 @@
   "level": "transition",
   "goals": [
     "자체·상속 필드와 열거 가능성을 구분한다.",
-    "데이터·접근자 descriptor와 읽기/쓰기 부수 효과를 설명한다.",
-    "누락·명시 undefined·지원 불가 필드를 잃지 않는 추출기를 구현한다."
+    "데이터·접근자 `descriptor`와 읽기/쓰기 부수 효과를 설명한다.",
+    "누락·명시 `undefined`·지원 불가 필드를 잃지 않는 추출기를 구현한다."
   ],
   "prerequisites": [
     "references-mutation-and-copy"
@@ -34,53 +34,53 @@
   ],
   "exerciseId": "properties-and-descriptors-exercise",
   "steps": {
-    "theory": "허용한 이름만 복사했는데 부모 객체의 값까지 들어오거나, 조회만 했는데 로그가 남았다. 프로퍼티는 이름과 값만의 쌍이 아니다. 데이터 프로퍼티에는 value/writable, 접근자에는 get/set이 있으며 둘 다 enumerable/configurable 같은 속성을 갖는다. own은 대상 자체에 있는지, enumerable은 특정 열거에서 포함되는지라는 서로 다른 질문이다.\n\n'key' in source는 상속 체인도 확인하고 Object.hasOwn은 자체 필드만 확인한다. source[key]는 getter를 실행할 수 있지만 Object.getOwnPropertyDescriptor(source,key)는 일반 객체의 descriptor를 읽는다. 그래서 값을 읽기 전에 접근자를 거부할 수 있다. Proxy라면 descriptor 조회 자체도 trap을 실행할 수 있으므로 이 일반 객체 계약을 모든 객체의 무부수효과 보장으로 확대하지 않는다.\n\n없는 프로퍼티를 읽은 undefined와 value:undefined인 자체 필드는 조회값만으로 구분되지 않는다. Object.keys·for...in·Reflect.ownKeys도 포함 범위가 다르다. 첫 번째는 자체 열거 가능한 문자열 키, 두 번째는 상속까지 포함할 수 있는 열거 가능한 문자열 키, 세 번째는 자체 비열거/Symbol 키까지 관찰한다.",
-    "example": "예제는 name과 unset만 수집한다. inherited와 missing은 missing 목록에, secret은 non-enumerable, computed는 accessor 거부 목록에 들어간다. unset은 values 안의 자체 필드로 남고 undefinedKeys에도 기록된다. descriptor.get의 타입을 읽을 때 reads는 0, source.computed를 실제로 읽은 뒤에는 1이다. 값 관찰과 메타데이터 관찰의 차이를 실행 순서로 확인한다.",
-    "quiz": "q1은 own과 in, q2는 descriptor 조회와 getter 실행, q3은 writable/enumerable/configurable의 독립성, q4는 Object.assign의 읽기/쓰기 효과를 구분한다. 추출 결과에 값을 복사했다고 원본 descriptor나 중첩 객체까지 복제한 것은 아니다.",
-    "practice": "교육용 설정 경계에서 사용자에게 공개한 필드만 추출한다고 가정한다. 상속 필드나 getter가 계산한 값을 무심코 포함하면 데이터가 아닌 동작까지 실행한다. 이번 추출기는 일반 객체의 자체 열거 가능한 데이터 프로퍼티만 선택한다. 결과는 null 원형 객체에 보관해 __proto__ 같은 이름도 데이터로 처리한다. 이 함수는 데이터의 스키마 유효성을 검사하지 않고, 중첩 값은 그대로 전달한다. 메모에는 허용 키를 정하는 주체, accessor를 읽을 대안과 비용, 이후 깊은 복사·검증이 필요한 경계를 적는다.",
-    "lab": "selectOwnData(source, allowedKeys)를 구현한다. source는 Proxy가 아닌 일반 객체이고 allowedKeys는 중복 없는 문자열 배열이다. {values,missing,undefinedKeys,rejected}를 반환한다. 자체 descriptor가 없으면 missing, 접근자이면 {key,reason:'accessor'}, 데이터이지만 비열거이면 {key,reason:'non-enumerable'}이다. 나머지는 null 원형 values 객체의 쓰기 가능한 자체 데이터 필드로 복사하고 값이 undefined면 undefinedKeys에도 기록한다. 각 목록의 순서는 allowedKeys를 따른다. getter/setter를 실행하지 않고 원본 descriptor를 바꾸지 않는다. 복사는 얕으며 원본의 객체 값은 공유한다."
+    "theory": "허용한 이름만 복사했는데 부모 객체의 값까지 들어오거나, 조회만 했는데 로그가 남았다. 프로퍼티는 이름과 값만의 쌍이 아니다. 데이터 프로퍼티에는 저장한 값인 `value`와 쓰기 허용 여부인 `writable`이 있다. 접근자 프로퍼티는 읽기와 쓰기에 사용할 `get`·`set` 함수를 둔다. 두 종류 모두 열거 가능 여부인 `enumerable`과 삭제·재정의 가능 여부인 `configurable`을 가진다. 자체(`own`) 프로퍼티인지와 열거 가능한지는 서로 다른 조건이다.\n\n`'key' in source`는 상속 체인도 확인하고 `Object.hasOwn`은 자체 필드만 확인한다. `source[key]`는 getter를 실행할 수 있지만 `Object.getOwnPropertyDescriptor(source,key)`는 일반 객체의 `descriptor`를 읽는다. 그래서 값을 읽기 전에 접근자를 거부할 수 있다. `Proxy`라면 `descriptor` 조회 자체도 trap을 실행할 수 있으므로 이 일반 객체 계약을 모든 객체의 무부수효과 보장으로 확대하지 않는다.\n\n없는 프로퍼티를 읽은 `undefined`와 `value:undefined`인 자체 필드는 조회값만으로 구분되지 않는다. `Object.keys`·`for...in`·`Reflect.ownKeys`도 포함 범위가 다르다. 첫 번째는 자체 열거 가능한 문자열 키, 두 번째는 상속까지 포함할 수 있는 열거 가능한 문자열 키, 세 번째는 자체 비열거/Symbol 키까지 관찰한다.",
+    "example": "예제는 `name`과 `unset`만 수집한다. `inherited`와 `missing`은 `missing` 목록에, `secret`은 `non-enumerable`, `computed`는 `accessor` 거부 목록에 들어간다. `unset`은 `values` 안의 자체 필드로 남고 `undefinedKeys`에도 기록된다. `descriptor.get`의 타입을 읽을 때 `reads`는 0, `source.computed`를 실제로 읽은 뒤에는 1이다. 값 관찰과 메타데이터 관찰의 차이를 실행 순서로 확인한다.",
+    "quiz": "자체 프로퍼티 확인과 `in` 연산, 기술자 조회와 getter 실행을 구분한다. `writable`·`enumerable`·`configurable`이 각각 무엇을 제한하는지, `Object.assign`이 읽기와 쓰기 과정에서 어떤 함수를 실행할 수 있는지도 확인한다. 추출 결과에 값을 복사했다고 원본 `descriptor`나 중첩 객체까지 복제한 것은 아니다.",
+    "practice": "교육용 설정 경계에서 사용자에게 공개한 필드만 추출한다고 가정한다. 상속 필드나 getter가 계산한 값을 무심코 포함하면 데이터가 아닌 동작까지 실행한다. 이번 추출기는 일반 객체의 자체 열거 가능한 데이터 프로퍼티만 선택한다. 결과는 `null` 원형 객체에 보관해 `__proto__` 같은 이름도 데이터로 처리한다. 이 함수는 데이터의 스키마 유효성을 검사하지 않고, 중첩 값은 그대로 전달한다. 메모에는 허용 키를 정하는 주체, `accessor`를 읽을 대안과 비용, 이후 깊은 복사·검증이 필요한 경계를 적는다.",
+    "lab": "`selectOwnData(source, allowedKeys)`를 구현한다. source는 `Proxy`가 아닌 일반 객체이고 `allowedKeys`는 중복 없는 문자열 배열이다. `{values,missing,undefinedKeys,rejected}`를 반환한다. 자체 `descriptor`가 없으면 `missing`, 접근자이면 `{key,reason:'accessor'}`, 데이터이지만 비열거이면 `{key,reason:'non-enumerable'}`이다. 나머지는 `null` 원형 `values` 객체의 쓰기 가능한 자체 데이터 필드로 복사하고 값이 `undefined`면 `undefinedKeys`에도 기록한다. 각 목록의 순서는 `allowedKeys`를 따른다. getter/setter를 실행하지 않고 원본 `descriptor`를 바꾸지 않는다. 복사는 얕으며 원본의 객체 값은 공유한다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-own-in",
-        "prompt": "Object.create({level:1})로 만든 obj에서 \"level\" in obj와 Object.hasOwn(obj,\"level\")은?",
+        "prompt": "`Object.create({level:1})`로 만든 obj에서 `\"level\" in obj`와 `Object.hasOwn(obj,\"level\")`은?",
         "choices": [
           {
             "id": "a",
-            "text": "true, false",
+            "text": "`true`, `false`",
             "explanation": "첫 번째는 상속 체인까지 검사하고 두 번째는 자체 프로퍼티만 검사한다."
           },
           {
             "id": "b",
-            "text": "true, true",
+            "text": "`true`, `true`",
             "explanation": "조회 가능하다는 사실이 자체 필드라는 뜻은 아니다."
           },
           {
             "id": "c",
-            "text": "false, false",
-            "explanation": "in은 상속된 필드도 발견한다."
+            "text": "`false`, `false`",
+            "explanation": "`in`은 상속된 필드도 발견한다."
           }
         ],
         "correctChoiceId": "a"
       },
       {
         "id": "q2-getter",
-        "prompt": "getter가 있는 obj.x를 실행하지 않고 자체 descriptor를 확인할 방법은?",
+        "prompt": "getter가 있는 `obj.x`를 실행하지 않고 자체 `descriptor`를 확인할 방법은?",
         "choices": [
           {
             "id": "a",
-            "text": "Object.getOwnPropertyDescriptor(obj,\"x\")",
-            "explanation": "일반 객체에서 getter 함수 자체를 포함한 descriptor를 얻고 getter를 호출하지 않는다."
+            "text": "`Object.getOwnPropertyDescriptor(obj,\"x\")`",
+            "explanation": "일반 객체에서 getter 함수 자체를 포함한 `descriptor`를 얻고 getter를 호출하지 않는다."
           },
           {
             "id": "b",
-            "text": "const {x}=obj",
+            "text": "`const {x}=obj`",
             "explanation": "구조 분해도 값을 읽으므로 getter가 호출된다."
           },
           {
             "id": "c",
-            "text": "Object.assign({},obj)",
+            "text": "`Object.assign({},obj)`",
             "explanation": "열거 가능한 원본 프로퍼티를 읽으며 getter를 호출할 수 있다."
           }
         ],
@@ -88,29 +88,29 @@
       },
       {
         "id": "q3-descriptor",
-        "prompt": "n이 없는 obj에 Object.defineProperty(obj,\"n\",{value:1})로 새 프로퍼티를 만들 때 생략된 writable/enumerable/configurable은?",
+        "prompt": "n이 없는 obj에 `Object.defineProperty(obj,\"n\",{value:1})`로 새 프로퍼티를 만들 때 생략된 writable/enumerable/configurable은?",
         "choices": [
           {
             "id": "a",
-            "text": "모두 true",
+            "text": "모두 `true`",
             "explanation": "defineProperty에서 생략한 속성의 기본값은 일반 대입과 다르다."
           },
           {
             "id": "b",
-            "text": "모두 false",
+            "text": "모두 `false`",
             "explanation": "읽기 가능성과 열거·쓰기·삭제/재정의 가능성을 각각 구분해야 한다."
           },
           {
             "id": "c",
-            "text": "모두 undefined여서 제한이 없다",
-            "explanation": "descriptor 입력의 생략은 제한 없는 프로퍼티를 뜻하지 않는다."
+            "text": "모두 `undefined`여서 제한이 없다",
+            "explanation": "`descriptor` 입력의 생략은 제한 없는 프로퍼티를 뜻하지 않는다."
           }
         ],
         "correctChoiceId": "b"
       },
       {
         "id": "q4-copy-effects",
-        "prompt": "Object.assign(target,source)에서 source getter와 target setter가 있다면?",
+        "prompt": "`Object.assign(target,source)`에서 source getter와 target setter가 있다면?",
         "choices": [
           {
             "id": "a",
@@ -119,8 +119,8 @@
           },
           {
             "id": "b",
-            "text": "descriptor만 복제하므로 둘 다 실행되지 않는다.",
-            "explanation": "Object.assign은 descriptor를 그대로 복제하는 API가 아니다."
+            "text": "`descriptor`만 복제하므로 둘 다 실행되지 않는다.",
+            "explanation": "`Object.assign`은 `descriptor`를 그대로 복제하는 API가 아니다."
           },
           {
             "id": "c",

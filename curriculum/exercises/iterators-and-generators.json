@@ -5,7 +5,7 @@
   "graderRevision": "iterators-and-generators-checks-v1",
   "mode": "body",
   "instructions": [
-    "takeMatching(iterable,limit,predicate)는 동기 generator다. limit은 0 이상의 정수만 허용하며 아니면 generator가 처음 실행될 때 RangeError를 던진다. limit 0은 원본 iterator를 얻지 않고 종료한다. 나머지는 원본 순서대로 predicate(value)를 한 번씩 호출하여 truthy인 값만 최대 limit개 yield한다.\n\ngenerator 생성만으로 원본을 소비하지 않는다. 제한에 도달한 뒤 더 진행하거나 소비자가 break/return하면 원본 순회를 닫는다. 원본이 자연 소진되면 불필요한 return을 추가하지 않는다. predicate가 던지면 같은 값을 보존하고 루프 정리를 수행한다. 원본 next 자체의 예외 정책이나 비동기 순회는 이번 과제에서 확장하지 않는다."
+    "`takeMatching(iterable,limit,predicate)`는 동기 generator다. `limit`은 0 이상의 정수만 허용하며 아니면 generator가 처음 실행될 때 `RangeError`를 던진다. `limit` 0은 원본 iterator를 얻지 않고 종료한다. 나머지는 원본 순서대로 `predicate(value)`를 한 번씩 호출하여 truthy인 값만 최대 `limit`개 `yield`한다.\n\ngenerator 생성만으로 원본을 소비하지 않는다. 제한에 도달한 뒤 더 진행하거나 소비자가 break/return하면 원본 순회를 닫는다. 원본이 자연 소진되면 불필요한 `return`을 추가하지 않는다. `predicate`에서 예외가 발생하면 던진 값을 그대로 보존하면서 반복문을 정리한다. 원본 `next` 자체의 예외 정책이나 비동기 순회는 이번 과제에서 확장하지 않는다."
   ],
   "template": "export function* takeMatching(iterable, limit, predicate) {\n  // TODO: 필요한 값만 지연 소비하고 순회 종료 시 원본 iterator를 정리하세요.\n}\n",
   "profileId": "ecmascript-2026",

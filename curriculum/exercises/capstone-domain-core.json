@@ -5,7 +5,7 @@
   "graderRevision": "capstone-domain-core-checks-v1",
   "mode": "files",
   "instructions": [
-    "main.mjs만 편집하며 reader.mjs는 고정이다. queryProducts(records, options={})는 조밀 배열과 객체 옵션을 받는다. 모든 행을 normalizeProduct로 검증한 뒤 정규화 ID의 첫 값을 보존한다. query 기본값은 빈 문자열, maxPrice와 limit 기본값은 Infinity다. maxPrice는 NaN이 아닌 0 이상 number, limit는 Infinity 또는 0 이상 안전 정수여야 한다.\n\n이름의 소문자 값에 정규화 query가 포함되고 price<=maxPrice인 항목을 고른다. 가격·ID 순으로 새 배열을 정렬하고 전체 count·total을 계산한다. total이 안전 정수를 벗어나면 RangeError다. {version:1,query,count,total,items}를 반환하고 items에만 limit을 적용한다. serializeReport는 이 순서의 키와 각 항목의 id/name/price만 JSON으로 만든다. 전역 누적 상태와 호스트 API를 넣지 않는다."
+    "`main.mjs`만 편집하며 `reader.mjs`는 고정이다. `queryProducts(records, options={})`는 빈 슬롯 없는 배열과 옵션 객체를 받는다. 모든 행을 `normalizeProduct`로 검증한 뒤 정규화 ID의 첫 값을 보존한다. `query` 기본값은 빈 문자열, `maxPrice`와 `limit` 기본값은 `Infinity`다. `maxPrice`는 `NaN`이 아닌 0 이상 number, `limit`는 `Infinity` 또는 0 이상의 안전 정수여야 한다.\n\n이름의 소문자 값에 정규화 `query`가 포함되고 `price<=maxPrice`인 항목을 고른다. 가격·ID 순으로 새 배열을 정렬하고 전체 `count`·`total`을 계산한다. `total`이 안전 정수를 벗어나면 `RangeError`다. `{version:1,query,count,total,items}`를 반환하고 `items`에만 `limit`을 적용한다. `serializeReport`는 이 순서의 키와 각 항목의 `id`/`name`/`price`만 JSON으로 만든다. 전역 누적 상태와 호스트 API를 넣지 않는다."
   ],
   "template": "import { normalizeProduct, normalizeQuery } from './reader.mjs';\nexport function queryProducts(records, options = {}) {\n  // TODO: 검증·정규화·ID 중복 제거·필터·집계·정렬·제한을 순수 함수로 연결하세요.\n}\nexport function serializeReport(report) {\n  // TODO: 지정된 키 순서로 보고서를 직렬화하세요.\n}\n",
   "profileId": "browser-esm",

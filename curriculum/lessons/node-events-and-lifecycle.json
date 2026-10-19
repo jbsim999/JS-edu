@@ -6,7 +6,7 @@
   "track": "node-runtime",
   "level": "advanced",
   "goals": [
-    "EventEmitter의 동기 호출·once 등록 시점·error 전파를 설명하고 관찰한다.",
+    "`EventEmitter`의 동기 호출·`once` 등록 시점·`error` 전파를 설명하고 관찰한다.",
     "처리량과 대기열을 제한하고 종료 중 새 작업을 거부하면서 승인한 작업을 정리한다.",
     "async iterable·timer·리스너의 소유권을 관리하고 프로세스 종료와 구분한다."
   ],
@@ -40,39 +40,39 @@
   ],
   "exerciseId": "node-events-and-lifecycle-exercise",
   "steps": {
-    "theory": "서버 종료 버튼을 눌렀는데 요청 Promise가 영원히 pending이라면 어디서 책임이 끊겼는가? 서비스에는 open→closing→closed 상태와 '승인한 작업'의 경계가 필요하다. 이 과제는 한 번에 하나를 처리하고, 추가 maxQueued개만 대기시킨다. close는 신규 접수를 막고 이미 승인한 작업을 drain한 뒤 끝난다. 작업 강제 취소와 drain은 다른 정책이다. 종료 deadline이 필요한 운영 서비스는 handler의 협력적 취소와 강제 종료 경계를 별도로 설계해야 한다.\n\nEventEmitter.emit은 등록 순서대로 리스너를 동기 호출한다. Promise를 반환하는 리스너를 붙였다고 emit이 await하지 않는다. 처리 함수의 실패는 submit Promise의 reject와 error 이벤트로 모두 관찰한다. 'error' 이벤트는 일반 이벤트와 달리 리스너가 없으면 예외가 되므로 서비스가 소유한 오류 관찰자를 먼저 설치한다. 외부 관찰자는 동기적으로 반환하며 예외를 던지지 않는다는 실습 계약을 둔다. 서비스가 다른 라이브러리의 리스너까지 removeAllListeners로 지우면 소유권을 침범한다.\n\nevents.once를 하나 await한 뒤 두 번째 once를 만들면 같은 턴에 이미 발생한 두 번째 이벤트를 놓칠 수 있다. 필요한 Promise를 모두 등록한 뒤 await한다. events.on은 이벤트를 async iterator로 읽게 하고 error를 reject로 연결한다. 소비자가 break/return하거나 서비스가 종료하면 자신이 등록한 리스너를 해제한다. 이 iterator는 읽기 편의를 제공할 뿐, 일반 EventEmitter에 자동 backpressure를 강제하지 않는다. 장기 모니터링의 이벤트 버퍼 상한은 별도 설계 문제다.\n\ntimer는 정확한 실행 시각 보장이 아니다. timers·poll·check 단계, microtask, nextTick의 관계는 스케줄링 문맥에 영향을 받으므로 setTimeout(0)과 setImmediate의 순서를 모든 실행에서 고정이라고 외우지 않는다. beforeExit는 더 예약할 일이 없는 순간이며 다시 일을 예약할 수 있다. exit 이벤트에는 비동기 정리를 맡길 수 없다. 일반 CLI는 정리를 await한 뒤 exitCode를 설정하고 자연 종료하는 편이 출력 유실을 줄인다. 학습용 Worker에서 process.exit를 호출하면 해당 스레드가 종료된다. 이 동작을 제품 서버 전체 종료 기능으로 설명하지 않는다.\n\nasync generator는 pending next 뒤에 return 요청을 큐에 넣을 수 있다. 이벤트를 기다리는 yield 앞의 await가 끝나지 않으면 return도 정리를 시작하지 못한다. 이 서비스의 watch는 구독별 AbortController와 events.on iterator를 감싸며, return이 현재 next를 먼저 깨우고 리스너를 해제한다. 작업 서비스 자체의 close 없이 구독만 끝낼 수 있어야 한다.",
-    "example": "예제는 first와 second의 once Promise를 둘 다 만든 다음 이벤트를 연속 발생시킨다. 출력은 [[\"A\"],[\"B\"]]다. 두 번째 once를 첫 await 뒤로 옮기면 알림을 놓칠 수 있다는 반례를 먼저 설명하고, 실제로 무한 대기하는 코드는 실행하지 않는다.\n\n다음 예제는 events.on의 iterator.next()가 대기할 때 value를 전달한다. return 이후 value/error 리스너가 0인지 확인한다. 마지막 취소 가능한 timer는 AbortError로 끝난다. 이 AbortError와 업무 handler의 원래 Error를 같은 것으로 다루지 않는다.",
-    "quiz": "이벤트 등록 순서, error 의미, drain 종료, 리스너 소유권을 각각 판단한다. 라이브러리 함수를 사용했다는 사실보다 누가 언제 자원을 해제하는지가 핵심이다.",
-    "practice": "handler에 짧은 비동기 대기를 넣고 submit을 세 번 연속 호출하라. maxQueued=1이면 active=1, queued=1이며 세 번째는 QUEUE_FULL이다. 이어 close를 두 번 호출하고 Promise 동일성과 이미 승인한 두 결과를 확인한다. close 뒤 제출은 CLOSED다.\n\nwatch의 next를 먼저 호출한 뒤 작업을 제출한다. 첫 이벤트를 받은 후 return하고 listenerCount를 기록한다. handler를 실패시키면 watch도 reject한다. 실제 요청에서 반복 구독/해제가 누적될 때 리스너 수가 증가하지 않는지 확인한다. MaxListeners 경고를 끄는 것을 누수 수정으로 취급하지 않는다.",
-    "lab": "createTaskService(handler,{maxQueued=2,onError=()=>{}}={})를 export한다. handler/onError는 함수, maxQueued는 0..32 정수다. 실제 EventEmitter인 events, submit(value), watch(), close(), stats()를 반환한다. 동시 handler는 1개, 대기열은 maxQueued개 FIFO다. 가득 차면 submit은 code=QUEUE_FULL로 reject하며 submitted를 늘리지 않는다.\n\n승인한 작업에는 1부터 id를 붙인다. 성공은 handler 결과를 그대로 resolve하고 settled 이벤트 {id,status:'fulfilled',value}를 발생시킨다. 실패는 원래 reason으로 reject하고 error 이벤트 및 {id,status:'rejected',reason}의 settled 이벤트를 발생시킨다. 소유한 error 리스너가 onError를 호출하므로 오류 후 다음 작업도 처리한다. 이 과제의 관찰 콜백/외부 이벤트 리스너는 예외 없이 반환한다.\n\nwatch는 events.on 기반의 취소 가능한 async iterator다. settled 객체를 순서대로 yield하고 handler error는 원래 오류로 reject한다. 정상 close는 대기 중 watch를 끝낸다. 이벤트를 기다리는 pending next가 있어도 watch.return()이 해당 next와 return을 done:true로 정착시켜야 한다. 각 구독의 AbortController를 사용해 서비스 전체를 닫지 않고 구독을 정리한다. watch return과 close가 소유 리스너를 해제하되 외부 리스너를 삭제하지 않는다. close는 항상 같은 Promise이며 open→closing 전환 직후 신규 submit을 code=CLOSED로 거부하고, 모든 승인 작업이 정착하면 closed가 된다. stats는 {state,active,queued,submitted,settled}다. 영구 pending handler의 강제 종료는 이 drain 계약에 포함하지 않으므로 실습 handler는 유한 시간에 끝난다."
+    "theory": "서버 종료를 요청했는데 작업의 `Promise`가 계속 대기 중이라면 어떤 종료 처리가 빠진 것일까? 서비스에는 open→closing→closed 상태와 '승인한 작업'의 경계가 필요하다. 이 과제는 한 번에 하나를 처리하고, 추가 `maxQueued`개만 대기시킨다. `close()`는 새 작업을 받지 않고 이미 승인한 작업이 끝날 때까지 기다린다. 이를 여기서는 drain이라고 부른다. 진행 중인 작업을 강제로 취소하는 정책과는 다르다. 종료 deadline이 필요한 운영 서비스는 `handler`의 협력적 취소와 강제 종료 경계를 별도로 설계해야 한다.\n\n`EventEmitter.emit`은 등록 순서대로 리스너를 동기 호출한다. 리스너가 `Promise`를 반환해도 `emit()`은 그 완료를 기다리지 않는다. 처리 함수가 실패하면 `submit()`이 반환한 `Promise`의 거부와 `error` 이벤트를 모두 확인한다. `'error'` 이벤트는 일반 이벤트와 달리 리스너가 없으면 예외가 되므로 서비스가 소유한 오류 관찰자를 먼저 설치한다. 외부 관찰자는 동기적으로 반환하며 예외를 던지지 않는다는 실습 계약을 둔다. 서비스가 다른 라이브러리의 리스너까지 `removeAllListeners`로 지우면 소유권을 침범한다.\n\n`events.once`를 하나 `await`한 뒤 두 번째 `once`를 만들면 같은 턴에 이미 발생한 두 번째 이벤트를 놓칠 수 있다. 필요한 `Promise`를 모두 등록한 뒤 `await`한다. `events.on()`은 이벤트를 비동기 이터레이터(async iterator)로 읽게 해 준다. `error` 이벤트가 발생하면 대기 중인 읽기를 거부한다. 소비자가 `break`/`return`하거나 서비스가 종료하면 자신이 등록한 리스너를 해제한다. 이 이터레이터는 이벤트를 순서대로 읽는 방법을 제공한다. 일반 `EventEmitter`에서 이벤트가 생성되는 속도를 자동으로 제한하지는 않는다. 장기 모니터링의 이벤트 버퍼 상한은 별도 설계 문제다.\n\n타이머에 지정한 지연 시간은 정확한 실행 시각을 보장하지 않는다. `timers`·`poll`·`check` 단계, `microtask`, `nextTick`의 관계는 스케줄링 문맥에 영향을 받으므로 `setTimeout(0)`과 `setImmediate`의 순서를 모든 실행에서 고정이라고 외우지 않는다. `beforeExit`는 이벤트 루프에 더 처리할 작업이 없을 때 발생한다. 이 이벤트의 리스너에서 작업을 다시 예약할 수 있다. `exit` 이벤트에는 비동기 정리를 맡길 수 없다. 일반 CLI는 정리를 `await`한 뒤 `exitCode`를 설정하고 자연 종료하는 편이 출력 유실을 줄인다. 학습용 Worker에서 `process.exit`를 호출하면 해당 스레드가 종료된다. 이 동작을 제품 서버 전체 종료 기능으로 설명하지 않는다.\n\n비동기 제너레이터에서는 `next()`가 아직 끝나지 않았다면 `return()` 요청이 그 뒤에서 대기할 수 있다. 이벤트를 기다리는 `yield` 앞의 `await`가 끝나지 않으면 `return`도 정리를 시작하지 못한다. 이 서비스의 `watch`는 구독별 `AbortController`와 `events.on` iterator를 감싸며, `return()`을 호출하면 현재 대기 중인 `next()`를 먼저 끝내고 리스너를 해제한다. 작업 서비스 자체의 `close` 없이 구독만 끝낼 수 있어야 한다.",
+    "example": "예제는 `first`와 `second`의 `once` `Promise`를 둘 다 만든 다음 이벤트를 연속 발생시킨다. 출력은 `[[\"A\"],[\"B\"]]`다. 두 번째 `once`를 첫 `await` 뒤로 옮기면 알림을 놓칠 수 있다는 반례를 먼저 설명하고, 실제로 무한 대기하는 코드는 실행하지 않는다.\n\n다음 예제는 `events.on`의 `iterator.next()`가 대기할 때 `value`를 전달한다. `return` 이후 `value`/`error` 리스너가 0인지 확인한다. 마지막 취소 가능한 timer는 `AbortError`로 끝난다. 이 `AbortError`와 업무 `handler`의 원래 Error를 같은 것으로 다루지 않는다.",
+    "quiz": "이벤트 등록 순서, `error` 의미, drain 종료, 리스너 소유권을 각각 판단한다. 라이브러리 함수를 사용했다는 사실보다 누가 언제 자원을 해제하는지가 핵심이다.",
+    "practice": "`handler`에 짧은 비동기 대기를 넣고 `submit()`을 세 번 연속 호출한다. `maxQueued=1`이면 `active=1`, `queued=1`이며 세 번째는 `QUEUE_FULL`이다. 이어 `close`를 두 번 호출하고 `Promise` 동일성과 이미 승인한 두 결과를 확인한다. `close()` 호출 뒤에는 새 제출을 `CLOSED` 오류로 거부한다.\n\n`watch`의 next를 먼저 호출한 뒤 작업을 제출한다. 첫 이벤트를 받은 후 `return`하고 `listenerCount`를 기록한다. `handler`를 실패시키면 `watch`도 reject한다. 실제 요청에서 반복 구독/해제가 누적될 때 리스너 수가 증가하지 않는지 확인한다. MaxListeners 경고를 끄는 것을 누수 수정으로 취급하지 않는다.",
+    "lab": "`createTaskService(handler,{maxQueued=2,onError=()=>{}}={})`를 export한다. `handler`/`onError`는 함수, `maxQueued`는 0..32 정수다. 실제 `EventEmitter`인 `events`, `submit(value)`, `watch()`, `close()`, `stats()`를 반환한다. 동시 `handler`는 1개, 대기열은 `maxQueued`개 FIFO다. 가득 차면 `submit`은 `code=QUEUE_FULL`로 reject하며 `submitted`를 늘리지 않는다.\n\n승인한 작업에는 1부터 `id`를 붙인다. 성공은 `handler` 결과를 그대로 resolve하고 `settled` 이벤트 `{id,status:'fulfilled',value}`를 발생시킨다. 실패는 원래 `reason`으로 reject하고 `error` 이벤트 및 `{id,status:'rejected',reason}`의 `settled` 이벤트를 발생시킨다. 소유한 `error` 리스너가 `onError`를 호출하므로 오류 후 다음 작업도 처리한다. 이 과제의 관찰 콜백/외부 이벤트 리스너는 예외 없이 반환한다.\n\n`watch`는 `events.on` 기반의 취소 가능한 async iterator다. `settled` 객체를 순서대로 `yield`하고 `handler` `error`는 원래 오류로 reject한다. 정상 `close`는 대기 중 `watch`를 끝낸다. 이벤트를 기다리는 `next()`가 있어도 `watch.return()`을 호출하면 그 `next()`와 `return()`의 결과가 모두 `done:true`로 완료돼야 한다. 각 구독의 `AbortController`를 사용해 서비스 전체를 닫지 않고 구독을 정리한다. `watch` `return`과 `close`가 소유 리스너를 해제하되 외부 리스너를 삭제하지 않는다. `close`는 항상 같은 `Promise`이며 open→closing 전환 직후 신규 `submit`을 `code=CLOSED`로 거부하고, 모든 승인 작업이 정착하면 closed가 된다. `stats`는 `{state,active,queued,submitted,settled}`다. 끝나지 않는 `handler`를 강제로 종료하는 기능은 이 drain 계약에 포함되지 않는다. 실습의 `handler`는 유한한 시간 안에 끝나는 함수로 제한한다."
   },
   "quiz": {
     "questions": [
       {
         "id": "n06-register",
-        "prompt": "연속 발생할 두 이벤트를 once로 받을 때 올바른 등록 순서는?",
+        "prompt": "연속 발생할 두 이벤트를 `once`로 받을 때 올바른 등록 순서는?",
         "choices": [
           {
             "id": "a",
-            "text": "두 Promise를 먼저 만들고 함께 await한다.",
-            "explanation": "첫 await 뒤 등록하면 이미 지나간 이벤트를 놓친다."
+            "text": "두 `Promise`를 먼저 만들고 함께 `await`한다.",
+            "explanation": "첫 `await` 뒤 등록하면 이미 지나간 이벤트를 놓친다."
           },
           {
             "id": "b",
-            "text": "첫 이벤트를 await한 뒤 다음 리스너를 만든다.",
-            "explanation": "동기 emit이 연속 발생할 때 두 번째 이벤트가 먼저 지나간다."
+            "text": "첫 이벤트를 `await`한 뒤 다음 리스너를 만든다.",
+            "explanation": "동기 `emit`이 연속 발생할 때 두 번째 이벤트가 먼저 지나간다."
           },
           {
             "id": "c",
-            "text": "once는 과거 이벤트를 저장하므로 순서와 무관하다.",
-            "explanation": "EventEmitter는 기본적으로 과거 이벤트 로그가 아니다."
+            "text": "`once`는 과거 이벤트를 저장하므로 순서와 무관하다.",
+            "explanation": "`EventEmitter`는 기본적으로 과거 이벤트 로그가 아니다."
           }
         ],
         "correctChoiceId": "a"
       },
       {
         "id": "n06-error",
-        "prompt": "error 이벤트 리스너를 제거한 채 emit(\"error\",err)를 호출하면?",
+        "prompt": "`error` 이벤트 리스너를 제거한 채 `emit(\"error\",err)`를 호출하면?",
         "choices": [
           {
             "id": "a",
@@ -82,19 +82,19 @@
           {
             "id": "b",
             "text": "아무 일도 일어나지 않는다.",
-            "explanation": "error는 특수 처리된다."
+            "explanation": "`error`는 특수 처리된다."
           },
           {
             "id": "c",
-            "text": "handler를 자동 재시도한다.",
-            "explanation": "재시도는 서비스 정책이지 EventEmitter 기능이 아니다."
+            "text": "`handler`를 자동 재시도한다.",
+            "explanation": "재시도는 서비스 정책이지 `EventEmitter` 기능이 아니다."
           }
         ],
         "correctChoiceId": "a"
       },
       {
         "id": "n06-close",
-        "prompt": "drain형 close가 처리 중 호출되면?",
+        "prompt": "drain형 `close`가 처리 중 호출되면?",
         "choices": [
           {
             "id": "a",
@@ -103,7 +103,7 @@
           },
           {
             "id": "b",
-            "text": "queued Promise를 pending으로 두고 바로 끝낸다.",
+            "text": "queued `Promise`를 pending으로 두고 바로 끝낸다.",
             "explanation": "호출자가 결과도 실패도 받지 못한다."
           },
           {
@@ -130,8 +130,8 @@
           },
           {
             "id": "c",
-            "text": "exit 콜백에서 비동기 파일 저장을 예약하면 모두 처리돼서다.",
-            "explanation": "exit 단계에서는 비동기 정리를 완료할 수 없다."
+            "text": "`exit` 콜백에서 비동기 파일 저장을 예약하면 모두 처리돼서다.",
+            "explanation": "`exit` 단계에서는 비동기 정리를 완료할 수 없다."
           }
         ],
         "correctChoiceId": "a"

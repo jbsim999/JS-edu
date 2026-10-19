@@ -6,7 +6,7 @@
   "track": "language-model",
   "level": "transition",
   "goals": [
-    "동기 중첩 호출의 스택과 normal·return·throw 완료를 코드로 추적한다.",
+    "동기 중첩 호출의 스택과 `normal`·`return`·`throw` 완료를 코드로 추적한다.",
     "재귀 종료 조건과 입력 깊이 제한을 구분하고 중첩 데이터를 안전하게 순회한다.",
     "정상·조기 반환·예외 경로에서 정리하며 원래 오류가 덮어써지는 상황을 방지한다."
   ],
@@ -40,44 +40,44 @@
   ],
   "exerciseId": "call-stack-and-completion-exercise",
   "steps": {
-    "theory": "작업은 실패했는데 호출자는 성공값을 받았다. finally에 넣은 return이 앞의 throw를 대체했기 때문이다. '정리 코드는 항상 마지막이므로 결과에 영향을 주지 않는다'는 해석부터 버린다. 완료(completion)는 명세가 실행을 이어갈지, 값을 반환할지, 예외로 빠져나갈지를 표현하는 모델이다. 학습자가 직접 생성해야 하는 런타임 객체를 뜻하지 않는다.\n\n보통의 동기 함수 A→B→C 호출에서는 A가 멈춘 자리와 지역 상태를 남기고 B로, 다시 C로 진입한다. C의 return은 먼저 B의 호출식 값을 정하고, B가 종료하면 A가 이어진다. C가 throw하면 가까운 처리 가능한 catch를 찾는 동안 중간 호출의 finally가 실행된다. 이 설명은 일반 동기 호출의 추적이다. async 함수·제너레이터의 중단과 재개까지 단순한 영구 LIFO 스택으로 설명하지 않으며 후속 단원에서 확장한다.\n\ntry { return 7; } finally { log.push('clean'); }는 정리 뒤 7을 반환한다. 반환식은 finally 전에 평가된다. finally가 정상 완료하면 앞서 보류된 return/throw가 이어지지만 finally 자체가 return 또는 throw하면 앞의 완료를 대체한다. 정리 함수가 내부에서 throw하는 경우도 같다. 작업 오류와 정리 오류가 모두 가능하면 어떤 오류를 우선할지, 둘 다 어떻게 관측할지 정책을 정해야 한다. 단순히 finally에서 return하지 않는 것만으로 정리 함수의 예외까지 해결되지는 않는다.\n\n재귀는 큰 문제를 작은 같은 문제로 나눠 자신을 호출하는 방식이다. 빈 목록이나 남은 항목 없음 같은 기저 조건과, 매 단계 반드시 줄어드는 입력이 필요하다. 유한한 데이터라도 지나치게 깊으면 엔진 스택 한도에 도달할 수 있다. 모든 엔진에 공통인 안전 재귀 횟수를 약속하거나 꼬리 호출 최적화를 당연시하지 않는다. 깊이 상한을 명시하고, 입력이 깊을 수 있으면 {배열,다음 인덱스,깊이}를 저장하는 명시적 스택으로 호출 상태를 옮길 수 있다.",
-    "example": "curriculum/examples/call-stack-and-completion.mjs는 outer가 inner를 부르는 경로를 기록한다. 정상 실행 로그는 outer:start → inner → outer:value:4 → outer:cleanup → caller:value:4다. 안쪽 함수의 return이 바깥 finally를 건너뛰지 않는다.\n\n같은 파일의 maskedFailure는 try에서 Error('work')를 던지지만 finally의 return 'masked' 때문에 호출자가 masked를 받는다. 이 함수는 고쳐야 할 반례다. 다음 보존 예제에서는 작업 오류와 정리 오류를 따로 잡고 작업 오류를 우선하여 'work'를 다시 던진다. 마지막 재귀 합계는 [1,[2,[]],3]을 6으로 계산하고 깊이 상한을 넘는 입력은 RangeError를 던진다. 무한 재귀를 실제로 실행해 엔진을 멈추는 방식으로 기저 조건을 시험하지 않는다.",
-    "quiz": "각 문항에서 try/catch/finally 진입 순서와 보류된 완료를 적는다. return 값을 계산하는 시점과 호출자에게 전달하는 시점은 다르다. 예외가 Error 객체만이라는 가정을 버리고 throw undefined도 예외 완료라는 점을 확인한다.",
-    "practice": "교육용 중첩 항목 내보내기에서 visit가 항목 변환을 하고 cleanup이 임시 자원을 정리한다고 가정한다. 빈 입력·사용자 정책에 따른 조기 종료·visit 오류·깊이 초과에도 cleanup을 정확히 한 번 호출해야 한다. cleanup에서 999를 반환했다고 최종 변환 결과를 999로 바꾸면 안 된다.\n\n이번 과제의 오류 정책은 '작업/깊이 오류가 있으면 그 값을 보존, 작업이 성공한 경우의 cleanup 오류는 전달'이다. 두 오류가 동시에 나면 작업 오류를 우선한다. 실제 파일·연결 관리 제품에서는 두 번째 오류도 별도 관측 경로나 집계 오류에 남기는 설계가 필요하며, 이번 함수는 그런 운영 수집기까지 구현하지 않는다. 비동기 cleanup·프로세스 강제 종료·Worker 강제 종료 시 완료 보장은 이 동기 finally 과제 범위 밖이다.\n\n명시적 스택 순회는 방문할 항목 수 N에 비례한 처리와 중첩 깊이 D에 비례한 보조 상태를 설계할 수 있다. 결과 배열은 변환한 원소 수만큼 보관한다. 이는 알고리즘 구조 설명이며 실측 성능 수치가 아니다. 설계 메모에 깊이 제한을 둘 이유, 순환 참조를 입력 계약에서 제외한 이유, 오류 우선순위와 실제 운영에서 정리 오류를 남길 위치를 적는다.",
-    "lab": "processNested(nodes,visit,cleanup,maxDepth = 32)의 본문을 작성한다. nodes는 숫자 또는 중첩 배열을 담는 유한·비순환 배열이고 maxDepth는 0~128 정수다. 루트 배열 깊이는 0이다. 배열을 왼쪽부터 깊이 우선으로 순회하고 숫자마다 visit(value)를 정확히 한 번 plain call한다. visit의 숫자 반환값을 새 결과 배열에 담는다. visit가 null을 반환하면 그 항목은 담지 않고 전체 순회를 즉시 끝낸다.\n\n하위 배열의 깊이가 maxDepth를 초과하면 RangeError를 던지고 더 방문하지 않는다. 입력 배열을 바꾸지 않는다. 빈 입력·조기 종료·방문 실패·깊이 초과에도 cleanup()을 인수 없이 정확히 한 번 호출하고 정상 반환값은 무시한다. visit 또는 깊이 검사에서 이미 던진 값이 있으면 cleanup도 실패하더라도 원래 값을 그대로 던진다. 작업이 성공하고 cleanup만 던지면 cleanup의 값을 던진다. throw undefined를 놓치지 않도록 실패 여부를 오류 값의 truthiness와 분리한다.\n\n이 과제는 동기 콜백만 받는다. 입력 전제 밖 타입이나 순환 그래프, 비동기 정리를 추가로 구현할 필요는 없다. 깊은 입력을 엔진 스택 한도 추측에 맡기지 않고 계약상 상한을 확인한다."
+    "theory": "작업은 실패했는데 호출자는 성공값을 받았다. `finally`에 넣은 `return`이 앞의 `throw`를 대체했기 때문이다. 정리 코드를 마지막에 실행하더라도 그 안의 `return`이나 `throw`가 최종 결과를 바꿀 수 있다. 완료(completion)는 명세가 실행을 이어갈지, 값을 반환할지, 예외로 빠져나갈지를 표현하는 모델이다. 학습자가 직접 생성해야 하는 런타임 객체를 뜻하지 않는다.\n\n보통의 동기 함수 A→B→C 호출에서는 A가 멈춘 자리와 지역 상태를 남기고 B로, 다시 C로 진입한다. C의 `return`은 먼저 B의 호출식 값을 정하고, B가 종료하면 A가 이어진다. C에서 예외를 던지면 이를 처리할 `catch`를 찾으며 호출 경로를 거슬러 올라간다. 이때 해당 경로의 `finally` 블록이 실행된다. 이 설명은 일반 동기 호출의 추적이다. `async` 함수·제너레이터의 중단과 재개까지 단순한 영구 LIFO 스택으로 설명하지 않으며 후속 단원에서 확장한다.\n\n`try { return 7; } finally { log.push('clean'); }`는 정리 뒤 7을 반환한다. 반환식은 `finally` 전에 평가된다. `finally`가 정상 완료하면 앞서 보류된 return/throw가 이어지지만 `finally` 자체가 `return` 또는 `throw`하면 앞의 완료를 대체한다. 정리 함수가 내부에서 `throw`하는 경우도 같다. 작업 오류와 정리 오류가 모두 가능하면 어떤 오류를 우선할지, 둘 다 어떻게 관측할지 정책을 정해야 한다. 단순히 `finally`에서 `return`하지 않는 것만으로 정리 함수의 예외까지 해결되지는 않는다.\n\n재귀는 큰 문제를 작은 같은 문제로 나눠 자신을 호출하는 방식이다. 빈 목록이나 남은 항목 없음 같은 기저 조건과, 매 단계 반드시 줄어드는 입력이 필요하다. 유한한 데이터라도 지나치게 깊으면 엔진 스택 한도에 도달할 수 있다. 모든 엔진에 공통인 안전 재귀 횟수를 약속하거나 꼬리 호출 최적화를 당연시하지 않는다. 깊이 상한을 명시하고, 입력이 깊을 수 있으면 {배열,다음 인덱스,깊이}를 저장하는 명시적 스택으로 호출 상태를 옮길 수 있다.",
+    "example": "curriculum/examples/call-stack-and-completion.mjs는 `outer`가 `inner`를 부르는 경로를 기록한다. 정상 실행 로그는 `outer`:start → `inner` → `outer`:value:4 → `outer`:`cleanup` → caller:value:4다. 안쪽 함수의 `return`이 바깥 `finally`를 건너뛰지 않는다.\n\n같은 파일의 `maskedFailure`는 `try`에서 `Error('work')`를 던지지만 `finally`의 `return 'masked'` 때문에 호출자가 masked를 받는다. 이 함수는 고쳐야 할 반례다. 다음 보존 예제에서는 작업 오류와 정리 오류를 따로 잡고 작업 오류를 우선하여 'work'를 다시 던진다. 마지막 재귀 합계는 `[1,[2,[]],3]`을 6으로 계산하고 깊이 상한을 넘는 입력은 `RangeError`를 던진다. 무한 재귀를 실제로 실행해 엔진을 멈추는 방식으로 기저 조건을 시험하지 않는다.",
+    "quiz": "각 문항에서 try/catch/finally 진입 순서와 보류된 완료를 적는다. `return` 값을 계산하는 시점과 호출자에게 전달하는 시점은 다르다. 예외가 `Error` 객체만이라는 가정을 버리고 `throw undefined`도 예외 완료라는 점을 확인한다.",
+    "practice": "교육용 중첩 항목 내보내기에서 `visit`가 항목 변환을 하고 `cleanup`이 임시 자원을 정리한다고 가정한다. 빈 입력·사용자 정책에 따른 조기 종료·`visit` 오류·깊이 초과에도 `cleanup`을 정확히 한 번 호출해야 한다. `cleanup`에서 999를 반환했다고 최종 변환 결과를 999로 바꾸면 안 된다.\n\n이번 과제의 오류 정책은 '작업/깊이 오류가 있으면 그 값을 보존, 작업이 성공한 경우의 cleanup 오류는 전달'이다. 두 오류가 동시에 나면 작업 오류를 우선한다. 실제 파일·연결 관리 제품에서는 두 번째 오류도 별도 관측 경로나 집계 오류에 남기는 설계가 필요하며, 이번 함수는 그런 운영 수집기까지 구현하지 않는다. 비동기 `cleanup`·프로세스 강제 종료·Worker 강제 종료 시 완료 보장은 이 동기 `finally` 과제 범위 밖이다.\n\n명시적 스택 순회는 방문할 항목 수 N에 비례한 처리와 중첩 깊이 D에 비례한 보조 상태를 설계할 수 있다. 결과 배열은 변환한 원소 수만큼 보관한다. 이는 알고리즘 구조 설명이며 실측 성능 수치가 아니다. 설계 메모에 깊이 제한을 둘 이유, 순환 참조를 입력 계약에서 제외한 이유, 오류 우선순위와 실제 운영에서 정리 오류를 남길 위치를 적는다.",
+    "lab": "`processNested(nodes,visit,cleanup,maxDepth = 32)`의 본문을 작성한다. `nodes`는 숫자 또는 중첩 배열을 담는 유한·비순환 배열이고 `maxDepth`는 0~128 정수다. 루트 배열 깊이는 0이다. 배열을 왼쪽부터 깊이 우선으로 순회하고 숫자마다 `visit(value)`를 메서드 호출이 아닌 일반 함수 호출로 정확히 한 번 실행한다. `visit`의 숫자 반환값을 새 결과 배열에 담는다. `visit`가 `null`을 반환하면 그 항목은 담지 않고 전체 순회를 즉시 끝낸다.\n\n하위 배열의 깊이가 `maxDepth`를 초과하면 `RangeError`를 던지고 더 방문하지 않는다. 입력 배열을 바꾸지 않는다. 빈 입력·조기 종료·방문 실패·깊이 초과에도 `cleanup()`을 인수 없이 정확히 한 번 호출하고 정상 반환값은 무시한다. `visit` 또는 깊이 검사에서 이미 던진 값이 있으면 `cleanup`도 실패하더라도 원래 값을 그대로 던진다. 작업은 성공했지만 `cleanup`에서 예외가 발생했다면, `cleanup`이 던진 값을 그대로 전달한다. `throw undefined`를 놓치지 않도록 실패 여부를 오류 값의 truthiness와 분리한다.\n\n이 과제는 동기 콜백만 받는다. 입력 전제 밖 타입이나 순환 그래프, 비동기 정리를 추가로 구현할 필요는 없다. 깊은 입력을 엔진 스택 한도 추측에 맡기지 않고 계약상 상한을 확인한다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-return-finally",
-        "prompt": "function f(){try{return 7;}finally{log.push('clean');}}의 호출 순서는?",
+        "prompt": "`function f(){try{return 7;}finally{log.push('clean');}}`의 호출 순서는?",
         "choices": [
           {
             "id": "a",
             "text": "호출자가 7을 받은 뒤 정리한다.",
-            "explanation": "finally가 끝나기 전에 함수 호출은 정상 반환을 마치지 않는다."
+            "explanation": "`finally`가 끝나기 전에 함수 호출은 정상 반환을 마치지 않는다."
           },
           {
             "id": "b",
             "text": "반환식 7을 평가하고 정리한 뒤 호출자에게 7을 전달한다.",
-            "explanation": "finally가 정상 완료하면 보류된 return이 이어진다."
+            "explanation": "`finally`가 정상 완료하면 보류된 `return`이 이어진다."
           },
           {
             "id": "c",
-            "text": "return이 있으므로 finally를 건너뛴다.",
-            "explanation": "try의 return도 finally를 거쳐 나간다."
+            "text": "`return`이 있으므로 `finally`를 건너뛴다.",
+            "explanation": "`try`의 `return`도 `finally`를 거쳐 나간다."
           }
         ],
         "correctChoiceId": "b"
       },
       {
         "id": "q2-masked-error",
-        "prompt": "try { throw new Error('work'); } finally { return 'done'; }의 결과는?",
+        "prompt": "`try { throw new Error('work'); } finally { return 'done'; }`의 결과는?",
         "choices": [
           {
             "id": "a",
-            "text": "Error('work')가 항상 호출자에게 전달된다.",
-            "explanation": "finally의 새 return 완료가 원래 throw 완료를 대체한다."
+            "text": "`Error('work')`가 항상 호출자에게 전달된다.",
+            "explanation": "`finally`의 새 `return` 완료가 원래 `throw` 완료를 대체한다."
           },
           {
             "id": "b",
@@ -116,38 +116,38 @@
       },
       {
         "id": "q4-thrown-undefined",
-        "prompt": "catch(error){ saved=error; } 뒤 if(saved) throw saved;만 쓰면 무엇을 놓칠 수 있을까?",
+        "prompt": "`catch(error){ saved=error; }` 뒤 `if(saved) throw saved;`만 쓰면 무엇을 놓칠 수 있을까?",
         "choices": [
           {
             "id": "a",
-            "text": "throw undefined나 throw 0 같은 falsy 예외 값",
+            "text": "`throw undefined`나 `throw 0` 같은 falsy 예외 값",
             "explanation": "던진 값이 falsy여도 예외 완료다. 별도 실패 플래그가 필요하다."
           },
           {
             "id": "b",
-            "text": "아무것도 놓치지 않는다. throw는 Error만 허용한다.",
+            "text": "아무것도 놓치지 않는다. `throw`는 `Error`만 허용한다.",
             "explanation": "JavaScript는 임의 값을 던질 수 있다."
           },
           {
             "id": "c",
             "text": "정상 숫자 반환은 모두 예외가 된다.",
-            "explanation": "정상 반환값과 catch로 받은 예외 값은 별도 경로다."
+            "explanation": "정상 반환값과 `catch`로 받은 예외 값은 별도 경로다."
           }
         ],
         "correctChoiceId": "a"
       },
       {
         "id": "q5-cleanup-precedence",
-        "prompt": "이번 과제에서 visit가 A를 던지고 cleanup도 B를 던졌다. 계약상 호출자는 무엇을 받는가?",
+        "prompt": "이번 과제에서 `visit`에서 예외 값 A를 던지고 `cleanup`에서도 예외 값 B를 던졌다. 계약상 호출자는 무엇을 받는가?",
         "choices": [
           {
             "id": "a",
-            "text": "B, finally이므로 무조건 정리 오류를 우선한다.",
+            "text": "B, `finally`이므로 무조건 정리 오류를 우선한다.",
             "explanation": "언어의 기본 덮어쓰기를 그대로 둘지 정책으로 조절할지 구분해야 한다."
           },
           {
             "id": "b",
-            "text": "원래 A를 받고 cleanup은 한 번 실행된다.",
+            "text": "원래 A를 받고 `cleanup`은 한 번 실행된다.",
             "explanation": "이 과제는 작업 오류를 우선하는 정책이다. 실제 운영에서 두 번째 오류의 관측은 별도 설계한다."
           },
           {

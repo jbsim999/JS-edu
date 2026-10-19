@@ -5,11 +5,11 @@
   "graderRevision": "language-host-boundaries-checks-v1",
   "mode": "body",
   "instructions": [
-    "requested/provided는 문자열 배열이며 입력을 변경하지 않는다.",
-    "Promise/Map/JSON은 language, document/fetch는 web, node:fs/node:path는 node, setTimeout은 host다.",
-    "그 외 이름은 unknown이며 available:false다.",
-    "{name, layer, available} 목록을 요청 순서대로 반환하고 중복을 유지한다.",
-    "알려진 이름이 provided에 있을 때만 available:true다."
+    "`requested`와 `provided`는 문자열 배열이다. 두 원본 배열을 변경하지 않는다.",
+    "이 과제의 분류표에서 `Promise`·`Map`·`JSON`은 `language`, `document`·`fetch`는 `web`, `node:fs`·`node:path`는 `node`, `setTimeout`은 `host`다. 이는 과제 전용 분류이며, `web`이 브라우저에서만 사용 가능하다는 뜻은 아니다.",
+    "분류표에 없는 이름은 `unknown`이며, `available`은 `false`다.",
+    "`{ name, layer, available }` 객체의 목록을 요청 순서대로 반환한다. 중복 요청도 그대로 유지한다.",
+    "분류표에 있는 이름이면서 `provided`에도 있을 때만 `available`이 `true`다."
   ],
   "template": "export function classifyApis(requested, provided) {\n  // TODO: 표준 소속과 제공 여부를 따로 판단하세요.\n}\n",
   "profileId": "ecmascript-2026",

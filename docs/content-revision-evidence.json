@@ -1,0 +1,410 @@
+{
+  "date": "2026-10-19",
+  "baseline": "3a0f88646b2eb8ab1cb4bfc45ab9c75d28b5edfd",
+  "skill": {
+    "name": "humanize-korean",
+    "commit": "b51aa5985be0a94a645788f1395b29a118bc9c33",
+    "method": "Sentence-by-sentence editing with separately recorded technical corrections and explicit code spans; ID/grading/data preservation checks."
+  },
+  "scope": {
+    "lessons": 52,
+    "nodeVariants": 3,
+    "glossaryTerms": 82,
+    "changedLessonFields": 1076,
+    "changedGlossaryFields": 164,
+    "synchronizedInstructionFields": 31
+  },
+  "validation": {
+    "invariants": "PASS",
+    "boundaryCandidates": 0,
+    "syntaxFiles": 318,
+    "tests": {
+      "total": 325,
+      "pass": 320,
+      "skip": 5,
+      "fail": 0
+    },
+    "baseCurriculum": {
+      "exercisesPass": 33,
+      "checks": 271,
+      "hostSkipped": 22,
+      "examplesPass": 33
+    },
+    "codeTheme": {
+      "tests": 14,
+      "pass": 14
+    },
+    "browser": {
+      "name": "155.0.8059.40",
+      "routes": 55,
+      "quizQuestions": 229,
+      "pageErrors": 0,
+      "status": "PASS"
+    }
+  },
+  "independentReview": {
+    "scope": [
+      "web/features/inline-code.mjs",
+      "web/app.mjs",
+      "tests/code-theme.test.mjs",
+      "curriculum/lessons/language-host-boundaries.json"
+    ],
+    "status": "PASS",
+    "type": "Static read-only review; runtime and visual checks performed by root",
+    "resolved": "Blank lines inside marked code must not split paragraphs"
+  },
+  "rawSkillAudit": {
+    "glossaryGate": "REJECT",
+    "changeRate": 0.1411,
+    "newUnsupportedClaims": 0,
+    "note": "Requested markup and separately checked technical corrections change protected strings. Raw gate is preserved, not relabeled PASS; protected data hashes and manual semantic comparisons are separate."
+  },
+  "limitations": [
+    "Emulated viewports, not physical devices or OS IME.",
+    "CSS 200% substitute, not native browser zoom.",
+    "Execution/reference code unchanged; this run verifies textbook display and quiz behavior.",
+    "No new native package/release, physical mobile, OS IME, screen reader, native browser 200% or clipboard paste verification."
+  ],
+  "sources": [
+    {
+      "file": "curriculum/exercises.json",
+      "sha256": "5cd0c4bec3ec4b8d93a457a38172670bfb655c491d43bea9d0675038685e27f2"
+    },
+    {
+      "file": "curriculum/exercises/array-pipelines-and-sorting.json",
+      "sha256": "89b78c57360fcb55f5b4764561eb520bfabd986fffeda155e433b92b3cf90ef2"
+    },
+    {
+      "file": "curriculum/exercises/browser-behavior-and-accessibility.json",
+      "sha256": "6cde51ebfd6c4269943136329096a027c810f41bd4768da08b9c231deb1780c3"
+    },
+    {
+      "file": "curriculum/exercises/browser-storage-and-migrations.json",
+      "sha256": "28c6a53877c554685d6f3606010687e56eafaa56785e4409f3e5b6315b274e62"
+    },
+    {
+      "file": "curriculum/exercises/browser-url-and-navigation.json",
+      "sha256": "f456f0d5f2fec1c6b9d3fd75f1d866ad397685ff56275ee8cb7e916731094435"
+    },
+    {
+      "file": "curriculum/exercises/browser-workers-and-performance.json",
+      "sha256": "9a4ca78945e1f2fb6e7dbb04bf3cb120f5547a319bcc7e864d6bdbe4c96047ff"
+    },
+    {
+      "file": "curriculum/exercises/cancellation-and-stale-results.json",
+      "sha256": "551e259415d01ddba02f44bee465491f742058a395cf9c4745956a4a1e303239"
+    },
+    {
+      "file": "curriculum/exercises/capstone-acceptance-review-node.json",
+      "sha256": "41ae8c694035436678bc85682cf8ba23533d5c95bf2469b3f444eee2df5a57d9"
+    },
+    {
+      "file": "curriculum/exercises/capstone-acceptance-review.json",
+      "sha256": "af41132ab9c8de5431c83c6d2d090e136eb6e01c29990ca66ca144dd0675462f"
+    },
+    {
+      "file": "curriculum/exercises/capstone-domain-core.json",
+      "sha256": "0b1fede9ce048f3857c95874051da4ac38471e00b1dcf1b2a2c2904087098877"
+    },
+    {
+      "file": "curriculum/exercises/capstone-failure-and-scale-node.json",
+      "sha256": "b7d2ceae3bdc0c7c96879ff0d22f1588a4e03958300780dbad572e4dbe34b114"
+    },
+    {
+      "file": "curriculum/exercises/capstone-failure-and-scale.json",
+      "sha256": "e764d5edcca7325a55ee3cb3e73a285ee48641176895d55d783419e4e3ab328b"
+    },
+    {
+      "file": "curriculum/exercises/capstone-host-product-node.json",
+      "sha256": "831c4809d8400ea8c4173524d96a9334eb5118845c3cfe1e19805ac58eb7ca8c"
+    },
+    {
+      "file": "curriculum/exercises/capstone-host-product.json",
+      "sha256": "16166498172e0d5f10a550d570414ecb493d29018cdae1701eb4ab7aa0161ed4"
+    },
+    {
+      "file": "curriculum/exercises/date-time-and-internationalization.json",
+      "sha256": "e5df5f572d57ba9d88796ab7e99fba3bdafc485120478e8bd4175226e3d6f7d2"
+    },
+    {
+      "file": "curriculum/exercises/iterators-and-generators.json",
+      "sha256": "bb2f93d50a2ea6acf2cd9a9ac076a48b6e3a71278ad39ebb799ad4eaa6ccecb1"
+    },
+    {
+      "file": "curriculum/exercises/json-and-serialization.json",
+      "sha256": "24d5721061dce0837c5d5283e145873337e99ea4d521f45138e52b1f723b32c1"
+    },
+    {
+      "file": "curriculum/exercises/keyed-collections-and-grouping.json",
+      "sha256": "9efe48a2e150f571d75e2942ca537890e02681ea91da360e717693a53a75bdd2"
+    },
+    {
+      "file": "curriculum/exercises/language-host-boundaries.json",
+      "sha256": "9bb148bd9f1976e89455b4074a167a00bc79564e9dd21b317b37cfe4828b5bc2"
+    },
+    {
+      "file": "curriculum/exercises/node-buffers-and-streams.json",
+      "sha256": "106e6429b304aaceafa744d3f6dd0cdd3f68f0b8548faeb1d125f57f345dd2f4"
+    },
+    {
+      "file": "curriculum/exercises/node-esm-packages-and-cli.json",
+      "sha256": "69b03cb982014607ef39245d5dc00fb8d408c20f0ae2db5ba2dc58de1a9ee878"
+    },
+    {
+      "file": "curriculum/exercises/node-events-and-lifecycle.json",
+      "sha256": "fa3dc358f523e061d011fb4714e5fbad2c79977a1738c328189a20cb42c2c5da"
+    },
+    {
+      "file": "curriculum/exercises/node-files-and-paths.json",
+      "sha256": "ee7b5f5f59d618d792651f7ad175f2a3f7174e131a7f9b338500833964fd4c5e"
+    },
+    {
+      "file": "curriculum/exercises/node-http-and-validation.json",
+      "sha256": "7f834c0b9aa3f8e6a84b6194215a346a952a3ed9d009c7c418f74ad257c6d11f"
+    },
+    {
+      "file": "curriculum/exercises/node-outbound-requests-and-cancellation.json",
+      "sha256": "e33f2388b84e11339c7332e747c560f348ff36afab0003ee4e93b211585d1d0e"
+    },
+    {
+      "file": "curriculum/exercises/node-testing-and-delivery.json",
+      "sha256": "1e901e6483c000bf5cd592004d93255dc853175227a51aa27ed952841cb8bbab"
+    },
+    {
+      "file": "curriculum/exercises/node-workers-and-resource-limits.json",
+      "sha256": "c0c044d114fbd15a6f06e173652c5ad3f876db919f1cc1962e66cfb3f090f000"
+    },
+    {
+      "file": "curriculum/exercises/strings-unicode-and-regexp.json",
+      "sha256": "455248ce62dc812fd34fdc02271fd66640798f6ac852f0f0e5ac72ca7da26a26"
+    },
+    {
+      "file": "curriculum/lessons/array-pipelines-and-sorting.json",
+      "sha256": "a6937168e93cdd4ea62d0cf23e96a6621d746b0335bbd6061301e5dc447907a5"
+    },
+    {
+      "file": "curriculum/lessons/async-await-and-iteration.json",
+      "sha256": "2bd5231f327ea1225038525537fa2aaeb20c35c79d06062a256fe23934ea8b7e"
+    },
+    {
+      "file": "curriculum/lessons/behavior-tests-and-debugging.json",
+      "sha256": "eec53134d0ec3ebb6a1e03fb0e69ad984cfe8689df7e9bb9ecabfd79e50e16b2"
+    },
+    {
+      "file": "curriculum/lessons/bindings-and-closures.json",
+      "sha256": "3d73a93d26b733a936bf888482927a4172345710211a45906c61baf74341f309"
+    },
+    {
+      "file": "curriculum/lessons/bounded-concurrency-and-retries.json",
+      "sha256": "ad06784d732dd6eb13ce272fd0e495af2c8efabdad9af88749bc233e1166c731"
+    },
+    {
+      "file": "curriculum/lessons/browser-behavior-and-accessibility.json",
+      "sha256": "f951f875981561fd82984efd4835cb690890a8eba81b159e2090fc2f0112adf7"
+    },
+    {
+      "file": "curriculum/lessons/browser-dom-and-rendering.json",
+      "sha256": "70217f4d339874b686dfaac5a9db56d3508195f7e2899c9c365a090990f2de51"
+    },
+    {
+      "file": "curriculum/lessons/browser-events-and-lifecycle.json",
+      "sha256": "ec5069378593c9d6c6f497832fb0fa42222f7a288b4a532cb12891748e5c5ed2"
+    },
+    {
+      "file": "curriculum/lessons/browser-fetch-and-http.json",
+      "sha256": "de7247b33ffe38ee12de27f77629166147246552f66f18def89486eee5be09f7"
+    },
+    {
+      "file": "curriculum/lessons/browser-forms-and-input.json",
+      "sha256": "d00c775c928442497f069e4590bc80494c0e066f77c2774f51fccf3bf4762f26"
+    },
+    {
+      "file": "curriculum/lessons/browser-storage-and-migrations.json",
+      "sha256": "f7c54c93ffd6c6789b5cfdcc83d9d31bd3a860f324ff54722914dbfcbb14ae03"
+    },
+    {
+      "file": "curriculum/lessons/browser-url-and-navigation.json",
+      "sha256": "5217102f3b0534930f114a90f7d5c6a4e3134b0c1c79cf32bbb41fc7a8b7f6e7"
+    },
+    {
+      "file": "curriculum/lessons/browser-workers-and-performance.json",
+      "sha256": "e6d7a9e10ab55bee7fcfd17df36cdcb7ad9a4bd5731e0418ce24789de4a3e2ff"
+    },
+    {
+      "file": "curriculum/lessons/call-stack-and-completion.json",
+      "sha256": "f073fd3860222dcae0fd2202e1db47e6e56a1f4961f134f356d53b7defcaa139"
+    },
+    {
+      "file": "curriculum/lessons/cancellation-and-stale-results.json",
+      "sha256": "687149ef1527c59e032e977bc832b1ab3356a4949b62c35d1972eac3e3503895"
+    },
+    {
+      "file": "curriculum/lessons/capstone-acceptance-review.json",
+      "sha256": "1b729edc33dc7bbfa60292992f295dab6fd170948a8d6a7cb6e30150cc0ad334"
+    },
+    {
+      "file": "curriculum/lessons/capstone-domain-core.json",
+      "sha256": "ffdf4356809c94768e98104c2df65d07251caebed6b7d47e63d9161303f497d3"
+    },
+    {
+      "file": "curriculum/lessons/capstone-failure-and-scale.json",
+      "sha256": "872ff334ae3d8dc395626e870d0bc4036ce8b6b328c92d575a9ca44e5190a89b"
+    },
+    {
+      "file": "curriculum/lessons/capstone-host-product.json",
+      "sha256": "f2f708cfd85ffc617eb9ad0d3dd443725b5987432bd7a2db2dd9b8ba11141a96"
+    },
+    {
+      "file": "curriculum/lessons/classes-and-private-state.json",
+      "sha256": "6a0fc7fecac0fe63d8a88ffc30857cfc5e8998c0c32fc8069426a62d72a1f4cb"
+    },
+    {
+      "file": "curriculum/lessons/coercion-and-equality.json",
+      "sha256": "7e219cf4c963777ba4a22fc450041ee342aa8b1ced63d32d363fe2c55ad8ef47"
+    },
+    {
+      "file": "curriculum/lessons/composition-and-domain-contracts.json",
+      "sha256": "74c401776b8c8274d1e0791a7b642315da24a6012767f7af6874335832639cd6"
+    },
+    {
+      "file": "curriculum/lessons/control-flow-and-operators.json",
+      "sha256": "533d142020ab7b9f0e95413451ef3d704472c5bab9b445b6e00d07ff8ed68d81"
+    },
+    {
+      "file": "curriculum/lessons/date-time-and-internationalization.json",
+      "sha256": "8c6624c47bcb5bd29172c52b030e62a86385224c157c689a9bf92bc7fa7ca1dd"
+    },
+    {
+      "file": "curriculum/lessons/errors-and-failure-contracts.json",
+      "sha256": "0158f880988f8180f2821a11440250afc1ea9de917203bcea7116004d2b4f391"
+    },
+    {
+      "file": "curriculum/lessons/esm-and-live-bindings.json",
+      "sha256": "21e2f9b0e83e571c43291f9ed62e6387c5e81a16100c971c6d90bb0a5c588a49"
+    },
+    {
+      "file": "curriculum/lessons/function-parameters-and-contracts.json",
+      "sha256": "b31eca50d7320f8322b79c9deaf4e356d7abf85325a92c453e448f2a0a9f1e6d"
+    },
+    {
+      "file": "curriculum/lessons/higher-order-functions.json",
+      "sha256": "59fb567ca476d0a93b8548f9b6f12743fca09b603bf49e5bf833674f73bd88a7"
+    },
+    {
+      "file": "curriculum/lessons/host-scheduling-and-event-loops.json",
+      "sha256": "3e250dc4d68fb55fe23b10477f288be9a1d042a851376869b90d124dc22f2ebb"
+    },
+    {
+      "file": "curriculum/lessons/iterators-and-generators.json",
+      "sha256": "043df082944ef69e4f95af62e7eefc484148c5a74f7e73d702ebac5d640642b9"
+    },
+    {
+      "file": "curriculum/lessons/json-and-serialization.json",
+      "sha256": "723258fe102909a0f8ab6b15c03348cf57329aff0f4042b45e57dd0b94a2f0a5"
+    },
+    {
+      "file": "curriculum/lessons/keyed-collections-and-grouping.json",
+      "sha256": "38742146a78111aa7cb9d3f191fd130060d5a6ab42e5d49d3db949455c3463dc"
+    },
+    {
+      "file": "curriculum/lessons/language-host-boundaries.json",
+      "sha256": "f50c784bfd060e3c3ef8479c3a778739a78dfafc1a95763e885d0f5fccc3bdab"
+    },
+    {
+      "file": "curriculum/lessons/module-and-dependency-boundaries.json",
+      "sha256": "fbaa1b26dc59db7eafa82b98ff5535e92f34dc8b27d9ff713bf9589e5ec065d0"
+    },
+    {
+      "file": "curriculum/lessons/node-buffers-and-streams.json",
+      "sha256": "c7a94370c2652764ac9daf16f543a8dc0c650583d82bf9fb37c6f03513a0b18d"
+    },
+    {
+      "file": "curriculum/lessons/node-esm-packages-and-cli.json",
+      "sha256": "5123945a913d7ae61df4837d400946804c645db6041af432ad9dffea163975fa"
+    },
+    {
+      "file": "curriculum/lessons/node-events-and-lifecycle.json",
+      "sha256": "39103146597780419088cd49471eda20b888cd2c3c7c68bb909f97f2aeecad5e"
+    },
+    {
+      "file": "curriculum/lessons/node-files-and-paths.json",
+      "sha256": "e330d30604b93692906bbb9514d4220cab575fc0b09303b3e1ef81f763d7d2a6"
+    },
+    {
+      "file": "curriculum/lessons/node-http-and-validation.json",
+      "sha256": "fa621500a0eb38bc255d1df336b6e0a7e33812fa6d1669e86e2ec4834d6057ff"
+    },
+    {
+      "file": "curriculum/lessons/node-outbound-requests-and-cancellation.json",
+      "sha256": "c00c7cc4d314bc188cd1034c3c85e6233e91e03f1c5730c2b5c602ceb1b5fa1c"
+    },
+    {
+      "file": "curriculum/lessons/node-testing-and-delivery.json",
+      "sha256": "4d6dda7852e9bf9379ff022db508c4015c3198a1973095363bb9c7eb7fb323ea"
+    },
+    {
+      "file": "curriculum/lessons/node-workers-and-resource-limits.json",
+      "sha256": "7987e275aba17826028b58fc3114e2e23ef3d152a4c2b8986b16efa3de1aeb25"
+    },
+    {
+      "file": "curriculum/lessons/numbers-and-precision.json",
+      "sha256": "e0b406170bd6dda824a2966c6e8046de47b73eac4351e6316ae621a7c1e13e5f"
+    },
+    {
+      "file": "curriculum/lessons/promise-chains-and-errors.json",
+      "sha256": "eb48edf94eeae511fef99e5a4ced4b7feb036692aebef4dc4df51bb499bd051d"
+    },
+    {
+      "file": "curriculum/lessons/promise-combinators.json",
+      "sha256": "7e073fbd5733c5b9d1ac1c44a1d4c805dd774fe2bd365c3acbb00c704833cad3"
+    },
+    {
+      "file": "curriculum/lessons/properties-and-descriptors.json",
+      "sha256": "f02212754d48a3c9239899d43b28cbc8f37d86f4b2344c5d7dee828829e32286"
+    },
+    {
+      "file": "curriculum/lessons/prototype-delegation.json",
+      "sha256": "7961dbfe097e07533437ae2035867dfa7775ae5a7f7b86f53923e27316fd59af"
+    },
+    {
+      "file": "curriculum/lessons/references-mutation-and-copy.json",
+      "sha256": "90739debb789a2577d54c293ca9e96b4e9e15687ed9af9206409d20a5dbfd54b"
+    },
+    {
+      "file": "curriculum/lessons/scope-tdz-and-declarations.json",
+      "sha256": "bd67003aa70228954dc5d951d378c9f3d434a4b63239247bcfe58f5b090fccf5"
+    },
+    {
+      "file": "curriculum/lessons/strings-unicode-and-regexp.json",
+      "sha256": "7cdda0bb111bf382acfccab9292d9dbf03f3c79e08013e8115602c50b177dada"
+    },
+    {
+      "file": "curriculum/lessons/this-and-arrow-functions.json",
+      "sha256": "d471742724de3921a4031dfc1ee4351007270386db2387dec34405b27d117b8d"
+    },
+    {
+      "file": "curriculum/lessons/values-and-types.json",
+      "sha256": "ae00d21db07f7c6823fc53771bb92f269a4b3f45e9a72aeb22766a88708c9fd7"
+    },
+    {
+      "file": "tests/code-theme.test.mjs",
+      "sha256": "023090430ecbab2c98b1ddb9bfae196462dc5ef298894a20792a83aca1fd03f9"
+    },
+    {
+      "file": "web/app.mjs",
+      "sha256": "d3db992a9e7fd58bfce48883bd279b812a2a18e03d3d9ba953bc911b51c3a86f"
+    },
+    {
+      "file": "web/features/inline-code.mjs",
+      "sha256": "c9310cf41dc38e730d7137db258383aa83696c28e2bb095f61a610761461111d"
+    },
+    {
+      "file": "web/glossary-data.mjs",
+      "sha256": "5e7a1a760a1a9b8c9a45b22dfcb744ac32dd2277d4ee1ba7d4f9587c69cbb230"
+    },
+    {
+      "file": "web/glossary-expanded.mjs",
+      "sha256": "c31311ea3df20cb5d0c1106b4e07b314a53a93dfb982ce3984c85c7cd243016d"
+    }
+  ]
+}

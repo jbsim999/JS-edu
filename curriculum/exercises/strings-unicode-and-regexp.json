@@ -5,7 +5,7 @@
   "graderRevision": "strings-unicode-and-regexp-checks-v1",
   "mode": "body",
   "instructions": [
-    "analyzeSearch(text,query)를 구현한다. 두 인수는 잘 형성된 Unicode 문자열이다. text는 NFC만, query는 trim 후 NFC로 정규화한다. 반환값은 {normalizedText,normalizedQuery,codeUnits,codePoints,graphemes,matches}다. 길이 세 값은 정규화된 text를 각각 UTF-16·코드 포인트·Intl.Segmenter('ko',{granularity:'grapheme'})로 센 결과다.\n\nmatches는 대소문자를 구분하는 리터럴 검색의 비중첩 결과 [{index,text}]이며 index는 정규화된 텍스트의 UTF-16 위치다. 빈 검색어는 빈 목록이다. 정규식을 쓴다면 사용자 특수문자를 문자 그대로 처리하고 호출 간 lastIndex 상태를 공유하지 않는다. Intl.Segmenter가 필요한 실행 프로필이다."
+    "`analyzeSearch(text,query)`를 구현한다. 두 인수는 잘 형성된 Unicode 문자열이다. `text`에는 NFC 정규화만 적용한다. `query`는 `trim`으로 앞뒤 공백을 제거한 뒤 NFC로 정규화한다. 반환값은 `{normalizedText,normalizedQuery,codeUnits,codePoints,graphemes,matches}`다. 길이 세 값은 정규화된 `text`를 각각 UTF-16·코드 포인트·`Intl.Segmenter('ko',{granularity:'grapheme'})`로 센 결과다.\n\n`matches`는 대소문자를 구분하는 리터럴 검색의 비중첩 결과 `[{index,text}]`이며 `index`는 정규화된 텍스트의 UTF-16 위치다. 빈 검색어는 빈 목록이다. 정규식을 쓴다면 사용자 특수문자를 문자 그대로 처리하고 호출 간 `lastIndex` 상태를 공유하지 않는다. `Intl.Segmenter`가 필요한 실행 프로필이다."
   ],
   "template": "export function analyzeSearch(text, query) {\n  // TODO: NFC 정규화·문자 단위 구분·리터럴 검색을 연결하세요.\n}\n",
   "profileId": "ecmascript-2026",

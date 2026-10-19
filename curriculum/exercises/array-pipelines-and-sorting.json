@@ -5,7 +5,7 @@
   "graderRevision": "array-pipelines-and-sorting-checks-v1",
   "mode": "body",
   "instructions": [
-    "summarizeOrders(orders,minimum=0)를 구현한다. minimum은 유한한 0 이상 숫자다. orders의 own 인덱스만 검사하고, null/undefined/비객체 또는 id가 문자열이 아니거나 status가 paid가 아닌 레코드를 제외한다. amount는 유한한 0 이상 number이고 minimum 이상이어야 한다. 누락·문자열 숫자는 보정하지 않는다.\n\n새 {id,amount} 레코드 목록을 amount 내림차순으로 정렬하고 동액은 원래 순서를 유지한다. 중복 ID를 제거하지 않는다. {items,count,total}을 반환하며 빈 합계는 0이다. 입력 배열·원소를 변경하지 않고 출력 레코드를 수정해도 입력이 바뀌지 않아야 한다."
+    "`summarizeOrders(orders,minimum=0)`를 구현한다. `minimum`은 유한한 0 이상 숫자다. `orders`의 `own` 인덱스만 검사하고, null/undefined/비객체 또는 `id`가 문자열이 아니거나 `status`가 `paid`가 아닌 레코드를 제외한다. `amount`는 유한한 0 이상 `number`이고 `minimum` 이상이어야 한다. 누락·문자열 숫자는 보정하지 않는다.\n\n새 `{id,amount}` 레코드 목록을 `amount` 내림차순으로 정렬하고 동액은 원래 순서를 유지한다. 중복 ID를 제거하지 않는다. `{items,count,total}`을 반환하며 빈 합계는 0이다. 입력 배열·원소를 변경하지 않고 출력 레코드를 수정해도 입력이 바뀌지 않아야 한다."
   ],
   "template": "export function summarizeOrders(orders, minimum = 0) {\n  // TODO: 유효 주문만 새 목록으로 모아 숫자 정렬과 합계를 계산하세요.\n}\n",
   "profileId": "ecmascript-2026",

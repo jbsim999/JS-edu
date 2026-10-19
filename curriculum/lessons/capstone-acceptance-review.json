@@ -7,7 +7,7 @@
   "level": "advanced",
   "goals": [
     "실제 검사 함수의 비동기 완료와 고정 판정을 실행해 빈 검사·오답을 거부한다.",
-    "교재·소스·검사·환경 식별정보에 결과를 결속하고 변경·종료 시 무효화한다.",
+    "교재·소스·검사·환경 식별정보와 결과를 연결하고 변경·종료 시 무효화한다.",
     "재현 가능한 사용 설명과 설계 메모를 작성하고 자동 검사와 자가 평가를 구분한다."
   ],
   "prerequisites": [
@@ -48,26 +48,26 @@
   ],
   "exerciseId": "capstone-acceptance-review-exercise",
   "steps": {
-    "theory": "어제 통과한 화면을 고친 뒤에도 완료 배지가 남아 있고 검사 목록이 비어도 PASS가 나온다. 완료 근거는 단순 boolean이 아니라 무엇을 어떤 검사와 환경에서 실행했는지 묶은 결과다. contentRevision은 교재 계약, sourceFingerprint는 실제 실행 소스, graderRevision은 판정 계약, environmentFingerprint는 실행 환경 식별정보다. 문자열 하나를 저장했다고 실제 소스와 일치함이 증명되는 것은 아니며 실행 제공자가 소스 snapshot과 지문을 연결해야 한다.\n\n인수 검사는 사용 흐름의 관찰 가능한 결과를 확인한다. 이 runner는 주입된 core와 AbortSignal을 각 check에 전달하고 Promise 완료를 기다린다. 정확히 true일 때만 PASS이며 false, 'PASS' 문자열 같은 truthy 값, 임의 throw는 FAIL이다. 한 검사 실패 뒤에도 나머지를 실행해 결과를 모은다. 1–32개의 유효한 고유 ID가 필요하므로 검사 0개는 통과가 될 수 없다.\n\n대상 변경은 invalidate(nextIdentity,nextCore)로 이전 작업을 취소하고 결과를 STALE로 바꾼다. 실행 중이던 옛 check가 나중에 true를 반환해도 현재 화면과 새 결과를 바꾸지 않는다. 새 식별정보와 실제 새 함수 모두 전달해야 한다. 결과 객체는 복사본으로 돌려주어 외부에서 행을 바꿔 현재 성취를 위조하지 않게 한다. 이 방어는 자가 학습 상태 일관성을 위한 것이며 클라이언트만으로 변조 불가능한 성적 인증을 제공하지 않는다.\n\n자동 통과와 메모 자가 확인, 실제 기기 검수, 아직 지원하지 않는 호스트는 별도 항목이다. 브라우저 대시보드 완료가 Node CLI 구현이나 패키지 배포를 뜻하지 않는다. 마지막 설명에는 실행 조건·입력 예·오류·취소·저장·지원 범위를 함께 적는다.",
-    "example": "예제는 빈 입력과 합계 검사를 실제 core에 적용해 PASS를 얻는다. 대상 소스 지문과 core를 바꾸면 즉시 STALE이며, 합계/개수가 틀린 대표 오답에 같은 검사를 실행하면 FAIL이다. 출력은 PASS → STALE → FAIL의 JSON 세 줄이다.\n\n브라우저 probe에는 실제 products HTTP 응답을 core로 처리하는 인수 검사, 빈 검사 거부, async 대기, 임의 throw, 새 core 재검사, 늦은 완료 무효화가 포함된다. 현재 Node 구문 검사만 했다면 이것을 실제 DOM 인수 PASS라고 기록하지 않는다. 코드가 만든 PASS 문자열 자체가 증거가 되는 것도 아니다.",
-    "quiz": "실제 대상 호출이 없는 검사의 PASS와, 고정 기대값을 비교한 PASS를 구분한다. 내용·소스·검사·환경 중 하나가 바뀌면 이전 결과를 어떻게 처리할지 답한다. 검사 개수를 늘리는 대신 대표 오답에서 실제로 실패하는 근거를 제시한다.",
-    "practice": "사용 설명에 다음 흐름을 자신의 말로 작성한다. ① 브라우저 실행 환경을 확인하고 대시보드를 연다. ② 검색어를 입력하고 Enter 또는 검색 버튼으로 실행한다. ③ 진행 중에는 취소할 수 있고 새 검색이 이전 결과를 대체한다. ④ 결과 없음과 HTTP/JSON/스키마 실패를 구분한다. ⑤ 검색어는 v1 저장 정책으로 복원되며 저장 차단 시 검색은 가능하다. ⑥ 검증할 소스가 바뀌면 다시 인수 검사한다. 현재 Node 변형과 설치 패키지는 제공 범위가 아니다.\n\n메모 자가 루브릭은 네 가지다. 처리 순서와 중복 정책의 선택 이유를 실제 반례로 설명했는가, 취소와 늦은 결과 차단을 구분했는가, 입력/동시성/출력 상한이 보호하지 못하는 범위를 적었는가, 실제 검사 환경·미검증·재현 입력을 남겼는가. 각 항목을 충족/보완 필요로 자가 표시하고 근거를 적는다. 이 메모가 자동 채점되었다고 표시하지 않는다.\n\n출시 판단에는 정상 코드 통과와 대표 오답 실패, 브라우저 합성 화면·키보드·반응형, 실제 기기/보조기술 미검증을 포함한다. 이번 강의의 사용 설명과 검증 기록은 배포 권한을 만들지 않는다. 오류를 고친 뒤 동일한 소스 snapshot을 다시 실행했는지 확인한다.",
-    "lab": "createAcceptanceReview(root,queryProducts,identity)의 본문을 작성한다. identity에는 비어 있지 않은 contentRevision/sourceFingerprint/graderRevision/environmentFingerprint 문자열이 모두 필요하다. root에 role=status/aria-live=polite output과 인수 결과 ol을 만들고 초기 상태 NOT_RUN을 표시한다. 반환 API는 run(tests), invalidate(nextIdentity,nextCore), getState(), dispose()다.\n\ntests는 1–32개 조밀 배열이며 각 {id,check}는 고유한 비빈 문자열 ID와 함수다. 잘못된 목록은 상태 INVALID·빈 checks로 바꾸고 빈/과다 개수는 RangeError, 나머지는 TypeError다. run은 순서대로 await check({queryProducts:현재대상,signal})을 실행한다. true만 {id,status:'PASS',reason:null}, 다른 반환은 FAIL/returned-false, throw는 FAIL/threw다. 전체는 하나 이상 모두 통과할 때만 PASS다. 결과 형태는 {status,identity,checks} 복사본이다.\n\ninvalidate는 실제 새 core와 새 identity를 받아 현재 작업을 abort하고 STALE·빈 checks로 바꾼다. 옛 작업 완료는 STALE 반환만 하고 현재 상태에 반영하지 않는다. 활성 run 중 중복 run과 dispose 뒤 동작은 InvalidStateError다. dispose는 현재 signal·자식 DOM을 정리하고 DISPOSED로 남는다. 실제 소스 지문 계산·성취 저장 연결은 실행 제공자 책임이며 임의 지문 문자열을 성적 인증으로 표시하지 않는다."
+    "theory": "어제 통과한 화면을 고친 뒤에도 완료 배지가 남아 있고 검사 목록이 비어도 `PASS`가 나온다. 완료 기록에는 통과 여부뿐 아니라 실행한 소스, 검사 규칙과 환경도 함께 남겨야 한다. `contentRevision`은 교재 계약, `sourceFingerprint`는 실제 실행 소스, `graderRevision`은 판정 계약, `environmentFingerprint`는 실행 환경 식별정보다. 문자열 하나를 저장했다고 실제 소스와 일치함이 증명되는 것은 아니며 실행 제공자가 소스 snapshot과 지문을 연결해야 한다.\n\n인수 검사는 사용 흐름의 관찰 가능한 결과를 확인한다. 이번에 구현할 검사 실행 함수는 주입한 도메인 함수와 `AbortSignal`을 각 `check` 함수에 전달한다. `check`가 `Promise`를 반환하면 완료될 때까지 기다린다. 반환값이 정확히 `true`일 때만 `PASS`다. `false`나 조건식에서 참으로 평가되는 `'PASS'` 문자열도 통과시키지 않으며, 예외가 발생한 경우도 `FAIL`로 기록한다. 한 검사 실패 뒤에도 나머지를 실행해 결과를 모은다. 1–32개의 유효한 고유 ID가 필요하므로 검사 0개는 통과가 될 수 없다.\n\n대상 변경은 `invalidate(nextIdentity,nextCore)`로 이전 작업을 취소하고 결과를 `STALE`로 바꾼다. 실행 중이던 옛 `check`가 나중에 `true`를 반환해도 현재 화면과 새 결과를 바꾸지 않는다. 새 식별정보와 실제 새 함수 모두 전달해야 한다. 결과 객체는 복사본으로 돌려주어 외부에서 행을 바꿔 현재 성취를 위조하지 않게 한다. 이 방어는 자가 학습 상태 일관성을 위한 것이며 클라이언트만으로 변조 불가능한 성적 인증을 제공하지 않는다.\n\n자동 통과와 메모 자가 확인, 실제 기기 검수, 아직 지원하지 않는 호스트는 별도 항목이다. 브라우저 대시보드 완료가 Node CLI 구현이나 패키지 배포를 뜻하지 않는다. 마지막 설명에는 실행 조건·입력 예·오류·취소·저장·지원 범위를 함께 적는다.",
+    "example": "예제는 빈 입력과 합계 검사를 실제 core에 적용해 `PASS`를 얻는다. 대상 소스 지문과 core를 바꾸면 즉시 `STALE`이며, 합계/개수가 틀린 대표 오답에 같은 검사를 실행하면 `FAIL`이다. 출력은 `PASS` → `STALE` → `FAIL`의 JSON 세 줄이다.\n\n브라우저 자동 검사에는 실제 products HTTP 응답을 core로 처리하는 인수 검사, 빈 검사 거부, async 대기, 임의 `throw`, 새 core 재검사, 늦은 완료 무효화가 포함된다. Node에서 구문만 확인했다면 실제 DOM 동작을 검증한 것으로 기록할 수 없다. `PASS`라는 문자열을 출력했는지보다 실제 검사 대상이 기대한 결과를 냈는지 확인해야 한다.",
+    "quiz": "실제 대상 호출이 없는 검사의 `PASS`와, 고정 기대값을 비교한 `PASS`를 구분한다. 내용·소스·검사·환경 중 하나가 바뀌면 이전 결과를 어떻게 처리할지 답한다. 검사 개수를 늘리는 대신 대표 오답에서 실제로 실패하는 근거를 제시한다.",
+    "practice": "사용 설명에 다음 흐름을 자신의 말로 작성한다. ① 브라우저 실행 환경을 확인하고 대시보드를 연다. ② 검색어를 입력하고 Enter 또는 검색 버튼으로 실행한다. ③ 진행 중에는 취소할 수 있고 새 검색이 이전 결과를 대체한다. ④ 결과 없음과 HTTP/JSON/스키마 실패를 구분한다. ⑤ 검색어는 v1 저장 정책으로 복원되며 저장 차단 시 검색은 가능하다. ⑥ 검증할 소스가 바뀌면 다시 인수 검사한다. Node 변형과 Windows·macOS용 데스크톱 앱도 제공한다. 사용 설명에는 실제로 실행한 변형과 앱의 버전·환경을 구분해 기록한다.\n\n설계 메모는 다음 네 가지 기준으로 스스로 확인한다. 처리 순서와 중복 정책의 선택 이유를 실제 반례로 설명했는가, 취소와 늦은 결과 차단을 구분했는가, 입력/동시성/출력 상한이 보호하지 못하는 범위를 적었는가, 실제 검사 환경·미검증·재현 입력을 남겼는가. 각 항목을 충족/보완 필요로 자가 표시하고 근거를 적는다. 이 메모가 자동 채점되었다고 표시하지 않는다.\n\n출시 판단에는 정상 코드 통과와 대표 오답 실패, 브라우저 합성 화면·키보드·반응형, 실제 기기/보조기술 미검증을 포함한다. 사용 설명과 검증 기록을 작성하는 단계와 패키지를 실제로 배포하는 단계는 구분한다. 오류를 고친 뒤 동일한 소스 snapshot을 다시 실행했는지 확인한다.",
+    "lab": "`createAcceptanceReview(root,queryProducts,identity)`의 본문을 작성한다. `identity`에는 비어 있지 않은 `contentRevision/sourceFingerprint/graderRevision/environmentFingerprint` 문자열이 모두 필요하다. root에 `role=status/aria-live=polite` output과 인수 결과 ol을 만들고 초기 상태 `NOT_RUN`을 표시한다. 반환 API는 `run(tests)`, `invalidate(nextIdentity,nextCore)`, `getState()`, `dispose()`다.\n\n`tests`는 1–32개 조밀 배열이며 각 항목 `{id,check}`의 `id`는 비어 있지 않은 고유 문자열이고 `check`는 함수다. 잘못된 목록은 상태 `INVALID`·빈 `checks`로 바꾸고 빈/과다 개수는 `RangeError`, 나머지는 `TypeError`다. `run`은 순서대로 `await` `check({queryProducts:현재대상,signal})`을 실행한다. `true`만 `{id,status:'PASS',reason:null}`, 다른 반환은 `FAIL/returned-false`, `throw`는 `FAIL/threw`다. 검사를 하나 이상 실행했고 그 검사가 모두 통과했을 때만 전체 결과가 `PASS`다. 결과 형태는 `{status,identity,checks}` 복사본이다.\n\n`invalidate`는 실제 새 core와 새 `identity`를 받아 현재 작업을 abort하고 `STALE`·빈 `checks`로 바꾼다. 옛 작업 완료는 `STALE` 반환만 하고 현재 상태에 반영하지 않는다. 활성 `run` 중 중복 `run`과 `dispose` 뒤 동작은 `InvalidStateError`다. `dispose`는 현재 signal·자식 DOM을 정리하고 `DISPOSED`로 남는다. 실제 소스 지문 계산·성취 저장 연결은 실행 제공자 책임이며 임의 지문 문자열을 성적 인증으로 표시하지 않는다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-no-tests",
-        "prompt": "checks=[]에서 every가 true면 인수 PASS로 삼아도 되는가?",
+        "prompt": "`checks=[]`에서 `every`가 `true`면 인수 `PASS`로 삼아도 되는가?",
         "choices": [
           {
             "id": "a",
             "text": "안 된다. 유효한 검사 하나 이상이라는 조건이 별도로 필요하다.",
-            "explanation": "빈 집합의 every 결과와 실제 검증 수행은 다르다."
+            "explanation": "빈 집합의 `every` 결과와 실제 검증 수행은 다르다."
           },
           {
             "id": "b",
-            "text": "된다. JavaScript가 true를 반환했기 때문이다.",
+            "text": "된다. JavaScript가 `true`를 반환했기 때문이다.",
             "explanation": "언어의 배열 규칙이 제품의 완료 조건을 대신하지 않는다."
           }
         ],
@@ -75,7 +75,7 @@
       },
       {
         "id": "q2-identity",
-        "prompt": "소스가 바뀌고 환경도 달라졌지만 어제의 PASS가 있다면?",
+        "prompt": "소스가 바뀌고 환경도 달라졌지만 어제의 `PASS`가 있다면?",
         "choices": [
           {
             "id": "a",
@@ -84,7 +84,7 @@
           },
           {
             "id": "b",
-            "text": "STALE로 무효화하고 실제 새 대상과 식별정보로 다시 검사한다.",
+            "text": "`STALE`로 무효화하고 실제 새 대상과 식별정보로 다시 검사한다.",
             "explanation": "코드·검사·교재·환경을 결과와 연결한다."
           }
         ],
@@ -92,17 +92,17 @@
       },
       {
         "id": "q3-await",
-        "prompt": "check가 Promise<false>를 반환한다. Promise 객체가 truthy라는 이유로 PASS인가?",
+        "prompt": "`check`가 `Promise<false>`를 반환한다. `Promise` 객체가 truthy라는 이유로 `PASS`인가?",
         "choices": [
           {
             "id": "a",
-            "text": "아니다. 완료를 기다린 실제 반환값이 정확히 true인지 본다.",
+            "text": "아니다. 완료를 기다린 실제 반환값이 정확히 `true`인지 본다.",
             "explanation": "비동기 객체 존재와 행동 판정은 다르다."
           },
           {
             "id": "b",
-            "text": "그렇다. 예외만 없으면 PASS다.",
-            "explanation": "false라는 실제 실패 결과를 놓치게 된다."
+            "text": "그렇다. 예외만 없으면 `PASS`다.",
+            "explanation": "`false`라는 실제 실패 결과를 놓치게 된다."
           }
         ],
         "correctChoiceId": "a"
@@ -169,14 +169,14 @@
     "node": {
       "exerciseId": "capstone-acceptance-review-node-exercise",
       "steps": {
-        "theory": "테스트 목록을 받자마자 PASS라고 표시하면 무엇을 증명했을까? 이번 인수 보고서는 check 함수를 실제로 순차 실행하고 반환 Promise까지 기다린다. 파일 검사 다음 HTTP 검사가 시작되도록 하면 임시 자료와 포트의 수명을 한 단계씩 추적할 수 있다. false·객체·undefined는 성공이 아니고, throw undefined도 예외 실패로 남겨야 한다. 빈 배열의 every가 true라는 언어 규칙을 인수 승인에 그대로 쓰지 않도록 검사 수를 먼저 확인한다.\n\n보고서는 무엇을 검사했는지 함께 담는다. contentRevision은 교재 계약, sourceRevision은 검사 대상 소스 식별자, environmentFingerprint는 실행 환경, graderRevision은 검사 규칙이다. 예를 들어 source-a에서 PASS한 뒤 source-b로 바뀌면 STALE로 바꾸고 결과를 비운다. 옛 검사 Promise가 뒤늦게 true를 반환해도 새 소스의 PASS가 될 수 없다. invalidate는 대상 함수와 identity를 한 번에 교체하며 실행 중인 검사에는 abort를 알린다.\n\nrun은 현재 대상과 검사 목록을 캡처한다. getState와 완료 결과는 내부 상태의 복사본으로 공개한다. 원본 identity나 반환 checks를 외부에서 바꿔도 결과가 조작되지 않게 하기 위해서다. 이 학습용 보고서는 실제 파일·loopback HTTP 경계를 실행하지만, 임의로 제공한 identity 자체가 서명이나 신뢰한 소스 해시라는 주장은 하지 않는다.",
-        "example": "예제는 실제 파일 조회와 loopback HTTP 조회를 순차 await해 checks를 만든다. 하나 이상 모두 true일 때만 PASS로 출력하고 sourceRevision=example-a와 process.version을 함께 기록한다. 소스가 example-b로 바뀌면 STALE·빈 검사 상태를 새로 만든다. 최종 실습은 이 흐름에 취소·중복 실행·늦은 완료 차단·방어적 복사를 더한다.\n\n예제 실행 제공자는 import 전에 globalThis.__javascriptEduExampleContext.workspaceRoot를 제공한다. 컨텍스트가 없으면 실행 불가 오류로 끝나며 사용자 폴더로 우회하지 않는다.",
-        "quiz": "아래 네 문제에서 실제 파일·HTTP 검사 함수를 순차 await하고 빈 검사와 거짓 성공을 거부한다. 소스·환경·검사 개정에 결과를 묶고 변경·취소 뒤 늦은 완료를 차단한다. 입력/결과 참조를 분리하고 수명·자원 정리와 미검증 범위를 기록한다.",
-        "practice": "실제 임시 파일에 상품을 쓰고 target.queryProductFile의 결과를 비교한 뒤, target.createProductServer를 loopback에서 열어 같은 결과를 확인하는 check를 만든다. 각 check가 finally로 자원을 정리하도록 한다. 다음에는 첫 check를 gate에서 멈추고 invalidate로 sourceRevision과 target을 바꾼다. signal이 abort되고 늦은 PASS가 STALE을 덮지 않는지 관찰하라. 보고서에는 실제 Node 버전과 검증 소스 지문을 제공자가 계산한 근거, 정답·대표 오답·미완성 거부, 남은 OS/패키징 미검증을 구분해 기록한다.",
-        "lab": "main.mjs에서 createNodeAcceptance({workspaceRoot,target,identity})를 export한다. workspaceRoot는 제공자가 허용한 기존 절대 디렉터리 문자열/file URL이다. target은 queryProductFile/runProductCli/createProductServer 함수가 있는 객체이며 각 메서드와 receiver를 캡처한다. identity는 contentRevision,sourceRevision,environmentFingerprint,graderRevision의 own 문자열(공백만 불가, 각각 1..128자)이다. API는 run(tests), invalidate(nextIdentity,nextTarget), cancel(), getState(), dispose()다. 초기 결과는 {status:'NOT_RUN',identity,checks:[]}다. identity 입력은 복사한다.\n\ntests는 1..32개 조밀 배열이며 각 {id,check}는 자기 필드로 비빈 고유 문자열 id와 함수 check를 가진다. 희소 배열의 상속 slot도 거부한다. 검사 개수 위반은 RangeError, 그 밖의 입력 위반은 TypeError다. 입력 전체를 복사·검증하고 잘못된 목록은 INVALID·빈 checks 상태가 된다. check({target,workspaceRoot,identity,signal})를 입력 순서대로 await한다. check가 실제 파일/HTTP를 다루고 finally에서 자신의 포트·파일을 정리한다. true만 PASS/reason:null, 다른 반환은 FAIL/returned-false, throw/reject(undefined 포함)는 FAIL/threw다. 실패 뒤 검사도 계속한다. 모든 검사가 하나 이상 PASS일 때만 전체 PASS, 나머지는 FAIL이다. 실행 중 상태는 RUNNING이다.\n\n결과는 {status,identity,checks:[{id,status,reason}]}의 분리된 복사본이다. 내부 상태·원본 identity·원본 tests·check에 전달한 identity·반환 보고서 사이의 변경이 전파되지 않아야 하며 동결 결과도 허용한다. target의 메서드를 나중에 덮어써도 현재 캡처를 바꾸지 않는다. invalidate는 새 identity와 새 target을 함께 검증한 뒤 STALE·빈 checks로 바꾸고 활성 signal을 abort한다. 잘못된 새 계약은 TypeError로 거부하고 기존 상태를 보존한다. 옛 check가 늦게 true를 반환해도 옛 run은 옛 identity/STALE/빈 checks만 반환하고 새 상태를 갱신하지 않는다.\n\ncancel은 활성 최초 취소에서 true로 CANCELLED·빈 checks가 되고, 이미 취소/비활성이면 false다. 시작한 check가 정리를 마칠 때까지 run은 대기하며 뒤 check는 시작하지 않는다. 취소를 무시한 코드의 강제 중단은 제공자 시간 제한의 별도 책임이다. drain 전 중복 run, dispose 뒤 run/invalidate는 InvalidStateError다. dispose는 멱등이며 DISPOSED·빈 checks로 바꾸고 활성 signal을 취소한다. 늦은 run은 DISPOSED를 반환한다. getState는 언제나 복사본이다. 실제 소스 지문 계산·실행 환경 확인·저장은 실행 제공자 책임이며 임의 sourceRevision 문자열만으로 제출 성적을 인증하지 않는다."
+        "theory": "테스트 목록을 받자마자 `PASS`라고 표시하면 무엇을 증명했을까? 이번 인수 보고서는 `check` 함수를 실제로 순차 실행하고 반환 `Promise`까지 기다린다. 파일 검사 다음 HTTP 검사가 시작되도록 하면 임시 자료와 포트의 수명을 한 단계씩 추적할 수 있다. `false`·객체·`undefined`는 성공이 아니고, `throw undefined`도 예외 실패로 남겨야 한다. 빈 배열의 `every`가 `true`라는 언어 규칙을 인수 승인에 그대로 쓰지 않도록 검사 수를 먼저 확인한다.\n\n보고서는 무엇을 검사했는지 함께 담는다. `contentRevision`은 교재 계약, `sourceRevision`은 검사 대상 소스 식별자, `environmentFingerprint`는 실행 환경, `graderRevision`은 검사 규칙이다. 예를 들어 `source-a`에서 `PASS`한 뒤 `source-b`로 바뀌면 `STALE`로 바꾸고 결과를 비운다. 옛 검사 `Promise`가 뒤늦게 `true`를 반환해도 새 소스의 `PASS`가 될 수 없다. `invalidate`는 대상 함수와 `identity`를 한 번에 교체하며 실행 중인 검사에는 abort를 알린다.\n\n`run`은 현재 대상과 검사 목록을 캡처한다. `getState`와 완료 결과는 내부 상태의 복사본으로 공개한다. 원본 `identity`나 반환 `checks`를 외부에서 바꿔도 결과가 조작되지 않게 하기 위해서다. 이 학습용 보고서는 실제 파일·loopback HTTP 경계를 실행하지만, 임의로 제공한 `identity` 자체가 서명이나 신뢰한 소스 해시라는 주장은 하지 않는다.",
+        "example": "예제는 실제 파일 조회와 loopback HTTP 조회를 순차 `await`해 `checks`를 만든다. 하나 이상 모두 `true`일 때만 `PASS`로 출력하고 `sourceRevision=example-a`와 `process.version`을 함께 기록한다. 소스가 `example-b`로 바뀌면 `STALE`·빈 검사 상태를 새로 만든다. 최종 실습은 이 흐름에 취소·중복 실행·늦은 완료 차단·방어적 복사를 더한다.\n\n예제 실행 제공자는 import 전에 `globalThis.__javascriptEduExampleContext.workspaceRoot`를 제공한다. 컨텍스트가 없으면 실행 불가 오류로 끝나며 사용자 폴더로 우회하지 않는다.",
+        "quiz": "빈 검사 목록과 `true`가 아닌 반환값을 어떻게 처리할지 판단한다. 소스를 바꾼 뒤 늦게 끝난 검사의 결과를 어디에 반영할 수 있는지, 소스 식별자를 기록한 것만으로 무엇을 확인할 수 있는지도 구분한다.",
+        "practice": "실제 임시 파일에 상품을 쓰고 `target.queryProductFile`의 결과를 비교한 뒤, `target.createProductServer`를 loopback에서 열어 같은 결과를 확인하는 `check`를 만든다. 각 `check`가 `finally`로 자원을 정리하도록 한다. 다음에는 첫 `check`를 gate에서 멈추고 `invalidate`로 `sourceRevision`과 `target`을 바꾼다. signal이 abort되고 늦은 `PASS`가 `STALE`을 덮지 않는지 관찰한다. 보고서에는 실제 Node 버전과 검증 소스 지문을 제공자가 계산한 근거, 정답·대표 오답·미완성 거부, 남은 OS/패키징 미검증을 구분해 기록한다.",
+        "lab": "`main.mjs`에서 `createNodeAcceptance({workspaceRoot,target,identity})`를 export한다. `workspaceRoot`는 제공자가 허용한 기존 절대 디렉터리 문자열/file URL이다. `target`은 `queryProductFile/runProductCli/createProductServer` 함수가 있는 객체이며 각 메서드와 그 메서드를 호출할 대상 객체(receiver)를 보관한다. `identity`는 자체 필드로 `contentRevision,sourceRevision,environmentFingerprint,graderRevision` 문자열을 가진다. 각 문자열은 1..128자여야 하며 공백만 있어서는 안 된다. API는 `run(tests)`, `invalidate(nextIdentity,nextTarget)`, `cancel()`, `getState()`, `dispose()`다. 초기 결과는 `{status:'NOT_RUN',identity,checks:[]}`다. `identity` 입력은 복사한다.\n\n`tests`는 1..32개 조밀 배열이며 각 `{id,check}`는 자기 필드로 비어 있지 않은 고유 문자열 `id`와 함수 `check`를 가진다. 빈 슬롯을 상속 프로퍼티로 채운 희소 배열도 거부한다. 검사 개수 위반은 `RangeError`, 그 밖의 입력 위반은 `TypeError`다. 입력 전체를 복사·검증하고 잘못된 목록은 `INVALID`·빈 `checks` 상태가 된다. `check({target,workspaceRoot,identity,signal})`를 입력 순서대로 `await`한다. `check`가 실제 파일/HTTP를 다루고 `finally`에서 자신의 포트·파일을 정리한다. `true`를 반환하면 `status:'PASS'`와 `reason:null`을 기록한다. 다른 반환값은 `status:'FAIL'`과 `reason:'returned-false'`로 기록한다. 예외를 던지거나 Promise를 거부한 경우에는 사유가 `undefined`여도 `status:'FAIL'`과 `reason:'threw'`로 기록한다. 실패 뒤 검사도 계속한다. 유효한 검사를 하나 이상 실행했고 모든 검사가 `PASS`일 때만 전체 결과를 `PASS`로 한다. 나머지는 `FAIL`이다. 실행 중 상태는 `RUNNING`이다.\n\n결과는 `{status,identity,checks:[{id,status,reason}]}`의 분리된 복사본이다. 내부 상태·원본 `identity`·원본 `tests`·`check`에 전달한 `identity`·반환 보고서 사이의 변경이 전파되지 않아야 하며 동결 결과도 허용한다. `target`의 메서드를 나중에 덮어써도 현재 캡처를 바꾸지 않는다. `invalidate`는 새 `identity`와 새 `target`을 함께 검증한 뒤 `STALE`·빈 `checks`로 바꾸고 활성 signal을 abort한다. 잘못된 새 계약은 `TypeError`로 거부하고 기존 상태를 보존한다. 옛 `check`가 늦게 `true`를 반환해도 옛 `run`은 옛 `identity`/`STALE`/빈 `checks`만 반환하고 새 상태를 갱신하지 않는다.\n\ncancel은 활성 최초 취소에서 `true`로 `CANCELLED`·빈 `checks`가 되고, 이미 취소/비활성이면 `false`다. 시작한 `check`가 정리를 마칠 때까지 `run`은 대기하며 뒤 `check`는 시작하지 않는다. 취소를 무시한 코드의 강제 중단은 제공자 시간 제한의 별도 책임이다. 시작한 검사의 정리가 끝나기 전 중복 `run`, `dispose` 뒤 `run`/`invalidate`는 `InvalidStateError`다. `dispose`는 멱등이며 `DISPOSED`·빈 `checks`로 바꾸고 활성 signal을 취소한다. 늦은 `run`은 `DISPOSED`를 반환한다. `getState`는 언제나 복사본이다. 실제 소스 지문 계산·실행 환경 확인·저장은 실행 제공자 책임이며 임의 `sourceRevision` 문자열만으로 제출 성적을 인증하지 않는다."
       },
       "goals": [
-        "실제 파일·HTTP 검사 함수를 순차 await하고 빈 검사와 거짓 성공을 거부한다.",
+        "실제 파일·HTTP 검사 함수를 순차 `await`하고 빈 검사와 거짓 성공을 거부한다.",
         "소스·환경·검사 개정에 결과를 묶고 변경·취소 뒤 늦은 완료를 차단한다.",
         "입력/결과 참조를 분리하고 수명·자원 정리와 미검증 범위를 기록한다."
       ],
@@ -185,16 +185,16 @@
         "questions": [
           {
             "id": "c04-node-empty",
-            "prompt": "빈 tests 배열의 올바른 처리는?",
+            "prompt": "빈 `tests` 배열의 올바른 처리는?",
             "choices": [
               {
                 "id": "a",
-                "text": "every가 true이므로 PASS",
+                "text": "`every`가 `true`이므로 `PASS`",
                 "explanation": "언어 규칙과 인수 승인 정책은 다르다."
               },
               {
                 "id": "b",
-                "text": "RangeError와 INVALID·빈 checks",
+                "text": "`RangeError`와 `INVALID`·빈 `checks`",
                 "explanation": "한 개 이상 실행한 검사만 인수 결과가 된다."
               }
             ],
@@ -202,16 +202,16 @@
           },
           {
             "id": "c04-node-strict",
-            "prompt": "check가 Promise.resolve({ok:true})를 반환하면?",
+            "prompt": "`check`가 `Promise.resolve({ok:true})`를 반환하면?",
             "choices": [
               {
                 "id": "a",
-                "text": "FAIL/returned-false",
-                "explanation": "명시한 성공 값은 boolean true 하나다."
+                "text": "`FAIL/returned-false`",
+                "explanation": "명시한 성공 값은 boolean `true` 하나다."
               },
               {
                 "id": "b",
-                "text": "truthy이므로 PASS",
+                "text": "truthy이므로 `PASS`",
                 "explanation": "truthy 객체는 합의된 boolean 성공이 아니다."
               }
             ],
@@ -219,16 +219,16 @@
           },
           {
             "id": "c04-node-stale",
-            "prompt": "source-b로 invalidate한 뒤 source-a 검사가 true를 반환하면?",
+            "prompt": "`source-b`로 `invalidate`한 뒤 `source-a` 검사가 `true`를 반환하면?",
             "choices": [
               {
                 "id": "a",
-                "text": "source-b를 PASS로 덮는다",
+                "text": "`source-b`를 `PASS`로 덮는다",
                 "explanation": "서로 다른 대상의 결과를 섞는다."
               },
               {
                 "id": "b",
-                "text": "옛 run은 STALE, 새 상태는 계속 STALE",
+                "text": "옛 `run`은 `STALE`, 새 상태는 계속 `STALE`",
                 "explanation": "소스·환경·검사 개정 결속을 보존한다."
               }
             ],
@@ -236,7 +236,7 @@
           },
           {
             "id": "c04-node-evidence",
-            "prompt": "sourceRevision 문자열을 보고서에 넣으면 어떤 근거가 생기는가?",
+            "prompt": "`sourceRevision` 문자열을 보고서에 넣으면 어떤 근거가 생기는가?",
             "choices": [
               {
                 "id": "a",

@@ -7,7 +7,7 @@
   "level": "intermediate",
   "goals": [
     "import/export의 바인딩과 값 복사를 구분하고 갱신을 다른 모듈에서 관찰한다.",
-    "정상 순환과 초기화 전 읽기 실패, top-level await의 평가 순서를 설명한다.",
+    "정상 순환과 초기화 전 읽기 실패, top-level `await`의 평가 순서를 설명한다.",
     "언어의 모듈 의미와 호스트의 resolve·부수 효과·공개 변경 권한을 구분한다."
   ],
   "prerequisites": [
@@ -49,49 +49,49 @@
   ],
   "exerciseId": "esm-and-live-bindings-exercise",
   "steps": {
-    "theory": "화면의 카운터가 바뀌는데 다른 모듈의 값은 계속 4다. import 자체가 복사한 것인지, 그 뒤 const copied = count로 숫자를 한 번 읽어 저장한 것인지부터 구분한다. live binding은 가져온 이름이 내보낸 바인딩의 현재 값을 읽는다는 뜻이다. export let count = 4에서 제공자가 count를 갱신하면 import { count }도 새 값을 본다. copied에는 이전 숫자가 남는다. 소비자는 import한 이름에 재할당할 수 없으며, 변경 권한은 add 같은 공개 함수로 설계한다.\n\nnamed export와 default export는 공개 이름을 만드는 방법이다. import { count as current }는 바인딩을 지역 이름 current로 참조한다. import * as counter는 모듈 네임스페이스를 받는다. 네임스페이스를 일반 변경 가능한 설정 객체처럼 쓰지 않는다. 내보낸 값이 객체라면 그 객체의 내부 변경 여부는 import 재할당 제한과 별개다. export { count as default }와 export default count처럼 바인딩을 내보내는 형태와 표현식을 평가하는 형태도 구별해야 한다.\n\n모듈은 의존 관계를 연결한 뒤 평가한다. 연결은 모든 let/const 값의 초기화 완료를 뜻하지 않는다. main → reader → main 순환은 reader가 함수 본문에서 count를 나중에 읽으면 동작할 수 있다. 반대로 reader의 최상위에서 미초기화 count를 즉시 읽으면 ReferenceError다. 순환을 금지된 문법으로 외우거나, 연결되었으니 값도 있다고 가정하지 않는다.\n\n이번 main은 before-await를 기록하고 count = await initialCount를 수행한 뒤 ready를 초기화한다. top-level await는 모듈 평가가 비동기로 완료될 수 있게 한다. 해당 모듈의 완료에 의존하는 importer는 그 완료를 기다린다. 모든 독립 모듈을 전역에서 직렬화한다는 뜻은 아니다. 서로의 완료를 기다리는 비동기 순환은 종료되지 않을 수 있으므로 연결 그래프와 대기 그래프를 함께 본다. 정식 기준은 ES2026 제17판이며 계속 갱신되는 TC39 초안의 기능을 이 수업의 정식 기능으로 추가하지 않는다.\n\n고정 reader는 초기화 Promise가 해결될 때 reader:initial-resolved를 남긴다. main:after-await가 그 뒤에 기록되는지 관찰하면, Promise.then을 등록한 뒤 초기화를 기다리지 않고 ready를 공개하는 결함을 최종 숫자만으로 판단하는 실수를 피할 수 있다.\n\n이 실습의 고정 reader는 setTimeout 호스트 task에서 초기화 Promise를 해결한다. 이는 ECMAScript의 timer가 아니라 브라우저/제작자 검사 환경의 fixture다. 모듈은 실제 top-level await로 초기화를 기다려야 한다. 단순히 then 콜백을 등록하고 평가를 끝내면, import 완료 직후에는 아직 ready와 count가 준비되지 않는다. 실행 시간의 정확한 밀리초 값은 계약이 아니다.",
-    "example": "예제 파일과 같은 이름의 하위 폴더를 함께 읽는다. main.mjs와 reader.mjs는 서로 import하지만 reader는 count·ready를 함수 호출 때 읽는다. 첫 출력은 count=4, imported=4, ready='ready'이며 trace는 reader:evaluated → main:before-await → main:after-await다. 모듈 평가가 끝난 뒤 소비자가 실행되므로 pending 상태를 정상 완료 값으로 받지 않는다.\n\n소비자는 copied에 4를 저장한 뒤 add(3)을 호출한다. 가져온 count와 reader의 관찰은 7, copied는 4다. count = 99는 TypeError로 거부된다. 별도 early-a/early-b는 최상위 초기화 중 상대 let 바인딩을 읽어 실패하고, 예제는 동적 import의 거부를 잡아 ReferenceError라고 출력한다. 실패 예제를 정상 그래프와 분리했으므로 이후 관찰을 가리지 않는다. 출력 문자열은 예상값이며 실행 검사 기록과 구분한다.",
-    "quiz": "변경 가능한 제공자 바인딩, 소비자 import의 쓰기 제한, 일반 변수에 복사한 값을 각각 추적한다. 순환에서는 어떤 줄이 어느 시점에 읽히는지 설명하고 top-level await는 의존 모듈의 평가 완료 조건으로 판단한다. 파일 확장자·URL·패키지 탐색은 별도 호스트 문서에 근거해 답한다.",
-    "practice": "교육용 공통 상태 모듈을 여러 기능이 공유한다고 가정한다. 최상위 네트워크 요청이나 전역 등록을 숨기면 import만 한 테스트도 외부 상태를 바꾸고 시작을 지연시킨다. 상태를 명시적으로 생성하는 팩터리나 initialize 의존성 주입으로 시작 비용을 드러내는 대안이 있다. 이번 trace는 초기화 순서를 관찰하기 위한 의도된 작은 부수 효과다.\n\nESM은 같은 호스트 모듈 인스턴스의 상태를 재사용할 수 있지만, 다른 Worker·다른 모듈 URL까지 하나의 전역 singleton으로 합쳐 주지는 않는다. 실행기는 검사마다 새 Worker/그래프를 사용한다. 설계 메모에는 공유 모듈 상태가 필요한 이유, 순환을 함수 호출 시점으로 미뤄도 되는지, 초기화 실패를 어느 경계에서 처리할지 적는다. Node의 .mjs/패키지 resolve 규칙과 브라우저의 URL 로드는 동일한 언어 문법 위의 서로 다른 호스트 계약이다.",
-    "lab": "main.mjs 전체를 편집한다. reader.mjs는 읽기 전용이며 count와 ready를 main에서 import하고 해결 직전에 reader:initial-resolved를 기록하고 4로 해결되는 initialCount Promise, evaluationTrace, readCount(), readReady()를 제공한다. main은 export let count=0으로 시작하고 trace에 main:before-await를 넣은 뒤 initialCount를 최상위 await하여 count를 갱신한다. 공개 ready는 'ready'가 되고 그 뒤 main:after-await를 기록한다. reader의 함수를 초기화 전에 호출하지 않는다.\n\nadd(delta=1)는 유한한 number만 받고 잘못된 타입·NaN·무한대는 TypeError다. count+delta가 무한대가 되면 RangeError를 던지고 기존 상태를 유지한다. 성공하면 공개 count를 갱신하고 그 값을 반환한다. snapshot()은 {count, imported:readCount(), ready:readReady(), trace:기록의 새 배열}을 반환한다. import/export를 함수 문자열로 바꾸지 않고 실제 모듈 파일로 실행한다. 검사는 완료된 초기화, 정상 순환 읽기, live binding, 0/음수, 실패 뒤 상태, 스냅샷 분리를 관찰한다."
+    "theory": "화면의 카운터가 바뀌는데 다른 모듈의 값은 계속 4다. `import` 자체가 복사한 것인지, 그 뒤 `const copied = count`로 숫자를 한 번 읽어 저장한 것인지부터 구분한다. live binding은 가져온 이름이 내보낸 바인딩의 현재 값을 읽는다는 뜻이다. `export let count = 4`에서 제공자가 `count`를 갱신하면 `import { count }`도 새 값을 본다. `copied`에는 이전 숫자가 남는다. 소비자는 `import`한 이름에 재할당할 수 없으며, 변경 권한은 `add` 같은 공개 함수로 설계한다.\n\n이름을 붙여 내보내는 named `export`와 기본 이름으로 내보내는 default `export`는 모듈의 공개 이름을 정하는 방법이다. `import { count as current }`는 바인딩을 지역 이름 `current`로 참조한다. `import * as counter`는 모듈 네임스페이스를 받는다. 네임스페이스를 일반 변경 가능한 설정 객체처럼 쓰지 않는다. 내보낸 값이 객체라면 그 객체의 내부 변경 여부는 `import` 재할당 제한과 별개다. `export { count as default }`와 `export default count`처럼 바인딩을 내보내는 형태와 표현식을 평가하는 형태도 구별해야 한다.\n\n모듈은 의존 관계를 연결한 뒤 평가한다. 연결은 모든 let/const 값의 초기화 완료를 뜻하지 않는다. main → reader → main 순환은 reader가 함수 본문에서 `count`를 나중에 읽으면 동작할 수 있다. 반대로 reader의 최상위에서 미초기화 `count`를 즉시 읽으면 `ReferenceError`다. 순환을 금지된 문법으로 외우거나, 연결되었으니 값도 있다고 가정하지 않는다.\n\n이 예제에서 필요한 비동기 용어를 먼저 정리한다. `Promise`는 나중에 성공 또는 실패로 완료되는 결과를 나타낸다. `then`은 완료 뒤 실행할 함수를 등록하고, `await`는 그 결과를 기다렸다가 뒤의 코드를 이어 실행한다. 모듈의 함수 바깥에서 쓰는 `await`를 top-level `await`라고 한다. `Promise`와 `await`의 자세한 동작은 27–28강에서 다룬다.\n\n이번 main은 `before-await`를 기록하고 `count = await initialCount`를 수행한 뒤 `ready`를 초기화한다. top-level `await`는 모듈 평가가 비동기로 완료될 수 있게 한다. 해당 모듈의 완료에 의존하는 importer는 그 완료를 기다린다. 모든 독립 모듈을 전역에서 직렬화한다는 뜻은 아니다. 서로의 완료를 기다리는 비동기 순환은 종료되지 않을 수 있으므로 연결 그래프와 대기 그래프를 함께 본다. 정식 기준은 ES2026 제17판이며 계속 갱신되는 TC39 초안의 기능을 이 수업의 정식 기능으로 추가하지 않는다.\n\n고정 reader는 초기화 `Promise`가 해결될 때 `reader:initial-resolved`를 남긴다. `main:after-await`가 그 뒤에 기록되는지 관찰하면, `then`에 콜백만 등록한 뒤 초기화를 기다리지 않고 `ready`를 공개하는 결함을 최종 숫자만으로 판단하는 실수를 피할 수 있다.\n\n이 실습의 고정 reader는 `setTimeout` 호스트 task에서 초기화 `Promise`를 해결한다. `setTimeout`은 호스트가 제공하는 타이머다. 이 실습에서는 초기화 완료 시점을 늦춰, 모듈이 실제로 기다리는지 확인하는 용도로 사용한다. 모듈은 실제 top-level `await`로 초기화를 기다려야 한다. 단순히 `then` 콜백을 등록하고 평가를 끝내면, `import` 완료 직후에는 아직 `ready`와 `count`가 준비되지 않는다. 실행 시간의 정확한 밀리초 값은 계약이 아니다.",
+    "example": "예제 파일과 같은 이름의 하위 폴더를 함께 읽는다. main.mjs와 reader.mjs는 서로 `import`하지만 reader는 `count`·`ready`를 함수 호출 때 읽는다. 첫 출력은 `count=4, imported=4, ready='ready'`이며 `trace`는 `reader:evaluated` → `main:before-await` → `reader:initial-resolved` → `main:after-await`다. 모듈 평가가 끝난 뒤 소비자가 실행되므로 `pending` 상태를 정상 완료 값으로 받지 않는다.\n\n소비자는 `copied`에 4를 저장한 뒤 `add(3)`을 호출한다. 가져온 `count`와 reader의 관찰은 7, `copied`는 4다. `count = 99`는 `TypeError`로 거부된다. 별도 early-a/early-b는 최상위 초기화 중 상대 `let` 바인딩을 읽어 실패하고, 예제는 동적 `import`의 거부를 잡아 `ReferenceError`라고 출력한다. 실패 예제를 정상 그래프와 분리했으므로 이후 관찰을 가리지 않는다. 출력 문자열은 예상값이며 실행 검사 기록과 구분한다.",
+    "quiz": "변경 가능한 제공자 바인딩, 소비자 `import`의 쓰기 제한, 일반 변수에 복사한 값을 각각 추적한다. 순환에서는 어떤 줄이 어느 시점에 읽히는지 설명하고 top-level `await`는 의존 모듈의 평가 완료 조건으로 판단한다. 파일 확장자·URL·패키지 탐색은 별도 호스트 문서에 근거해 답한다.",
+    "practice": "교육용 공통 상태 모듈을 여러 기능이 공유한다고 가정한다. 최상위 네트워크 요청이나 전역 등록을 숨기면 `import`만 한 테스트도 외부 상태를 바꾸고 시작을 지연시킨다. 상태를 명시적으로 생성하는 팩터리나 `initialize` 의존성 주입으로 시작 비용을 드러내는 대안이 있다. 이번 `trace`는 초기화 순서를 관찰하기 위한 의도된 작은 부수 효과다.\n\nESM은 같은 호스트 모듈 인스턴스의 상태를 재사용할 수 있지만, 다른 Worker·다른 모듈 URL까지 하나의 전역 singleton으로 합쳐 주지는 않는다. 실행기는 검사마다 새 Worker/그래프를 사용한다. 설계 메모에는 공유 모듈 상태가 필요한 이유, 순환을 함수 호출 시점으로 미뤄도 되는지, 초기화 실패를 어느 경계에서 처리할지 적는다. Node의 .mjs/패키지 resolve 규칙과 브라우저의 URL 로드는 동일한 언어 문법 위의 서로 다른 호스트 계약이다.",
+    "lab": "main.mjs 전체를 편집한다. 읽기 전용 reader.mjs는 main에서 `count`와 `ready`를 가져온다. 이 파일은 `initialCount` `Promise`와 `evaluationTrace`, `readCount()`, `readReady()`를 제공한다. `initialCount`가 값 4로 완료되기 직전에 `reader:initial-resolved`를 기록한다. main은 `export let count=0`으로 시작하고 `trace`에 `main:before-await`를 넣은 뒤 `initialCount`를 최상위 `await`하여 `count`를 갱신한다. 공개 `ready`는 'ready'가 되고 그 뒤 `main:after-await`를 기록한다. reader의 함수를 초기화 전에 호출하지 않는다.\n\n`add(delta=1)`는 유한한 `number`만 받고 잘못된 타입·`NaN`·무한대는 `TypeError`다. `count+delta`가 무한대가 되면 `RangeError`를 던지고 기존 상태를 유지한다. 성공하면 공개 `count`를 갱신하고 그 값을 반환한다. `snapshot()`은 `{count, imported:readCount(), ready:readReady(), trace:기록의 새 배열}`을 반환한다. import/export를 함수 문자열로 바꾸지 않고 실제 모듈 파일로 실행한다. 검사는 완료된 초기화, 정상 순환 읽기, live binding, 0/음수, 실패 뒤 상태, 스냅샷 분리를 관찰한다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-live-binding",
-        "prompt": "export let count = 4를 import한 뒤 const copied = count로 저장했다. 원래 모듈이 count를 7로 바꾸면?",
+        "prompt": "`export let count = 4`를 `import`한 뒤 `const copied = count`로 저장했다. 원래 모듈이 `count`를 7로 바꾸면?",
         "choices": [
           {
             "id": "a",
-            "text": "import한 count는 7, copied는 4다.",
-            "explanation": "import는 바인딩을 따라가지만 copied는 읽던 시점의 숫자 값을 담는다."
+            "text": "`import`한 `count`는 7, `copied`는 4다.",
+            "explanation": "`import`는 바인딩을 따라가지만 `copied`는 읽던 시점의 숫자 값을 담는다."
           },
           {
             "id": "b",
             "text": "둘 다 자동으로 7이 된다.",
-            "explanation": "일반 const 초기화가 다른 바인딩과 계속 연결되는 것은 아니다."
+            "explanation": "일반 `const` 초기화가 다른 바인딩과 계속 연결되는 것은 아니다."
           },
           {
             "id": "c",
             "text": "둘 다 4다.",
-            "explanation": "named import를 단순 값 복사로 이해하면 이후 변경을 놓친다."
+            "explanation": "named `import`를 단순 값 복사로 이해하면 이후 변경을 놓친다."
           }
         ],
         "correctChoiceId": "a"
       },
       {
         "id": "q2-cycle-initialization",
-        "prompt": "a.mjs는 b를 읽어 export let a = b로 초기화하고, b.mjs는 a를 읽어 export let b = a로 초기화한다. 아직 초기화되지 않은 바인딩을 읽으면?",
+        "prompt": "a.mjs는 b를 읽어 `export let a = b`로 초기화하고, b.mjs는 a를 읽어 `export let b = a`로 초기화한다. 아직 초기화되지 않은 바인딩을 읽으면?",
         "choices": [
           {
             "id": "a",
-            "text": "순환 import 자체가 항상 문법 오류다.",
+            "text": "순환 `import` 자체가 항상 문법 오류다.",
             "explanation": "순환 그래프는 허용된다. 함수 안에서 읽기를 미룬 정상 예제도 있다."
           },
           {
             "id": "b",
-            "text": "ReferenceError가 난다.",
-            "explanation": "연결되어 있어도 let 바인딩이 초기화되기 전 읽기는 허용되지 않는다."
+            "text": "`ReferenceError`가 난다.",
+            "explanation": "연결되어 있어도 `let` 바인딩이 초기화되기 전 읽기는 허용되지 않는다."
           },
           {
             "id": "c",
@@ -103,7 +103,7 @@
       },
       {
         "id": "q3-top-level-await",
-        "prompt": "main.mjs가 의존 모듈의 top-level await를 기다리는 동안, 의존 모듈을 사용하는 main의 본문은 언제 실행되는가?",
+        "prompt": "main.mjs가 의존 모듈의 top-level `await`를 기다리는 동안, 의존 모듈을 사용하는 main의 본문은 언제 실행되는가?",
         "choices": [
           {
             "id": "a",
@@ -112,12 +112,12 @@
           },
           {
             "id": "b",
-            "text": "await가 모든 모듈의 모든 작업을 직렬화한다.",
+            "text": "`await`가 모든 모듈의 모든 작업을 직렬화한다.",
             "explanation": "다른 독립 그래프의 모든 일을 막는 전역 직렬 실행 규칙은 아니다."
           },
           {
             "id": "c",
-            "text": "import는 파일을 읽기만 하므로 초기화 완료와 무관하다.",
+            "text": "`import`는 파일을 읽기만 하므로 초기화 완료와 무관하다.",
             "explanation": "정적 의존 관계와 모듈 평가 완료가 연결된다."
           }
         ],
@@ -125,7 +125,7 @@
       },
       {
         "id": "q4-host-resolution",
-        "prompt": "import { add } from './counter.mjs'의 바인딩 의미와 파일 검색·다운로드 정책은 어떤 관계인가?",
+        "prompt": "`import { add } from './counter.mjs'`의 바인딩 의미와 파일 검색·다운로드 정책은 어떤 관계인가?",
         "choices": [
           {
             "id": "a",
@@ -139,7 +139,7 @@
           },
           {
             "id": "c",
-            "text": "브라우저에서 동작한 import는 모든 Node 설정에서도 같다.",
+            "text": "브라우저에서 동작한 `import`는 모든 Node 설정에서도 같다.",
             "explanation": "같은 소스 문법이어도 호스트가 제공하는 모듈과 resolve 규칙이 다르다."
           }
         ],
@@ -147,22 +147,22 @@
       },
       {
         "id": "q5-import-assignment",
-        "prompt": "import { count } 이후 count = 99로 직접 재할당하는 소비자 코드에 대한 설명은?",
+        "prompt": "`import { count }` 이후 `count = 99`로 직접 재할당하는 소비자 코드에 대한 설명은?",
         "choices": [
           {
             "id": "a",
-            "text": "export let이면 소비자도 대입할 수 있다.",
-            "explanation": "내보내는 모듈의 mutable 바인딩과 소비자의 immutable import 바인딩은 다르다."
+            "text": "`export` `let`이면 소비자도 대입할 수 있다.",
+            "explanation": "내보내는 모듈의 mutable 바인딩과 소비자의 immutable `import` 바인딩은 다르다."
           },
           {
             "id": "b",
-            "text": "재할당은 거부되고, 제공한 add 같은 함수로 변경해야 한다.",
+            "text": "재할당은 거부되고, 제공한 `add` 같은 함수로 변경해야 한다.",
             "explanation": "live binding은 소비자에게 쓰기 권한을 주지 않는다. 객체 내부 변경 가능성은 별도 문제다."
           },
           {
             "id": "c",
             "text": "소비자 안에 같은 이름의 독립 변수가 생긴다.",
-            "explanation": "대입이 import와 관계없는 새 바인딩을 만드는 것은 아니다."
+            "explanation": "대입이 `import`와 관계없는 새 바인딩을 만드는 것은 아니다."
           }
         ],
         "correctChoiceId": "b"

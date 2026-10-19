@@ -8,7 +8,7 @@
   "goals": [
     "iterable·iterator·generator의 역할과 일회성 소비를 구분한다.",
     "지연 실행으로 필요한 값만 소비하고 제한·빈 입력을 처리한다.",
-    "break·정상 소진·predicate 오류의 IteratorClose 경로를 추적한다."
+    "`break`·정상 소진·`predicate` 오류의 IteratorClose 경로를 추적한다."
   ],
   "prerequisites": [
     "keyed-collections-and-grouping",
@@ -37,11 +37,11 @@
   ],
   "exerciseId": "iterators-and-generators-exercise",
   "steps": {
-    "theory": "미리보기는 앞의 두 항목만 필요하지만 전체 파일을 배열로 만든 뒤 slice했다. 출력 개수는 2여도 원본 전체를 읽고 메모리에 쌓는 비용은 이미 발생한다. iterable은 Symbol.iterator로 iterator를 얻을 수 있는 값, iterator는 next()로 {value,done}을 돌려주는 소비 상태다. 모든 iterable이 재시작 가능하거나 길이를 미리 알 수 있는 것은 아니다.\n\nfunction*을 호출하면 본문을 즉시 끝까지 실행하지 않고 generator 객체를 얻는다. next가 본문을 진행하고 yield에서 멈춘다. 다음 next는 정지한 자리 뒤에서 이어진다. 반환된 generator는 iterable이면서 자신의 소비 상태를 가진 iterator다. 한 번 소진한 generator를 다시 spread한다고 처음부터 재생되지 않는다. 배열처럼 새 iterator를 만들 수 있는 값과 구분한다.\n\n지연 필터+개수 제한은 통과한 값 개수를 세되 필요한 마지막 값 뒤의 원본을 더 읽지 않아야 한다. limit 0이면 원본 iterator조차 얻지 않는 정책을 택할 수 있다. 여기서는 그 정책을 사용한다. 마지막 yield에서 함수는 아직 중단 상태이므로 호출자가 다음 next로 완료를 확인하거나 return/break로 닫을 때 정리가 이어진다. 값만 하나 얻고 참조를 버리는 일을 명시적 종료라고 간주하지 않는다.\n\nfor...of의 break나 루프 본문에서 던진 오류는 iterator의 return을 통한 정리를 유도한다. 자연스럽게 done:true가 온 경우와 다르다. next 자체가 던지는 임의 iterator에 대해 return이 반드시 자동 호출된다고 일반화하지 않는다. generator의 finally와 소유권을 설계할 때 이 경계를 적는다. Iterator helpers의 map/filter/take는 이 지연 흐름을 짧게 표현하지만 실제 제공 여부를 확인해야 한다. ES2026 Iterator.concat도 선택 심화이며 여기서는 function*과 for...of로 구현한다.",
-    "example": "예제에서 generator를 만든 직후 log는 []다. 첫 next는 1·2만 읽고 {value:2,done:false}를 반환한다. 두 번째 next는 3·4를 읽고 4를 반환한다. 다음 next가 done:true를 반환하며 원본의 finally가 closed를 기록한다. 최종 로그는 [1,2,3,4,'closed']이며 5를 읽지 않았다. 이미 완료된 iterator를 spread한 결과는 []다.",
+    "theory": "미리보기는 앞의 두 항목만 필요하지만 전체 파일을 배열로 만든 뒤 `slice`했다. 출력 개수는 2여도 원본 전체를 읽고 메모리에 쌓는 비용은 이미 발생한다. 반복 가능한 값(iterable)은 `Symbol.iterator` 메서드로 이터레이터(iterator)를 얻을 수 있는 값이다. 이터레이터는 순회 상태를 보관하며, `next()`를 호출하면 다음 값과 종료 여부를 `{value,done}` 형태로 반환하는 객체다. 모든 iterable이 재시작 가능하거나 길이를 미리 알 수 있는 것은 아니다.\n\n`function*`으로 선언한 제너레이터(generator) 함수를 호출하면, 본문을 끝까지 실행하는 대신 제너레이터 객체를 반환한다. `next`가 본문을 진행하고 `yield`에서 멈춘다. 다음 `next`는 정지한 자리 뒤에서 이어진다. 반환된 generator는 iterable이면서 자신의 소비 상태를 가진 iterator다. 한 번 소진한 generator를 다시 spread한다고 처음부터 재생되지 않는다. 배열처럼 새 iterator를 만들 수 있는 값과 구분한다.\n\n지연 필터+개수 제한은 통과한 값 개수를 세되 필요한 마지막 값 뒤의 원본을 더 읽지 않아야 한다. `limit` 0이면 원본 iterator조차 얻지 않는 정책을 택할 수 있다. 여기서는 그 정책을 사용한다. 마지막 `yield`에서 함수는 아직 중단 상태이므로 호출자가 다음 `next`로 완료를 확인하거나 return/break로 닫을 때 정리가 이어진다. 값만 하나 얻고 참조를 버리는 일을 명시적 종료라고 간주하지 않는다.\n\n`for...of`의 `break`나 루프 본문에서 던진 오류는 iterator의 `return`을 통한 정리를 유도한다. 자연스럽게 `done:true`가 온 경우와 다르다. `next` 자체가 던지는 임의 iterator에 대해 `return`이 반드시 자동 호출된다고 일반화하지 않는다. generator의 `finally`와 소유권을 설계할 때 이 경계를 적는다. Iterator helpers의 map/filter/take는 이 지연 흐름을 짧게 표현하지만 실제 제공 여부를 확인해야 한다. ES2026 `Iterator.concat`도 선택 심화이며 여기서는 `function*`과 `for...of`로 구현한다.",
+    "example": "예제에서 generator를 만든 직후 `log`는 `[]`다. 첫 `next`는 1·2만 읽고 `{value:2,done:false}`를 반환한다. 두 번째 `next`는 3·4를 읽고 4를 반환한다. 다음 `next`가 `done:true`를 반환하며 원본의 `finally`가 `closed`를 기록한다. 최종 로그는 `[1,2,3,4,'closed']`이며 5를 읽지 않았다. 이미 완료된 iterator를 spread한 결과는 `[]`다.",
     "quiz": "'만들기', '다음 값 요청', '완료 요청', '닫기'를 서로 다른 동작으로 추적한다. 출력 배열이 맞아도 더 많은 입력을 읽었으면 지연 처리 계약을 통과한 것이 아니다.",
-    "practice": "교육용 대량 이벤트 스트림에서 조건에 맞는 첫 N개만 미리 보여 준다고 가정한다. 필터를 통과하지 않는 이벤트도 읽어야 하므로 읽은 개수는 N보다 많을 수 있다. 필요한 것은 전체 입력 수가 아니라 마지막 채택 값 이후의 불필요한 소비를 막는 것이다. 조건이 절대 맞지 않는 무한 원본은 영원히 탐색할 수 있으므로 실제 서비스는 시간·검색량·취소 한도도 필요하다.\n\n동기 iterator는 파일이나 네트워크를 자동 비동기화하지 않는다. 비동기 iterable은 후속 단원과 호스트 트랙에서 별도로 다룬다. 설계 메모에는 재사용 가능한 iterable과 단발성 iterator 중 어느 것을 받는지, 중단을 누가 책임지는지, 원본 next의 예외를 어디서 관측할지 적는다.",
-    "lab": "takeMatching(iterable,limit,predicate)는 동기 generator다. limit은 0 이상의 정수만 허용하며 아니면 generator가 처음 실행될 때 RangeError를 던진다. limit 0은 원본 iterator를 얻지 않고 종료한다. 나머지는 원본 순서대로 predicate(value)를 한 번씩 호출하여 truthy인 값만 최대 limit개 yield한다.\n\ngenerator 생성만으로 원본을 소비하지 않는다. 제한에 도달한 뒤 더 진행하거나 소비자가 break/return하면 원본 순회를 닫는다. 원본이 자연 소진되면 불필요한 return을 추가하지 않는다. predicate가 던지면 같은 값을 보존하고 루프 정리를 수행한다. 원본 next 자체의 예외 정책이나 비동기 순회는 이번 과제에서 확장하지 않는다."
+    "practice": "교육용 대량 이벤트 스트림에서 조건에 맞는 첫 N개만 미리 보여 준다고 가정한다. 필터를 통과하지 않는 이벤트도 읽어야 하므로 읽은 개수는 N보다 많을 수 있다. 필요한 것은 전체 입력 수가 아니라 마지막 채택 값 이후의 불필요한 소비를 막는 것이다. 조건이 절대 맞지 않는 무한 원본은 영원히 탐색할 수 있으므로 실제 서비스는 시간·검색량·취소 한도도 필요하다.\n\n동기 iterator는 파일이나 네트워크를 자동 비동기화하지 않는다. 비동기 iterable은 후속 단원과 호스트 트랙에서 별도로 다룬다. 설계 메모에는 재사용 가능한 iterable과 단발성 iterator 중 어느 것을 받는지, 중단을 누가 책임지는지, 원본 `next`의 예외를 어디서 관측할지 적는다.",
+    "lab": "`takeMatching(iterable,limit,predicate)`는 동기 generator다. `limit`은 0 이상의 정수만 허용하며 아니면 generator가 처음 실행될 때 `RangeError`를 던진다. `limit` 0은 원본 iterator를 얻지 않고 종료한다. 나머지는 원본 순서대로 `predicate(value)`를 한 번씩 호출하여 truthy인 값만 최대 `limit`개 `yield`한다.\n\ngenerator 생성만으로 원본을 소비하지 않는다. 제한에 도달한 뒤 더 진행하거나 소비자가 break/return하면 원본 순회를 닫는다. 원본이 자연 소진되면 불필요한 `return`을 추가하지 않는다. `predicate`에서 예외가 발생하면 던진 값을 그대로 보존하면서 반복문을 정리한다. 원본 `next` 자체의 예외 정책이나 비동기 순회는 이번 과제에서 확장하지 않는다."
   },
   "quiz": {
     "questions": [
@@ -51,7 +51,7 @@
         "choices": [
           {
             "id": "a",
-            "text": "iterable은 iterator를 얻는 계약, iterator는 next로 소비 상태를 진행하는 계약이다.",
+            "text": "iterable은 iterator를 얻는 계약, iterator는 `next`로 소비 상태를 진행하는 계약이다.",
             "explanation": "둘을 함께 구현할 수 있지만 재시작 가능성까지 자동으로 같아지지 않는다."
           },
           {
@@ -69,21 +69,21 @@
       },
       {
         "id": "q2-lazy",
-        "prompt": "function* g(){log.push(\"start\");yield 1;}에서 const iterator=g() 직후 log는?",
+        "prompt": "`function* g(){log.push(\"start\");yield 1;}`에서 `const iterator=g()` 직후 `log`는?",
         "choices": [
           {
             "id": "a",
             "text": "[\"start\"]",
-            "explanation": "본문은 최초 next에서 시작한다."
+            "explanation": "본문은 최초 `next`에서 시작한다."
           },
           {
             "id": "b",
-            "text": "[]",
+            "text": "`[]`",
             "explanation": "generator 생성과 본문 진행은 별도다."
           },
           {
             "id": "c",
-            "text": "항상 TypeError",
+            "text": "항상 `TypeError`",
             "explanation": "유효한 generator 생성이다."
           }
         ],
@@ -91,12 +91,12 @@
       },
       {
         "id": "q3-cleanup",
-        "prompt": "for...of가 원본을 자연 소진하기 전에 break하면?",
+        "prompt": "`for...of`가 원본을 자연 소진하기 전에 `break`하면?",
         "choices": [
           {
             "id": "a",
-            "text": "iterator.return이 있으면 IteratorClose 경로로 정리한다.",
-            "explanation": "generator의 finally도 이 종료 과정에서 실행될 수 있다."
+            "text": "`iterator.return`이 있으면 IteratorClose 경로로 정리한다.",
+            "explanation": "generator의 `finally`도 이 종료 과정에서 실행될 수 있다."
           },
           {
             "id": "b",
@@ -106,28 +106,28 @@
           {
             "id": "c",
             "text": "언제나 아무 정리도 하지 않는다.",
-            "explanation": "프로토콜의 return을 통한 정리 경로가 있다."
+            "explanation": "프로토콜의 `return`을 통한 정리 경로가 있다."
           }
         ],
         "correctChoiceId": "a"
       },
       {
         "id": "q4-last-yield",
-        "prompt": "제한의 마지막 값을 yield한 직후 정리 시점에 대한 설명은?",
+        "prompt": "제한의 마지막 값을 `yield`한 직후 정리 시점에 대한 설명은?",
         "choices": [
           {
             "id": "a",
             "text": "모든 generator는 그 순간 자동 소진된다.",
-            "explanation": "yield는 중단이다. 마지막이라는 업무 조건만으로 실행이 뒤까지 진행되지 않는다."
+            "explanation": "`yield`는 중단이다. 마지막이라는 업무 조건만으로 실행이 뒤까지 진행되지 않는다."
           },
           {
             "id": "b",
-            "text": "소비자가 다음 next로 완료를 요청하거나 return/break로 닫아야 남은 정리가 이어질 수 있다.",
+            "text": "소비자가 다음 `next`로 완료를 요청하거나 return/break로 닫아야 남은 정리가 이어질 수 있다.",
             "explanation": "값을 얻는 것과 iterator를 닫는 것을 구분한다."
           },
           {
             "id": "c",
-            "text": "참조를 잃으면 finally가 즉시 실행된다고 보장된다.",
+            "text": "참조를 잃으면 `finally`가 즉시 실행된다고 보장된다.",
             "explanation": "GC와 명시적 정리의 시점을 동일시할 수 없다."
           }
         ],

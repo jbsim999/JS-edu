@@ -9,7 +9,7 @@ import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, 
 import { createWorkspaceState, readPreferences, writePreferences } from "./features/workspace-state.mjs";
 import { createModuleWorkspaceState } from "./features/module-workspace-state.mjs";
 import { highlightCode, codeLanguage, attachCodeEditor, syncCodeEditor } from "./features/code-theme.mjs";
-import { learningText } from "./features/inline-code.mjs";
+import { learningText, learningParagraphs } from "./features/inline-code.mjs";
 
 const steps = [
   { id: "theory", name: "이론" },
@@ -111,7 +111,7 @@ function currentQuiz() {
 }
 
 function textParagraphs(text) {
-  return String(text || "").split(/\n\s*\n/u).filter(Boolean).map(part => `<p>${learningText(part)}</p>`).join("");
+  return learningParagraphs(text);
 }
 
 function fieldMessage(record) {

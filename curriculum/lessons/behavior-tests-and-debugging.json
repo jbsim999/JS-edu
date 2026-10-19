@@ -6,7 +6,7 @@
   "track": "modules-and-failure",
   "level": "intermediate",
   "goals": [
-    "형태·실행 성공과 행동 통과를 구분하고 고정 기대값으로 주장한다.",
+    "함수의 형태와 실행 성공, 실제 동작의 정확성을 구분하고 고정 기대값과 비교한다.",
     "테이블 검사·대역·상태 추적으로 경계값과 공유 상태 결함을 재현한다.",
     "정상·미완성·대표 오답에 검사를 적용하고 실패 후 회귀를 유지한다."
   ],
@@ -41,17 +41,17 @@
   ],
   "exerciseId": "behavior-tests-and-debugging-exercise",
   "steps": {
-    "theory": "정상 구현과 빈 함수가 같은 검사에서 모두 통과했다면 테스트가 무엇을 관찰했는지부터 확인한다. 실행 성공은 예외 없이 끝났다는 사실이고 행동 통과는 입력에 대한 관찰값이 계약과 일치했다는 판단이다. assertion은 기대한 조건이 틀리면 실패를 드러내는 주장이다. 함수 이름·타입만 확인하거나 PASS를 출력하는 일은 그 함수의 계산·반환·상태를 검증하지 않는다.\n\n검사는 준비(Arrange) → 행동(Act) → 주장(Assert)으로 읽는다. 시작값 3을 준비하고 increment(0)을 실행해 반환 3과 현재값 3을 각각 확인한다. count += delta || 1은 0을 1로 바꾸므로 이 작은 입력에서 실패한다. 여러 상황을 표로 만들면 같은 구조를 재사용하면서 초기값·0·음수·초기화·독립 상태 같은 서로 다른 이유를 명확히 유지할 수 있다.\n\n대역은 실제 협력자 대신 넣는 통제 가능한 함수나 객체다. 고정값을 반환하는 stub, 호출을 기록하는 spy, 메모리 저장소 같은 fake의 역할을 구분한다. 이 과제는 검사 대상 팩터리를 주입하므로 정상 구현·공유 상태 오답·미완성을 같은 검사에 넣는다. 대역을 통과했다고 실제 파일·네트워크 어댑터까지 검증된 것은 아니다.\n\n숫자 같은 단순 값은 Object.is로 비교할 수 있다. 객체·순환·프로토타입까지 다루는 깊은 비교는 별도의 정책이 필요하며 JSON.stringify 일치만으로 일반 동등성을 대신하지 않는다. 이번 검사 결과는 {id,passed} 다섯 행이고 한 상황의 예외를 그 행의 실패로 기록한 뒤 나머지를 계속 실행한다. 무효한 팩터리 인수는 별도로 TypeError다. Node의 node:test·node:assert는 호스트 도구이며 이번 공통 브라우저 실습은 고정된 작은 행동 검사 계약을 사용한다.",
-    "example": "예제는 auditCounterFactory를 정상 good, 전역 상태를 공유하는 shared, 미완성 함수, 0을 잘못 처리하는 wrongDefault에 각각 적용한다. good은 다섯 행동을 통과한다. shared는 단독 사용 사례에서는 정상처럼 보이지만 두 인스턴스를 동시에 만든 independent-instances에서 실패한다. 미완성 함수는 다섯 경우 모두 실패한다. wrongDefault는 zero-and-negative에서 실패한다.\n\n공유 상태의 추적은 first(2) 생성 → second(10) 생성 → first.increment(3) 순서다. 잘못된 전역 변수는 이미 10이므로 first도 13을 본다. 정상 설계에서는 first=5, second=10이어야 한다. 이 상태 차이는 내부 변수 이름이나 클로저 구현 문구를 검사하지 않아도 드러난다.",
-    "quiz": "검사가 통과했다는 문장에는 어떤 입력과 어떤 관찰이 근거인지 붙인다. 가장 작은 반례로 || 기본값 오류를 드러내고, 두 인스턴스의 생성·변경 순서를 따라 공유 상태를 설명한다. 테스트 자체도 대표 오답에서 실패하는지 확인한다. 언어의 debugger 문장과 실제 브라우저/Node 디버깅 도구를 구분한다.",
-    "practice": "버그를 고치기 전에 입력·기대·실제값과 재현 순서를 고정한다. 작은 실패 검사에서 시작해 중단점이나 구조화된 로그로 값이 처음 달라지는 지점을 찾고, 원인을 수정한 뒤 그 검사를 회귀로 남긴다. debugger 문장이 있어도 실제 중단 여부와 UI는 호스트 디버거 설정에 달려 있다. 로그에 민감한 입력 전체를 남기지 않고 원인 확인에 필요한 상태만 기록한다.\n\n통과 결과를 만들기 위해 기대값을 현재 구현의 잘못된 출력으로 바꾸지 않는다. 이 수업의 대표 오답은 공유 상태, 0 기본값, reset 원점, 반환 누락이다. 정상 코드에서 통과하고 각 결함에서 실패해야 비교와 호출이 실제로 수행된 증거가 된다. 새 요구사항은 별도 입력과 판정 기준을 추가한다. 설계 메모에는 새 사례가 기존 사례와 다른 실패 원인, 대역으로 충분한 범위, 실제 호스트 통합 검사가 필요한 경계를 적는다.",
-    "lab": "auditCounterFactory(createCounter)의 본문만 작성한다. 함수가 아닌 인수는 TypeError다. createCounter(start)는 value(), increment(delta=1), reset()을 가진 카운터를 만드는 검사 대상이다. 각 검사는 새 카운터로 시작한다. 고정 순서로 {id,passed} 다섯 행을 반환하며 한 검사가 어떤 값이든 throw하면 그 행만 false로 기록하고 계속한다.\n\ninitial-value: start=5의 value가 5. increment-and-default: start=-2에서 increment(), increment(4), value()가 [-1,3,3]. zero-and-negative: start=3에서 increment(0), increment(-5), value()가 [3,-2,-2]. reset-origin: start=7에서 increment(4), reset(), value(), increment(), value()가 [11,7,7,8,8]. independent-instances: first(2), second(10)를 이 순서로 만든 뒤 first.increment(3), first.value(), second.value(), second.increment(-2), first.value(), second.value(), first.reset(), first.value(), second.value()가 [5,5,10,8,5,8,2,2,8]이어야 한다.\n\n위 순서를 그대로 관찰하고 결과를 고정 기대값과 비교한다. 검사 대상의 소스 문구를 읽거나 PASS를 하드코딩하지 않는다. 전체 결과는 매번 새 배열과 행 객체다. 이 과제의 제출 검사는 여러분의 검사 함수를 여러 정답·오답 팩터리에 적용하여 테스트 자체의 판별력을 확인한다."
+    "theory": "정상 구현과 빈 함수가 같은 검사에서 모두 통과했다면 테스트가 무엇을 관찰했는지부터 확인한다. 실행 성공은 예외 없이 끝났다는 사실이고 행동 통과는 입력에 대한 관찰값이 계약과 일치했다는 판단이다. 단언(assertion)은 실제 결과가 기대한 조건과 다르면 검사를 실패시키는 검증문이다. 함수 이름·타입만 확인하거나 PASS를 출력하는 일은 그 함수의 계산·반환·상태를 검증하지 않는다.\n\n검사는 준비(Arrange) → 실행(Act) → 결과 확인(Assert)의 순서로 읽는다. 시작값 3을 준비하고 `increment(0)`을 실행해 반환 3과 현재값 3을 각각 확인한다. `count += delta || 1`은 0을 1로 바꾸므로 이 작은 입력에서 실패한다. 여러 상황을 표로 만들면 같은 구조를 재사용하면서 초기값·0·음수·초기화·독립 상태 같은 서로 다른 이유를 명확히 유지할 수 있다.\n\n대역은 실제 협력자 대신 넣는 통제 가능한 함수나 객체다. 고정값을 반환하는 stub, 호출을 기록하는 spy, 메모리 저장소 같은 fake의 역할을 구분한다. 이 과제는 검사 대상 팩터리를 주입하므로 정상 구현·공유 상태 오답·미완성을 같은 검사에 넣는다. 대역을 통과했다고 실제 파일·네트워크 어댑터까지 검증된 것은 아니다.\n\n숫자 같은 단순 값은 `Object.is`로 비교할 수 있다. 객체·순환·프로토타입까지 다루는 깊은 비교는 별도의 정책이 필요하며 `JSON.stringify` 일치만으로 일반 동등성을 대신하지 않는다. 이번 검사 결과는 `{id,passed}` 다섯 행이고 한 상황의 예외를 그 행의 실패로 기록한 뒤 나머지를 계속 실행한다. 무효한 팩터리 인수는 별도로 `TypeError`다. Node의 `node:test`·`node:assert`는 호스트 도구이며 이번 공통 브라우저 실습은 고정된 작은 행동 검사 계약을 사용한다.",
+    "example": "예제는 `auditCounterFactory`를 정상 `good`, 전역 상태를 공유하는 `shared`, 미완성 함수, 0을 잘못 처리하는 `wrongDefault`에 각각 적용한다. `good`은 다섯 행동을 통과한다. `shared`는 단독 사용 사례에서는 정상처럼 보이지만 두 인스턴스를 동시에 만든 `independent-instances`에서 실패한다. 미완성 함수는 다섯 경우 모두 실패한다. `wrongDefault`는 `zero-and-negative`에서 실패한다.\n\n공유 상태의 추적은 `first(2)` 생성 → `second(10)` 생성 → `first.increment(3)` 순서다. 잘못된 전역 변수는 이미 10이므로 first도 13을 본다. 정상 설계에서는 first=5, second=10이어야 한다. 이 상태 차이는 내부 변수 이름이나 클로저 구현 문구를 검사하지 않아도 드러난다.",
+    "quiz": "검사가 통과했다는 문장에는 어떤 입력과 어떤 관찰이 근거인지 붙인다. 가장 작은 반례로 `||` 기본값 오류를 드러내고, 두 인스턴스의 생성·변경 순서를 따라 공유 상태를 설명한다. 테스트 자체도 대표 오답에서 실패하는지 확인한다. 언어의 `debugger` 문장과 실제 브라우저/Node 디버깅 도구를 구분한다.",
+    "practice": "버그를 고치기 전에 입력·기대·실제값과 재현 순서를 고정한다. 작은 실패 검사에서 시작해 중단점이나 구조화된 로그로 값이 처음 달라지는 지점을 찾고, 원인을 수정한 뒤 그 검사를 회귀로 남긴다. `debugger` 문장이 있어도 실제 중단 여부와 UI는 호스트 디버거 설정에 달려 있다. 로그에 민감한 입력 전체를 남기지 않고 원인 확인에 필요한 상태만 기록한다.\n\n통과 결과를 만들기 위해 기대값을 현재 구현의 잘못된 출력으로 바꾸지 않는다. 이 수업의 대표 오답은 공유 상태, 0 기본값, `reset` 원점, 반환 누락이다. 정상 코드에서 통과하고 각 결함에서 실패해야 비교와 호출이 실제로 수행된 증거가 된다. 새 요구사항은 별도 입력과 판정 기준을 추가한다. 설계 메모에는 새 사례가 기존 사례와 다른 실패 원인, 대역으로 충분한 범위, 실제 호스트 통합 검사가 필요한 경계를 적는다.",
+    "lab": "`auditCounterFactory(createCounter)`의 본문만 작성한다. 함수가 아닌 인수는 `TypeError`다. `createCounter(start)`는 `value()`, `increment(delta=1)`, `reset()`을 가진 카운터를 만드는 검사 대상이다. 각 검사는 새 카운터로 시작한다. 고정 순서로 `{id,passed}` 다섯 행을 반환하며 한 검사가 어떤 값이든 `throw`하면 그 행만 `false`로 기록하고 계속한다.\n\n`initial-value`: start=5의 value가 5. `increment-and-default`: start=-2에서 `increment()`, `increment(4)`, `value()`가 `[-1,3,3]`. `zero-and-negative`: start=3에서 `increment(0)`, `increment(-5)`, `value()`가 `[3,-2,-2]`. `reset-origin`: start=7에서 `increment(4)`, `reset()`, `value()`, `increment()`, `value()`가 `[11,7,7,8,8]`. `independent-instances`: `first(2)`, `second(10)`를 이 순서로 만든 뒤 `first.increment(3)`, `first.value()`, `second.value()`, `second.increment(-2)`, `first.value()`, `second.value()`, `first.reset()`, `first.value()`, `second.value()`가 `[5,5,10,8,5,8,2,2,8]`이어야 한다.\n\n위 순서를 그대로 관찰하고 결과를 고정 기대값과 비교한다. 검사 대상의 소스 문구를 읽거나 PASS를 하드코딩하지 않는다. 전체 결과는 매번 새 배열과 행 객체다. 이 과제의 제출 검사는 여러분의 검사 함수를 여러 정답·오답 팩터리에 적용하여 테스트 자체의 판별력을 확인한다."
   },
   "quiz": {
     "questions": [
       {
         "id": "q1-behavior-not-shape",
-        "prompt": "counter.increment가 함수라는 검사만으로 증가 기능을 승인해도 되는가?",
+        "prompt": "`counter.increment`가 함수라는 검사만으로 증가 기능을 승인해도 되는가?",
         "choices": [
           {
             "id": "a",
@@ -73,16 +73,16 @@
       },
       {
         "id": "q2-boundary-case",
-        "prompt": "count += delta || 1의 결함을 가장 작게 드러내는 호출은?",
+        "prompt": "`count += delta || 1`의 결함을 가장 작게 드러내는 호출은?",
         "choices": [
           {
             "id": "a",
-            "text": "시작값 3에서 increment(0)을 호출하고 3을 기대한다.",
-            "explanation": "0이 유효한 증가량인데 ||가 1로 바꾼다. default parameter는 undefined만 기본값으로 처리한다."
+            "text": "시작값 3에서 `increment(0)`을 호출하고 3을 기대한다.",
+            "explanation": "0이 유효한 증가량인데 `||`가 1로 바꾼다. 매개변수 기본값은 인수가 생략되거나 `undefined`일 때 적용된다."
           },
           {
             "id": "b",
-            "text": "시작값 3에서 increment(2)를 한 번 호출한다.",
+            "text": "시작값 3에서 `increment(2)`를 한 번 호출한다.",
             "explanation": "2는 truthy라서 결함이 드러나지 않는다."
           },
           {
@@ -139,16 +139,16 @@
       },
       {
         "id": "q5-host-tools",
-        "prompt": "node:test, node:assert, debugger에 관한 설명으로 맞는 것은?",
+        "prompt": "`node:test`, `node:assert`, `debugger`에 관한 설명으로 맞는 것은?",
         "choices": [
           {
             "id": "a",
-            "text": "node:test와 node:assert는 ECMAScript 표준 전역 함수다.",
+            "text": "`node:test`와 `node:assert`는 ECMAScript 표준 전역 함수다.",
             "explanation": "두 모듈은 Node가 제공하는 도구이며 브라우저에는 그대로 존재하지 않는다."
           },
           {
             "id": "b",
-            "text": "debugger는 언어 문장이지만 실제 중단·표시는 호스트 도구에 달렸고 Node 검사 도구는 별도다.",
+            "text": "`debugger`는 언어 문장이지만 실제 중단·표시는 호스트 도구에 달렸고 Node 검사 도구는 별도다.",
             "explanation": "언어의 실행 지점과 디버거·검사 제공자의 기능을 구분한다."
           },
           {
