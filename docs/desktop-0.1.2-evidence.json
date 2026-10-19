@@ -1,0 +1,139 @@
+{
+  "status": "BUILT_UNVERIFIED",
+  "version": "0.1.2",
+  "sourceCommit": "4478e391d76c94a44a84e58db148eba826956e44",
+  "release": "https://github.com/jbsim999/JS-edu/releases/tag/v0.1.2",
+  "workflow": "https://github.com/jbsim999/JS-edu/actions/runs/39228451971",
+  "sourceChecks": {
+    "status": "PASS",
+    "tests": {
+      "pass": 322,
+      "skip": 5,
+      "fail": 0
+    },
+    "webRoutes": 55,
+    "quizQuestions": 229,
+    "labelDisplayChecks": 7
+  },
+  "packaging": {
+    "buildConclusion": "success",
+    "finalArchiveVerification": "SKIPPED_BY_REQUEST",
+    "nativeApplicationTest": "SKIPPED_BY_REQUEST",
+    "reason": "Explicit user request to skip packaging verification",
+    "jobs": [
+      {
+        "name": "desktop package (Windows x64)",
+        "conclusion": "success",
+        "skipped": [
+          "Verify the extracted native application",
+          "Retain Windows failure evidence"
+        ]
+      },
+      {
+        "name": "desktop package (macOS arm64)",
+        "conclusion": "success",
+        "skipped": [
+          "Run platform regression tests",
+          "Verify the final native app on this Mac CPU",
+          "Retain failure evidence without marking a package verified"
+        ]
+      },
+      {
+        "name": "desktop package (macOS x64)",
+        "conclusion": "success",
+        "skipped": [
+          "Run platform regression tests",
+          "Verify the final native app on this Mac CPU",
+          "Retain failure evidence without marking a package verified"
+        ]
+      }
+    ]
+  },
+  "delivery": {
+    "scope": "Authenticated CI artifact transfer only; no application ZIP extraction or application launch",
+    "files": [
+      {
+        "target": "win-x64",
+        "name": "JavaScript-edu-0.1.2-win-x64.zip",
+        "bytes": 315357842,
+        "sha256": "b230eca8e6ae4b1d2d02f49e723fdbfc92696524cae9caa90cb0754894f25e83",
+        "packageStatus": "BUILT_UNVERIFIED",
+        "transferScope": "authenticated-artifact-transfer-only"
+      },
+      {
+        "target": "mac-arm64",
+        "name": "JavaScript-edu-0.1.2-mac-arm64.zip",
+        "bytes": 189820184,
+        "sha256": "55841f959f58822cc8936d438d478aa6b90383e207246e8ffa043587415ea634",
+        "packageStatus": "BUILT_UNVERIFIED",
+        "transferScope": "authenticated-artifact-transfer-only"
+      },
+      {
+        "target": "mac-x64",
+        "name": "JavaScript-edu-0.1.2-mac-x64.zip",
+        "bytes": 194968112,
+        "sha256": "6cba29dcad22aa95c59e46058c8c9dad74f82bacd5933cce6aac79b5fc908a17",
+        "packageStatus": "BUILT_UNVERIFIED",
+        "transferScope": "authenticated-artifact-transfer-only"
+      },
+      {
+        "name": "JavaScript-edu-0.1.2-source-context.zip",
+        "bytes": 1512953,
+        "sha256": "066de8082630b901bc7c04ac0e855063b354987e9618b56b2a8ec9e67427c675"
+      },
+      {
+        "name": "SOURCE-PROVENANCE-0.1.2.md",
+        "bytes": 8813,
+        "sha256": "c080b02a0c489f048737539c4e2e03293fea5087ed21cbc15b008e63d91fc70a"
+      }
+    ]
+  },
+  "runtimeSources": "Electron/FFmpeg/Node exact unchanged corresponding sources remain on v0.1.1; see SOURCE-PROVENANCE-0.1.2.md",
+  "published": true,
+  "publicDownloadLinks": "Three unauthenticated HTTP206/1byte responses; link access only, no application inspection",
+  "releaseAssets": [
+    {
+      "name": "JavaScript-edu-0.1.2-build-status.json",
+      "bytes": 3146,
+      "digest": "sha256:416fe161f3452d3babf84e58a4c3d851af09c49445943c7b5ab33fbf750fdbf6",
+      "state": "uploaded"
+    },
+    {
+      "name": "JavaScript-edu-0.1.2-mac-arm64.zip",
+      "bytes": 189820184,
+      "digest": "sha256:55841f959f58822cc8936d438d478aa6b90383e207246e8ffa043587415ea634",
+      "state": "uploaded"
+    },
+    {
+      "name": "JavaScript-edu-0.1.2-mac-x64.zip",
+      "bytes": 194968112,
+      "digest": "sha256:6cba29dcad22aa95c59e46058c8c9dad74f82bacd5933cce6aac79b5fc908a17",
+      "state": "uploaded"
+    },
+    {
+      "name": "JavaScript-edu-0.1.2-source-context.zip",
+      "bytes": 1512953,
+      "digest": "sha256:066de8082630b901bc7c04ac0e855063b354987e9618b56b2a8ec9e67427c675",
+      "state": "uploaded"
+    },
+    {
+      "name": "JavaScript-edu-0.1.2-win-x64.zip",
+      "bytes": 315357842,
+      "digest": "sha256:b230eca8e6ae4b1d2d02f49e723fdbfc92696524cae9caa90cb0754894f25e83",
+      "state": "uploaded"
+    },
+    {
+      "name": "SHA256SUMS-0.1.2.txt",
+      "bytes": 603,
+      "digest": "sha256:ca8b1dfde3eb7f7a6b30f25c08e1ffc28a2cebc965bb70d5047be1104c95a6c9",
+      "state": "uploaded"
+    },
+    {
+      "name": "SOURCE-PROVENANCE-0.1.2.md",
+      "bytes": 8813,
+      "digest": "sha256:c080b02a0c489f048737539c4e2e03293fea5087ed21cbc15b008e63d91fc70a",
+      "state": "uploaded"
+    }
+  ],
+  "releaseId": 417100961
+}

@@ -1,5 +1,15 @@
 # 검증 기록
 
+## 2026-10-19 0.1.2 build-only 생성·전송·공개 완료
+
+정확한 생성 소스4478e391d76c94a44a84e58db148eba826956e44, [수동 실행39228451971](https://github.com/jbsim999/JS-edu/actions/runs/39228451971), Windows x64·Mac x64/arm64 세 생성 작업 success. 각 native 앱검수 단계와 Mac 플랫폼검사 단계는 명시 입력에 따라 skipped다. 빌더의 최종 ZIP 재해제 대조도 건너뛰었고 manifest는 BUILT_UNVERIFIED/SKIPPED_BY_REQUEST/extractedPath:null이다. 원본 배포본·소스·CPU 확인은 빌드 필수로 수행했다. 이번 패키지를 실행하거나 내용을 해제해 검사하지 않았다.
+
+대용량 수신 지연으로 기존 세션을 중단하고4MiB분할 전송을 사용했다. GitHub artifact digest3개를 전송 컨테이너 바이트와 대조한 후 컨테이너만 해제했다. 앱ZIP은 암호화 인증과 명시 allow-unverified로 수령했고 기대한4478소스·CPU·BUILT_UNVERIFIED 상태를 결속했다. 수신3개 receipt의 status:PASS는 authenticated-artifact-transfer-only이며 패키지 검수 PASS가 아니다.
+
+[v0.1.2](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.2)는 prerelease로 공개했다. 태그는4478 커밋을 직접 가리킨다. 3앱·source-context·소스출처·생성상태·체크섬 총7개 uploaded이며 공개 서버 digest/크기를 수신 파일과 대조했다. 인증 없는3앱 실제GET range는 HTTP206/1byte로 링크 접근만 확인했다. README의 링크·현재웹화면·코드/용어기준·소스검사와 패키지검수생략 안내를 갱신했다. 기존0.1.1 파일/태그는 교체하지 않았다. [기계판독 요약](desktop-0.1.2-evidence.json)과 원시 artifacts/package-012-build-jobs.json, package-012-remote-artifacts.json, received-012-*.json, release-012-published.json, release-0.1.2-anonymous-downloads.json을 따른다.
+
+판정: **생성·전달 완료 / 최종 패키지 검수는 요청으로 생략**. UI/소스 검사 결과는 아래 절이며 이 생략을 대체하지 않는다. 서명·공증·다운로드 후OS승인·실제기기·OS IME 등 새 검증을 수행했다고 표시하지 않는다.
+
 ## 2026-10-19 0.1.2 코드/명칭 기준 통일과 명시적 build-only
 
 부분 키워드 자동 인식으로 Web Worker의 Worker만 강조되고 명세 타입 Undefined/Null만 누락되는 표시 불일치를 수정했다. 실행 코드와 자연어 전문 명칭을 구분한다. 명시 code 범위의 구문 색상은 그대로 유지하고, Node.js·Web Worker·ECMAScript 및 Undefined·Null·Boolean·String·Symbol·Number·BigInt·Object 등의 전체 명칭은 별도 technical-term으로 같은 배경/고정색을 적용한다. 타입 이름과 변환 함수·실제 값은 대소문자 변경으로 섞지 않고 문맥/명시 code 범위로 나눈다. [기준](code-theme.md)을 본문과 README에 명시했다.

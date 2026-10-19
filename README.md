@@ -8,7 +8,7 @@
 
 다른 언어 경험자의 JavaScript 전환 학습부터 현직 개발자의 브라우저·Node.js 심화까지.
 
-[![ECMAScript](https://img.shields.io/badge/ECMAScript-2026-496440?style=flat-square)](docs/roadmap.md) [![Lessons](https://img.shields.io/badge/Lessons-52-806223?style=flat-square)](docs/roadmap.md) [![Exercises](https://img.shields.io/badge/Exercises-55-806223?style=flat-square)](curriculum/exercises.json) [![Status](https://img.shields.io/badge/Status-0.1.1%20preview-496440?style=flat-square)](docs/project-state.md) [![CI](https://github.com/jbsim999/JS-edu/actions/workflows/scaffold-check.yml/badge.svg?branch=main)](https://github.com/jbsim999/JS-edu/actions/workflows/scaffold-check.yml?query=branch%3Amain)
+[![ECMAScript](https://img.shields.io/badge/ECMAScript-2026-496440?style=flat-square)](docs/roadmap.md) [![Lessons](https://img.shields.io/badge/Lessons-52-806223?style=flat-square)](docs/roadmap.md) [![Exercises](https://img.shields.io/badge/Exercises-55-806223?style=flat-square)](curriculum/exercises.json) [![Status](https://img.shields.io/badge/Status-0.1.2%20preview-496440?style=flat-square)](docs/project-state.md) [![CI](https://github.com/jbsim999/JS-edu/actions/workflows/scaffold-check.yml/badge.svg?branch=main)](https://github.com/jbsim999/JS-edu/actions/workflows/scaffold-check.yml?query=branch%3Amain)
 
 [교육 로드맵](docs/roadmap.md) · [개발 소스](https://github.com/jbsim999/JS-edu/tree/main) · [기여 안내](CONTRIBUTING.md) · [버그·제안](https://github.com/jbsim999/JS-edu/issues)
 
@@ -20,9 +20,8 @@ JavaScript-edu는 **한국어 웹 교재와 로컬 코드 실행·자동 채점�
 
 수업은 **이론 → 예시 → 문제풀이 → 실무 심화 → 직접 코딩**으로 이어집니다. ECMAScript 언어 규칙과 브라우저·Node.js API를 나누어 설명하고, 공식 자료의 출처와 실제 실행 환경을 함께 제공합니다.
 
-> **개발 상태** — 52강·55실습과 코드 문법 색상, 용어 사전, 진도 저장을 구현했습니다. Windows 0.1.0은 사용자 실행 확인을 마쳤습니다. 0.1.1 프리뷰는 코드 테마와 Mac 패키징을 추가하며 Windows·Mac Intel·Apple Silicon의 최종 ZIP·실제 앱 실행 검사를 모두 통과했습니다. [0.1.1 프리뷰](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)에서 자신의 OS와 CPU에 맞는 앱을 내려받으세요. [현재 상태](docs/project-state.md)
+> **개발 상태** — 52강·55실습과 코드 문법 색상, 용어 사전, 진도 저장을 제공합니다. 0.1.2 프리뷰에는 전체 본문 교정과 코드·전문 명칭의 표시 기준 통일을 반영했습니다. Windows x64·Mac Intel·Apple Silicon 패키지 생성은 완료했으며, **이번 버전의 최종 패키지 검수는 사용자 요청으로 생략했습니다(BUILT_UNVERIFIED).** [0.1.2 프리뷰](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.2) · [생성·검수 상태](docs/desktop-0.1.2-evidence.json)
 
-현재 main의 0.1.2 소스에는 전체 본문 교정과 코드·용어 표시 기준 통일을 반영했습니다. Windows·Mac 패키지를 준비 중이며, 이번 버전은 사용자 요청으로 패키징 후 검수를 생략합니다. 아래 다운로드는 아직 게시된 0.1.1을 가리킵니다.
 
 ## 설치하고 시작하기
 
@@ -30,9 +29,9 @@ JavaScript-edu는 **한국어 웹 교재와 로컬 코드 실행·자동 채점�
 
 **아래에서 자신의 컴퓨터에 맞는 앱 하나만 다운로드하세요.**
 
-**[Windows x64 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.1/JavaScript-edu-0.1.1-win-x64.zip)** · **[Mac Apple Silicon 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.1/JavaScript-edu-0.1.1-mac-arm64.zip)** · **[Mac Intel 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.1/JavaScript-edu-0.1.1-mac-x64.zip)**
+**[Windows x64 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.2/JavaScript-edu-0.1.2-win-x64.zip)** · **[Mac Apple Silicon 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.2/JavaScript-edu-0.1.2-mac-arm64.zip)** · **[Mac Intel 앱 다운로드](https://github.com/jbsim999/JS-edu/releases/download/v0.1.2/JavaScript-edu-0.1.2-mac-x64.zip)**
 
-[릴리스와 체크섬·검증 기록](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.1)
+[릴리스·체크섬·생성 상태](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.2)
 
 전달받은 ZIP은 **폴더 전체를 압축 해제**해 사용하세요. Electron과 Node.js 전체 런타임이 포함되므로 따로 설치하거나 시스템 경로를 설정할 필요가 없습니다.
 
@@ -70,9 +69,9 @@ npm run dev
 
 ## 학습실 미리보기
 
-![JavaScript-edu 학습실: 강의 목차, 문법 색상이 있는 클로저 예시, 검색형 용어 사전](docs/assets/learning-workspace.png)
+![JavaScript-edu 학습실: 코드와 여덟 타입 이름을 구분한 본문, 강의 목차와 검색형 용어 사전](docs/assets/learning-workspace-0.1.2.png)
 
-*0.1.1 Windows 검증용 앱에서 캡처한 실제 화면입니다. 밝은 테마·다크 모드를 제공하며, 화면 캡처와 플랫폼별 실행 검증은 구분합니다.*
+*0.1.2 개발 소스의 웹 학습 화면입니다. 밝은 테마·다크 모드를 제공합니다. 이번 데스크톱 패키지의 실행 검수 화면은 아닙니다.*
 
 ## 주요 기능
 
@@ -140,7 +139,7 @@ node web/serve.mjs --port 4182 --qualification
 
 `http://127.0.0.1:4182/execution/qualification.html`을 엽니다. 정답·대표 오답 경로는 이 제작자 모드에서만 제공하며 기본 학습 서버에는 노출하지 않습니다. 검사용 명령은 신뢰하는 저장소 소스에서 실행하세요.
 
-2026-10-19 보완 소스의 로컬 전체 검사는 **구조 52강·구문 317개·회귀 311 PASS/Unix 전용 5 SKIP/실패 0**입니다. 일반 제작자 검사의 호스트 과제 생략은 PARTIAL이며, 실제 브라우저 44과제·361조건과 Node.js 11과제·110조건의 전수 실행 근거는 별도로 기록합니다. Windows·Ubuntu 일반 CI와 고정 Node CI도 통과했습니다. 최종 소스 ec4a38e의 일반·고정 Node·세 플랫폼 패키징 CI 9개가 모두 통과했습니다. 정확한 CPU별 결과는 [후속 검증 기록](docs/code-mac-ci-verification.md)을 따릅니다.
+2026-10-19의 0.1.2 소스 검사는 **구조 52강·구문 318개·회귀 322 PASS/5 SKIP/실패 0**입니다. 웹 화면에서는 55개 학습 경로의 이론 표시와 퀴즈 229문항을 확인했습니다. 기본 제작자 검사에서 호스트 과제 22개를 생략한 사실과 실제 실행 검증은 구분합니다. 이전 0.1.1의 브라우저 44과제·361조건과 Node.js 11과제·110조건 및 세 플랫폼 네이티브 검수는 그 버전의 이력입니다. **0.1.2 최종 패키지 검수는 사용자 요청으로 생략했습니다.** [버전별 검증 기록](docs/verification.md)
 
 ## 문서와 로드맵
 
@@ -159,8 +158,8 @@ node web/serve.mjs --port 4182 --qualification
 - [x] 55실습과 브라우저·Node.js 행동 검사 471조건
 - [x] 82개 검색형 용어 사전과 상세 팝업
 - [x] 코드 문법 색상·밝은/어두운 테마·초안과 진도 저장
-- [x] 런타임 포함 Windows 포터블 앱과 실제 실행 검사
-- [x] macOS Intel·Apple Silicon 최종 ZIP·앱 실행 검사 완료
+- [x] 런타임 포함 Windows x64 포터블 ZIP 생성
+- [x] macOS Intel·Apple Silicon 포터블 ZIP 생성
 - [x] Windows·Mac 프리뷰 다운로드 릴리스 게시
 
 ## 기여와 문의

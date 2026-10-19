@@ -1,5 +1,11 @@
 # 현재 상태
 
+## 2026-10-19 0.1.2 세CPU 생성·공개 다운로드 완료 / 패키징 검수 생략
+
+생성 소스 `4478e391d76c94a44a84e58db148eba826956e44`로 [build-only CI39228451971](https://github.com/jbsim999/JS-edu/actions/runs/39228451971)의 Windows x64·Mac x64/arm64 생성3개가 success다. 최종 ZIP 재해제·앱실행 검수 단계는 모두 사용자 요청대로 skipped이며 패키지 상태는 BUILT_UNVERIFIED다. 이를 검수 PASS로 표시하지 않았다.
+
+[v0.1.2 프리뷰](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.2)와 README에서3앱ZIP·제품source-context·고정소스안내·생성상태·체크섬 총7첨부를 제공한다. 원본/전송/공개파일의 digest와 인증 없는3다운로드 HTTP206/1byte는 전송/링크 확인일 뿐 앱 검수가 아니다. 앱ZIP은 로컬 dist/JavaScript-edu-0.1.2-{win-x64,mac-x64,mac-arm64}.zip에 있으며 해제/실행하지 않았다. 기존0.1.1은 보존했다. [파일·소스·생성/검수 상태](desktop-0.1.2-evidence.json)를 따른다. 최종 README/증거/화면이미지 커밋은 생성 소스와 구분한다.
+
 ## 2026-10-19 0.1.2 명칭 표시 통일 / 검수 생략 패키징 준비
 
 사용자 승인: 코드/명칭 표시 기준을 전체에 통일하고 README 갱신·패키징·main 커밋푸시. 이번 최종 패키징 검수는 명시적으로 생략한다. 실행 코드/값은 code+구문색상, Node.js·Web Worker·명세의8타입 이름은 이름 전체의 technical-term+동일색으로 나눴다. 기본 타입 목록·타입/변환함수 문맥 등10파일34필드도 보완했다. 52강+Node변형3개/229문항/용어82개 대상 패턴·보호 데이터 대조 PASS, 웹55경로/229문항·용어표시7묶음 PASS. Node24.22 전체 소스 검사도 PASS(구문318·테스트322PASS/5skip/0fail·기본교재33실습271조건/호스트22skip). 원시 근거는 artifacts/consistent-content-labels.json, label-consistency-qa/, content-revision-qa/, labels-012-full-check.log다.
