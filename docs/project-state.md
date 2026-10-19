@@ -1,5 +1,11 @@
 # 현재 상태
 
+## 2026-10-19 최종 Windows 로컬 패키지 PASS
+
+최종 ZIP은 `dist/JavaScript-edu-0.1.0-win-x64.zip`(315,315,450바이트), SHA256 `9e9be81a981502ac6a3bcbfd2e56b5d1f8ed8a12c3cb085386e555b0e38d493e`다. 빌드 소스는 `23154a3c3cc2f718469a3e03e158bc5db041c6b2`, sourceDirty:false이며 후속 문서 커밋과 구분한다. 원본 vendor73+1994와 최종해제2410파일을 독립 대조했다.
+
+전체294회귀·55실습471조건·실제200%·동의/취소/복원·저장실패양분기·정상/강제종료정리·실제EXE한글/공백/&경로이동을 확인했고 독립 최종 PASS, 미해결 P1/P2 없음. [최종 검증](desktop-packaging-verification.md)과 [소스/산출물/원시지문 요약](desktop-packaging-evidence.json)을 재개 근거로 사용한다. 원격 commit/push/CI는 실제 현재브랜치의 ref·Actions를 대조한다. 패키지는 미서명·미게시이며 main 병합/공개바이너리게시/대응소스조건완료를 주장하지 않는다. 사용자4179탭·초안은 보존했다. 실제OSdialog입력·IME·스크린리더·물리모바일·모든Electron하위PID소멸은 미검증이다. 아래는 과정별 보존 이력이다.
+
 ## 2026-10-19 Windows 소스 검증 완료 / 최종 ZIP 생성 전
 
 Windows portable 구현·소스 동결·전체 검사·독립 코드 게이트 PASS다. 구조52·구문306·회귀294/294/skip0와 제작자33/271·예제33 PASS, 호스트22 skip PARTIAL을 구분했다. 입력486파일 지문집계b3cb3e353dbcea697524e8dd46940219ea6c17dc608a0b33dfac5e440fce629a를 독립 대조했다. 실제 EXE 원본·한글/공백/&이동본의 각N01 8/8·같은origin·WM_CLOSE·exit0·TEMP0 PASS. 중간09 전체FAIL은 보존하며 최종clean HEAD ZIP·전체native 게이트는 남아 있다. 소스커밋 후 최종 산출물을 만들고 검증한다. [최종 패키지 검증](desktop-packaging-verification.md), [구현 계약](desktop-packaging-implementation.md)을 따른다. 공개 바이너리 게시·서명·main 병합은 수행하지 않는다.

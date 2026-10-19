@@ -1,0 +1,192 @@
+{
+  "status": "PASS",
+  "scope": "Local unsigned Windows x64 portable ZIP; not a public release",
+  "sourceCommit": "23154a3c3cc2f718469a3e03e158bc5db041c6b2",
+  "sourceDirty": false,
+  "version": "0.1.0",
+  "artifact": {
+    "file": "dist/JavaScript-edu-0.1.0-win-x64.zip",
+    "bytes": 315315450,
+    "sha256": "9e9be81a981502ac6a3bcbfd2e56b5d1f8ed8a12c3cb085386e555b0e38d493e",
+    "manifest": "dist/JavaScript-edu-0.1.0-win-x64.manifest.json",
+    "manifestSha256": "a6ace165e1532027ed3ee7bd5f4a67a0fa3ae5672cd8f1511dee1d76b1558191",
+    "files": 2410,
+    "electronFiles": 73,
+    "nodeFiles": 1994,
+    "packagedSourceFilesSha256": "7c95f9eeb2f5a8ae803c6959f5d27c186a7c90b5830d6510e4bfcb8300129f19"
+  },
+  "host": {
+    "platform": "win32",
+    "architecture": "x64",
+    "windowsDisplayVersion": "25H2",
+    "windowsBuild": "26200.9711",
+    "developmentNode": "22.17.0"
+  },
+  "sourceCheck": {
+    "files": 486,
+    "sha256": "b3cb3e353dbcea697524e8dd46940219ea6c17dc608a0b33dfac5e440fce629a",
+    "syntaxFiles": 306,
+    "tests": 294,
+    "passed": 294,
+    "failed": 0,
+    "skipped": 0,
+    "desktopTests": 13,
+    "creatorHostSkips": 22,
+    "creatorStatus": "PARTIAL"
+  },
+  "native": {
+    "startedAt": "2026-10-19T05:17:59.011Z",
+    "completedAt": "2026-10-19T05:20:31.884Z",
+    "shell": {
+      "electron": "44.9.0",
+      "chromium": "152.0.7977.167",
+      "embeddedNode": "24.22.0",
+      "embeddedV8": "15.2.124.43-electron.0"
+    },
+    "learnerActualRuntime": "Node.js 24.22.0 (win32/x64; native process + Worker)",
+    "browser": {
+      "exercises": 44,
+      "behaviorChecks": 361,
+      "negativeSubmissions": 88,
+      "domExamples": 11,
+      "runtimeChecks": 16
+    },
+    "node": {
+      "exercises": 11,
+      "behaviorChecks": 110,
+      "negativeSubmissions": 22,
+      "nodeExamples": "Not rerun by this package smoke; prior native example evidence is separate"
+    },
+    "uniqueExercises": 55,
+    "uniqueBehaviorChecks": 471,
+    "authorInputs": {
+      "files": 117,
+      "digest": "a2abe1d855d3150efd384a63be80f2010ba3c6356ab999ef32bbe2b437e30768",
+      "sourceCommit": "23154a3c3cc2f718469a3e03e158bc5db041c6b2",
+      "verifiedUnchanged": true
+    },
+    "normalShutdown": true,
+    "singleInstance": true,
+    "forcedParentDisconnectCleanup": true,
+    "allPhasesLearnerTempCleanup": true,
+    "packageUnchanged": true,
+    "productionEntry": {
+      "passed": true,
+      "checks": 8,
+      "exitCode": 0,
+      "closeMainWindow": true
+    },
+    "relocatedProductionEntry": {
+      "passed": true,
+      "checks": 8,
+      "exitCode": 0,
+      "closeMainWindow": true,
+      "sameOrigin": true,
+      "pathCharacters": [
+        "Korean",
+        "space",
+        "&"
+      ]
+    },
+    "zoom": [
+      {
+        "file": "artifacts/desktop-final-native/desktop-dark-200.png",
+        "zoomFactor": 2,
+        "dpr": 2,
+        "innerWidth": 712,
+        "innerHeight": 447,
+        "scrollWidth": 704
+      },
+      {
+        "file": "artifacts/desktop-final-native/desktop-light-200.png",
+        "zoomFactor": 2,
+        "dpr": 2,
+        "innerWidth": 712,
+        "innerHeight": 447,
+        "scrollWidth": 704
+      },
+      {
+        "file": "artifacts/desktop-final-native/desktop-light-200-glossary.png",
+        "zoomFactor": 2,
+        "dpr": 2,
+        "innerWidth": 712,
+        "innerHeight": 447,
+        "scrollWidth": 704
+      },
+      {
+        "file": "artifacts/desktop-final-native/desktop-node-200-submission.png",
+        "zoomFactor": 2,
+        "dpr": 2,
+        "innerWidth": 712,
+        "innerHeight": 447,
+        "scrollWidth": 704
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "file": "artifacts/desktop-final-native/desktop-smoke-report.json",
+      "sha256": "689455f14d15ef93cbd33f10c90cada5c7fb88b02407bb9412c76a27a61d8d16"
+    },
+    {
+      "file": "artifacts/desktop-final-native/qualify.json",
+      "sha256": "9e4b91cd1adea0e46d61762790b20d84f9824080c65c1c3f0964e11b14548da5"
+    },
+    {
+      "file": "artifacts/desktop-final-native/restore.json",
+      "sha256": "deb96699c6ec8b67b61a8d6a358ce6893fab15b29a53e217231468a97a4fe2db"
+    },
+    {
+      "file": "artifacts/desktop-final-native/discard.json",
+      "sha256": "533a0ad81491f596acf6d37a44fc94c3b02f97785c61ca860452aa6361722ef1"
+    },
+    {
+      "file": "artifacts/desktop-final-native/force-parent.json",
+      "sha256": "14c65533ccf2817005f4000f797504d8ad778936097170c65c10a9707c0bc185"
+    },
+    {
+      "file": "artifacts/desktop-final-native/browser-qualification.json",
+      "sha256": "6f747b4c0b05d1c35985acec6848185ba8e13cd9cfc098830c555020da01135a"
+    },
+    {
+      "file": "artifacts/desktop-final-native/node-qualification.json",
+      "sha256": "e0d80990822c7ca4cd401dccb6beff0b7e4f07f82eac29520b6acec6d4be7978"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-dark-100.png",
+      "sha256": "776ff5474a384ba31afb02bdc09126a3ce407851dbe73298eb9a66a7f39f5b91"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-dark-200.png",
+      "sha256": "d4c2a393558bc716de921f1fd47554088339dbbe55d087da898a491e83ee5213"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-light-200.png",
+      "sha256": "62021bb434b15836f88f518c355c51d5c1f7946271520476c8d5dd56e4c4bd09"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-light-200-glossary.png",
+      "sha256": "184a4fe96293f40023662e8bb5b3d336fb0781b6d4259c948d90659a14fcc8a8"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-node-100-submission.png",
+      "sha256": "58c47a9bbdc66a0937dcde24cde5493246d54defda7c1a543cb1573f129561b8"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-node-200-submission.png",
+      "sha256": "8547928150a59a21aca72767499e23112daf0b43b92fea85463c614ac5dfc514"
+    },
+    {
+      "file": "artifacts/desktop-final-native/desktop-restored-session.png",
+      "sha256": "101d3f3f40384590409208ccb3e4282c4a66c398633627b79c6f9128ee912a50"
+    }
+  ],
+  "limitations": [
+    "No app code signing or public binary release",
+    "Physical mobile devices, OS IME composition and screen reader not tested",
+    "OS dialog choices are stubbed; actual Storage write failure and will-prevent-unload events tested",
+    "Forced-parent cleanup checks cover owned service PID, both ports and learner temp directories; no all-descendant PID or Job Object isolation claim",
+    "Public binary redistribution source/license obligations remain a separate gate"
+  ],
+  "independentReview": "PASS: source/HEAD486, ZIP/extracted/vendor inventories, native55 exercise IDs and author117 input hashes independently compared; no unresolved P1/P2; read-only review, no direct native test execution by reviewer"
+}

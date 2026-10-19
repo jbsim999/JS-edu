@@ -1,6 +1,6 @@
 # Windows 최종 패키지 검증
 
-2026-10-19. 현재 소스 커밋·빌드 게이트는 **PASS**, clean HEAD 최종 ZIP의 전체 native 게이트는 후속 검증 대상으로 남긴다. 미서명 로컬 Windows x64 포터블 패키지이며 공개 릴리스를 게시하지 않는다.
+2026-10-19. 소스·최종 ZIP 무결성·전체 native·독립 최종 검토 모두 **PASS**다. 미서명 로컬 Windows x64 포터블 패키지이며 공개 릴리스를 게시하지 않는다. 바이너리 빌드 소스는 `23154a3c3cc2f718469a3e03e158bc5db041c6b2`다. 이후 검증 기록 문서 커밋과 이 빌드 SHA를 구분한다.
 
 ## 소스 게이트
 
@@ -22,6 +22,23 @@ Windows 네이티브 개발 Node 22.17.0에서 `JS_EDU_NODE_EXECUTABLE`에 포�
 
 ## 최종 산출물 게이트
 
-검토한 소스를 먼저 로컬 커밋하고 `sourceDirty:false`인 최종 ZIP을 한 번 생성한다. 공식 배포본 전체와 최종 해제본을 비교한 뒤 외부 manifest/ZIP 해시·최종 앱 소스·작성자 입력을 결속해 전체 native 검사를 수행한다. 검사 후 원본/이동본 전체 바이트, 모든 phase 뒤 임시 폴더와 작성자 입력 불변을 확인한다. 실제 소스 commit·ZIP SHA256·native 결과는 완료 후 이 문서에 추가한다.
+검토한 소스를 먼저 로컬 커밋하고 `sourceDirty:false`인 최종 ZIP을 한 번 생성했다. 원본 Electron73·Node1,994파일을 보존하고 최종 해제본 **2,410파일/2,908항목**을 외부 manifest와 대조했다. 독립 리뷰어도 직접 크기/SHA256/누락·추가·링크를 확인해 불일치0을 판정했다.
+
+| 항목 | 최종 식별자 |
+| --- | --- |
+| 빌드 소스 | `23154a3c3cc2f718469a3e03e158bc5db041c6b2`, sourceDirty:false |
+| 산출물 | `dist/JavaScript-edu-0.1.0-win-x64.zip`, 315,315,450바이트 |
+| ZIP SHA256 | `9e9be81a981502ac6a3bcbfd2e56b5d1f8ed8a12c3cb085386e555b0e38d493e` |
+| 외부 manifest SHA256 | `a6ace165e1532027ed3ee7bd5f4a67a0fa3ae5672cd8f1511dee1d76b1558191` |
+| 포함 앱 소스 집계 | `7c95f9eeb2f5a8ae803c6959f5d27c186a7c90b5830d6510e4bfcb8300129f19` |
+| 작성자 입력117파일 집계 | `a2abe1d855d3150efd384a63be80f2010ba3c6356ab999ef32bbe2b437e30768` |
+
+실제 최종 native 실행은 **05:17:59.011–05:20:31.884 UTC**, Windows win32/x64·25H2·build26200.9711에서 수행했다. 개발/빌드 Node22.17.0, 셸 Electron44.9.0/Chromium152.0.7977.167, 별도 학습 프로세스의 공식 Node24.22.0을 구분했다. 전체 **55실습471조건**(browser361+Node110), browser negative88·DOM예제11·runtime16, Node starter/오답 각11개 거부 PASS다. Node 예제11개 실행은 이번 패키지 smoke의 검사 범위가 아니며 앞선 교재 검증 기록과 구분한다.
+
+실제 UI 동의·준비·실패 제출·취소의 DELETE 응답/정리·재실행/제출 복구, 진도/메모/테마 복원·코드 수정 후 성취 무효화, 실제200% dark/light/사전·초점, 저장 실패 양쪽 선택, 단일 인스턴스, 정상 종료와 강제 부모 종료 후 서비스PID/두포트/임시 폴더 정리가 모두 PASS다. 실제 production EXE 원본과 한글·공백·`&` 이동본도 각각 N01 8/8, WM_CLOSE·exit0, 동일origin 재사용을 통과했다. 마지막 production 단계 뒤 임시 폴더0·원본/이동본 전체 바이트·외부 manifest·작성자117입력 불변을 확인했다.
+
+독립 리뷰어는 55실습의 검사 ID와 원본, 개별 입력 지문, 실제 native 원시 보고서 및 캡처를 대조해 **최종 로컬 패키지 PASS·미해결 P1/P2 없음**으로 판정했다. 총괄도 최종 압축 해제본의 100/200% 합성 화면을 직접 검토했다. 정확한 보고서와 캡처의 경로/SHA256은 [최종 근거 요약](desktop-packaging-evidence.json), 원시는 `artifacts/desktop-final-native/`, 전체 ZIP 파일 목록은 `dist/JavaScript-edu-0.1.0-win-x64.manifest.json`에 보존했다. checksum 파일도 dist에 있다.
+
+원격 반영과 CI는 현재 `feat/runtime-and-curriculum`의 실제 Git ref와 Actions 결과를 확인한다. 이 문서의 로컬 산출물 PASS를 원격 CI 성공이나 공개 게시로 확대하지 않는다.
 
 전체 vendor 라이선스는 보존한다. 공개 바이너리 배포의 대응 소스·배포 조건 확인, 프로젝트 라이선스 지정, 앱 코드 서명과 공개 게시는 이번 로컬 산출물과 구분해 미완료로 남긴다.

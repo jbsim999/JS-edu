@@ -14,3 +14,5 @@
 추가로 실제 Electron 44.9.0의 `webContents.setZoomFactor(2)`에서 배율 2, DPR 1→2, viewport 1424×895→712×447을 확인했다. 총괄이 `artifacts/desktop-smoke-06/`의 dark/light 200%·용어집 화면과 `artifacts/desktop-smoke-07/`의 Node 100/200% 제출·재시작 복원 합성 화면을 직접 검토했다. 페이지 수평 넘침·버튼 겹침·읽기 불가 잘림 없이 정상이며 이 화면 범위는 **PASS**다. 해당 중간 후보의 전체 native 검사는 하네스의 boot/cancel/함수 반환 직렬화 전제 오류로 FAIL이었다. 화면·채점 부분 PASS를 전체 native 완료로 확대하지 않는다. 최종 ZIP의 native 결과는 패키지 최종 검증에서 별도 연결한다.
 
 물리 모바일 기기·OS IME 조합·스크린리더는 사용 가능한 검사 환경이 없어 미검증이다. 자동 테스트의 dialog 응답 스텁도 실제 OS 대화상자 키보드 조작 검사와 구분한다.
+
+최종 ZIP 소스 `23154a3c3cc2f718469a3e03e158bc5db041c6b2`의 실제 해제 앱에서도 동일한 100/200%·light/dark/사전·Node 제출·복원 캡처를 확인했다. 총괄이 `artifacts/desktop-final-native/desktop-dark-100.png`, `desktop-light-200-glossary.png`, `desktop-restored-session.png`를 직접 검토했으며, 전체 native와 독립 최종 검토도 PASS다. 최종 캡처 지문과 범위는 [패키지 근거](desktop-packaging-evidence.json)에 연결한다.

@@ -1,5 +1,9 @@
 # 검증 기록
 
+## 2026-10-19 최종 Windows ZIP/native/독립 검토 PASS
+
+소스 `23154a3c3cc2f718469a3e03e158bc5db041c6b2`의 clean 최종ZIP 315,315,450바이트·SHA256 `9e9be81a981502ac6a3bcbfd2e56b5d1f8ed8a12c3cb085386e555b0e38d493e`, 원본vendor73+1994와 최종해제2410파일 전체 일치. 최종native 05:17:59.011–05:20:31.884 UTC PASS:55실습471조건·negative110·DOM예제11·runtime16·실제200%·동의/취소/복원·저장실패두선택·정상/강제종료정리·실제EXE와한글이동본각8/8·WM_CLOSE/exit0·마지막TEMP0·모든phase후원본/이동본과author117입력불변. 독립 검토도 검사ID·HEAD486파일·ZIP/manifest/native지문을 대조해PASS,미해결P1/P2없음. 자세한 범위/미검증은 [최종 기록](desktop-packaging-verification.md)과 [근거 요약](desktop-packaging-evidence.json)을 따른다. 미서명 로컬 산출물이며 원격CI/공개게시는 별도다. 아래는 당시 상태의 보존 이력이다.
+
 ## 2026-10-19 Windows 소스·빌드 게이트 PASS
 
 동결 소스의 전체 검사 PASS: 구조52강·구문306·회귀294/294·fail0·skip0, 제작자33과제271조건/예제33 PASS와 호스트22 skip PARTIAL을 구분했다. 검사 입력486파일 SHA256 집계 `b3cb3e353dbcea697524e8dd46940219ea6c17dc608a0b33dfac5e440fce629a`를 전후·독립 리뷰에서 일치 확인했다. 패키징13회귀와 세P2·startup·Windows 서비스 수명 수정 검토 PASS, 미해결 P1/P2 없음. 실제 EXE 원본/한글이동본의 N01·WM_CLOSE·exit0·TEMP0 probe도 확인했다. 중간09 전체 FAIL은 보존한다. clean HEAD 최종 ZIP/full native 게이트는 후속이며 [패키지 검증](desktop-packaging-verification.md)을 따른다. 아래는 과거 시점의 보존 기록이다.
