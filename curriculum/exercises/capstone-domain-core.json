@@ -1,0 +1,68 @@
+{
+  "id": "capstone-domain-core-exercise",
+  "lessonId": "capstone-domain-core",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-domain-core-checks-v1",
+  "mode": "files",
+  "instructions": [
+    "main.mjs만 편집하며 reader.mjs는 고정이다. queryProducts(records, options={})는 조밀 배열과 객체 옵션을 받는다. 모든 행을 normalizeProduct로 검증한 뒤 정규화 ID의 첫 값을 보존한다. query 기본값은 빈 문자열, maxPrice와 limit 기본값은 Infinity다. maxPrice는 NaN이 아닌 0 이상 number, limit는 Infinity 또는 0 이상 안전 정수여야 한다.\n\n이름의 소문자 값에 정규화 query가 포함되고 price<=maxPrice인 항목을 고른다. 가격·ID 순으로 새 배열을 정렬하고 전체 count·total을 계산한다. total이 안전 정수를 벗어나면 RangeError다. {version:1,query,count,total,items}를 반환하고 items에만 limit을 적용한다. serializeReport는 이 순서의 키와 각 항목의 id/name/price만 JSON으로 만든다. 전역 누적 상태와 호스트 API를 넣지 않는다."
+  ],
+  "template": "import { normalizeProduct, normalizeQuery } from './reader.mjs';\nexport function queryProducts(records, options = {}) {\n  // TODO: 검증·정규화·ID 중복 제거·필터·집계·정렬·제한을 순수 함수로 연결하세요.\n}\nexport function serializeReport(report) {\n  // TODO: 지정된 키 순서로 보고서를 직렬화하세요.\n}\n",
+  "profileId": "browser-esm",
+  "profileByVersion": {
+    "ES2026": "browser-esm"
+  },
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/capstone-domain-core.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "정규화한 ID는 첫 값을 보존하고 필터 뒤 가격·ID 순으로 정렬한다",
+    "출력 제한이 전체 일치 개수와 합계를 바꾸지 않는다",
+    "한글·결합문자 검색과 빈 결과를 결정적으로 처리한다",
+    "누락·희소·중복 속 불량 행과 잘못된 옵션을 거부한다",
+    "동결 원본과 반복 호출을 서로 분리한다",
+    "안전한 정수 범위를 넘는 합계를 조용히 반올림하지 않는다",
+    "정한 스키마·키 순서로 JSON을 만들고 다시 읽을 수 있다"
+  ],
+  "rubric": [
+    "정규화·중복·집계 순서",
+    "원본·호스트와 독립적인 ESM",
+    "제한된 출력과 명시적 직렬화"
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "observe(submission.queryProducts([{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}],{limit:1}));"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import { normalizeProduct, normalizeQuery } from './reader.mjs';\nexport function queryProducts(records, options = {}) {\n  // TODO: 검증·정규화·ID 중복 제거·필터·집계·정렬·제한을 순수 함수로 연결하세요.\n}\nexport function serializeReport(report) {\n  // TODO: 지정된 키 순서로 보고서를 직렬화하세요.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "reader.mjs",
+        "source": "export function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nexport function normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/capstone-domain-core.json",
+  "referenceFile": "reference/capstone-domain-core.mjs",
+  "incorrectFile": "reference/incorrect/capstone-domain-core.mjs",
+  "exampleFile": "curriculum/examples/capstone-domain-core.mjs",
+  "exampleExpectedLogs": [
+    "{\"version\":1,\"query\":\"\",\"count\":2,\"total\":350,\"items\":[{\"id\":\"p1\",\"name\":\"Lemon\",\"price\":120}]}",
+    "{\"version\":1,\"query\":\"pista\",\"count\":1,\"total\":230,\"items\":[{\"id\":\"p2\",\"name\":\"Pistachio\",\"price\":230}]}",
+    "{\"version\":1,\"query\":\"한글\",\"count\":0,\"total\":0,\"items\":[]}"
+  ],
+  "verificationRecord": "docs/execution/capstone-domain-core-exercise.json"
+}

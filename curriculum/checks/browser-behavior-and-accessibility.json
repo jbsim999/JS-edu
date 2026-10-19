@@ -1,0 +1,184 @@
+{
+  "exerciseId": "browser-behavior-and-accessibility-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-behavior-and-accessibility-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "semantic-controls-and-focus",
+      "label": "실제 label·textarea·button·상태 의미와 초기 포커스를 연결한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{panel=submission.mountDraftPanel(root,async()=>{},{initialText:'초안',opener});const input=root.querySelector('[data-draft]');observe({state:panel.getState(),label:input.labels[0].textContent,required:input.required,focus:document.activeElement.id,expectedId:input.id,saveType:root.querySelector('[data-save]').type,cancelType:root.querySelector('[data-cancel]').type,role:root.querySelector('[data-status]').getAttribute('role'),errorRole:root.querySelector('[data-error]').getAttribute('role'),busy:root.querySelector('form').getAttribute('aria-busy')});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "state": {
+          "text": "초안",
+          "status": "idle",
+          "error": null
+        },
+        "label": "초안 내용",
+        "required": true,
+        "focus": "exercise-root-draft",
+        "expectedId": "exercise-root-draft",
+        "saveType": "submit",
+        "cancelType": "button",
+        "role": "status",
+        "errorRole": "alert",
+        "busy": "false"
+      }
+    },
+    {
+      "id": "empty-validation",
+      "label": "빈 입력 제출은 저장 호출 없이 연결된 오류와 포커스로 안내한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{let calls=0;panel=submission.mountDraftPanel(root,async()=>{calls++;},{opener});root.querySelector('form').requestSubmit();const input=root.querySelector('[data-draft]');const error=root.querySelector('[data-error]');observe({calls,state:panel.getState(),invalid:input.getAttribute('aria-invalid'),error:error.textContent,described:input.getAttribute('aria-describedby').split(' ').map(id=>document.getElementById(id)?.textContent),focus:document.activeElement.id});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "calls": 0,
+        "state": {
+          "text": "",
+          "status": "error",
+          "error": "내용을 입력하세요."
+        },
+        "invalid": "true",
+        "error": "내용을 입력하세요.",
+        "described": [
+          "입력을 유지한 채 저장하거나 진행 요청을 취소할 수 있습니다.",
+          "내용을 입력하세요."
+        ],
+        "focus": "exercise-root-draft"
+      }
+    },
+    {
+      "id": "delayed-submit-once",
+      "label": "지연 저장 중 중복 제출을 막고 완료 뒤 원문을 남긴다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{let finish;const calls=[];panel=submission.mountDraftPanel(root,(text,{signal})=>{calls.push({text,aborted:signal.aborted});return new Promise(resolve=>{finish=resolve;});},{initialText:'  한글 초안  ',opener});const form=root.querySelector('form');form.requestSubmit();form.requestSubmit();const during={state:panel.getState(),busy:form.getAttribute('aria-busy'),saveDisabled:root.querySelector('[data-save]').disabled,cancelDisabled:root.querySelector('[data-cancel]').disabled};finish();await new Promise(resolve=>setTimeout(resolve,0));observe({calls,during,after:panel.getState(),input:root.querySelector('[data-draft]').value,status:root.querySelector('[data-status]').textContent});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "calls": [
+          {
+            "text": "  한글 초안  ",
+            "aborted": false
+          }
+        ],
+        "during": {
+          "state": {
+            "text": "  한글 초안  ",
+            "status": "saving",
+            "error": null
+          },
+          "busy": "true",
+          "saveDisabled": true,
+          "cancelDisabled": false
+        },
+        "after": {
+          "text": "  한글 초안  ",
+          "status": "saved",
+          "error": null
+        },
+        "input": "  한글 초안  ",
+        "status": "저장됨"
+      }
+    },
+    {
+      "id": "storage-failure-preserves-input",
+      "label": "저장 거부는 입력 검증 오류와 구분하고 내용을 보존한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{panel=submission.mountDraftPanel(root,()=>Promise.reject(new DOMException('fixture','QuotaExceededError')),{initialText:'소중한 초안',opener});root.querySelector('form').requestSubmit();await new Promise(resolve=>setTimeout(resolve,0));const input=root.querySelector('[data-draft]');observe({state:panel.getState(),input:input.value,invalid:input.getAttribute('aria-invalid'),error:root.querySelector('[data-error]').textContent,busy:root.querySelector('form').getAttribute('aria-busy')});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "state": {
+          "text": "소중한 초안",
+          "status": "error",
+          "error": "저장하지 못했습니다. 입력은 유지됩니다."
+        },
+        "input": "소중한 초안",
+        "invalid": "false",
+        "error": "저장하지 못했습니다. 입력은 유지됩니다.",
+        "busy": "false"
+      }
+    },
+    {
+      "id": "input-invalidates-late-save",
+      "label": "저장 중 새 입력은 signal을 취소하고 늦은 성공을 무시한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{let finish,signal;panel=submission.mountDraftPanel(root,(text,options)=>{signal=options.signal;return new Promise(resolve=>{finish=resolve;});},{initialText:'이전',opener});root.querySelector('form').requestSubmit();const input=root.querySelector('[data-draft]');input.value='최신';input.dispatchEvent(new Event('input',{bubbles:true}));finish();await new Promise(resolve=>setTimeout(resolve,0));observe({aborted:signal.aborted,state:panel.getState(),input:input.value,status:root.querySelector('[data-status]').textContent});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "aborted": true,
+        "state": {
+          "text": "최신",
+          "status": "idle",
+          "error": null
+        },
+        "input": "최신",
+        "status": "변경 사항 있음"
+      }
+    },
+    {
+      "id": "keyboard-cancel-and-composition",
+      "label": "합성 단축키와 Escape를 처리하되 조합 중 키는 가로채지 않는다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{let signal;let calls=0;panel=submission.mountDraftPanel(root,(text,options)=>{calls++;signal=options.signal;return new Promise(()=>{});},{initialText:'입력',opener});const input=root.querySelector('[data-draft]');const composing=new KeyboardEvent('keydown',{key:'s',ctrlKey:true,isComposing:true,bubbles:true,cancelable:true});input.dispatchEvent(composing);const shortcut=new KeyboardEvent('keydown',{key:'s',metaKey:true,bubbles:true,cancelable:true});input.dispatchEvent(shortcut);const escape=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});input.dispatchEvent(escape);observe({calls,composingPrevented:composing.defaultPrevented,shortcutPrevented:shortcut.defaultPrevented,escapePrevented:escape.defaultPrevented,aborted:signal.aborted,state:panel.getState(),focus:document.activeElement.id});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "calls": 1,
+        "composingPrevented": false,
+        "shortcutPrevented": true,
+        "escapePrevented": true,
+        "aborted": true,
+        "state": {
+          "text": "입력",
+          "status": "cancelled",
+          "error": null
+        },
+        "focus": "exercise-root-draft"
+      }
+    },
+    {
+      "id": "dispose-aborts-and-restores-focus",
+      "label": "해제 후 늦은 결과·이벤트를 막고 호출 버튼으로 포커스를 돌린다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{let finish,signal;let calls=0;panel=submission.mountDraftPanel(root,(text,options)=>{calls++;signal=options.signal;return new Promise(resolve=>{finish=resolve;});},{initialText:'보존',opener});const form=root.querySelector('form');form.requestSubmit();panel.dispose();panel.dispose();finish();await new Promise(resolve=>setTimeout(resolve,0));form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));observe({calls,aborted:signal.aborted,state:panel.getState(),children:root.childElementCount,focusText:document.activeElement.textContent});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "calls": 1,
+        "aborted": true,
+        "state": {
+          "text": "보존",
+          "status": "disposed",
+          "error": null
+        },
+        "children": 0,
+        "focusText": "열기"
+      }
+    },
+    {
+      "id": "narrow-container-overflow",
+      "label": "좁은 실제 컨테이너에서 폼과 입력이 가로로 넘치지 않는다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{root.style.width='260px';panel=submission.mountDraftPanel(root,async()=>{},{initialText:'긴 초안',opener});const form=root.querySelector('form');const input=root.querySelector('[data-draft]');observe({formOverflow:Math.max(0,form.scrollWidth-form.clientWidth),rootOverflow:Math.max(0,root.scrollWidth-root.clientWidth),text:input.value});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "formOverflow": 0,
+        "rootOverflow": 0,
+        "text": "긴 초안"
+      }
+    },
+    {
+      "id": "cancel-button-preserves-text",
+      "label": "실제 기본 버튼 클릭으로 저장을 시작하고 취소 후 입력을 유지한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{let signal;panel=submission.mountDraftPanel(root,(text,options)=>{signal=options.signal;return new Promise(()=>{});},{initialText:'취소할 초안',opener});root.querySelector('[data-save]').click();root.querySelector('[data-cancel]').click();observe({aborted:signal.aborted,state:panel.getState(),input:root.querySelector('[data-draft]').value,status:root.querySelector('[data-status]').textContent,saveDisabled:root.querySelector('[data-save]').disabled,cancelDisabled:root.querySelector('[data-cancel]').disabled});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "aborted": true,
+        "state": {
+          "text": "취소할 초안",
+          "status": "cancelled",
+          "error": null
+        },
+        "input": "취소할 초안",
+        "status": "저장 취소",
+        "saveDisabled": false,
+        "cancelDisabled": true
+      }
+    },
+    {
+      "id": "synchronous-persist-error",
+      "label": "저장 어댑터의 동기 예외도 입력 보존과 오류 안내로 처리한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalStyle=root.getAttribute('style');const opener=document.createElement('button');opener.textContent='열기';document.body.append(opener);let panel;try{panel=submission.mountDraftPanel(root,()=>{throw new Error('fixture');},{initialText:'남길 입력',opener});root.querySelector('form').requestSubmit();await new Promise(resolve=>setTimeout(resolve,0));observe({state:panel.getState(),error:root.querySelector('[data-error]').textContent});}finally{panel?.dispose();root.replaceChildren();if(originalStyle===null)root.removeAttribute('style');else root.setAttribute('style',originalStyle);opener.remove();}",
+      "expected": {
+        "state": {
+          "text": "남길 입력",
+          "status": "error",
+          "error": "저장하지 못했습니다. 입력은 유지됩니다."
+        },
+        "error": "저장하지 못했습니다. 입력은 유지됩니다."
+      }
+    }
+  ]
+}

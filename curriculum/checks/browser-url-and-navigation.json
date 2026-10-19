@@ -1,0 +1,122 @@
+{
+  "exerciseId": "browser-url-and-navigation-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-url-and-navigation-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "restore-from-url",
+      "label": "현재 주소의 유효한 ID를 실제 DOM에 복원한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=b&keep=yes\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','b'],'a');observe({state:router.getState(),text:root.querySelector('output').textContent,dataset:root.dataset.lesson,label:root.querySelector('textarea').getAttribute('aria-label')});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "state": {
+          "lessonId": "b",
+          "draft": ""
+        },
+        "text": "b",
+        "dataset": "b",
+        "label": "학습 메모"
+      }
+    },
+    {
+      "id": "canonicalize-invalid-and-duplicate",
+      "label": "잘못되거나 중복된 query를 replace하며 소유하지 않은 값을 보존한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=invalid&lesson=b&keep=yes\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);const before=history.length;router=submission.createLessonRouter(root,['a','b'],'a');const url=new URL(location.href);observe({ids:url.searchParams.getAll('lesson'),keep:url.searchParams.get('keep'),hash:url.hash,historyDelta:history.length-before,historyState:history.state});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "ids": [
+          "a"
+        ],
+        "keep": "yes",
+        "hash": "#notes",
+        "historyDelta": 0,
+        "historyState": {
+          "kept": "state"
+        }
+      }
+    },
+    {
+      "id": "programmatic-navigation",
+      "label": "탐색 즉시 렌더링하고 같은 ID의 History 항목은 중복하지 않는다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=a&keep=yes\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','b'],'a');const originalPush=history.pushState;let pushCalls=0;history.pushState=function(...args){pushCalls++;return Reflect.apply(originalPush,this,args);};try{const first=router.navigate('b');const second=router.navigate('b');const url=new URL(location.href);observe({first,second,pushCalls,lesson:url.searchParams.get('lesson'),keep:url.searchParams.get('keep'),text:root.querySelector('output').textContent});}finally{history.pushState=originalPush;}}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "first": {
+          "lessonId": "b",
+          "draft": ""
+        },
+        "second": {
+          "lessonId": "b",
+          "draft": ""
+        },
+        "lesson": "b",
+        "keep": "yes",
+        "text": "b",
+        "pushCalls": 1
+      }
+    },
+    {
+      "id": "drafts-survive-actual-back",
+      "label": "실제 History.back 후 URL·화면·강의별 초안이 함께 복원된다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=a\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','b','c'],'a');const input=root.querySelector('textarea');input.value='a 초안';input.dispatchEvent(new Event('input',{bubbles:true}));router.navigate('b');input.value='b 초안';input.dispatchEvent(new Event('input',{bubbles:true}));router.navigate('c');await new Promise((resolve,reject)=>{const onPop=()=>{clearTimeout(timer);window.removeEventListener('popstate',onPop);resolve();};const timer=setTimeout(()=>{window.removeEventListener('popstate',onPop);reject(new Error('History traversal timed out'));},1500);window.addEventListener('popstate',onPop);history.back();});const b={state:router.getState(),input:input.value};await new Promise((resolve,reject)=>{const onPop=()=>{clearTimeout(timer);window.removeEventListener('popstate',onPop);resolve();};const timer=setTimeout(()=>{window.removeEventListener('popstate',onPop);reject(new Error('History traversal timed out'));},1500);window.addEventListener('popstate',onPop);history.back();});observe({b,a:{state:router.getState(),input:input.value},url:new URL(location.href).searchParams.get('lesson')});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "b": {
+          "state": {
+            "lessonId": "b",
+            "draft": "b 초안"
+          },
+          "input": "b 초안"
+        },
+        "a": {
+          "state": {
+            "lessonId": "a",
+            "draft": "a 초안"
+          },
+          "input": "a 초안"
+        },
+        "url": "a"
+      }
+    },
+    {
+      "id": "encoded-id-and-invalid-navigation",
+      "label": "한글·구분자가 있는 ID를 roundtrip하고 잘못된 이동은 거부한다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=a&keep=yes\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','한글 & 기초'],'a');router.navigate('한글 & 기초');let errorName='accepted';try{router.navigate('unknown');}catch(error){errorName=error.name;}observe({id:new URL(location.href).searchParams.get('lesson'),keep:new URL(location.href).searchParams.get('keep'),state:router.getState(),errorName});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "id": "한글 & 기초",
+        "keep": "yes",
+        "state": {
+          "lessonId": "한글 & 기초",
+          "draft": ""
+        },
+        "errorName": "RangeError"
+      }
+    },
+    {
+      "id": "remount-url-not-memory",
+      "label": "새 인스턴스는 URL 선택만 복원하고 영속 저장을 가장하지 않는다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=b\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','b'],'a');const input=root.querySelector('textarea');input.value='인스턴스 초안';input.dispatchEvent(new Event('input',{bubbles:true}));const previous=router.getState();router.dispose();router=submission.createLessonRouter(root,['a','b'],'a');observe({previous,current:router.getState()});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "previous": {
+          "lessonId": "b",
+          "draft": "인스턴스 초안"
+        },
+        "current": {
+          "lessonId": "b",
+          "draft": ""
+        }
+      }
+    },
+    {
+      "id": "dispose-detaches-events",
+      "label": "해제한 인스턴스는 실제 popstate와 입력을 더 이상 반영하지 않는다",
+      "probe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=a\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','b'],'a');router.navigate('b');router.dispose();router.dispose();const input=root.querySelector('textarea');input.value='해제 후 입력';input.dispatchEvent(new Event('input',{bubbles:true}));await new Promise((resolve,reject)=>{const onPop=()=>{clearTimeout(timer);window.removeEventListener('popstate',onPop);resolve();};const timer=setTimeout(()=>{window.removeEventListener('popstate',onPop);reject(new Error('History traversal timed out'));},1500);window.addEventListener('popstate',onPop);history.back();});let errorName='accepted';try{router.navigate('a');}catch(error){errorName=error.name;}observe({state:router.getState(),text:root.querySelector('output').textContent,url:new URL(location.href).searchParams.get('lesson'),errorName});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}",
+      "expected": {
+        "state": {
+          "lessonId": "b",
+          "draft": ""
+        },
+        "text": "b",
+        "url": "a",
+        "errorName": "InvalidStateError"
+      }
+    }
+  ]
+}

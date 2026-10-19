@@ -1,0 +1,185 @@
+{
+  "id": "browser-events-and-lifecycle",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "이벤트와 수명주기: 동적 항목을 한 번만 처리하고 연결 해제하기",
+  "track": "browser",
+  "level": "transition",
+  "goals": [
+    "target/currentTarget·전파·기본 동작을 구분해 동적 항목에 이벤트를 위임한다.",
+    "네이티브 버튼과 제한된 키보드 단축키를 함께 처리한다.",
+    "connect/dispose로 중복 등록과 해제 후 콜백을 방지한다."
+  ],
+  "prerequisites": [
+    "browser-dom-and-rendering"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "WHATWG DOM §2 Events: dispatch, target, currentTarget, cancelable",
+      "url": "https://dom.spec.whatwg.org/#events",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM EventTarget.addEventListener/removeEventListener",
+      "url": "https://dom.spec.whatwg.org/#interface-eventtarget",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML: activation behavior와 button",
+      "url": "https://html.spec.whatwg.org/multipage/interaction.html#activation-behavior",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "browser-events-and-lifecycle-exercise",
+  "steps": {
+    "theory": "항목을 추가했더니 새 편집 버튼만 동작하지 않는다. 최초 querySelectorAll로 찾은 버튼마다 리스너를 붙이면 나중에 만든 노드는 그 목록에 없다. 안정적인 부모 ul에 click 리스너를 두고 이벤트가 시작된 target에서 가까운 버튼과 항목을 찾으면 동적으로 추가한 자식도 같은 경로로 처리할 수 있다. 단, 부모 안에 있는 다른 위젯까지 처리하지 않도록 항목의 직접 부모가 현재 root인지 확인한다.\n\ntarget은 발생 지점이며 currentTarget은 현재 리스너를 실행하는 대상이다. 버튼 안 span을 클릭하면 둘이 다르다. preventDefault는 취소 가능한 기본 동작을 막고 stopPropagation은 전파 경로를 막는다. 삭제를 처리했다는 이유만으로 부모의 관찰까지 막을 필요는 없다. dispatchEvent가 예외를 일반 함수 호출처럼 호출자에게 그대로 던진다고 가정하지도 않는다.\n\nbutton은 기본적인 키보드 활성화를 제공한다. 별도의 Enter 처리까지 중복 추가하면 동작을 두 번 실행할 수 있다. 여기서는 버튼 활성화는 click에 맡기고, 포커스 가능한 행 자체의 Delete만 명시적 단축키로 다룬다. 연결 함수에 새 익명 함수를 계속 넘기면 동일 동작이라도 다른 리스너가 쌓인다. 같은 함수 참조와 연결 상태를 보관해 해제하고 재연결한다.",
+    "example": "브라우저 예제는 편집 버튼 안 span에 합성 click을 보내도 p1/edit가 한 번 기록되는지 본다. 연결 후 만든 p2의 삭제 버튼도 처리된다. 마지막에는 행에 focus한 뒤 합성 Delete 이벤트를 보내고 dispose 후 버튼을 눌러도 기록 수가 늘지 않는지 확인한다. 합성 이벤트와 .click()은 실제 OS 키보드 입력·스크린리더 사용의 인수 검사를 대신하지 않는다.",
+    "quiz": "q1은 안쪽 span과 부모 ul의 target/currentTarget, q2는 preventDefault와 전파 중단의 차이, q3은 함수 참조와 중복 등록, q4는 합성 KeyboardEvent가 실제 브라우저 키보드 기본 동작을 자동 재현하는지 묻는다. 이벤트 종류만 맞는다는 이유로 사용자 활성화나 isTrusted까지 같다고 판단하지 않는다.",
+    "practice": "라우팅으로 목록 화면을 열고 닫을 때 connect와 dispose를 함께 호출한다. 동일 컨트롤러의 connect를 두 번 불러도 한 번만 연결하고, dispose 뒤 다시 connect할 수 있게 한다. 동시에 여러 컨트롤러를 같은 root에 소유시키는 사용은 이 과제의 범위 밖이다. 단축키가 입력칸의 삭제나 한글 조합을 가로채지 않게 대상을 제한하고, 수명 종료 시 root를 제거하는 코드와 리스너를 해제하는 코드를 모두 확인한다.",
+    "lab": "createInventoryEvents(root,onAction)는 ul root와 함수 콜백으로 {connect,dispose}를 만든다. 처음에는 미연결이다. connect/dispose는 반복 호출해도 안전하며 dispose 후 재연결할 수 있다. 직계 li[data-id] 안의 활성 button[data-action=edit/delete] click만 처리한다. 안쪽 span 클릭도 허용하고 중첩된 다른 목록·disabled·알 수 없는 action은 무시한다. 처리한 이벤트만 preventDefault하고 전파는 유지하며 onAction({action,id})을 한 번 호출한다. 행 자체를 target으로 하는 Delete에서 조합 중·repeat·ctrl/alt/meta가 아니면 delete를 호출한다. 입력 요소·버튼 자체의 keydown에는 별도 동작을 추가하지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-target",
+        "prompt": "ul에 등록한 리스너에서 버튼 안 span을 클릭했다. target과 currentTarget은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "target은 span, currentTarget은 ul이다.",
+            "explanation": "발생 지점과 현재 리스너 등록 지점을 구분한다."
+          },
+          {
+            "id": "b",
+            "text": "둘 다 ul이다.",
+            "explanation": "위임했다고 발생 지점이 바뀌지는 않는다."
+          },
+          {
+            "id": "c",
+            "text": "둘 다 button이다.",
+            "explanation": "버튼 안 요소가 실제 target일 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-prevent",
+        "prompt": "처리한 click에 preventDefault를 호출하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "모든 부모 리스너도 자동으로 멈춘다.",
+            "explanation": "기본 동작 취소와 전파 중단은 별도다."
+          },
+          {
+            "id": "b",
+            "text": "취소 가능한 기본 동작을 막되 전파는 별도로 유지된다.",
+            "explanation": "stopPropagation을 호출하지 않는 한 전파 자체를 막는 명령이 아니다."
+          },
+          {
+            "id": "c",
+            "text": "cancelable이 false여도 항상 취소된다.",
+            "explanation": "이벤트의 취소 가능성 및 passive 리스너 제약을 확인해야 한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-listener-identity",
+        "prompt": "connect마다 새 화살표 리스너를 생성하면 생길 수 있는 문제는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "코드가 같으니 항상 하나로 합쳐진다.",
+            "explanation": "서로 다른 함수 객체는 같은 리스너 참조가 아니다."
+          },
+          {
+            "id": "b",
+            "text": "removeEventListener에 다른 새 화살표를 넣어도 해제된다.",
+            "explanation": "등록한 콜백 참조와 capture 조건 등을 맞춰야 한다."
+          },
+          {
+            "id": "c",
+            "text": "중복 처리와 해제 실패가 생길 수 있다.",
+            "explanation": "안정적인 함수 참조와 연결 상태를 관리한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q4-synthetic-key",
+        "prompt": "dispatchEvent(new KeyboardEvent(...))만 통과하면 실제 키보드 사용도 검증됐는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "아니다. 합성 이벤트 처리와 실제 기본 동작·사용자 입력은 별도 확인한다.",
+            "explanation": "합성 키 이벤트가 브라우저의 모든 네이티브 활성화 동작을 재현하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "그렇다. isTrusted도 실제 입력과 같다.",
+            "explanation": "스크립트가 만든 이벤트를 사용자 에이전트의 실제 입력과 동일시하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "버튼을 div로 바꿔도 접근성은 항상 같다.",
+            "explanation": "네이티브 버튼의 의미와 키보드 동작을 다시 구현해야 할 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-target",
+        "q2-prevent"
+      ],
+      "caseIds": [
+        "nested-click-and-propagation",
+        "dynamic-item",
+        "unowned-and-disabled-ignored"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q4-synthetic-key"
+      ],
+      "caseIds": [
+        "keyboard-row-focus",
+        "editing-and-composition-ignored"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-listener-identity"
+      ],
+      "caseIds": [
+        "connect-dispose-reconnect"
+      ]
+    }
+  ],
+  "example": {
+    "file": "curriculum/examples/browser-events-and-lifecycle.mjs",
+    "expectedLogs": [
+      "{\"actions\":[{\"action\":\"edit\",\"id\":\"p1\"}],\"prevented\":true}",
+      "[{\"action\":\"edit\",\"id\":\"p1\"},{\"action\":\"delete\",\"id\":\"p2\"},{\"action\":\"delete\",\"id\":\"p1\"}]",
+      "{\"count\":3}"
+    ],
+    "hostRequirements": [
+      "browser-dom"
+    ]
+  }
+}

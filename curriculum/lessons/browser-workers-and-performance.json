@@ -1,0 +1,182 @@
+{
+  "id": "browser-workers-and-performance",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "Worker와 성능: 작업을 옮기고 오래된 결과를 차단하기",
+  "track": "browser",
+  "level": "advanced",
+  "goals": [
+    "Worker의 별도 실행 환경과 structured clone·transfer의 소유권을 구분한다.",
+    "요청 번호로 낡은 응답을 거부하고 취소·종료·오류 뒤 자원을 정리한다.",
+    "같은 입력·기준 결과·단계별 비용을 갖춘 성능 측정을 설계한다."
+  ],
+  "prerequisites": [
+    "browser-url-and-navigation",
+    "iterators-and-generators",
+    "cancellation-and-stale-results",
+    "bounded-concurrency-and-retries"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "WHATWG HTML — dedicated workers and Worker interface",
+      "url": "https://html.spec.whatwg.org/multipage/workers.html#dedicated-workers-and-the-worker-interface",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML — structured serialization and transfer",
+      "url": "https://html.spec.whatwg.org/multipage/structured-data.html#structuredserializewithtransfer",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM — AbortSignal event listener lifetime",
+      "url": "https://dom.spec.whatwg.org/#abortsignal",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "browser-workers-and-performance-exercise",
+  "steps": {
+    "theory": "대량 집계를 Worker로 옮겼는데 화면에는 이전 검색 조건의 합계가 늦게 나타났다. 실행 위치를 분리해도 결과가 최신 입력에 속하는지 판단하는 책임은 남는다. dedicated Worker는 별도 전역 환경에서 실행되며 document로 DOM을 직접 변경하지 않는다. 메인 화면은 메시지로 받은 결과를 검증한 뒤 렌더링한다. 이 분리가 곧 계산량 감소나 전체 처리 시간 단축을 뜻하지는 않는다.\n\npostMessage의 일반 값은 structured clone 경로로 전달한다. 원본 배열이 상대 쪽과 같은 JavaScript 객체로 공유된다고 가정하지 않는다. 함수처럼 직렬화할 수 없는 값은 실패할 수 있다. transferable ArrayBuffer를 전송 목록에 넣으면 소유권이 이동하여 보내는 쪽 버퍼가 분리될 수 있다. 취소 후에도 사용자의 입력 버퍼가 필요하다면 전송 전에 복사할지, 원본을 계속 소유할지 결정해야 한다. 이번 합계 과제는 숫자 배열 복사 전달을 사용한다.\n\n사용자가 연속 제출하면 requestId 1의 응답이 왔을 때 현재 요청은 2일 수 있다. 실제 완료 순서와 관계없이 현재 활성 번호에 맞는 유효한 결과만 채택한다. 취소는 더 이상 반영하지 않는다는 상태 전이와 계산 자원을 멈추는 작업을 함께 정의한다. Worker.terminate()는 강제 종료 요청이며 Worker 내부 finally나 저장 정리 콜백이 끝났다는 약속이 아니다. 중요한 커밋은 별도 확인 프로토콜이 필요하다.\n\n성능은 기준 구현의 결과가 같은지부터 확인한다. 입력 크기·분포, Worker 생성 비용, clone/transfer 비용, 계산 시간, 왕복 지연, 화면 반응성을 나눠 기록한다. 한 번의 짧은 측정만으로 더 빠르다고 결론 내리지 않는다. performance.now는 경과 시간 관찰에 사용하지만 숫자가 환경마다 달라지는 측정 결과를 고정 정답으로 비교하지 않는다. 이 제품의 DOM 과제는 별도 출처 iframe에서 실행하며 동기 무한 루프나 hard RAM 상한의 강제 종료까지 보장하지 않는다.",
+    "example": "브라우저 전용 예제는 고정 sum Worker에 [1,2,3]을 보내 합계 6과 원본 입력이 그대로 남아 있음을 출력한다. performance.now로 왕복 구간을 측정한 elapsedMs는 고정 로그 비교에서 제외한다. 이어 ArrayBuffer를 transfer한 뒤 원본 byteLength는 0, 받은 버퍼는 4임을 보여 준다. finally에서 실제 Worker를 terminate한다. 이 로그만으로 Worker가 더 빠르다고 판정하지 않는다.",
+    "quiz": "다른 실행 환경, 데이터 복사와 소유권 이동, 최신 요청의 판정, 강제 종료와 정상 정리 완료, 처리량과 UI 응답성을 구분한다.",
+    "practice": "큰 주문 입력을 필터링·집계하는 화면에서 기준 동기 구현과 Worker 결과를 먼저 맞춘다. 사용자가 입력을 수정하면 이전 요청을 표시 대상에서 제외하고, 취소 뒤 재시도할 원본 배열을 유지한다. Worker 생성·재사용 정책과 메시지 스키마를 문서화하고 dispose 때 연결 리스너와 Worker를 모두 정리한다.\n\n자동 검사는 실제 Worker 응답, 연속 요청의 낡은 메시지, terminate 계측, 취소 후 새 Worker, 잘못된 입력, 주입한 error/message 이벤트를 구분한다. 합성 error는 실제 네트워크 로드 실패를 재현한 것으로 쓰지 않는다. 성능 보고서는 입력 크기·브라우저·기기·반복 수·워밍업·중앙값/분산·메인 스레드 지연을 포함한다. 동기 무한 루프·메모리 고갈에 대한 제품 격리 한계는 Worker 메시지의 논리적 취소와 별개다.\n\n채점 입력은 개수와 정수 범위를 제한해 합계가 안전 정수 범위 안에 있도록 한다. 임의의 유한 Number 배열에서 합계 오버플로·반올림을 무시하는 정책이 아니다.",
+    "lab": "createWorkerAggregator(options)를 구현한다. options는 {workerURL,onResult,onError,makeWorker}이고 onError 기본값은 아무 일도 하지 않는 함수, makeWorker 기본값은 url=>new Worker(url)이다. fixture URL은 context.workerBase+\"sum.js\"이며 {requestId,values:number[]}를 받아 {requestId,sum}을 응답한다. 반환 API는 {submit,cancel,dispose,getState}다. Worker는 첫 유효 submit에 만들고 정상 완료 후 재사용한다.\n\nsubmit(values)는 길이 100,000 이하인 조밀 배열이며 각 own 인덱스의 값이 절댓값 1,000,000 이하의 안전 정수일 때만 허용하고 잘못되면 TypeError를 던지며 기존 작업을 유지한다. 입력을 변경·transfer하지 않는다. 유효 요청마다 1부터 증가하는 requestId를 반환하고 복사한 values를 postMessage한다. 활성 요청보다 오래되거나 다른 requestId, 유한 number가 아닌 sum의 메시지는 무시한다. 유효한 최신 결과만 onResult({requestId,sum})를 한 번 호출한다.\n\ngetState는 {status,requestId,lastSum}의 새 객체다. 초기값은 idle/0/null, submit은 running/요청번호/직전 성공 합계, 정상 응답은 done/번호/새 합계다. cancel은 활성 요청을 무효화하고 Worker를 terminate하며 cancelled로 바꾸되 입력·직전 합계·마지막 번호는 보존한다. 다음 submit은 새 Worker를 만든다. dispose는 여러 번 호출해도 Worker를 한 번만 종료하고 리스너를 제거하며 disposed가 된다. 이후 submit은 InvalidStateError다.\n\nWorker error 또는 messageerror는 활성 요청을 error 상태로 만들고 Worker를 종료한 뒤 onError({requestId,message})를 호출한다. error의 message 문자열을 사용하며 messageerror는 Message deserialization failed로 한다. 생성/postMessage의 동기 예외는 원래 값을 다시 던지고 error 상태로 정리하되 onError를 중복 호출하지 않는다. 종료·취소 뒤의 메시지는 무시한다. 콜백과 makeWorker는 정상 함수이며 콜백 자체의 예외 정책은 이 과제 범위 밖이다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-transfer",
+        "prompt": "ArrayBuffer를 transfer 목록으로 보냈다. 원본을 취소 후 재사용하려면 무엇을 고려해야 하는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "원본 버퍼는 항상 이전처럼 읽을 수 있다.",
+            "explanation": "transfer는 복사와 달리 보내는 쪽 버퍼를 분리할 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "소유권 이동 때문에 원본 보존·복사 정책을 먼저 정한다.",
+            "explanation": "취소 논리와 데이터 소유권을 함께 설계해야 한다."
+          },
+          {
+            "id": "c",
+            "text": "Worker와 Window는 DOM 객체를 그대로 공유한다.",
+            "explanation": "Worker는 document를 직접 사용하는 DOM 환경이 아니다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-stale",
+        "prompt": "requestId 1과 2를 연달아 보낸 뒤 1의 응답이 왔다. 최신 화면의 합계는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "마지막 도착값이면 번호와 무관하게 표시한다.",
+            "explanation": "도착 순서만으로 최신 사용자 의도를 판단할 수 없다."
+          },
+          {
+            "id": "b",
+            "text": "현재 활성 번호 2와 다르므로 1의 결과는 표시하지 않는다.",
+            "explanation": "결과를 요청 정체성에 결속한다."
+          },
+          {
+            "id": "c",
+            "text": "번호 비교 대신 항상 1초 기다리면 해결된다.",
+            "explanation": "임의 지연은 올바른 요청의 식별을 대신하지 못한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-terminate",
+        "prompt": "Worker.terminate() 후 확실히 기대할 수 없는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Worker 내부 finally와 저장 커밋 완료",
+            "explanation": "강제 종료 요청은 협력적 정리 완료 응답이 아니다."
+          },
+          {
+            "id": "b",
+            "text": "화면에서 이전 결과를 무시하는 상태를 둘 수 있다는 사실",
+            "explanation": "화면의 논리 상태는 별도로 갱신할 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "다음 요청에 새 Worker를 만들 수 있다는 사실",
+            "explanation": "종료된 Worker를 재사용하는 대신 새 인스턴스를 만들 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-measurement",
+        "prompt": "Worker 성능 비교에서 가장 먼저 갖출 조건은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "같은 입력과 기준 결과를 확인하고 생성·전달·계산 비용을 나누어 측정한다.",
+            "explanation": "작업량과 정확성이 다른 실행을 속도 숫자만으로 비교하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "Worker라는 이름이 붙으면 항상 빠르다고 기록한다.",
+            "explanation": "추가 생성·전달 비용 때문에 작거나 짧은 작업은 느릴 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "한 번 실행한 시간만으로 모든 기기를 대표한다.",
+            "explanation": "기기·부하·워밍업·표본 변동을 무시한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-transfer"
+      ],
+      "caseIds": [
+        "actual-worker-sum",
+        "invalid-input-preserves-active",
+        "postmessage-failure"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-stale",
+        "q3-terminate"
+      ],
+      "caseIds": [
+        "ignore-stale-real-messages",
+        "cancel-and-restart",
+        "dispose-once",
+        "worker-error-and-recovery",
+        "ignore-malformed-response",
+        "messageerror-retains-last-success"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-measurement"
+      ],
+      "caseIds": [
+        "actual-worker-sum",
+        "cancel-and-restart"
+      ]
+    }
+  ]
+}

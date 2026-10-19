@@ -1,0 +1,70 @@
+{
+  "id": "capstone-acceptance-review-exercise",
+  "lessonId": "capstone-acceptance-review",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-acceptance-review-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createAcceptanceReview(root,queryProducts,identity)의 본문을 작성한다. identity에는 비어 있지 않은 contentRevision/sourceFingerprint/graderRevision/environmentFingerprint 문자열이 모두 필요하다. root에 role=status/aria-live=polite output과 인수 결과 ol을 만들고 초기 상태 NOT_RUN을 표시한다. 반환 API는 run(tests), invalidate(nextIdentity,nextCore), getState(), dispose()다.\n\ntests는 1–32개 조밀 배열이며 각 {id,check}는 고유한 비빈 문자열 ID와 함수다. 잘못된 목록은 상태 INVALID·빈 checks로 바꾸고 빈/과다 개수는 RangeError, 나머지는 TypeError다. run은 순서대로 await check({queryProducts:현재대상,signal})을 실행한다. true만 {id,status:'PASS',reason:null}, 다른 반환은 FAIL/returned-false, throw는 FAIL/threw다. 전체는 하나 이상 모두 통과할 때만 PASS다. 결과 형태는 {status,identity,checks} 복사본이다.\n\ninvalidate는 실제 새 core와 새 identity를 받아 현재 작업을 abort하고 STALE·빈 checks로 바꾼다. 옛 작업 완료는 STALE 반환만 하고 현재 상태에 반영하지 않는다. 활성 run 중 중복 run과 dispose 뒤 동작은 InvalidStateError다. dispose는 현재 signal·자식 DOM을 정리하고 DISPOSED로 남는다. 실제 소스 지문 계산·성취 저장 연결은 실행 제공자 책임이며 임의 지문 문자열을 성적 인증으로 표시하지 않는다."
+  ],
+  "template": "export function createAcceptanceReview(root, queryProducts, identity) {\n  // TODO: 실제 검사 함수를 기다리고 개정·소스·환경에 결속된 인수 결과를 표시하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/capstone-acceptance-review.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 HTTP·core 검사를 실행·대기하고 식별정보와 결과를 표시한다",
+    "빈 검사·중복 ID·호출 불가 검사를 성공으로 만들지 않는다",
+    "false·truthy 값·throw를 실패로 기록하고 뒤 비동기 검사를 계속한다",
+    "새 소스·검사개정·환경은 이전 통과를 지우고 새 core를 검사한다",
+    "실행 중 소스가 바뀌면 옛 비동기 통과를 새 결과에 덮어쓰지 않는다",
+    "보고서 외부 변경을 분리하고 종료 뒤 미완료 결과를 차단한다"
+  ],
+  "rubric": [
+    "실제 검사 실행·대기·0검사 거부",
+    "개정·소스·환경 결속과 무효화",
+    "사용 설명·선택 이유·미검증 범위 자가 확인"
+  ],
+  "available": false,
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createAcceptanceReview",
+    "parameters": [
+      "root",
+      "queryProducts",
+      "identity"
+    ],
+    "async": false,
+    "hostRequirements": [
+      "browser-dom"
+    ],
+    "runProbe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{review=submission.createAcceptanceReview(root,queryProducts,identity);const result=await review.run([{id:'empty',check:({queryProducts})=>queryProducts([]).count===0},{id:'sum',check:({queryProducts})=>queryProducts([{id:'a',name:'A',price:5}]).total===5}]);observe(result);}finally{review?.dispose();root.replaceChildren();}"
+  },
+  "editable": {
+    "prefix": "export function createAcceptanceReview(root, queryProducts, identity) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 실제 검사 함수를 기다리고 개정·소스·환경에 결속된 인수 결과를 표시하세요."
+  },
+  "graderFile": "curriculum/checks/capstone-acceptance-review.json",
+  "referenceFile": "reference/capstone-acceptance-review.mjs",
+  "incorrectFile": "reference/incorrect/capstone-acceptance-review.mjs",
+  "exampleFile": "curriculum/examples/capstone-acceptance-review.mjs",
+  "exampleExpectedLogs": [
+    "{\"status\":\"PASS\"}",
+    "{\"status\":\"STALE\"}",
+    "{\"status\":\"FAIL\"}"
+  ],
+  "verificationRecord": "docs/execution/capstone-acceptance-review-exercise.json"
+}

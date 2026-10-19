@@ -1,0 +1,493 @@
+{
+  "snapshot": "M4 Git index source; reports excluded; matches work/m4-review-final",
+  "algorithm": "SHA256 of file + NUL + sha256 + LF in sorted path order",
+  "aggregateSha256": "eb28351f897866d22514e14318afdc750291f78e541bfdf53607f3934c970aea",
+  "sourceCount": 110,
+  "files": [
+    {
+      "file": "AGENTS.md",
+      "sha256": "90689238ed1f0c0f5be010f6bc83dfeda3e99f7e04d969f58f593b3b2dcbab4f"
+    },
+    {
+      "file": "curriculum/catalog.json",
+      "sha256": "c8a79577c3dfe459c3199b04179d1105c916148b8ea147d2f2341d73ced0e81a"
+    },
+    {
+      "file": "curriculum/checks/browser-behavior-and-accessibility.json",
+      "sha256": "ac37667fe5c075c0e0a16ce1a2b078af2171d28a504d10db707ccfed3b026f94"
+    },
+    {
+      "file": "curriculum/checks/browser-dom-and-rendering.json",
+      "sha256": "32f14313b06e976d66238cddde33d5a5d1802722c6e41a71f1cfbb12517b149e"
+    },
+    {
+      "file": "curriculum/checks/browser-events-and-lifecycle.json",
+      "sha256": "be385205606302508bbfe60c91645f10081c20d812a914846c466984a358b74e"
+    },
+    {
+      "file": "curriculum/checks/browser-fetch-and-http.json",
+      "sha256": "852f2ad24830a8118833132e1e6e4609e5e9c63e1c89f232a33c0527c9cfca44"
+    },
+    {
+      "file": "curriculum/checks/browser-forms-and-input.json",
+      "sha256": "732ea66a0582f3d1c9e3089012a1341ec62ab1fdd8b4f74587c577b43632b647"
+    },
+    {
+      "file": "curriculum/checks/browser-storage-and-migrations.json",
+      "sha256": "cfa756ae4867c498e5215199ff02f77200d4210e7c96285a0ff8afc941d93449"
+    },
+    {
+      "file": "curriculum/checks/browser-url-and-navigation.json",
+      "sha256": "a4dd010600ced61d79e95ff9a0987fff1333052f27332838e7d9c93794cb040d"
+    },
+    {
+      "file": "curriculum/checks/browser-workers-and-performance.json",
+      "sha256": "f39904cbb5368f0204016740334befb66640b1a81e5f9387076ec10ce210d6b7"
+    },
+    {
+      "file": "curriculum/checks/capstone-acceptance-review.json",
+      "sha256": "abafaf2dde7b75973b65e9263017a1d859a8bfb079ee408dd30f38606cc8c9af"
+    },
+    {
+      "file": "curriculum/checks/capstone-domain-core.json",
+      "sha256": "ff45159ee8eeccfe00113ff5f3cec2d3945cba33a084853cd024ffebb09cda98"
+    },
+    {
+      "file": "curriculum/checks/capstone-failure-and-scale.json",
+      "sha256": "d8bcecceba833203b4359902c851cec2cd2b01a5642ec6612e4723fb9a8d4bc7"
+    },
+    {
+      "file": "curriculum/checks/capstone-host-product.json",
+      "sha256": "586433ae3f19277040adef7a9164f6ec11f85e345fd7632e92625bdf320c0de1"
+    },
+    {
+      "file": "curriculum/examples/browser-behavior-and-accessibility.mjs",
+      "sha256": "71cbecdcfb1201ed2a171aad0bac6fbb5cd520ff97880bf84597562a1d71478a"
+    },
+    {
+      "file": "curriculum/examples/browser-dom-and-rendering.mjs",
+      "sha256": "a8177b39d5dde58e685d78ab1d523c42c6a748572f3b62e5db48fca6f2ce98f6"
+    },
+    {
+      "file": "curriculum/examples/browser-events-and-lifecycle.mjs",
+      "sha256": "9a45340195f46c025c2bd47bc72e622d961a5674787fc0a3f5737170400da3ff"
+    },
+    {
+      "file": "curriculum/examples/browser-fetch-and-http.mjs",
+      "sha256": "72793cb2ca728943af4998ad005111664b4c2d7c0bf1d07b064a480e21e78976"
+    },
+    {
+      "file": "curriculum/examples/browser-forms-and-input.mjs",
+      "sha256": "a862f5f7654d8846ffcfd256b61b507786ef752cf2fddd9c903db1e3790f4199"
+    },
+    {
+      "file": "curriculum/examples/browser-storage-and-migrations.mjs",
+      "sha256": "dfa4d5fb098141df0ec6c473fa0cb3967cf0feb91ee39621f77767522d0e7a37"
+    },
+    {
+      "file": "curriculum/examples/browser-url-and-navigation.mjs",
+      "sha256": "05832b805f4effb197e229b8a943e024082d7b0d8f66a2ed8fe43f4d01cff7b0"
+    },
+    {
+      "file": "curriculum/examples/browser-workers-and-performance.mjs",
+      "sha256": "19874431df7afee97cb2bb8d7a1d69c0368bbf3c07faec5f4cf4acfb158213fc"
+    },
+    {
+      "file": "curriculum/examples/capstone-acceptance-review.mjs",
+      "sha256": "3c3c91533ccdbec5718b4f420115007c4f58a6348c2b29a72bb6a141af2dd587"
+    },
+    {
+      "file": "curriculum/examples/capstone-domain-core.mjs",
+      "sha256": "ef990b1e13d7e081e1f46375b76365abc4d08fe6d9d6937f9397b998c98e6bef"
+    },
+    {
+      "file": "curriculum/examples/capstone-domain-core/main.mjs",
+      "sha256": "37baad4e60a0fb16627a7ca52b4b0ea9ef7f6ade012aa2680ac080c1e068a1be"
+    },
+    {
+      "file": "curriculum/examples/capstone-domain-core/reader.mjs",
+      "sha256": "e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+    },
+    {
+      "file": "curriculum/examples/capstone-failure-and-scale.mjs",
+      "sha256": "3167cbf29f17167e0d7308b5afa91ac8dd2d4dbf640020f47a2afeeb48ef6043"
+    },
+    {
+      "file": "curriculum/examples/capstone-host-product.mjs",
+      "sha256": "7299c4fca1a463f39fbef455a4563cf21720b115e8e48a36da814276b9e38c8f"
+    },
+    {
+      "file": "curriculum/exercises.json",
+      "sha256": "132feced6a8c9bb1d84e20367a46ae14fb73b49ba49792607c3ba42bd10f8c92"
+    },
+    {
+      "file": "curriculum/exercises/browser-behavior-and-accessibility.json",
+      "sha256": "1b76832e9bc1fd3c4326135150c173b6589dd31987a63f013130b6f8d13b83f0"
+    },
+    {
+      "file": "curriculum/exercises/browser-dom-and-rendering.json",
+      "sha256": "41e7c1d6cfe93170b2e1e059f30676aec2f9b41c8f825d3f91acb147c9b3a9b2"
+    },
+    {
+      "file": "curriculum/exercises/browser-events-and-lifecycle.json",
+      "sha256": "99641a5d646214e6312ac84ae6e2654abcde431d03f9df490b74ebfa291b49c8"
+    },
+    {
+      "file": "curriculum/exercises/browser-fetch-and-http.json",
+      "sha256": "9e033be33042f696b3854584630c071ca6d10d900ed7a6654e4788916f22e7ef"
+    },
+    {
+      "file": "curriculum/exercises/browser-forms-and-input.json",
+      "sha256": "32e686ca86ef22e99781e30bac5206a641a7fd9c8e35bdaeb479507273b97d3e"
+    },
+    {
+      "file": "curriculum/exercises/browser-storage-and-migrations.json",
+      "sha256": "a170eb4cfe9a2d1629f4e7b05c26a9a572a987362e29c7bf592270ee736c8b37"
+    },
+    {
+      "file": "curriculum/exercises/browser-url-and-navigation.json",
+      "sha256": "95c78bfa8d06591645eb462dcaa4da96123a628b66896d67230e0c455037c450"
+    },
+    {
+      "file": "curriculum/exercises/browser-workers-and-performance.json",
+      "sha256": "b64069cea52a4e0a81aac3ebcfb8832b85663cc31e97feca5b77f156a5e92264"
+    },
+    {
+      "file": "curriculum/exercises/capstone-acceptance-review.json",
+      "sha256": "8c64da28a93889bf215420eb47e79d6daae3cf11ac2d61c87d7506441273ba71"
+    },
+    {
+      "file": "curriculum/exercises/capstone-domain-core.json",
+      "sha256": "06904fb21d6f92b7aa2205be00cd69c7885216be1d439aa5bea8e57d55d893db"
+    },
+    {
+      "file": "curriculum/exercises/capstone-failure-and-scale.json",
+      "sha256": "d056b4dd241906e1910fe315998d6112b61bfd9df7e0336c3eff0e6946f3c0f7"
+    },
+    {
+      "file": "curriculum/exercises/capstone-host-product.json",
+      "sha256": "ee2dc772800e88e0b0504449a0ddef3c8166ef883b5da79de82805d8add1e64a"
+    },
+    {
+      "file": "curriculum/lessons/browser-behavior-and-accessibility.json",
+      "sha256": "0830e072a14271e01b83a79a17dd8380bfc8fb3dbac56b238e0760872f933cea"
+    },
+    {
+      "file": "curriculum/lessons/browser-dom-and-rendering.json",
+      "sha256": "3cd92293ff9a795e1c620d6bc3c1997a6e1c3a197d14250ee46ae5ad2c9aa7bb"
+    },
+    {
+      "file": "curriculum/lessons/browser-events-and-lifecycle.json",
+      "sha256": "033870e541a730178a7fd84a928fe1452834d6fd14e2f0998982e5e27921fabd"
+    },
+    {
+      "file": "curriculum/lessons/browser-fetch-and-http.json",
+      "sha256": "bd209ff34f82dd88bea257e9322f41b6b6af94c095becad559ecc556dd51691d"
+    },
+    {
+      "file": "curriculum/lessons/browser-forms-and-input.json",
+      "sha256": "efca9762e764f4111cf71f24a7e958d1ff6e6af67462054bfed4242c79afa001"
+    },
+    {
+      "file": "curriculum/lessons/browser-storage-and-migrations.json",
+      "sha256": "d6ae14b3355a7f06e0cc3caa8591862d5bdd553727272d8f489d573e875c33f4"
+    },
+    {
+      "file": "curriculum/lessons/browser-url-and-navigation.json",
+      "sha256": "272de445e08242d793cc193c529e128be9a89518b5af13803eab37f2124f250f"
+    },
+    {
+      "file": "curriculum/lessons/browser-workers-and-performance.json",
+      "sha256": "1004e7c202f9ef3d2ce56422f1dbcdf5477b4eeb9604bf9ec043bf81f125a6bd"
+    },
+    {
+      "file": "curriculum/lessons/capstone-acceptance-review.json",
+      "sha256": "5d8b70b9488a560dfb60c09bf23431cf43e728610f7d71263404bfeb6632b446"
+    },
+    {
+      "file": "curriculum/lessons/capstone-domain-core.json",
+      "sha256": "330c60b3e85f6beb6b42e2634e1fb502e2b509f784e8fd88053a881cf84efaf8"
+    },
+    {
+      "file": "curriculum/lessons/capstone-failure-and-scale.json",
+      "sha256": "2c9b0c99f05b961b7ff37ceb31cba1337415d4c49249a1279067c6aab9986fb7"
+    },
+    {
+      "file": "curriculum/lessons/capstone-host-product.json",
+      "sha256": "0e883edf8303f9b63b65e9d2935abbb0f437381abe6182f951bfab114a12b9df"
+    },
+    {
+      "file": "package.json",
+      "sha256": "c3f8b410889c36219781a129853c4de34ab3fc0bf03aaddf72d201645c9516fe"
+    },
+    {
+      "file": "reference/browser-behavior-and-accessibility.mjs",
+      "sha256": "81668b717baabfe46e77dc34d4ca7f7e56d202d33fda1f9e0a1de897557f48a4"
+    },
+    {
+      "file": "reference/browser-dom-and-rendering.mjs",
+      "sha256": "04d59ab74fd2602df7fb1934a2709f43c37391bdd1dae2db0cc08f0c8ccf2853"
+    },
+    {
+      "file": "reference/browser-events-and-lifecycle.mjs",
+      "sha256": "2b727d6d2cb36b122043bd04f9a1347ebd14e8c9dcc86cb711a4e3407370382b"
+    },
+    {
+      "file": "reference/browser-fetch-and-http.mjs",
+      "sha256": "e1f5b605fe3d2809cedb02b7424117b389c38220c8e624bebfb49eafd501e287"
+    },
+    {
+      "file": "reference/browser-forms-and-input.mjs",
+      "sha256": "2c1a3ce217c88efc539c0fed11fa76bec4b29e20ce89f2e95bea6b098e580357"
+    },
+    {
+      "file": "reference/browser-storage-and-migrations.mjs",
+      "sha256": "2b1c539fe60b25cdb7317759782b23989935d08077962ae948cbd2a3bd1d2d00"
+    },
+    {
+      "file": "reference/browser-url-and-navigation.mjs",
+      "sha256": "b372440eefeedbbe545b3c0da12baa85040ec60f8c2da47a84c973aaeb97b890"
+    },
+    {
+      "file": "reference/browser-workers-and-performance.mjs",
+      "sha256": "52534bfb2614917419d2b17ee42e8d8295027601c3d5b32b001e7b1194a94d14"
+    },
+    {
+      "file": "reference/capstone-acceptance-review.mjs",
+      "sha256": "637a0c68a6d3ea4694f386a05939f0d61409a67061ee222ece423e7f7500802e"
+    },
+    {
+      "file": "reference/capstone-domain-core.mjs",
+      "sha256": "37baad4e60a0fb16627a7ca52b4b0ea9ef7f6ade012aa2680ac080c1e068a1be"
+    },
+    {
+      "file": "reference/capstone-failure-and-scale.mjs",
+      "sha256": "ba7ef72b3467b63d64ae3e543e3c0cc5d41c5058fdd8c83cbadd3f01489e35dc"
+    },
+    {
+      "file": "reference/capstone-host-product.mjs",
+      "sha256": "ecd91a3b87b66fb5552ccb68d2b4e352d139a23117dfb13cb9349fc0f39c29d4"
+    },
+    {
+      "file": "reference/incorrect/browser-behavior-and-accessibility.mjs",
+      "sha256": "dc2b877823f9aca9121d6caf3220b543cac348f6a7e162e8752a684fd2d24d32"
+    },
+    {
+      "file": "reference/incorrect/browser-dom-and-rendering.mjs",
+      "sha256": "ae52067a4ceeb5ea6d6461d8c8327daef98f7f0c7e1a6b27b448d4eb079ea4e1"
+    },
+    {
+      "file": "reference/incorrect/browser-events-and-lifecycle.mjs",
+      "sha256": "5bb334d920f888dcd3d526c1965fe828152074489bd5f608cd29847522f7baa4"
+    },
+    {
+      "file": "reference/incorrect/browser-fetch-and-http.mjs",
+      "sha256": "4e5662b802fd64dd7db39f8349edb6b351b8ae8a9d3cd36c9c786d3d310e6981"
+    },
+    {
+      "file": "reference/incorrect/browser-forms-and-input.mjs",
+      "sha256": "e45947a912830475c8cfe753c3686f50f623384cbfce205e60cc16c0eb0a7bf7"
+    },
+    {
+      "file": "reference/incorrect/browser-storage-and-migrations.mjs",
+      "sha256": "41051094884e6f9cec3d48d5a800956b8755793297913aee1cc18d121a90cbe2"
+    },
+    {
+      "file": "reference/incorrect/browser-url-and-navigation.mjs",
+      "sha256": "5e295e9008dfadbacc8c515fec1b4a9429920741378092bf7e2b146b4d344054"
+    },
+    {
+      "file": "reference/incorrect/browser-workers-and-performance.mjs",
+      "sha256": "0b9f1a505f63a4242b58dfb77bdc86a10ff85a8ea85930aa27cf6a98d8e1c863"
+    },
+    {
+      "file": "reference/incorrect/capstone-acceptance-review.mjs",
+      "sha256": "b3d3210691b9818d537d07e0ea11d1f2f7bcf7e3cef8adc2e005ba1f58804e0c"
+    },
+    {
+      "file": "reference/incorrect/capstone-domain-core.mjs",
+      "sha256": "dfaa4194169305c708195c1995fa8fcc02c8f9c9e9d792c5efb8c8e785af8025"
+    },
+    {
+      "file": "reference/incorrect/capstone-failure-and-scale.mjs",
+      "sha256": "4cbf9815e33c814ca25bbe77dade9b985696fd10c5f4d14daf143d0effeb0537"
+    },
+    {
+      "file": "reference/incorrect/capstone-host-product.mjs",
+      "sha256": "8e91cbfa3a986afb19f077baa63b09d4dee9711dc583a9ba39cea082236a2485"
+    },
+    {
+      "file": "runtime/profiles.json",
+      "sha256": "1dd8b5cf7aa32e82b6a0f85778b1afe0af978585958f79fb5d7d28434dbda98c"
+    },
+    {
+      "file": "starter/browser-behavior-and-accessibility.mjs",
+      "sha256": "b1569b17224e5644d049420db8156c211f06fc04e55a4f59c1f9373974853f3d"
+    },
+    {
+      "file": "starter/browser-dom-and-rendering.mjs",
+      "sha256": "f4767ec0aa44da880f994e2d3dcf41a5037f4332ec1df7ee69ec1147b2e8019f"
+    },
+    {
+      "file": "starter/browser-events-and-lifecycle.mjs",
+      "sha256": "1e38b9eb3bc5167e0f59f461f7ff4e162e9e91e4cf078981031f04c1df6e22b7"
+    },
+    {
+      "file": "starter/browser-fetch-and-http.mjs",
+      "sha256": "d7873c18080a28426c90d0a48d12c595b42416da6f46db9b5faf0aadd7acc129"
+    },
+    {
+      "file": "starter/browser-forms-and-input.mjs",
+      "sha256": "36d1be8e159bd6ae26b53f3a75e48c7caa5e0c028e4f404f66a865c9f5a10e12"
+    },
+    {
+      "file": "starter/browser-storage-and-migrations.mjs",
+      "sha256": "23ddc74998a9e6d3849f42d9eb6b5215294c71d6b58c7a865a829d92d9c69458"
+    },
+    {
+      "file": "starter/browser-url-and-navigation.mjs",
+      "sha256": "bc2220db8b97f5cc39baa9fcf62dcd0c43bf8e77a948dbec76901d50c1307f0e"
+    },
+    {
+      "file": "starter/browser-workers-and-performance.mjs",
+      "sha256": "f5d697af6ca606cdefa2b87d78e82f91521e5a8115528bc7691c44ec384f7a61"
+    },
+    {
+      "file": "starter/capstone-acceptance-review.mjs",
+      "sha256": "600d5868602ddd77328d5e9fe6ef02fecc1665a40be456b779da2acff79239e1"
+    },
+    {
+      "file": "starter/capstone-domain-core.mjs",
+      "sha256": "a2e8189592464615a79d880e9ecb727fc2c1aab0119ed17593e5f01c1962535d"
+    },
+    {
+      "file": "starter/capstone-failure-and-scale.mjs",
+      "sha256": "d981749a97ab69784274f2a4c61c976d31b0b4eee0031b2939c4f8aec07686eb"
+    },
+    {
+      "file": "starter/capstone-host-product.mjs",
+      "sha256": "40bdc719f5efda70cdb6f1da82d07afaec1ceb0b3c9123c38dd35d09dbc3f153"
+    },
+    {
+      "file": "tests/browser-host-integration.test.mjs",
+      "sha256": "1b549bcb340303286f02e1760ed490670a19f45dd437b2b57710c35b7dcb093a"
+    },
+    {
+      "file": "tests/dom-runtime.test.mjs",
+      "sha256": "7ad158fc06d5ee6cb398c900433763166200835995ca79768be707f9cf857280"
+    },
+    {
+      "file": "tests/glossary-data.test.mjs",
+      "sha256": "8c294170dc8ce0357fb8da94379d7d4fd00ff963c7ea082ce83f41192b5db9c9"
+    },
+    {
+      "file": "tests/learning-server.test.mjs",
+      "sha256": "bdc37d25a08cfe0b7782863b92a6a5f39aae3d0c57d87dde28a482b34aa99f70"
+    },
+    {
+      "file": "tests/learning-ui-state.test.mjs",
+      "sha256": "a26552709b4f8e644782327ce9725e7ca7ea134a7b8bf6473d5ea0526887314a"
+    },
+    {
+      "file": "tests/module-curriculum-contract.test.mjs",
+      "sha256": "42b73323f8dca519baf4ddd2e63cc86359e6be6a0c98bfd432b8c33480deed95"
+    },
+    {
+      "file": "tests/qualification-completion.test.mjs",
+      "sha256": "70cfcf1ca9686b3c852191775d73f6f5bf073c5e0e4015187d7702294b1fde46"
+    },
+    {
+      "file": "web/app.mjs",
+      "sha256": "8811826cca7699e4f41046f69c6d2f9c8039caaf402127ac5d1529b2b12ce8b8"
+    },
+    {
+      "file": "web/execution/dom-frame.html",
+      "sha256": "079723f774fe03355ac6b8e7c83913f68656d32846c0b727901df2d32f372c4c"
+    },
+    {
+      "file": "web/execution/dom-frame.js",
+      "sha256": "fef8805fc856a4aa0af508ec665b2a2c2902cf53f39914c1f2ba4f7048ab88a2"
+    },
+    {
+      "file": "web/execution/dom-runner.mjs",
+      "sha256": "f57b1e05883e46b16e993aa8772238faf14d8a805c3e8272bef88b9bd3bb9e22"
+    },
+    {
+      "file": "web/execution/qualification-completion.mjs",
+      "sha256": "7cc1f2c4d8692656179988060ca6fdaa809aed1966da166121d71666d5859939"
+    },
+    {
+      "file": "web/execution/qualification.mjs",
+      "sha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786"
+    },
+    {
+      "file": "web/features/learning-data.mjs",
+      "sha256": "2b39aeac7839b723c44e1e6af4d9034d368115f7b2757489a1e5828cd1bafa6b"
+    },
+    {
+      "file": "web/glossary-data.mjs",
+      "sha256": "a494c43a65103b0754c9f722617025833f2f714637e0731e32f4ad30729891e4"
+    },
+    {
+      "file": "web/glossary-expanded.mjs",
+      "sha256": "7be576a5aa3c1fb3c835ee3df88f5ba0d5bf6372cf892ef332b6c816982515a0"
+    },
+    {
+      "file": "web/serve.mjs",
+      "sha256": "cce167fb3e4df1829c8a26f92a6806e986363b235798263b528bb69a82436b72"
+    },
+    {
+      "file": "web/server/browser-host.mjs",
+      "sha256": "0b956f1b6e8b95e1aa6f2c5865c9182f9efa8305c2e9602250efd004ee33e215"
+    },
+    {
+      "file": "web/styles.css",
+      "sha256": "fc4d838fdc076bc7b85afcc1a217eb3b691daa7f8d61ef15e597d896f5b69e27"
+    }
+  ],
+  "actualChecks": {
+    "native": "Windows Node22.17.0 staged source npm run check",
+    "syntax": 229,
+    "regressionTests": 206,
+    "regressionSkips": 0,
+    "creator": {
+      "status": "PARTIAL",
+      "exercisesPassed": 33,
+      "referenceChecks": 271,
+      "examplesCompared": 33,
+      "hostExercisesSkipped": 11
+    },
+    "browser": {
+      "runtime": "Chrome155 / Windows",
+      "startedAt": "2026-10-19T01:12:37.819Z",
+      "completedAt": "2026-10-19T01:13:02.527Z",
+      "exercises": 44,
+      "referenceChecks": 361,
+      "negativeSubmissions": 88,
+      "domExamples": 11,
+      "runtimeConditions": 16
+    },
+    "ui": {
+      "widths": [
+        320,
+        360,
+        390,
+        768,
+        1440
+      ],
+      "shortHeight": [
+        1280,
+        420
+      ],
+      "keyboardRoadmapItems": 52,
+      "physicalDevices": false,
+      "actual200PercentZoom": false
+    }
+  },
+  "limitations": [
+    "Public self-study checks, not certification",
+    "DOM synchronous infinite loops have no guaranteed forced termination; no hard RAM cap or OS isolation",
+    "Physical devices, actual 200% browser zoom, OS IME and screen reader unverified",
+    "Node curriculum and provider excluded from M4"
+  ]
+}

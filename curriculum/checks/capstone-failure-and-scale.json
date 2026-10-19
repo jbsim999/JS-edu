@@ -1,0 +1,173 @@
+{
+  "exerciseId": "capstone-failure-and-scale-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-failure-and-scale-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "bounded-gates-and-measurement",
+      "label": "대기 gate로 동시성·입력 순서·출력 상한·측정값을 관찰한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{let clock=10,active=0,peak=0;const gates=[];const started=[];const startSignals=Array.from({length:3},(_,i)=>new Promise(resolve=>{started[i]=resolve;}));const load=(task,{signal})=>new Promise((resolve,reject)=>{active++;peak=Math.max(peak,active);const finish=value=>{active--;signal.removeEventListener('abort',abort);resolve(value);};const abort=()=>{active--;reject(signal.reason);};signal.addEventListener('abort',abort,{once:true});gates.push({id:task.id,finish});started[gates.length-1]();});batch=submission.createBoundedQueryBatch(root,queryProducts,{load,now:()=>clock,concurrency:2,maxOutputs:1});const pending=batch.run([{id:'a',query:''},{id:'b',query:''},{id:'c',query:''}]);await Promise.race([Promise.all(startSignals.slice(0,2)),pending.then(()=>false,()=>false)]);const initial={active:batch.getState().active,started:batch.getState().started,gates:gates.length};gates[1].finish([{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}]);await Promise.race([startSignals[2],pending.then(()=>false,()=>false)]);gates[0].finish([{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}]);clock=35;gates[2].finish([{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}]);const result=await pending;observe({initial,peak,active,ids:result.results.map(x=>x.id),lengths:result.results.map(x=>x.report.items.length),counts:result.results.map(x=>x.report.count),metrics:result.metrics,busy:root.getAttribute('aria-busy')});}finally{batch?.dispose();root.replaceChildren();}",
+      "expected": {
+        "initial": {
+          "active": 2,
+          "started": 2,
+          "gates": 2
+        },
+        "peak": 2,
+        "active": 0,
+        "ids": [
+          "a",
+          "b",
+          "c"
+        ],
+        "lengths": [
+          1,
+          1,
+          1
+        ],
+        "counts": [
+          2,
+          2,
+          2
+        ],
+        "metrics": {
+          "status": "done",
+          "runId": 1,
+          "total": 3,
+          "started": 3,
+          "completed": 3,
+          "failed": 0,
+          "active": 0,
+          "peakActive": 2,
+          "returnedItems": 3,
+          "elapsedMs": 25
+        },
+        "busy": "false"
+      }
+    },
+    {
+      "id": "input-bound-before-load",
+      "label": "작업 개수·희소·중복 ID를 I/O 전에 거부한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{let calls=0;batch=submission.createBoundedQueryBatch(root,queryProducts,{load:async()=>{calls++;return [];},now:()=>0,maxInputs:2});const names=[];for(const tasks of [[{id:'a',query:''},{id:'b',query:''},{id:'c',query:''}],new Array(1),[{id:'a',query:''},{id:'a',query:''}]]){try{await batch.run(tasks);names.push('returned');}catch(error){names.push(error.name);}}observe({names,calls,started:batch.getState().started});}finally{batch?.dispose();root.replaceChildren();}",
+      "expected": {
+        "names": [
+          "RangeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "calls": 0,
+        "started": 0
+      }
+    },
+    {
+      "id": "record-bound-and-no-retry",
+      "label": "큰 응답을 core 전에 거부하고 실패 작업을 자동 재시도하지 않는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{let loads=0,cores=0;batch=submission.createBoundedQueryBatch(root,(...args)=>{cores++;return queryProducts(...args);},{load:async task=>{loads++;if(task.id==='throw')throw undefined;return [{id:'a',name:'A',price:1},{id:'b',name:'B',price:2},{id:'c',name:'C',price:3}];},now:()=>0,maxRecords:2});const result=await batch.run([{id:'big',query:''},{id:'throw',query:''}]);observe({loads,cores,rows:result.results,failed:result.metrics.failed,active:result.metrics.active});}finally{batch?.dispose();root.replaceChildren();}",
+      "expected": {
+        "loads": 2,
+        "cores": 0,
+        "rows": [
+          {
+            "id": "big",
+            "status": "rejected",
+            "error": "input"
+          },
+          {
+            "id": "throw",
+            "status": "rejected",
+            "error": "load"
+          }
+        ],
+        "failed": 2,
+        "active": 0
+      }
+    },
+    {
+      "id": "core-failure-and-slot-release",
+      "label": "core 실패와 동기 throw 뒤 슬롯을 회수하고 뒤 작업을 실행한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{const calls=[];batch=submission.createBoundedQueryBatch(root,queryProducts,{load(task){calls.push(task.id);if(task.id==='sync')throw null;if(task.id==='schema')return [{id:'bad',name:'B',price:'1'}];return [{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}];},now:()=>5,concurrency:1,maxOutputs:0});const result=await batch.run([{id:'sync',query:''},{id:'schema',query:''},{id:'ok',query:''}]);observe({calls,statuses:result.results.map(x=>[x.id,x.status,x.error??null]),count:result.results[2].report.count,items:result.results[2].report.items.length,active:result.metrics.active,completed:result.metrics.completed,failed:result.metrics.failed});}finally{batch?.dispose();root.replaceChildren();}",
+      "expected": {
+        "calls": [
+          "sync",
+          "schema",
+          "ok"
+        ],
+        "statuses": [
+          [
+            "sync",
+            "rejected",
+            "load"
+          ],
+          [
+            "schema",
+            "rejected",
+            "core"
+          ],
+          [
+            "ok",
+            "fulfilled",
+            null
+          ]
+        ],
+        "count": 2,
+        "items": 0,
+        "active": 0,
+        "completed": 3,
+        "failed": 2
+      }
+    },
+    {
+      "id": "cancel-drain-and-repeat",
+      "label": "협력적 취소로 활성 작업을 정리하고 다음 실행을 독립적으로 시작한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{let blocking=true,active=0,calls=0;let bothStarted;const started=new Promise(resolve=>{bothStarted=resolve;});const load=(task,{signal})=>{calls++;if(!blocking)return Promise.resolve([{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}]);active++;if(active===2)bothStarted();return new Promise((resolve,reject)=>{signal.addEventListener('abort',()=>{active--;reject(signal.reason);},{once:true});});};batch=submission.createBoundedQueryBatch(root,queryProducts,{load,now:()=>0,concurrency:2,maxOutputs:1});const pending=batch.run([{id:'a',query:''},{id:'b',query:''},{id:'c',query:''}]);await Promise.race([started,pending.then(()=>false,()=>false)]);batch.cancel();const cancelled=await pending;blocking=false;const next=await batch.run([{id:'again',query:'pista'}]);observe({cancelled:cancelled.status,statuses:cancelled.results.map(x=>x.status),active,calls,next:next.status,runId:next.runId,started:next.metrics.started,returned:next.metrics.returnedItems,name:next.results[0].report.items[0].name});}finally{batch?.dispose();root.replaceChildren();}",
+      "expected": {
+        "cancelled": "cancelled",
+        "statuses": [
+          "cancelled",
+          "cancelled",
+          "cancelled"
+        ],
+        "active": 0,
+        "calls": 3,
+        "next": "done",
+        "runId": 2,
+        "started": 1,
+        "returned": 1,
+        "name": "Pistachio"
+      }
+    },
+    {
+      "id": "dispose-and-invalid-overlap",
+      "label": "중복 실행을 막고 dispose 뒤 자원과 화면을 정리한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{let active=0;batch=submission.createBoundedQueryBatch(root,queryProducts,{load:(task,{signal})=>new Promise((resolve,reject)=>{active++;signal.addEventListener('abort',()=>{active--;reject(signal.reason);},{once:true});}),now:()=>0});const pending=batch.run([{id:'a',query:''}]);let overlap,after;try{await batch.run([]);}catch(error){overlap=error.name;}batch.dispose();batch.dispose();await pending;try{await batch.run([]);}catch(error){after=error.name;}observe({overlap,after,active,state:batch.getState().status,children:root.childElementCount});}finally{batch?.dispose();root.replaceChildren();}",
+      "expected": {
+        "overlap": "InvalidStateError",
+        "after": "InvalidStateError",
+        "active": 0,
+        "state": "disposed",
+        "children": 0
+      }
+    },
+    {
+      "id": "constructor-bound-validation",
+      "label": "생성 시 모든 상한과 하한을 검증하며 I/O를 시작하지 않는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let loads=0;const errors=[];for(const options of [{concurrency:0},{concurrency:5},{concurrency:1.5},{maxInputs:0},{maxInputs:33},{maxRecords:0},{maxRecords:1001},{maxOutputs:-1},{maxOutputs:101},{maxOutputs:NaN}]){let batch;try{batch=submission.createBoundedQueryBatch(root,queryProducts,{load:async()=>{loads++;return [];},now:()=>0,...options});errors.push(false);}catch(error){errors.push(error instanceof RangeError);}finally{batch?.dispose();root.replaceChildren();}}observe({loads,errors});",
+      "expected": {
+        "loads": 0,
+        "errors": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    }
+  ]
+}

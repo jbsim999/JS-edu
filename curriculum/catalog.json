@@ -463,6 +463,181 @@
         "promise-combinators"
       ],
       "exerciseId": "bounded-concurrency-and-retries-exercise"
+    },
+    {
+      "id": "browser-dom-and-rendering",
+      "order": 33,
+      "displayNumber": "B01",
+      "title": "DOM·안전한 텍스트·상태→렌더링",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "DOM과 안전한 렌더링",
+      "file": "curriculum/lessons/browser-dom-and-rendering.json",
+      "prerequisites": [
+        "bounded-concurrency-and-retries"
+      ],
+      "exerciseId": "browser-dom-and-rendering-exercise"
+    },
+    {
+      "id": "browser-events-and-lifecycle",
+      "order": 34,
+      "displayNumber": "B02",
+      "title": "전파·위임·기본 동작·등록/해제",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "이벤트와 수명",
+      "file": "curriculum/lessons/browser-events-and-lifecycle.json",
+      "prerequisites": [
+        "browser-dom-and-rendering"
+      ],
+      "exerciseId": "browser-events-and-lifecycle-exercise"
+    },
+    {
+      "id": "browser-forms-and-input",
+      "order": 35,
+      "displayNumber": "B03",
+      "title": "폼·focus·한글 조합·debounce·렌더링 기회",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "폼과 입력",
+      "file": "curriculum/lessons/browser-forms-and-input.json",
+      "prerequisites": [
+        "browser-events-and-lifecycle"
+      ],
+      "exerciseId": "browser-forms-and-input-exercise"
+    },
+    {
+      "id": "browser-fetch-and-http",
+      "order": 36,
+      "displayNumber": "B04",
+      "title": "Fetch·status·본문·스키마·CORS/credentials",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "Fetch와 HTTP",
+      "file": "curriculum/lessons/browser-fetch-and-http.json",
+      "prerequisites": [
+        "browser-forms-and-input"
+      ],
+      "exerciseId": "browser-fetch-and-http-exercise"
+    },
+    {
+      "id": "browser-storage-and-migrations",
+      "order": 37,
+      "displayNumber": "B05",
+      "title": "localStorage·IndexedDB 선택·개정·충돌·실패",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "저장과 마이그레이션",
+      "file": "curriculum/lessons/browser-storage-and-migrations.json",
+      "prerequisites": [
+        "browser-fetch-and-http"
+      ],
+      "exerciseId": "browser-storage-and-migrations-exercise"
+    },
+    {
+      "id": "browser-url-and-navigation",
+      "order": 38,
+      "displayNumber": "B06",
+      "title": "URL·query·History·뒤로 가기",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "URL과 탐색",
+      "file": "curriculum/lessons/browser-url-and-navigation.json",
+      "prerequisites": [
+        "browser-storage-and-migrations"
+      ],
+      "exerciseId": "browser-url-and-navigation-exercise"
+    },
+    {
+      "id": "browser-workers-and-performance",
+      "order": 39,
+      "displayNumber": "B07",
+      "title": "Worker·clone/transfer·메시지·종료·측정",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "Worker와 성능",
+      "file": "curriculum/lessons/browser-workers-and-performance.json",
+      "prerequisites": [
+        "browser-url-and-navigation",
+        "iterators-and-generators",
+        "cancellation-and-stale-results",
+        "bounded-concurrency-and-retries"
+      ],
+      "exerciseId": "browser-workers-and-performance-exercise"
+    },
+    {
+      "id": "browser-behavior-and-accessibility",
+      "order": 40,
+      "displayNumber": "B08",
+      "title": "실제 DOM 검사·접근성·반응형·회귀",
+      "track": "browser",
+      "unit": "브라우저 트랙",
+      "shortTitle": "브라우저 인수 검사",
+      "file": "curriculum/lessons/browser-behavior-and-accessibility.json",
+      "prerequisites": [
+        "browser-workers-and-performance"
+      ],
+      "exerciseId": "browser-behavior-and-accessibility-exercise"
+    },
+    {
+      "id": "capstone-domain-core",
+      "order": 49,
+      "displayNumber": "C01",
+      "title": "정규화·필터·집계·정렬·직렬화의 공유 패키지",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "공유 도메인 코어",
+      "file": "curriculum/lessons/capstone-domain-core.json",
+      "prerequisites": [
+        "bounded-concurrency-and-retries"
+      ],
+      "exerciseId": "capstone-domain-core-exercise"
+    },
+    {
+      "id": "capstone-host-product",
+      "order": 50,
+      "displayNumber": "C02",
+      "title": "선택 호스트 조회 제품",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "호스트 제품 통합",
+      "file": "curriculum/lessons/capstone-host-product.json",
+      "prerequisites": [
+        "capstone-domain-core",
+        "browser-behavior-and-accessibility"
+      ],
+      "exerciseId": "capstone-host-product-exercise"
+    },
+    {
+      "id": "capstone-failure-and-scale",
+      "order": 51,
+      "displayNumber": "C03",
+      "title": "장애·큰 입력·관측 정보 보강",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "장애와 규모",
+      "file": "curriculum/lessons/capstone-failure-and-scale.json",
+      "prerequisites": [
+        "capstone-host-product",
+        "bounded-concurrency-and-retries"
+      ],
+      "exerciseId": "capstone-failure-and-scale-exercise"
+    },
+    {
+      "id": "capstone-acceptance-review",
+      "order": 52,
+      "displayNumber": "C04",
+      "title": "인수 검사·설계 메모·사용 설명",
+      "track": "capstone",
+      "unit": "통합 프로젝트",
+      "shortTitle": "최종 인수 검토",
+      "file": "curriculum/lessons/capstone-acceptance-review.json",
+      "prerequisites": [
+        "capstone-domain-core",
+        "capstone-host-product",
+        "capstone-failure-and-scale"
+      ],
+      "exerciseId": "capstone-acceptance-review-exercise"
     }
   ],
   "roadmap": [

@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "capstone-acceptance-review-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-acceptance-review-checks-v1",
+  "executedTests": 6,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:a824e5f0cf7f20bfbcf0a5db4e52bc6467d88a0db3f427b8bf87276072961a03",
+  "referenceChecks": [
+    "actual-product-acceptance",
+    "zero-tests-never-pass",
+    "false-throw-and-async",
+    "candidate-change-invalidates",
+    "old-completion-cannot-replace",
+    "dispose-and-result-copy"
+  ],
+  "referenceChecksPassed": 6,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

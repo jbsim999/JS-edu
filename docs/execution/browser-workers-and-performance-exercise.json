@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-workers-and-performance-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-workers-and-performance-checks-v1",
+  "executedTests": 9,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:edd6f2d1a90ebbd2f4ea862523d6da0868d11a13cd7bf45e52bd1fe2ff68bacf",
+  "referenceChecks": [
+    "actual-worker-sum",
+    "ignore-stale-real-messages",
+    "cancel-and-restart",
+    "dispose-once",
+    "invalid-input-preserves-active",
+    "worker-error-and-recovery",
+    "ignore-malformed-response",
+    "postmessage-failure",
+    "messageerror-retains-last-success"
+  ],
+  "referenceChecksPassed": 9,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

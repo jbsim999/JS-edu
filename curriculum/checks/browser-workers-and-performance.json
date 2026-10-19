@@ -1,0 +1,202 @@
+{
+  "exerciseId": "browser-workers-and-performance-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-workers-and-performance-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "actual-worker-sum",
+      "label": "실제 Worker 결과가 기준 합계와 일치하고 원본 배열이 남는다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const values=Object.freeze([1,2,3]);controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:resolveResult,onError:rejectResult});const id=controller.submit(values);const answer=await result;observe({id,answer,input:values,state:controller.getState()});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "id": 1,
+        "answer": {
+          "requestId": 1,
+          "sum": 6
+        },
+        "input": [
+          1,
+          2,
+          3
+        ],
+        "state": {
+          "status": "done",
+          "requestId": 1,
+          "lastSum": 6
+        }
+      }
+    },
+    {
+      "id": "ignore-stale-real-messages",
+      "label": "연속 제출의 실제 이전 Worker 응답을 최신 결과로 채택하지 않는다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const results=[];controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:value=>{results.push(value);if(value.requestId===2)resolveResult();},onError:rejectResult});controller.submit([100]);controller.submit([2,3]);await result;observe({results,workers:workers.length,state:controller.getState()});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "results": [
+          {
+            "requestId": 2,
+            "sum": 5
+          }
+        ],
+        "workers": 1,
+        "state": {
+          "status": "done",
+          "requestId": 2,
+          "lastSum": 5
+        }
+      }
+    },
+    {
+      "id": "cancel-and-restart",
+      "label": "취소 시 실제 Worker를 종료하고 입력을 유지한 채 새 Worker로 재개한다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const results=[];const input=Object.freeze([1,2,3]);controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:value=>{results.push(value);if(value.requestId===2)resolveResult();},onError:rejectResult});controller.submit(input);controller.cancel();const cancelled=controller.getState();controller.submit([7]);await result;observe({cancelled,results,input,workers:workers.length,terminations,state:controller.getState()});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "cancelled": {
+          "status": "cancelled",
+          "requestId": 1,
+          "lastSum": null
+        },
+        "results": [
+          {
+            "requestId": 2,
+            "sum": 7
+          }
+        ],
+        "input": [
+          1,
+          2,
+          3
+        ],
+        "workers": 2,
+        "terminations": 1,
+        "state": {
+          "status": "done",
+          "requestId": 2,
+          "lastSum": 7
+        }
+      }
+    },
+    {
+      "id": "dispose-once",
+      "label": "종료는 멱등적이며 종료 후 제출·늦은 메시지를 차단한다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});try{const results=[];controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:value=>results.push(value)});controller.submit([3]);controller.dispose();controller.dispose();workers[0].dispatchEvent(new MessageEvent('message',{data:{requestId:1,sum:999}}));let errorName='accepted';try{controller.submit([1]);}catch(error){errorName=error.name;}observe({terminations,results,state:controller.getState(),errorName});}finally{controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "terminations": 1,
+        "results": [],
+        "state": {
+          "status": "disposed",
+          "requestId": 1,
+          "lastSum": null
+        },
+        "errorName": "InvalidStateError"
+      }
+    },
+    {
+      "id": "invalid-input-preserves-active",
+      "label": "누락·비유한 값의 입력은 현재 유효 요청을 덮어쓰지 않는다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:resolveResult,onError:rejectResult});controller.submit([4]);const errors=[];for(const values of [[NaN],[Infinity],new Array(1),'4',[0.5],[1000001],new Array(100001)]){try{controller.submit(values);errors.push('accepted');}catch(error){errors.push(error.name);}}const answer=await result;observe({errors,answer,state:controller.getState()});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "answer": {
+          "requestId": 1,
+          "sum": 4
+        },
+        "state": {
+          "status": "done",
+          "requestId": 1,
+          "lastSum": 4
+        }
+      }
+    },
+    {
+      "id": "worker-error-and-recovery",
+      "label": "실제 Worker에 주입한 error 이벤트를 정리하고 새 요청을 받는다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const errors=[];controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:resolveResult,onError:value=>errors.push(value)});controller.submit([1]);workers[0].dispatchEvent(new ErrorEvent('error',{message:'fixture failure',cancelable:true}));const failed=controller.getState();controller.submit([8]);const answer=await result;observe({errors,failed,answer,workers:workers.length,terminations});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "errors": [
+          {
+            "requestId": 1,
+            "message": "fixture failure"
+          }
+        ],
+        "failed": {
+          "status": "error",
+          "requestId": 1,
+          "lastSum": null
+        },
+        "answer": {
+          "requestId": 2,
+          "sum": 8
+        },
+        "workers": 2,
+        "terminations": 1
+      }
+    },
+    {
+      "id": "ignore-malformed-response",
+      "label": "스키마가 맞지 않는 메시지는 무시하고 실제 숫자 응답을 기다린다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const results=[];controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:value=>{results.push(value);resolveResult();},onError:rejectResult});controller.submit([1,2]);workers[0].dispatchEvent(new MessageEvent('message',{data:{requestId:1,sum:'300'}}));workers[0].dispatchEvent(new MessageEvent('message',{data:{requestId:88,sum:300}}));const during=controller.getState();await result;observe({during,results});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "during": {
+          "status": "running",
+          "requestId": 1,
+          "lastSum": null
+        },
+        "results": [
+          {
+            "requestId": 1,
+            "sum": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "postmessage-failure",
+      "label": "실제 Worker의 전송 실패를 주입하면 원래 예외와 종료를 보존한다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});try{const marker=new DOMException('fixture clone failure','DataCloneError');const errors=[];controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker:url=>{const worker=makeWorker(url);worker.postMessage=()=>{throw marker;};return worker;},onResult:()=>{},onError:value=>errors.push(value)});let failure;try{controller.submit([1]);}catch(error){failure={name:error.name,same:error===marker};}observe({failure,errors,terminations,state:controller.getState()});}finally{controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "failure": {
+          "name": "DataCloneError",
+          "same": true
+        },
+        "errors": [],
+        "terminations": 1,
+        "state": {
+          "status": "error",
+          "requestId": 1,
+          "lastSum": null
+        }
+      }
+    },
+    {
+      "id": "messageerror-retains-last-success",
+      "label": "messageerror 정리 후 직전 성공 합계와 오류 요청 번호를 보존한다",
+      "probe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const errors=[];controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:resolveResult,onError:value=>errors.push(value)});controller.submit([1,2]);const first=await result;controller.submit([9]);workers[0].dispatchEvent(new MessageEvent('messageerror'));observe({first,errors,terminations,state:controller.getState()});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}",
+      "expected": {
+        "first": {
+          "requestId": 1,
+          "sum": 3
+        },
+        "errors": [
+          {
+            "requestId": 2,
+            "message": "Message deserialization failed"
+          }
+        ],
+        "terminations": 1,
+        "state": {
+          "status": "error",
+          "requestId": 2,
+          "lastSum": 3
+        }
+      }
+    }
+  ]
+}

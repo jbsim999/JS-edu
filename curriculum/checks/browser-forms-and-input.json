@@ -1,0 +1,111 @@
+{
+  "exerciseId": "browser-forms-and-input-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-forms-and-input-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "submit-flushes-pending",
+      "label": "명시적 제출은 trim 값으로 즉시 검색하고 예약 중복을 없앤다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.value=' Lemon ';input.dispatchEvent(new InputEvent('input',{bubbles:true}));const event=new SubmitEvent('submit',{bubbles:true,cancelable:true});form.dispatchEvent(event);const immediate=searches.length;await new Promise(resolve=>setTimeout(resolve,30));observe({searches,immediate,prevented:event.defaultPrevented,value:input.value,error:error.textContent,invalid:input.getAttribute('aria-invalid')});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "searches": [
+          "Lemon"
+        ],
+        "immediate": 1,
+        "prevented": true,
+        "value": " Lemon ",
+        "error": "",
+        "invalid": "false"
+      }
+    },
+    {
+      "id": "invalid-submit-focus",
+      "label": "공백 제출을 거부하고 오류·설명 연결·실제 focus를 제공한다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.value='   ';const event=new SubmitEvent('submit',{bubbles:true,cancelable:true});form.dispatchEvent(event);observe({searches,prevented:event.defaultPrevented,focused:document.activeElement===input,valid:input.checkValidity(),customError:input.validity.customError,error:error.textContent,invalid:input.getAttribute('aria-invalid'),describedBy:input.getAttribute('aria-describedby'),live:error.getAttribute('aria-live'),value:input.value});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "searches": [],
+        "prevented": true,
+        "focused": true,
+        "valid": false,
+        "customError": true,
+        "error": "검색어를 입력하세요.",
+        "invalid": "true",
+        "describedBy": "query-help query-error",
+        "live": "polite",
+        "value": "   "
+      }
+    },
+    {
+      "id": "native-constraint-and-request-submit",
+      "label": "requestSubmit 경로와 네이티브 patternMismatch를 확인한다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.pattern='[0-9]+';input.value='ABC';form.addEventListener('submit',event=>event.preventDefault(),{capture:true});form.requestSubmit();observe({searches,mismatch:input.validity.patternMismatch,focused:document.activeElement===input,error:error.textContent,customError:input.validity.customError});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "searches": [],
+        "mismatch": true,
+        "focused": true,
+        "error": "입력 형식을 확인하세요.",
+        "customError": false
+      }
+    },
+    {
+      "id": "latest-debounce-only",
+      "label": "빠른 연속 입력은 마지막 값만 한 번 검색한다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');for(const value of ['L','Le',' Lemon ']){input.value=value;input.dispatchEvent(new InputEvent('input',{bubbles:true}));}const before=searches.length;await new Promise(resolve=>setTimeout(resolve,30));observe({before,searches,value:input.value});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "before": 0,
+        "searches": [
+          "Lemon"
+        ],
+        "value": " Lemon "
+      }
+    },
+    {
+      "id": "composition-blocks-submit",
+      "label": "조합 시작은 이전 예약을 취소하고 조합 중 제출을 막는다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.value='old';input.dispatchEvent(new InputEvent('input',{bubbles:true}));input.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));input.value='ㅎ';input.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true}));const event=new SubmitEvent('submit',{bubbles:true,cancelable:true});form.dispatchEvent(event);await new Promise(resolve=>setTimeout(resolve,30));const during=searches.length;input.value='한글';input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'한글'}));input.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:false}));await new Promise(resolve=>setTimeout(resolve,30));observe({during,searches,prevented:event.defaultPrevented,value:input.value});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "during": 0,
+        "searches": [
+          "한글"
+        ],
+        "prevented": true,
+        "value": "한글"
+      }
+    },
+    {
+      "id": "invalid-input-cancels-without-focus-theft",
+      "label": "invalid 입력은 이전 검색을 취소하고 타이핑 경로에서 focus를 빼앗지 않는다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');button.focus();input.value='valid';input.dispatchEvent(new InputEvent('input',{bubbles:true}));input.value='x'.repeat(41);input.dispatchEvent(new InputEvent('input',{bubbles:true}));await new Promise(resolve=>setTimeout(resolve,30));observe({searches,buttonFocused:document.activeElement===button,error:error.textContent,customError:input.validity.customError,valueLength:input.value.length});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "searches": [],
+        "buttonFocused": true,
+        "error": "검색어는 40자 이내로 입력하세요.",
+        "customError": true,
+        "valueLength": 41
+      }
+    },
+    {
+      "id": "dispose-cancels-and-remounts",
+      "label": "dispose 뒤 예약·리스너가 남지 않고 다시 연결할 수 있다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.value='old';input.dispatchEvent(new InputEvent('input',{bubbles:true}));controller.dispose();controller.dispose();input.value='next';input.dispatchEvent(new InputEvent('input',{bubbles:true}));await new Promise(resolve=>setTimeout(resolve,30));const before=searches.length;const restored=form.noValidate===false;controller=submission.mountSearchForm(form,value=>searches.push('new:'+value),10);form.dispatchEvent(new SubmitEvent('submit',{bubbles:true,cancelable:true}));observe({before,restored,searches,value:input.value});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "before": 0,
+        "restored": true,
+        "searches": [
+          "new:next"
+        ],
+        "value": "next"
+      }
+    },
+    {
+      "id": "is-composing-cancels-existing-timer",
+      "label": "InputEvent.isComposing도 기존 예약을 취소한다",
+      "probe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.value='old';input.dispatchEvent(new InputEvent('input',{bubbles:true}));input.value='ㅎ';input.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true}));await new Promise(resolve=>setTimeout(resolve,30));observe({searches,value:input.value});}finally{controller?.dispose?.();form.remove();}",
+      "expected": {
+        "searches": [],
+        "value": "ㅎ"
+      }
+    }
+  ]
+}

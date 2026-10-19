@@ -1,0 +1,79 @@
+{
+  "id": "browser-fetch-and-http-exercise",
+  "lessonId": "browser-fetch-and-http",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-fetch-and-http-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createProductClient(fetcher=fetch)는 비동기 loadProducts(url='/_fixtures/http/products',{signal}={})를 가진 객체를 반환한다.",
+    "fetcher는 GET, credentials:'same-origin', Accept:'application/json', 동일 AbortSignal로 최대 한 번 호출한다. 이미 취소된 signal은 호출 없이 aborted다. 자동 재시도는 하지 않는다.",
+    "HTTP 오류는 본문을 읽지 않는다. 성공 본문은 json()으로 한 번만 읽고 배열·고유 id·name·price 스키마를 검사한다.",
+    "id/name은 비어 있지 않은 문자열, id는 고유, price는 0 이상 안전 정수다. 성공은 새 items 배열과 새 {id,name,price} 항목을 포함한 {ok:true,status,items}다.",
+    "실패는 {ok:false,kind,status}: http/json/schema에는 응답 status, network/aborted에는 null을 둔다. JSON SyntaxError와 본문 읽기 실패를 구분하고 사용자 지정 abort reason도 signal.aborted로 처리한다.",
+    "모든 과제 endpoint는 실행 origin의 /_fixtures/http/*이다. products/empty/not-found/invalid-json/invalid-schema/unavailable/network-error/slow는 제품 고정 응답이며 외부 인터넷을 호출하지 않는다.",
+    "브라우저 실행 환경과 companion fixture 서버가 연결되기 전까지 available/executionVerified는 false다. CORS·인증 쿠키의 실제 교차 출처 검증은 이 과제 범위 밖이다."
+  ],
+  "template": "export function createProductClient(fetcher = fetch) {\n  // TODO: HTTP·본문·스키마·전송 실패·취소를 구분하는 클라이언트를 반환하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/browser-fetch-and-http.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 fetch에서 상품·GET·Accept·credentials·동일 signal을 확인한다",
+    "정상 빈 배열을 실패나 가짜 항목으로 바꾸지 않는다",
+    "404·503을 HTTP 오류로 반환하고 본문을 소비하지 않는다",
+    "200 응답의 깨진 JSON을 파싱 실패로 구분한다",
+    "JSON은 유효해도 문자열 price인 응답을 거부한다",
+    "실제 연결 종료로 생긴 fetch 거부를 HTTP·빈 성공과 구분한다",
+    "실제 fetch에 signal을 전달해 취소하고 다음 요청은 정상 처리한다",
+    "이미 취소된 요청은 fetch를 시작하지 않는다",
+    "실제 본문은 한 번 읽고 반환 항목은 별도 데이터로 만든다"
+  ],
+  "rubric": [
+    "fetch 완료와 HTTP 성공·JSON 해석·스키마 검증을 별도 단계로 처리한다.",
+    "AbortSignal을 실제 fetch에 전달하고 네트워크 실패와 취소를 구분한다.",
+    "요청 옵션·본문 소비·데이터 반환 계약을 고정하고 CORS의 한계를 설명한다."
+  ],
+  "available": false,
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createProductClient",
+    "parameters": [
+      "fetcher = fetch"
+    ],
+    "async": false,
+    "hostRequirements": [
+      "browser-dom"
+    ],
+    "runProbe": "const controller=new AbortController();const calls=[];const client=submission.createProductClient((url,init)=>{calls.push({url,method:init?.method,credentials:init?.credentials,accept:new Headers(init?.headers).get('accept'),sameSignal:init?.signal===controller.signal});return fetch(url,init);});const result=await client.loadProducts('/_fixtures/http/products',{signal:controller.signal});observe({result,calls});"
+  },
+  "editable": {
+    "prefix": "export function createProductClient(fetcher = fetch) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: HTTP·본문·스키마·전송 실패·취소를 구분하는 클라이언트를 반환하세요.\n"
+  },
+  "graderFile": "curriculum/checks/browser-fetch-and-http.json",
+  "referenceFile": "reference/browser-fetch-and-http.mjs",
+  "incorrectFile": "reference/incorrect/browser-fetch-and-http.mjs",
+  "exampleFile": "curriculum/examples/browser-fetch-and-http.mjs",
+  "exampleExpectedLogs": [
+    "{\"ok\":true,\"status\":200,\"items\":[{\"id\":\"p1\",\"name\":\"Lemon\",\"price\":120},{\"id\":\"p2\",\"name\":\"Pistachio\",\"price\":230}]}",
+    "{\"ok\":true,\"status\":200,\"items\":[]}",
+    "{\"ok\":false,\"kind\":\"http\",\"status\":404}",
+    "{\"ok\":false,\"kind\":\"json\",\"status\":200}",
+    "{\"ok\":false,\"kind\":\"schema\",\"status\":200}"
+  ],
+  "verificationRecord": "docs/execution/browser-fetch-and-http-exercise.json"
+}

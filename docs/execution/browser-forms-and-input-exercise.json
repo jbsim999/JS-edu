@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-forms-and-input-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-forms-and-input-checks-v1",
+  "executedTests": 8,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:ef67cc533607b7defb06d1bff9b893589524559228fbf36e6b6f3a6465ecf731",
+  "referenceChecks": [
+    "submit-flushes-pending",
+    "invalid-submit-focus",
+    "native-constraint-and-request-submit",
+    "latest-debounce-only",
+    "composition-blocks-submit",
+    "invalid-input-cancels-without-focus-theft",
+    "dispose-cancels-and-remounts",
+    "is-composing-cancels-existing-timer"
+  ],
+  "referenceChecksPassed": 8,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

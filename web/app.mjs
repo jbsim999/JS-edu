@@ -1,7 +1,8 @@
 import { glossary, findTerms, normalizeSearch } from "./glossary-data.mjs";
 import { createBrowserRunner, fingerprintSource } from "./execution/browser-runner.mjs";
 import { createModuleRunner } from "./execution/module-runner.mjs";
-import { loadLearningData, normalizeRoute, trackLabels, conceptAliases, supportsExerciseProvider } from "./features/learning-data.mjs";
+import { createDomRunner } from "./execution/dom-runner.mjs";
+import { loadLearningData, normalizeRoute, trackLabels, conceptAliases, supportsExerciseProvider, browserWorkerProfile, browserDomProfile } from "./features/learning-data.mjs";
 import { createExecutionRouter, createExecutionState } from "./features/execution-state.mjs";
 import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, quizForRevision } from "./features/learning-progress.mjs";
 import { createWorkspaceState, readPreferences, writePreferences } from "./features/workspace-state.mjs";
@@ -57,6 +58,9 @@ let preferences;
 let saveTimer;
 let pendingReset = null;
 let resetOpener = null;
+let executionInitiator = null;
+let navigationLayoutFrame = null;
+let navigationRevealPending = false;
 const moduleWorkspaces = new WeakMap();
 
 function currentEntry() { return lessons.find(entry => entry.id === route?.lesson); }
@@ -181,7 +185,11 @@ function notesBlock() {
 }
 
 function environmentForEntry(entry) {
-  return product.environment.exerciseAvailability?.[entry.exercise?.id] || product.environment;
+  const environment = product.environment.exerciseAvailability?.[entry.exercise?.id] || product.environment;
+  if (browserDomProfile(entry.profile) && location.hostname === "localhost") {
+    return { ...environment, available: false, reason: "DOM 실습은 정확한 실행 출처를 사용합니다. 같은 학습 화면을 127.0.0.1 주소에서 열어 주세요." };
+  }
+  return environment;
 }
 
 function executionContent() {
@@ -189,10 +197,16 @@ function executionContent() {
   const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[route.version] || entry.profile?.id));
   const environment = environmentForEntry(entry);
   const available = runnableForVersion(entry) && environment.available;
-  const description = entry.moduleWorkspace
+  const description = browserDomProfile(profile)
+    ? "학습 화면과 다른 로컬 출처의 실제 DOM에서 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다."
+    : entry.moduleWorkspace
     ? "현재 브라우저의 네이티브 ES 모듈 Worker에서 전체 파일을 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다."
     : "현재 브라우저의 전용 Worker에서 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다.";
-  return `<section class="execution-section" aria-labelledby="execution-title"><h3 id="execution-title">실행과 제출 검사</h3><dl class="runtime-details"><div><dt>언어 기준</dt><dd>${escapeHtml(route.version)}</dd></div><div><dt>실제 런타임</dt><dd>${escapeHtml(environment.actualRuntime || "연결할 수 없음")}</dd></div><div><dt>변환 대상</dt><dd>${escapeHtml(profile?.compilerTarget || "별도 변환 없음")}</dd></div></dl><p class="runtime-note" id="runtime-note">${available ? description : escapeHtml((!environment.available && environment.reason) || entry.runtimeReason || profile?.execution?.reason || "이 과제의 실행 환경을 준비하고 있습니다.")}</p><div class="execution-actions"><button type="button" class="plain-button" data-execute="prepare"${available ? "" : " disabled"}>환경 확인</button><button type="button" class="secondary-button" data-execute="run"${available ? "" : " disabled"}>코드 실행</button><button type="button" class="primary-button" data-execute="submit"${available ? "" : " disabled"}>제출 검사</button><button type="button" class="secondary-button" id="cancel-execution" hidden>중지</button></div><p id="execution-announcement" class="save-status" role="status" aria-live="polite"></p><div id="execution-result"></div><p class="code-note">공개된 행동 검사를 이용하는 자가 학습용 결과입니다. 언어 기준과 현재 브라우저의 전체 기능 지원은 별개입니다.</p></section>`;
+  const canonicalUrl = new URL(location.href);
+  canonicalUrl.hostname = "127.0.0.1";
+  const limitation = browserDomProfile(profile)
+    ? `<p class="runtime-limitation">${escapeHtml(environment.limitations || "동기 무한 루프의 시간 초과·강제 중지와 절대 메모리 한도를 보장하지 않습니다.")} 실행을 멈추려면 학습 화면의 중지 버튼을 누르세요.</p>${location.hostname === "localhost" ? `<a class="runtime-address" href="${escapeHtml(canonicalUrl.href)}" target="_blank" rel="noopener noreferrer">127.0.0.1 학습 화면 열기 ↗ <span class="sr-only">(새 탭)</span></a><p class="code-note">주소별 브라우저 저장 공간이 다릅니다. 현재 초안은 복사해 옮길 수 있습니다.</p>` : ""}` : "";
+  return `<section class="execution-section" aria-labelledby="execution-title"><h3 id="execution-title">실행과 제출 검사</h3><dl class="runtime-details"><div><dt>언어 기준</dt><dd>${escapeHtml(route.version)}</dd></div><div><dt>실제 런타임</dt><dd>${escapeHtml(environment.actualRuntime || "연결할 수 없음")}</dd></div><div><dt>변환 대상</dt><dd>${escapeHtml(profile?.compilerTarget || "별도 변환 없음")}</dd></div></dl><p class="runtime-note" id="runtime-note">${available ? description : escapeHtml((!environment.available && environment.reason) || entry.runtimeReason || profile?.execution?.reason || "이 과제의 실행 환경을 준비하고 있습니다.")}</p>${limitation}<div class="execution-actions"><button type="button" class="plain-button" data-execute="prepare"${available ? "" : " disabled"}>환경 확인</button><button type="button" class="secondary-button" data-execute="run"${available ? "" : " disabled"}>코드 실행</button><button type="button" class="primary-button" data-execute="submit"${available ? "" : " disabled"}>제출 검사</button><button type="button" class="secondary-button" id="cancel-execution" hidden>중지</button></div><p id="execution-announcement" class="save-status" role="status" aria-live="polite"></p><div id="execution-result"></div><p class="code-note">공개된 행동 검사를 이용하는 자가 학습용 결과입니다. 언어 기준과 현재 브라우저의 전체 기능 지원은 별개입니다.</p></section>`;
 }
 
 function codingContent() {
@@ -311,22 +325,57 @@ function renderNavigation() {
   const runnable = lessons.filter(entry => entry.runnable).length;
   byId("catalog-status").textContent = `교재 ${prepared}강 · 실습 연결 ${runnable}강 · 계획 ${lessons.length}강`;
   ensureActiveLessonVisible();
+  queueNavigationLayout({ reveal: true });
+}
+
+function revealNavigationItem(container, target) {
+  if (!target || container.clientHeight >= container.scrollHeight) return;
+  const viewport = container.getBoundingClientRect();
+  const bounds = target.getBoundingClientRect();
+  if (bounds.top < viewport.top + 4) container.scrollTop -= viewport.top + 4 - bounds.top;
+  else if (bounds.bottom > viewport.bottom - 4) container.scrollTop += bounds.bottom - viewport.bottom + 4;
 }
 
 function ensureActiveLessonVisible() {
-  const selected = elements.lessonList.querySelector('[aria-current="page"]');
-  const viewport = elements.lessonList.getBoundingClientRect();
-  const bounds = selected?.getBoundingClientRect();
-  if (bounds && elements.lessonList.clientHeight < elements.lessonList.scrollHeight) {
-    if (bounds.top < viewport.top + 4) elements.lessonList.scrollTop -= viewport.top + 4 - bounds.top;
-    if (bounds.bottom > viewport.bottom - 4) elements.lessonList.scrollTop += bounds.bottom - viewport.bottom + 4;
+  const focused = document.activeElement;
+  const selected = elements.lessonList.contains(focused) ? focused : elements.lessonList.querySelector('[aria-current="page"]');
+  revealNavigationItem(elements.lessonList, selected);
+  if (navigationViewport.matches && byId("toc-sidebar").contains(elements.toc)) {
+    revealNavigationItem(elements.toc, elements.toc.contains(focused) ? focused : selected);
   }
+}
+
+function queueNavigationLayout({ reveal = false } = {}) {
+  navigationRevealPending ||= reveal;
+  if (navigationLayoutFrame !== null) return;
+  navigationLayoutFrame = requestAnimationFrame(() => {
+    navigationLayoutFrame = null;
+    const revealAfterLayout = navigationRevealPending;
+    navigationRevealPending = false;
+    if (!navigationViewport.matches || !byId("toc-sidebar").contains(elements.toc)) {
+      elements.toc.style.removeProperty("--toc-available-height");
+      elements.toc.style.removeProperty("--toc-item-space");
+      return;
+    }
+    // At the page top the header still precedes the sticky sidebar. Measure its
+    // actual position instead of assuming the sidebar has reached its sticky top.
+    const viewportBottom = window.visualViewport
+      ? window.visualViewport.offsetTop + window.visualViewport.height : window.innerHeight;
+    const availableHeight = Math.max(0, Math.floor(viewportBottom - elements.toc.getBoundingClientRect().top - 12));
+    const focused = document.activeElement;
+    const selected = elements.lessonList.contains(focused) ? focused : elements.lessonList.querySelector('[aria-current="page"]');
+    const itemSpace = Math.max(72, Math.ceil((selected?.getBoundingClientRect().height || 0) + 8));
+    elements.toc.style.setProperty("--toc-available-height", `${availableHeight}px`);
+    elements.toc.style.setProperty("--toc-item-space", `${itemSpace}px`);
+    if (revealAfterLayout) ensureActiveLessonVisible();
+  });
 }
 
 function updateCourseProgressLabel(text) {
   const previousHeight = elements.lessonList.clientHeight;
   byId("course-progress").textContent = text;
   if (elements.lessonList.clientHeight !== previousHeight) ensureActiveLessonVisible();
+  queueNavigationLayout({ reveal: true });
 }
 
 function renderLesson() {
@@ -379,6 +428,11 @@ function renderExecution() {
   const available = runnableForVersion(entry) && environmentForEntry(entry).available;
   document.querySelectorAll("[data-execute]").forEach(button => { button.disabled = busy || !available; });
   byId("cancel-execution").hidden = !busy;
+  if (!busy && executionInitiator) {
+    const initiator = executionInitiator;
+    executionInitiator = null;
+    if (document.activeElement === document.body && initiator.isConnected && !initiator.disabled) initiator.focus({ preventScroll: true });
+  }
   byId("execution-announcement").textContent = state.reason;
   output.setAttribute("aria-busy", String(busy));
   const result = state.result;
@@ -526,6 +580,7 @@ function clearSearch() {
 function panelsHome() {
   byId("toc-sidebar").append(elements.toc);
   byId("glossary-sidebar").append(elements.glossary);
+  queueNavigationLayout();
 }
 
 function focusIfVisible(target) {
@@ -805,10 +860,15 @@ elements.dialog.addEventListener("pointercancel", () => { backdropPointer = null
 window.addEventListener("blur", () => { backdropPointer = null; });
 window.addEventListener("popstate", () => { if (product) applyRoute(readRoute()); });
 window.addEventListener("resize", ensureActiveTabVisible);
+window.addEventListener("resize", () => queueNavigationLayout({ reveal: true }));
+window.addEventListener("scroll", queueNavigationLayout, { passive: true });
+window.visualViewport?.addEventListener("resize", () => queueNavigationLayout({ reveal: true }));
+window.visualViewport?.addEventListener("scroll", queueNavigationLayout, { passive: true });
 document.addEventListener("focusin", event => {
   // A breakpoint can blur a hidden control before matchMedia's change event.
   // Remember its region so keyboard focus can move to that region's opener.
   if (event.target instanceof HTMLElement && event.target !== document.body) lastFocusedElement = event.target;
+  if (elements.toc.contains(event.target)) queueNavigationLayout({ reveal: true });
 });
 wideViewport.addEventListener("change", event => {
   if (event.matches && modalMode === "glossary") {
@@ -825,8 +885,10 @@ navigationViewport.addEventListener("change", event => {
   }
 });
 if (typeof ResizeObserver === "function") {
-  const navigationResize = new ResizeObserver(() => ensureActiveLessonVisible());
+  const navigationResize = new ResizeObserver(queueNavigationLayout);
   navigationResize.observe(elements.lessonList);
+  navigationResize.observe(document.querySelector(".site-header"));
+  navigationResize.observe(byId("preference-notice"));
 }
 
 document.addEventListener("input", event => {
@@ -903,6 +965,7 @@ document.addEventListener("click", event => {
   const button = target?.closest("[data-execute]");
   if (!button || button.disabled || !runnableForVersion(currentEntry()) || executionState.busy()) return;
   const kind = button.dataset.execute;
+  executionInitiator = button;
   const identity = progressIdentity(currentEntry(), route.version);
   flushDrafts();
   if (kind === "submit") {
@@ -1011,11 +1074,13 @@ try {
   product = await loadLearningData();
   lessons = product.entries;
   const supported = lessons.filter(entry => entry.ready && supportsExerciseProvider(entry.exercise, entry.profile));
-  const functionExercises = supported.filter(entry => entry.exercise.runner.kind === "function-body").map(entry => entry.exercise);
+  const functionExercises = supported.filter(entry => entry.exercise.runner.kind === "function-body" && browserWorkerProfile(entry.profile)).map(entry => entry.exercise);
   const moduleExercises = supported.filter(entry => entry.exercise.runner.kind === "module-files").map(entry => entry.exercise);
+  const domExercises = supported.filter(entry => entry.exercise.runner.kind === "function-body" && browserDomProfile(entry.profile)).map(entry => entry.exercise);
   const providers = [];
   if (functionExercises.length) providers.push({ runner: createBrowserRunner({ exercises: functionExercises }), exerciseIds: functionExercises.map(exercise => exercise.id) });
   if (moduleExercises.length) providers.push({ runner: createModuleRunner({ exercises: moduleExercises }), exerciseIds: moduleExercises.map(exercise => exercise.id) });
+  if (domExercises.length) providers.push({ runner: createDomRunner({ exercises: domExercises }), exerciseIds: domExercises.map(exercise => exercise.id) });
   product.runner = createExecutionRouter(providers);
   product.environment = await product.runner.getEnvironment();
   try { browserStorage = window.localStorage; } catch { /* Storage access can be blocked. */ }

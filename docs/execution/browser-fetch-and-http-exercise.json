@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-fetch-and-http-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-fetch-and-http-checks-v1",
+  "executedTests": 10,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:9670ced5b53b98bd62e00ed9602069b85ebbd2cff4e39a44b8f715d6c3ac147e",
+  "referenceChecks": [
+    "products-and-request-contract",
+    "empty-is-success",
+    "http-errors-before-body",
+    "invalid-json",
+    "invalid-schema",
+    "network-failure",
+    "abort-forwarded-and-recovery",
+    "already-aborted",
+    "one-body-read-and-copy",
+    "duplicate-product-id"
+  ],
+  "referenceChecksPassed": 10,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

@@ -4,6 +4,7 @@ import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { moduleWorkspaceLimits, validateModuleExercise, verifyModuleVariant } from '../scripts/verify-module-curriculum.mjs';
 import { validateProject } from '../scripts/validate-project.mjs';
@@ -266,4 +267,31 @@ test('module host requirements remain explicit partial author verification', asy
   assert.equal(result.summary.referenceChecks, 0);
   assert.equal(result.examples.length, 0);
   assert.match(result.exercises[0].reason, /browser-dom/);
+});
+
+test('CLI host allowance preserves PARTIAL and cannot hide a reference failure', async context => {
+  const { directory, exercise } = await projectFixture(context);
+  const filename = path.join(directory, 'curriculum/exercises.json');
+  const data = JSON.parse(await readFile(filename, 'utf8'));
+  data.exercises[0].hostRequirements = ['browser-dom'];
+  await writeFile(filename, JSON.stringify(data));
+  const cli = new URL('../scripts/verify-curriculum.mjs', import.meta.url);
+  const call = async flags => {
+    try {
+      const result = await promisify(execFile)(process.execPath, [fileURLToPath(cli), directory, ...flags], { timeout: 15000, maxBuffer: 524288 });
+      return { code: 0, report: JSON.parse(result.stdout) };
+    } catch (error) { return { code: error.code, report: JSON.parse(error.stdout) }; }
+  };
+  const strict = await call([]);
+  assert.equal(strict.code, 1);
+  assert.equal(strict.report.status, 'PARTIAL');
+  const allowed = await call(['--allow-host-skips']);
+  assert.equal(allowed.code, 0);
+  assert.equal(allowed.report.status, 'PARTIAL');
+  delete data.exercises[0].hostRequirements;
+  await writeFile(filename, JSON.stringify(data));
+  await writeFile(path.join(directory, exercise.referenceFile), 'export const broken = true;');
+  const broken = await call(['--allow-host-skips']);
+  assert.equal(broken.code, 1);
+  assert.equal(broken.report.status, 'FAIL');
 });

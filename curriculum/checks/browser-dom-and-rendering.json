@@ -1,0 +1,104 @@
+{
+  "exerciseId": "browser-dom-and-rendering-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-dom-and-rendering-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "safe-text",
+      "label": "태그처럼 생긴 이름을 텍스트로 유지한다",
+      "probe": "const root=document.createElement('div');document.body.append(root);try{const name='<b>레몬</b><img data-untrusted>';const count=submission.renderInventory(root,[{id:'p1',name,quantity:2}]);observe({count,text:root.querySelector('[data-field=\"name\"]').textContent,parsedTags:root.querySelectorAll('b,img').length,quantity:root.querySelector('[data-field=\"quantity\"]').textContent});}finally{root.remove();}",
+      "expected": {
+        "count": 1,
+        "text": "<b>레몬</b><img data-untrusted>",
+        "parsedTags": 0,
+        "quantity": "2"
+      }
+    },
+    {
+      "id": "repeat-render-replaces",
+      "label": "재렌더링은 항목·목록을 중복하지 않는다",
+      "probe": "const root=document.createElement('div');document.body.append(root);try{submission.renderInventory(root,[{id:'old',name:'Old',quantity:1}]);const count=submission.renderInventory(root,[{id:'new',name:'New',quantity:0}]);submission.renderInventory(root,[{id:'new',name:'New',quantity:0}]);observe({count,lists:root.querySelectorAll('ul').length,ids:Array.from(root.querySelectorAll('li'),row=>row.dataset.id),quantity:root.querySelector('[data-field=\"quantity\"]').textContent,empty:root.querySelector('[data-empty]')===null});}finally{root.remove();}",
+      "expected": {
+        "count": 1,
+        "lists": 1,
+        "ids": [
+          "new"
+        ],
+        "quantity": "0",
+        "empty": true
+      }
+    },
+    {
+      "id": "empty-transition",
+      "label": "빈 상태를 명시하고 다시 채울 때 안내를 제거한다",
+      "probe": "const root=document.createElement('div');document.body.append(root);try{const emptyCount=submission.renderInventory(root,[]);const empty={count:emptyCount,rows:root.querySelectorAll('li').length,message:root.querySelector('[data-empty]').textContent};submission.renderInventory(root,[{id:'p',name:'Lemon',quantity:1}]);observe({empty,afterEmpty:root.querySelector('[data-empty]')===null,afterRows:root.querySelectorAll('li').length});}finally{root.remove();}",
+      "expected": {
+        "empty": {
+          "count": 0,
+          "rows": 0,
+          "message": "등록된 상품이 없습니다."
+        },
+        "afterEmpty": true,
+        "afterRows": 1
+      }
+    },
+    {
+      "id": "native-controls-and-order",
+      "label": "항목 순서와 키보드로 사용할 수 있는 기본 버튼 구조를 만든다",
+      "probe": "const root=document.createElement('div');document.body.append(root);try{submission.renderInventory(root,[{id:'quote\"]',name:'A',quantity:0},{id:'b',name:'B',quantity:3}]);observe({ids:Array.from(root.querySelectorAll('li'),n=>n.dataset.id),tabs:Array.from(root.querySelectorAll('li'),n=>n.tabIndex),buttons:Array.from(root.querySelector('li').querySelectorAll('button'),b=>({type:b.type,action:b.dataset.action,text:b.textContent,label:b.getAttribute('aria-label')}))});}finally{root.remove();}",
+      "expected": {
+        "ids": [
+          "quote\"]",
+          "b"
+        ],
+        "tabs": [
+          0,
+          0
+        ],
+        "buttons": [
+          {
+            "type": "button",
+            "action": "edit",
+            "text": "편집",
+            "label": "A 편집"
+          },
+          {
+            "type": "button",
+            "action": "delete",
+            "text": "삭제",
+            "label": "A 삭제"
+          }
+        ]
+      }
+    },
+    {
+      "id": "invalid-preserves-view",
+      "label": "잘못된 항목과 중복 ID에서 기존 DOM을 보존한다",
+      "probe": "const root=document.createElement('div');document.body.append(root);try{submission.renderInventory(root,[{id:'keep',name:'Keep',quantity:1}]);const before=root.innerHTML;const inputs=[[{id:'x',name:'X',quantity:-1}],[{id:'x',name:'X',quantity:1},{id:'x',name:'Y',quantity:2}],null];const errors=inputs.map(value=>{try{submission.renderInventory(root,value);return 'none';}catch(error){return error.name;}});observe({errors,unchanged:root.innerHTML===before});}finally{root.remove();}",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "unchanged": true
+      }
+    },
+    {
+      "id": "input-and-boundary-preserved",
+      "label": "동결 입력과 root 밖의 노드를 변경하지 않는다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('div');const sibling=document.createElement('p');sibling.textContent='keep';host.append(root,sibling);document.body.append(host);try{const item=Object.freeze({id:'p',name:'Lemon',quantity:2});const items=Object.freeze([item]);submission.renderInventory(root,items);observe({item:{...item},sibling:sibling.textContent,stillConnected:sibling.parentElement===host,listsOutside:host.querySelectorAll('ul').length});}finally{host.remove();}",
+      "expected": {
+        "item": {
+          "id": "p",
+          "name": "Lemon",
+          "quantity": 2
+        },
+        "sibling": "keep",
+        "stillConnected": true,
+        "listsOutside": 1
+      }
+    }
+  ]
+}

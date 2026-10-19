@@ -1,0 +1,72 @@
+{
+  "id": "browser-workers-and-performance-exercise",
+  "lessonId": "browser-workers-and-performance",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-workers-and-performance-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createWorkerAggregator(options)를 구현한다. options는 {workerURL,onResult,onError,makeWorker}이고 onError 기본값은 아무 일도 하지 않는 함수, makeWorker 기본값은 url=>new Worker(url)이다. fixture URL은 context.workerBase+\"sum.js\"이며 {requestId,values:number[]}를 받아 {requestId,sum}을 응답한다. 반환 API는 {submit,cancel,dispose,getState}다. Worker는 첫 유효 submit에 만들고 정상 완료 후 재사용한다.\n\nsubmit(values)는 길이 100,000 이하인 조밀 배열이며 각 own 인덱스의 값이 절댓값 1,000,000 이하의 안전 정수일 때만 허용하고 잘못되면 TypeError를 던지며 기존 작업을 유지한다. 입력을 변경·transfer하지 않는다. 유효 요청마다 1부터 증가하는 requestId를 반환하고 복사한 values를 postMessage한다. 활성 요청보다 오래되거나 다른 requestId, 유한 number가 아닌 sum의 메시지는 무시한다. 유효한 최신 결과만 onResult({requestId,sum})를 한 번 호출한다.\n\ngetState는 {status,requestId,lastSum}의 새 객체다. 초기값은 idle/0/null, submit은 running/요청번호/직전 성공 합계, 정상 응답은 done/번호/새 합계다. cancel은 활성 요청을 무효화하고 Worker를 terminate하며 cancelled로 바꾸되 입력·직전 합계·마지막 번호는 보존한다. 다음 submit은 새 Worker를 만든다. dispose는 여러 번 호출해도 Worker를 한 번만 종료하고 리스너를 제거하며 disposed가 된다. 이후 submit은 InvalidStateError다.\n\nWorker error 또는 messageerror는 활성 요청을 error 상태로 만들고 Worker를 종료한 뒤 onError({requestId,message})를 호출한다. error의 message 문자열을 사용하며 messageerror는 Message deserialization failed로 한다. 생성/postMessage의 동기 예외는 원래 값을 다시 던지고 error 상태로 정리하되 onError를 중복 호출하지 않는다. 종료·취소 뒤의 메시지는 무시한다. 콜백과 makeWorker는 정상 함수이며 콜백 자체의 예외 정책은 이 과제 범위 밖이다."
+  ],
+  "template": "export function createWorkerAggregator(options) {\n  // TODO: 실제 Worker의 요청 번호·취소·오류·종료 수명을 관리하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/browser-workers-and-performance.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 Worker 결과가 기준 합계와 일치하고 원본 배열이 남는다",
+    "연속 제출의 실제 이전 Worker 응답을 최신 결과로 채택하지 않는다",
+    "취소 시 실제 Worker를 종료하고 입력을 유지한 채 새 Worker로 재개한다",
+    "종료는 멱등적이며 종료 후 제출·늦은 메시지를 차단한다",
+    "누락·비유한 값의 입력은 현재 유효 요청을 덮어쓰지 않는다",
+    "실제 Worker에 주입한 error 이벤트를 정리하고 새 요청을 받는다",
+    "스키마가 맞지 않는 메시지는 무시하고 실제 숫자 응답을 기다린다",
+    "실제 Worker의 전송 실패를 주입하면 원래 예외와 종료를 보존한다",
+    "messageerror 정리 후 직전 성공 합계와 오류 요청 번호를 보존한다"
+  ],
+  "rubric": [
+    "Worker의 별도 실행 환경과 structured clone·transfer의 소유권을 구분한다.",
+    "요청 번호로 낡은 응답을 거부하고 취소·종료·오류 뒤 자원을 정리한다.",
+    "같은 입력·기준 결과·단계별 비용을 갖춘 성능 측정을 설계한다."
+  ],
+  "executionVerified": true,
+  "requiredFeatures": [
+    "Worker",
+    "AbortController",
+    "structuredClone",
+    "Performance.prototype.now"
+  ],
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createWorkerAggregator",
+    "parameters": [
+      "options"
+    ],
+    "async": false,
+    "runProbe": "const workers=[];let terminations=0;const makeWorker=url=>{const worker=new Worker(url);const terminate=worker.terminate.bind(worker);worker.terminate=()=>{terminations++;terminate();};workers.push(worker);return worker;};let controller;let timer;let resolveResult,rejectResult;const result=new Promise((resolve,reject)=>{resolveResult=resolve;rejectResult=reject;});timer=setTimeout(()=>rejectResult(new Error('Worker fixture timed out')),2000);try{const values=Object.freeze([1,2,3]);controller=submission.createWorkerAggregator({workerURL:context.workerBase+'sum.js',makeWorker,onResult:resolveResult,onError:rejectResult});const id=controller.submit(values);const answer=await result;observe({id,answer,input:values,state:controller.getState()});}finally{clearTimeout(timer);controller?.dispose();for(const worker of workers)worker.terminate();}"
+  },
+  "editable": {
+    "prefix": "export function createWorkerAggregator(options) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 실제 Worker의 요청 번호·취소·오류·종료 수명을 관리하세요."
+  },
+  "graderFile": "curriculum/checks/browser-workers-and-performance.json",
+  "referenceFile": "reference/browser-workers-and-performance.mjs",
+  "incorrectFile": "reference/incorrect/browser-workers-and-performance.mjs",
+  "exampleFile": "curriculum/examples/browser-workers-and-performance.mjs",
+  "exampleExpectedLogs": [
+    "{\"sum\":6,\"input\":[1,2,3]}",
+    "{\"sourceBytes\":0,\"targetBytes\":4}"
+  ],
+  "verificationRecord": "docs/execution/browser-workers-and-performance-exercise.json"
+}

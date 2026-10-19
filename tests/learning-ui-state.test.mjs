@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createExecutionRouter, createExecutionState, resultMatches, submissionPassed } from "../web/features/execution-state.mjs";
 import { createLearningProgress, assessQuiz, validSubmission, quizForRevision } from "../web/features/learning-progress.mjs";
-import { loadLearningData, normalizeRoute, browserWorkerProfile, browserModuleProfile, supportsExerciseProvider } from "../web/features/learning-data.mjs";
+import { loadLearningData, normalizeRoute, browserWorkerProfile, browserModuleProfile, browserDomProfile, supportsExerciseProvider } from "../web/features/learning-data.mjs";
 
 const identity = { lessonId: "counter", exerciseId: "counter-task", contentRevision: "r1", targetVersion: "ES2026", profileId: "worker-1", graderRevision: "g1" };
 const environment = { available: true, actualRuntime: "test worker", environmentFingerprint: "environment-1" };
@@ -169,6 +169,13 @@ test("only dedicated browser-worker profiles are passed to the Worker provider",
   assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, moduleProfile), true);
   assert.equal(supportsExerciseProvider({ runner: { kind: "function-body" } }, moduleProfile), false);
   assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, { execution: { provider: "browser-worker" } }), false);
+  const domProfile = { id: "browser-dom", execution: { provider: "browser-dom" } };
+  assert.equal(browserDomProfile(domProfile), true);
+  assert.equal(browserWorkerProfile(domProfile), false);
+  assert.equal(browserModuleProfile(domProfile), false);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "function-body" } }, domProfile), true);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, domProfile), false);
+  assert.equal(browserDomProfile({ id: "browser-dom", execution: { provider: "node-process" } }), false);
 });
 
 test("provider routing preserves each exercise environment and keeps unavailable feature reasons", async () => {

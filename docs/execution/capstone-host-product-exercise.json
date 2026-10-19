@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "exerciseId": "capstone-host-product-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-host-product-checks-v1",
+  "executedTests": 9,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:a0680b5acb4d4e02ca09d68c6af0b471bc6b0ea768fb62377fc66756a4430109",
+  "referenceChecks": [
+    "actual-fetch-core-dom",
+    "empty-and-input",
+    "upstream-failures",
+    "storage-restore",
+    "keyboard-and-composition",
+    "late-response-cannot-overwrite",
+    "dispose-and-recovery",
+    "text-and-storage-failure",
+    "storage-getter-unavailable"
+  ],
+  "referenceChecksPassed": 9,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

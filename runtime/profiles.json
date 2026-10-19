@@ -63,6 +63,42 @@
         "isolation": "실행별 임시 메모리 파일과 전용 Worker. OS 격리/절대 RAM 상한/같은 출처 저장 권한 제거는 보장하지 않는다."
       },
       "publication": "draft"
+    },
+    {
+      "id": "browser-dom",
+      "languageVersion": "ES2026",
+      "compilerTarget": null,
+      "compilerTargetReason": "Native browser DOM and JavaScript; no transpilation.",
+      "runtimeRequirement": "Local browser DOM and isolated loopback iframe host",
+      "runtimeRequirementReason": "Browser APIs are separate from the ECMAScript language edition.",
+      "dependencies": [],
+      "resources": [],
+      "capabilities": [
+        "function-body",
+        "dom",
+        "events",
+        "storage",
+        "http-fixtures",
+        "worker-fixtures",
+        "run",
+        "behavior-checks",
+        "bounded-output"
+      ],
+      "execution": {
+        "available": true,
+        "provider": "browser-dom",
+        "reason": "실제 Chrome155/Windows에서 브라우저8강·통합DOM3강의 정답/오답·예제와 출처 격리를 검증했다. 환경과 필수 API는 실행 시 확인한다.",
+        "limits": {
+          "caseTimeoutMs": 5000,
+          "totalTimeoutMs": 30000,
+          "hardMemoryLimit": false,
+          "hardTimeout": false,
+          "forcedTermination": false,
+          "frameStartupMs": 5000
+        },
+        "isolation": "다른 포트의 loopback iframe. 제품 저장 출처를 분리하지만 동기 무한 반복의 강제 중지·OS 격리·절대 RAM 한도는 보장하지 않는다."
+      },
+      "publication": "draft"
     }
   ]
 }

@@ -3,13 +3,14 @@ import { readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createModuleWorkspace } from './server/module-workspace.mjs';
+import { createBrowserHostServer } from './server/browser-host.mjs';
 
 const projectRoot = new URL('../', import.meta.url);
 const routes = new Map([
   ['/', ['web/index.html', 'text/html; charset=utf-8']],
-  ...['index.html', 'styles.css', 'app.mjs', 'glossary-data.mjs', 'adapters/storage.mjs', 'adapters/runner.mjs', 'features/workspace-state.mjs',
+  ...['index.html', 'styles.css', 'app.mjs', 'glossary-data.mjs', 'glossary-expanded.mjs', 'adapters/storage.mjs', 'adapters/runner.mjs', 'features/workspace-state.mjs',
     'features/learning-data.mjs', 'features/execution-state.mjs', 'features/learning-progress.mjs',
-    'features/module-workspace-state.mjs', 'execution/module-runner.mjs',
+    'features/module-workspace-state.mjs', 'execution/module-runner.mjs', 'execution/dom-runner.mjs',
     'execution/browser-runner.mjs', 'execution/protocol.mjs', 'execution/worker.js'].map(file => [
     `/${file}`, [`web/${file}`, file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8'],
   ]),
@@ -25,7 +26,7 @@ const securityHeaders = {
   'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
 };
 const workerPolicy = "default-src 'none'; script-src 'unsafe-eval'; connect-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
 
@@ -60,6 +61,10 @@ async function addLearningRoutes(publicRoutes, qualification) {
 // Only these public learning resources are served, never the repository directory.
 export function createLearningServer({ qualification = false } = {}) {
   let closed = false;
+  let browserHost;
+  let browserHostConfig = null;
+  let browserHostReady = Promise.resolve(null);
+  let shutdown;
   const moduleWorkspace = readFile(new URL('web/execution/module-bootstrap.mjs', projectRoot), 'utf8')
     .then(bootstrap => { const workspace = createModuleWorkspace({ bootstrap, headers: securityHeaders }); if (closed) workspace.close(); return workspace; })
     .catch(() => null);
@@ -67,6 +72,7 @@ export function createLearningServer({ qualification = false } = {}) {
   if (qualification) {
     publicRoutes.set('/execution/qualification.html', ['web/execution/qualification.html', 'text/html; charset=utf-8']);
     publicRoutes.set('/execution/qualification.mjs', ['web/execution/qualification.mjs', 'text/javascript; charset=utf-8']);
+    publicRoutes.set('/execution/qualification-completion.mjs', ['web/execution/qualification-completion.mjs', 'text/javascript; charset=utf-8']);
   }
   let learningIndexFailed = false;
   const learningReady = addLearningRoutes(publicRoutes, qualification).catch(() => { learningIndexFailed = true; });
@@ -75,10 +81,21 @@ export function createLearningServer({ qualification = false } = {}) {
     const port = server.address()?.port;
     const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
     const send = (status, body, headers = {}) => {
-      response.writeHead(status, { ...securityHeaders, 'Content-Type': 'text/plain; charset=utf-8', ...headers });
+      const policy = securityHeaders['Content-Security-Policy'].replace("frame-src 'none'", browserHostConfig ? `frame-src ${browserHostConfig.origin}` : "frame-src 'none'");
+      response.writeHead(status, { ...securityHeaders, 'Content-Security-Policy': policy, 'Content-Type': 'text/plain; charset=utf-8', ...headers });
       response.end(request.method === 'HEAD' ? undefined : body);
     };
     if (!allowedHosts.has(request.headers.host)) return send(403, 'Local access only');
+    if (request.url?.split('?')[0] === '/_browser/config') {
+      const parentOrigin = `http://127.0.0.1:${port}`;
+      const json = (status, body) => send(status, JSON.stringify(body), { 'Content-Type': 'application/json; charset=utf-8' });
+      if (request.headers.origin !== undefined && request.headers.origin !== parentOrigin) return json(403, { error: 'Origin is not allowed.' });
+      if (!['GET', 'HEAD'].includes(request.method)) return send(405, 'Method not allowed', { Allow: 'GET, HEAD' });
+      if (request.headers.host !== `127.0.0.1:${port}`) return json(409, { error: 'DOM 실습은 127.0.0.1 주소에서 열어 주세요.', parentOrigin });
+      const config = await browserHostReady;
+      return config && config === browserHostConfig && browserHost?.listening && !closed
+        ? json(200, config) : json(503, { error: '별도 브라우저 실습 서버를 연결하지 못했습니다.' });
+    }
     if (request.url?.startsWith('/_execution/')) {
       const workspace = await moduleWorkspace;
       if (!workspace) return send(503, 'Module execution is unavailable');
@@ -94,6 +111,9 @@ export function createLearningServer({ qualification = false } = {}) {
     const entry = publicRoutes.get(pathname);
     if (!entry) return send(404, 'Not found');
     try {
+      // The document receives only the one host origin started for this server.
+      // Other local ports, same-origin frames and external frames remain blocked.
+      if (entry[1].startsWith('text/html')) await browserHostReady;
       const actual = await realpath(new URL(entry[0], projectRoot));
       const relative = path.relative(await actualProjectRoot, actual);
       if (relative.startsWith('..') || path.isAbsolute(relative)) return send(404, 'Not found');
@@ -103,7 +123,43 @@ export function createLearningServer({ qualification = false } = {}) {
       send(500, 'Learning resource could not be read');
     }
   });
-  server.on('close', () => { closed = true; void moduleWorkspace.then(workspace => workspace?.close()); });
+  server.on('listening', () => {
+    const address = server.address();
+    if (closed || !address || typeof address !== 'object' || address.address !== '127.0.0.1') return;
+    const parentOrigin = `http://127.0.0.1:${address.port}`;
+    browserHostReady = new Promise(resolve => {
+      try {
+        browserHost = createBrowserHostServer({ parentOrigin });
+        browserHost.on('error', () => { browserHostConfig = null; resolve(null); });
+        browserHost.on('close', () => { browserHostConfig = null; });
+        browserHost.listen(0, '127.0.0.1', () => {
+          const hostAddress = browserHost.address();
+          if (closed || !hostAddress || typeof hostAddress !== 'object') { browserHost.close(() => resolve(null)); return; }
+          const origin = `http://127.0.0.1:${hostAddress.port}`;
+          browserHostConfig = Object.freeze({ origin, frameUrl: `${origin}/execution/dom-frame.html` });
+          resolve(browserHostConfig);
+        });
+      } catch { resolve(null); }
+    });
+  });
+  const closeMain = server.close.bind(server);
+  server.close = callback => {
+    if (!shutdown) {
+      closed = true;
+      shutdown = new Promise(resolve => closeMain(error => resolve(error))).then(async error => {
+        await browserHostReady;
+        await new Promise(resolve => {
+          if (!browserHost?.listening) { resolve(); return; }
+          browserHost.close(resolve);
+          browserHost.closeAllConnections();
+        });
+        (await moduleWorkspace)?.close();
+        return error;
+      });
+    }
+    if (typeof callback === 'function') void shutdown.then(error => callback(error));
+    return server;
+  };
   return server;
 }
 

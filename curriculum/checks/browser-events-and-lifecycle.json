@@ -1,0 +1,98 @@
+{
+  "exerciseId": "browser-events-and-lifecycle-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-events-and-lifecycle-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "nested-click-and-propagation",
+      "label": "중첩 span 클릭을 한 번 처리하고 전파를 유지한다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('ul');host.append(root);document.body.append(host);const actions=[];function add(id,parent=root){const row=document.createElement('li');row.dataset.id=id;row.tabIndex=0;for(const action of ['edit','delete']){const button=document.createElement('button');button.type='button';button.dataset.action=action;const span=document.createElement('span');span.textContent=action;button.append(span);row.append(button);}parent.append(row);return row;}let controller;try{controller=submission.createInventoryEvents(root,value=>actions.push(value));const row=add('p1');let bubbled=0;host.addEventListener('click',()=>bubbled++);controller.connect();const event=new MouseEvent('click',{bubbles:true,cancelable:true});row.querySelector('span').dispatchEvent(event);observe({actions,prevented:event.defaultPrevented,bubbled,rows:root.children.length});}finally{controller?.dispose?.();host.remove();}",
+      "expected": {
+        "actions": [
+          {
+            "action": "edit",
+            "id": "p1"
+          }
+        ],
+        "prevented": true,
+        "bubbled": 1,
+        "rows": 1
+      }
+    },
+    {
+      "id": "dynamic-item",
+      "label": "연결 후 추가한 항목을 위임 처리한다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('ul');host.append(root);document.body.append(host);const actions=[];function add(id,parent=root){const row=document.createElement('li');row.dataset.id=id;row.tabIndex=0;for(const action of ['edit','delete']){const button=document.createElement('button');button.type='button';button.dataset.action=action;const span=document.createElement('span');span.textContent=action;button.append(span);row.append(button);}parent.append(row);return row;}let controller;try{controller=submission.createInventoryEvents(root,value=>actions.push(value));controller.connect();const row=add('later');row.querySelector('[data-action=\"delete\"]').click();observe(actions);}finally{controller?.dispose?.();host.remove();}",
+      "expected": [
+        {
+          "action": "delete",
+          "id": "later"
+        }
+      ]
+    },
+    {
+      "id": "connect-dispose-reconnect",
+      "label": "중복 연결·반복 해제·재연결에서 콜백 수를 지킨다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('ul');host.append(root);document.body.append(host);const actions=[];function add(id,parent=root){const row=document.createElement('li');row.dataset.id=id;row.tabIndex=0;for(const action of ['edit','delete']){const button=document.createElement('button');button.type='button';button.dataset.action=action;const span=document.createElement('span');span.textContent=action;button.append(span);row.append(button);}parent.append(row);return row;}let controller;try{controller=submission.createInventoryEvents(root,value=>actions.push(value));const row=add('p');const button=row.querySelector('button');button.click();const before=actions.length;controller.connect();controller.connect();button.click();const connected=actions.length;controller.dispose();controller.dispose();button.click();const disposed=actions.length;controller.connect();button.click();observe({before,connected,disposed,afterReconnect:actions.length,actions});}finally{controller?.dispose?.();host.remove();}",
+      "expected": {
+        "before": 0,
+        "connected": 1,
+        "disposed": 1,
+        "afterReconnect": 2,
+        "actions": [
+          {
+            "action": "edit",
+            "id": "p"
+          },
+          {
+            "action": "edit",
+            "id": "p"
+          }
+        ]
+      }
+    },
+    {
+      "id": "keyboard-row-focus",
+      "label": "포커스한 행의 Delete 단축키를 처리한다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('ul');host.append(root);document.body.append(host);const actions=[];function add(id,parent=root){const row=document.createElement('li');row.dataset.id=id;row.tabIndex=0;for(const action of ['edit','delete']){const button=document.createElement('button');button.type='button';button.dataset.action=action;const span=document.createElement('span');span.textContent=action;button.append(span);row.append(button);}parent.append(row);return row;}let controller;try{controller=submission.createInventoryEvents(root,value=>actions.push(value));const row=add('key');controller.connect();row.focus();const event=new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true});row.dispatchEvent(event);observe({focused:document.activeElement===row,actions,prevented:event.defaultPrevented});}finally{controller?.dispose?.();host.remove();}",
+      "expected": {
+        "focused": true,
+        "actions": [
+          {
+            "action": "delete",
+            "id": "key"
+          }
+        ],
+        "prevented": true
+      }
+    },
+    {
+      "id": "editing-and-composition-ignored",
+      "label": "입력칸·조합·반복·수정키 이벤트를 가로채지 않는다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('ul');host.append(root);document.body.append(host);const actions=[];function add(id,parent=root){const row=document.createElement('li');row.dataset.id=id;row.tabIndex=0;for(const action of ['edit','delete']){const button=document.createElement('button');button.type='button';button.dataset.action=action;const span=document.createElement('span');span.textContent=action;button.append(span);row.append(button);}parent.append(row);return row;}let controller;try{controller=submission.createInventoryEvents(root,value=>actions.push(value));const row=add('p');const input=document.createElement('input');row.append(input);controller.connect();const events=[new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true}),new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true,isComposing:true}),new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true,repeat:true}),new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true,ctrlKey:true})];input.dispatchEvent(events[0]);for(const event of events.slice(1))row.dispatchEvent(event);observe({actions,prevented:events.map(event=>event.defaultPrevented)});}finally{controller?.dispose?.();host.remove();}",
+      "expected": {
+        "actions": [],
+        "prevented": [
+          false,
+          false,
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "id": "unowned-and-disabled-ignored",
+      "label": "중첩 위젯·비활성·알 수 없는 버튼을 무시한다",
+      "probe": "const host=document.createElement('section');const root=document.createElement('ul');host.append(root);document.body.append(host);const actions=[];function add(id,parent=root){const row=document.createElement('li');row.dataset.id=id;row.tabIndex=0;for(const action of ['edit','delete']){const button=document.createElement('button');button.type='button';button.dataset.action=action;const span=document.createElement('span');span.textContent=action;button.append(span);row.append(button);}parent.append(row);return row;}let controller;try{controller=submission.createInventoryEvents(root,value=>actions.push(value));const row=add('outer');const nested=document.createElement('ul');row.append(nested);const inner=add('inner',nested);const disabled=row.querySelector('button');disabled.disabled=true;const unknown=document.createElement('button');unknown.type='button';unknown.dataset.action='archive';row.append(unknown);controller.connect();const targets=[inner.querySelector('button'),disabled,unknown];const prevented=targets.map(target=>{const event=new MouseEvent('click',{bubbles:true,cancelable:true});target.dispatchEvent(event);return event.defaultPrevented;});observe({actions,prevented});}finally{controller?.dispose?.();host.remove();}",
+      "expected": {
+        "actions": [],
+        "prevented": [
+          false,
+          false,
+          false
+        ]
+      }
+    }
+  ]
+}

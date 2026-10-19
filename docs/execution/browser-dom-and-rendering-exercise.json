@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-dom-and-rendering-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-dom-and-rendering-checks-v1",
+  "executedTests": 6,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:29f962bfbddb3b0076e00b1cb992eb1732778de20fccd197d21d693f3ab0e5d6",
+  "referenceChecks": [
+    "safe-text",
+    "repeat-render-replaces",
+    "empty-transition",
+    "native-controls-and-order",
+    "invalid-preserves-view",
+    "input-and-boundary-preserved"
+  ],
+  "referenceChecksPassed": 6,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

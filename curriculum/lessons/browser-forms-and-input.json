@@ -1,0 +1,193 @@
+{
+  "id": "browser-forms-and-input",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "폼과 입력: 한글 조합을 기다리고 오류와 예약 검색을 관리하기",
+  "track": "browser",
+  "level": "transition",
+  "goals": [
+    "네이티브 유효성과 오류 안내·focus를 연결하면서 입력값을 보존한다.",
+    "조합 입력과 일반 입력·제출을 구분해 중간 검색과 중복 제출을 막는다.",
+    "debounce 예약 작업과 리스너를 수명 종료 시 취소한다."
+  ],
+  "prerequisites": [
+    "browser-events-and-lifecycle"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "WHATWG HTML: constraint validation와 checkValidity/setCustomValidity",
+      "url": "https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#constraint-validation",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML: focus",
+      "url": "https://html.spec.whatwg.org/multipage/interaction.html#dom-focus-dev",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML: timers",
+      "url": "https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#timers",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "W3C UI Events: composition events와 InputEvent.isComposing",
+      "url": "https://w3c.github.io/uievents/#events-compositionevents",
+      "edition": "Editor’s Draft; 명세 상태와 구현 지원은 별도",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "browser-forms-and-input-exercise",
+  "steps": {
+    "theory": "사용자가 '한글'을 조합하는 중 'ㅎ'만 검색되거나 Enter가 제출로 이어지면 어떻게 막을까? input은 최종 문자열만 나타내는 사건이 아니다. compositionstart/end로 조합 상태를 추적하고 InputEvent.isComposing도 확인한다. 조합 시작 시 기존 검색 예약을 취소하고 조합 종료 뒤 최종 값을 예약한다. 프로그램이 input.value를 바꿨다고 input 이벤트가 자동 발생한다고 가정하지 않는다.\n\n폼 제출은 버튼 click만의 기능이 아니다. submit 경로를 처리하고 preventDefault한 뒤 유효성을 확인한다. 이 과제는 사용자 정의 오류 안내를 일관되게 만들기 위해 연결 중 form.noValidate=true로 두고 input.checkValidity를 직접 호출한다. setCustomValidity에 빈 문자열을 넣어 이전 오류를 해제하지 않으면 새 값도 계속 invalid일 수 있다. 실패한 명시적 제출은 입력에 focus를 주지만, 타이핑 중 검사는 다른 요소의 포커스를 빼앗지 않는다.\n\ndebounce는 마지막 입력 이후 한 번의 호출을 예약하는 정책이다. 타이머의 지연값은 정확한 실행 시각이 아니며 검색 완료도 뜻하지 않는다. await Promise.resolve()만 반복해서는 브라우저가 그릴 기회를 보장하지 못한다. 무거운 작업 분할·Worker·프레임 조율은 별도 선택이며 이 과제는 실제 페인트 시간을 측정했다고 주장하지 않는다.",
+    "example": "브라우저 예제는 공백만 제출했을 때 검색은 0회이고 오류 문구와 input focus가 생기는지 보여 준다. compositionstart 뒤 'ㅎ' input과 submit을 보내도 호출 수는 0이다. '한글'로 compositionend와 일반 input을 보낸 뒤 예약 시간이 지나면 한 번 검색한다. 합성 CompositionEvent와 InputEvent의 계약 검사이며 실제 Windows/macOS 한글 IME 조합·확정 키 동작은 별도 인수 검사다.",
+    "quiz": "q1은 noValidate와 checkValidity의 역할, q2는 조합 중 값과 최종 값, q3은 clearTimeout과 dispose, q4는 microtask와 렌더링 기회의 차이를 확인한다. 브라우저 오류 메시지의 현지화 문자열에 의존하지 않고 과제의 고정 안내와 validity 상태를 각각 관찰한다.",
+    "practice": "입력칸은 매번 렌더링으로 교체하지 않고 같은 DOM 노드의 값과 선택을 유지한다. 검색어는 trim한 값으로 콜백에 보내지만 화면의 원문은 바꾸지 않는다. 기본 debounce 200ms는 실습 설정이며 실제 제품의 응답성 기준은 측정해 조정한다. 콜백은 동기이며 네트워크 검색의 실패·취소·낡은 결과는 다음 단원에서 별도 연결한다. 화면을 떠날 때 예약 타이머와 이벤트를 함께 정리하고, 재진입 시 이전 인스턴스가 뒤늦게 검색하지 않는지 확인한다.",
+    "lab": "mountSearchForm(form,onSearch,delay=200)는 즉시 연결하고 {dispose}를 반환한다. form에는 required input[name=query], id가 있는 [data-error], submit 버튼이 있다. delay는 0~60000의 정수다. 연결 중 noValidate=true, dispose 시 원래 값 복구다. trim 결과가 비면 '검색어를 입력하세요.', 길이(UTF-16 코드 단위)가 40 초과면 '검색어는 40자 이내로 입력하세요.'를 customValidity와 안내에 설정한다. 다른 네이티브 제약 실패는 '입력 형식을 확인하세요.'다. aria-invalid와 기존 aria-describedby를 보존·확장하고 오류 영역은 aria-live=polite다. 일반 input은 마지막 유효 값만 지연 검색하고, 유효 submit은 예약을 취소한 뒤 즉시 한 번 검색한다. invalid submit은 focus, 조합 중 submit은 검색 없이 취소한다. compositionstart·isComposing input은 예약을 취소하고 compositionend는 다시 예약한다. dispose는 반복 안전하며 값은 보존한다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-validation",
+        "prompt": "form.noValidate=true인 동안 input.checkValidity를 호출하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "브라우저 유효성 API 자체가 모두 꺼진다.",
+            "explanation": "자동 제출 검증 우회와 명시적 검사 호출은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "명시적인 유효성 검사는 할 수 있고 안내·focus 정책을 직접 연결한다.",
+            "explanation": "과제는 직접 검사한 결과를 UI와 연결한다."
+          },
+          {
+            "id": "c",
+            "text": "항상 제출이 서버에 전송된다.",
+            "explanation": "submit 리스너의 preventDefault 및 별도 전송 로직과 구분한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-composition",
+        "prompt": "한글 조합 중 input이 왔고 isComposing=true다. 이 과제의 동작은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "중간 값을 즉시 검색하고 예약도 유지한다.",
+            "explanation": "조합 중 요청과 이전 예약이 불필요한 결과를 만들 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "input.value를 빈 문자열로 초기화한다.",
+            "explanation": "사용자의 조합 내용을 파괴한다."
+          },
+          {
+            "id": "c",
+            "text": "기존 예약을 취소하고 최종 조합 후 검색한다.",
+            "explanation": "조합 경계를 존중하면서 입력 자체는 보존한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q3-dispose",
+        "prompt": "화면을 닫을 때 리스너만 해제하고 타이머를 남기면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이미 예약된 검색 콜백이 뒤늦게 실행될 수 있다.",
+            "explanation": "예약 작업의 수명도 함께 끝내야 한다."
+          },
+          {
+            "id": "b",
+            "text": "DOM에서 form을 제거하면 타이머도 자동 취소된다.",
+            "explanation": "DOM 연결과 타이머의 존재는 별도다."
+          },
+          {
+            "id": "c",
+            "text": "clearTimeout은 실행 중 네트워크도 항상 중단한다.",
+            "explanation": "예약 타이머 취소와 시작된 네트워크 취소를 구분한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-render-opportunity",
+        "prompt": "큰 반복문에서 await Promise.resolve()만 넣으면 매번 화면이 그려지는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그렇다. 모든 await는 페인트를 강제한다.",
+            "explanation": "microtask 재개와 렌더링 기회는 동일하지 않다."
+          },
+          {
+            "id": "b",
+            "text": "아니다. 작업 분할과 호스트 렌더링 기회를 별도로 고려한다.",
+            "explanation": "정확한 프레임 타이밍은 실제 환경에서 측정해야 한다."
+          },
+          {
+            "id": "c",
+            "text": "setTimeout(0)은 정확히 0ms 뒤 페인트를 보장한다.",
+            "explanation": "타이머 지연값은 정확한 실행·페인트 시각 보장이 아니다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-validation"
+      ],
+      "caseIds": [
+        "invalid-submit-focus",
+        "native-constraint-and-request-submit",
+        "invalid-input-cancels-without-focus-theft"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-composition"
+      ],
+      "caseIds": [
+        "composition-blocks-submit",
+        "is-composing-cancels-existing-timer",
+        "submit-flushes-pending"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-dispose",
+        "q4-render-opportunity"
+      ],
+      "caseIds": [
+        "latest-debounce-only",
+        "dispose-cancels-and-remounts"
+      ]
+    }
+  ],
+  "example": {
+    "file": "curriculum/examples/browser-forms-and-input.mjs",
+    "expectedLogs": [
+      "{\"count\":0,\"error\":\"검색어를 입력하세요.\",\"focused\":true}",
+      "{\"duringComposition\":0}",
+      "{\"searches\":[\"한글\"],\"error\":\"\"}"
+    ],
+    "hostRequirements": [
+      "browser-dom"
+    ]
+  }
+}

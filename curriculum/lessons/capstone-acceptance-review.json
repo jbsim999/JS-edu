@@ -1,0 +1,164 @@
+{
+  "id": "capstone-acceptance-review",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "통합 4 · 실제 인수 검사와 개정별 완료 근거",
+  "track": "capstone",
+  "level": "advanced",
+  "goals": [
+    "실제 검사 함수의 비동기 완료와 고정 판정을 실행해 빈 검사·오답을 거부한다.",
+    "교재·소스·검사·환경 식별정보에 결과를 결속하고 변경·종료 시 무효화한다.",
+    "재현 가능한 사용 설명과 설계 메모를 작성하고 자동 검사와 자가 평가를 구분한다."
+  ],
+  "prerequisites": [
+    "capstone-domain-core",
+    "capstone-host-product",
+    "capstone-failure-and-scale"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2017 async functions; DOM/Fetch/Storage/AbortController are browser-host APIs",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 제17판 — Promise·async 함수·배열·오류 계약",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM — AbortSignal, event lifecycle",
+      "url": "https://dom.spec.whatwg.org/#abortsignal",
+      "edition": "Living Standard / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "W3C WCAG 2.2 Understanding 4.1.3 — Status Messages",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html",
+      "edition": "WCAG 2.2 supporting guidance / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Test runner — test execution and isolation; host-specific comparison",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/test.html",
+      "edition": "Node.js v24.22.0 document when checked; current lab is browser variant",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "capstone-acceptance-review-exercise",
+  "steps": {
+    "theory": "어제 통과한 화면을 고친 뒤에도 완료 배지가 남아 있고 검사 목록이 비어도 PASS가 나온다. 완료 근거는 단순 boolean이 아니라 무엇을 어떤 검사와 환경에서 실행했는지 묶은 결과다. contentRevision은 교재 계약, sourceFingerprint는 실제 실행 소스, graderRevision은 판정 계약, environmentFingerprint는 실행 환경 식별정보다. 문자열 하나를 저장했다고 실제 소스와 일치함이 증명되는 것은 아니며 실행 제공자가 소스 snapshot과 지문을 연결해야 한다.\n\n인수 검사는 사용 흐름의 관찰 가능한 결과를 확인한다. 이 runner는 주입된 core와 AbortSignal을 각 check에 전달하고 Promise 완료를 기다린다. 정확히 true일 때만 PASS이며 false, 'PASS' 문자열 같은 truthy 값, 임의 throw는 FAIL이다. 한 검사 실패 뒤에도 나머지를 실행해 결과를 모은다. 1–32개의 유효한 고유 ID가 필요하므로 검사 0개는 통과가 될 수 없다.\n\n대상 변경은 invalidate(nextIdentity,nextCore)로 이전 작업을 취소하고 결과를 STALE로 바꾼다. 실행 중이던 옛 check가 나중에 true를 반환해도 현재 화면과 새 결과를 바꾸지 않는다. 새 식별정보와 실제 새 함수 모두 전달해야 한다. 결과 객체는 복사본으로 돌려주어 외부에서 행을 바꿔 현재 성취를 위조하지 않게 한다. 이 방어는 자가 학습 상태 일관성을 위한 것이며 클라이언트만으로 변조 불가능한 성적 인증을 제공하지 않는다.\n\n자동 통과와 메모 자가 확인, 실제 기기 검수, 아직 지원하지 않는 호스트는 별도 항목이다. 브라우저 대시보드 완료가 Node CLI 구현이나 패키지 배포를 뜻하지 않는다. 마지막 설명에는 실행 조건·입력 예·오류·취소·저장·지원 범위를 함께 적는다.",
+    "example": "예제는 빈 입력과 합계 검사를 실제 core에 적용해 PASS를 얻는다. 대상 소스 지문과 core를 바꾸면 즉시 STALE이며, 합계/개수가 틀린 대표 오답에 같은 검사를 실행하면 FAIL이다. 출력은 PASS → STALE → FAIL의 JSON 세 줄이다.\n\n브라우저 probe에는 실제 products HTTP 응답을 core로 처리하는 인수 검사, 빈 검사 거부, async 대기, 임의 throw, 새 core 재검사, 늦은 완료 무효화가 포함된다. 현재 Node 구문 검사만 했다면 이것을 실제 DOM 인수 PASS라고 기록하지 않는다. 코드가 만든 PASS 문자열 자체가 증거가 되는 것도 아니다.",
+    "quiz": "실제 대상 호출이 없는 검사의 PASS와, 고정 기대값을 비교한 PASS를 구분한다. 내용·소스·검사·환경 중 하나가 바뀌면 이전 결과를 어떻게 처리할지 답한다. 검사 개수를 늘리는 대신 대표 오답에서 실제로 실패하는 근거를 제시한다.",
+    "practice": "사용 설명에 다음 흐름을 자신의 말로 작성한다. ① 브라우저 실행 환경을 확인하고 대시보드를 연다. ② 검색어를 입력하고 Enter 또는 검색 버튼으로 실행한다. ③ 진행 중에는 취소할 수 있고 새 검색이 이전 결과를 대체한다. ④ 결과 없음과 HTTP/JSON/스키마 실패를 구분한다. ⑤ 검색어는 v1 저장 정책으로 복원되며 저장 차단 시 검색은 가능하다. ⑥ 검증할 소스가 바뀌면 다시 인수 검사한다. 현재 Node 변형과 설치 패키지는 제공 범위가 아니다.\n\n메모 자가 루브릭은 네 가지다. 처리 순서와 중복 정책의 선택 이유를 실제 반례로 설명했는가, 취소와 늦은 결과 차단을 구분했는가, 입력/동시성/출력 상한이 보호하지 못하는 범위를 적었는가, 실제 검사 환경·미검증·재현 입력을 남겼는가. 각 항목을 충족/보완 필요로 자가 표시하고 근거를 적는다. 이 메모가 자동 채점되었다고 표시하지 않는다.\n\n출시 판단에는 정상 코드 통과와 대표 오답 실패, 브라우저 합성 화면·키보드·반응형, 실제 기기/보조기술 미검증을 포함한다. 이번 강의의 사용 설명과 검증 기록은 배포 권한을 만들지 않는다. 오류를 고친 뒤 동일한 소스 snapshot을 다시 실행했는지 확인한다.",
+    "lab": "createAcceptanceReview(root,queryProducts,identity)의 본문을 작성한다. identity에는 비어 있지 않은 contentRevision/sourceFingerprint/graderRevision/environmentFingerprint 문자열이 모두 필요하다. root에 role=status/aria-live=polite output과 인수 결과 ol을 만들고 초기 상태 NOT_RUN을 표시한다. 반환 API는 run(tests), invalidate(nextIdentity,nextCore), getState(), dispose()다.\n\ntests는 1–32개 조밀 배열이며 각 {id,check}는 고유한 비빈 문자열 ID와 함수다. 잘못된 목록은 상태 INVALID·빈 checks로 바꾸고 빈/과다 개수는 RangeError, 나머지는 TypeError다. run은 순서대로 await check({queryProducts:현재대상,signal})을 실행한다. true만 {id,status:'PASS',reason:null}, 다른 반환은 FAIL/returned-false, throw는 FAIL/threw다. 전체는 하나 이상 모두 통과할 때만 PASS다. 결과 형태는 {status,identity,checks} 복사본이다.\n\ninvalidate는 실제 새 core와 새 identity를 받아 현재 작업을 abort하고 STALE·빈 checks로 바꾼다. 옛 작업 완료는 STALE 반환만 하고 현재 상태에 반영하지 않는다. 활성 run 중 중복 run과 dispose 뒤 동작은 InvalidStateError다. dispose는 현재 signal·자식 DOM을 정리하고 DISPOSED로 남는다. 실제 소스 지문 계산·성취 저장 연결은 실행 제공자 책임이며 임의 지문 문자열을 성적 인증으로 표시하지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-no-tests",
+        "prompt": "checks=[]에서 every가 true면 인수 PASS로 삼아도 되는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "안 된다. 유효한 검사 하나 이상이라는 조건이 별도로 필요하다.",
+            "explanation": "빈 집합의 every 결과와 실제 검증 수행은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "된다. JavaScript가 true를 반환했기 때문이다.",
+            "explanation": "언어의 배열 규칙이 제품의 완료 조건을 대신하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-identity",
+        "prompt": "소스가 바뀌고 환경도 달라졌지만 어제의 PASS가 있다면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "교재 제목이 같으므로 재사용한다.",
+            "explanation": "검증 대상과 환경이 달라 현재 성취 근거가 아니다."
+          },
+          {
+            "id": "b",
+            "text": "STALE로 무효화하고 실제 새 대상과 식별정보로 다시 검사한다.",
+            "explanation": "코드·검사·교재·환경을 결과와 연결한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-await",
+        "prompt": "check가 Promise<false>를 반환한다. Promise 객체가 truthy라는 이유로 PASS인가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "아니다. 완료를 기다린 실제 반환값이 정확히 true인지 본다.",
+            "explanation": "비동기 객체 존재와 행동 판정은 다르다."
+          },
+          {
+            "id": "b",
+            "text": "그렇다. 예외만 없으면 PASS다.",
+            "explanation": "false라는 실제 실패 결과를 놓치게 된다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q4-evidence",
+        "prompt": "브라우저 검사가 통과한 뒤 사용 설명에 적을 수 있는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Node CLI와 실제 모바일·스크린리더까지 모두 검증되었다.",
+            "explanation": "실행한 환경 밖으로 검증 범위를 넓힐 수 없다."
+          },
+          {
+            "id": "b",
+            "text": "실행한 브라우저·입력·결과와 별도의 미검증 범위",
+            "explanation": "자동 검사, 자가 메모, 실제 기기 검수를 구분한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-no-tests",
+        "q3-await"
+      ],
+      "caseIds": [
+        "actual-product-acceptance",
+        "zero-tests-never-pass",
+        "false-throw-and-async"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-identity"
+      ],
+      "caseIds": [
+        "candidate-change-invalidates",
+        "old-completion-cannot-replace",
+        "dispose-and-result-copy"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-evidence"
+      ],
+      "caseIds": [
+        "actual-product-acceptance",
+        "candidate-change-invalidates"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "id": "browser-dom-and-rendering-exercise",
+  "lessonId": "browser-dom-and-rendering",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-dom-and-rendering-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "renderInventory(root,items)는 아래의 고정 DOM 구조로 root 하위만 교체하고 항목 수를 반환한다.",
+    "items는 고유한 비어 있지 않은 문자열 id, 문자열 name, 0 이상 안전 정수 quantity의 배열이다. 잘못된 입력은 TypeError이며 기존 root를 유지한다.",
+    "ul[data-inventory-list]의 직계 li[data-id]는 tabindex=0이다. 각 li에 span[data-field=name], span[data-field=quantity], button[data-action=edit/delete]를 만든다.",
+    "버튼 type은 button, 텍스트는 편집/삭제, aria-label은 이름+' 편집' 또는 이름+' 삭제'다. 사용자 문자열은 HTML로 해석하지 않는다.",
+    "빈 목록에서도 ul을 두고 p[data-empty]에 '등록된 상품이 없습니다.'를 표시한다. 원본 데이터와 root 밖 DOM은 변경하지 않는다.",
+    "실제 document가 있는 browser-dom 환경 전용이다. 실행 환경 연결 전 available/executionVerified는 false다."
+  ],
+  "template": "export function renderInventory(root, items) {\n  // TODO: 재고 상태를 검증한 뒤 안전한 DOM 목록으로 교체하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/browser-dom-and-rendering.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "태그처럼 생긴 이름을 텍스트로 유지한다",
+    "재렌더링은 항목·목록을 중복하지 않는다",
+    "빈 상태를 명시하고 다시 채울 때 안내를 제거한다",
+    "항목 순서와 키보드로 사용할 수 있는 기본 버튼 구조를 만든다",
+    "잘못된 항목과 중복 ID에서 기존 DOM을 보존한다",
+    "동결 입력과 root 밖의 노드를 변경하지 않는다"
+  ],
+  "rubric": [
+    "데이터 문자열과 HTML 해석을 구분해 안전한 텍스트를 렌더링한다.",
+    "빈 목록·순서·반복 호출을 포함한 상태→DOM 계약을 구현한다.",
+    "검증 후 교체와 렌더링 범위로 기존 화면·입력 데이터를 보존한다."
+  ],
+  "available": false,
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "renderInventory",
+    "parameters": [
+      "root",
+      "items"
+    ],
+    "async": false,
+    "hostRequirements": [
+      "browser-dom"
+    ],
+    "runProbe": "const root=document.createElement('div');document.body.append(root);try{const name='<b>레몬</b><img data-untrusted>';const count=submission.renderInventory(root,[{id:'p1',name,quantity:2}]);observe({count,text:root.querySelector('[data-field=\"name\"]').textContent,parsedTags:root.querySelectorAll('b,img').length,quantity:root.querySelector('[data-field=\"quantity\"]').textContent});}finally{root.remove();}"
+  },
+  "editable": {
+    "prefix": "export function renderInventory(root, items) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 재고 상태를 검증한 뒤 안전한 DOM 목록으로 교체하세요.\n"
+  },
+  "graderFile": "curriculum/checks/browser-dom-and-rendering.json",
+  "referenceFile": "reference/browser-dom-and-rendering.mjs",
+  "incorrectFile": "reference/incorrect/browser-dom-and-rendering.mjs",
+  "exampleFile": "curriculum/examples/browser-dom-and-rendering.mjs",
+  "exampleExpectedLogs": [
+    "{\"names\":[\"<b>레몬</b>\",\"피스타치오\"],\"parsedB\":0}",
+    "{\"rows\":2}",
+    "{\"rows\":0,\"message\":\"등록된 상품이 없습니다.\"}"
+  ],
+  "verificationRecord": "docs/execution/browser-dom-and-rendering-exercise.json"
+}

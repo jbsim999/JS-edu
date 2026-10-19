@@ -1,0 +1,153 @@
+{
+  "exerciseId": "browser-fetch-and-http-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-fetch-and-http-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "products-and-request-contract",
+      "label": "실제 fetch에서 상품·GET·Accept·credentials·동일 signal을 확인한다",
+      "probe": "const controller=new AbortController();const calls=[];const client=submission.createProductClient((url,init)=>{calls.push({url,method:init?.method,credentials:init?.credentials,accept:new Headers(init?.headers).get('accept'),sameSignal:init?.signal===controller.signal});return fetch(url,init);});const result=await client.loadProducts('/_fixtures/http/products',{signal:controller.signal});observe({result,calls});",
+      "expected": {
+        "result": {
+          "ok": true,
+          "status": 200,
+          "items": [
+            {
+              "id": "p1",
+              "name": "Lemon",
+              "price": 120
+            },
+            {
+              "id": "p2",
+              "name": "Pistachio",
+              "price": 230
+            }
+          ]
+        },
+        "calls": [
+          {
+            "url": "/_fixtures/http/products",
+            "method": "GET",
+            "credentials": "same-origin",
+            "accept": "application/json",
+            "sameSignal": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "empty-is-success",
+      "label": "정상 빈 배열을 실패나 가짜 항목으로 바꾸지 않는다",
+      "probe": "const client=submission.createProductClient((url,init)=>fetch(url,init));const result=await client.loadProducts('/_fixtures/http/empty');observe(result);",
+      "expected": {
+        "ok": true,
+        "status": 200,
+        "items": []
+      }
+    },
+    {
+      "id": "http-errors-before-body",
+      "label": "404·503을 HTTP 오류로 반환하고 본문을 소비하지 않는다",
+      "probe": "let calls=0,reads=0;const client=submission.createProductClient(async(url,init)=>{calls++;const response=await fetch(url,init);return {ok:response.ok,status:response.status,json(){reads++;return response.json();}};});const missing=await client.loadProducts('/_fixtures/http/not-found');const unavailable=await client.loadProducts('/_fixtures/http/unavailable');observe({results:[missing,unavailable],calls,reads});",
+      "expected": {
+        "results": [
+          {
+            "ok": false,
+            "kind": "http",
+            "status": 404
+          },
+          {
+            "ok": false,
+            "kind": "http",
+            "status": 503
+          }
+        ],
+        "calls": 2,
+        "reads": 0
+      }
+    },
+    {
+      "id": "invalid-json",
+      "label": "200 응답의 깨진 JSON을 파싱 실패로 구분한다",
+      "probe": "const client=submission.createProductClient((url,init)=>fetch(url,init));const result=await client.loadProducts('/_fixtures/http/invalid-json');observe(result);",
+      "expected": {
+        "ok": false,
+        "kind": "json",
+        "status": 200
+      }
+    },
+    {
+      "id": "invalid-schema",
+      "label": "JSON은 유효해도 문자열 price인 응답을 거부한다",
+      "probe": "const client=submission.createProductClient((url,init)=>fetch(url,init));const result=await client.loadProducts('/_fixtures/http/invalid-schema');observe(result);",
+      "expected": {
+        "ok": false,
+        "kind": "schema",
+        "status": 200
+      }
+    },
+    {
+      "id": "network-failure",
+      "label": "실제 연결 종료로 생긴 fetch 거부를 HTTP·빈 성공과 구분한다",
+      "probe": "const client=submission.createProductClient((url,init)=>fetch(url,init));const result=await client.loadProducts('/_fixtures/http/network-error');observe(result);",
+      "expected": {
+        "ok": false,
+        "kind": "network",
+        "status": null
+      }
+    },
+    {
+      "id": "abort-forwarded-and-recovery",
+      "label": "실제 fetch에 signal을 전달해 취소하고 다음 요청은 정상 처리한다",
+      "probe": "const controller=new AbortController();const signals=[];const client=submission.createProductClient((url,init)=>{signals.push(init?.signal);return fetch(url,init);});const pending=client.loadProducts('/_fixtures/http/slow',{signal:controller.signal});queueMicrotask(()=>controller.abort({reason:'lesson-cancel'}));const canceled=await pending;const recovered=await client.loadProducts('/_fixtures/http/products');observe({canceled,calls:signals.length,sameSignal:signals[0]===controller.signal,recovered:{ok:recovered.ok,count:recovered.items?.length}});",
+      "expected": {
+        "canceled": {
+          "ok": false,
+          "kind": "aborted",
+          "status": null
+        },
+        "calls": 2,
+        "sameSignal": true,
+        "recovered": {
+          "ok": true,
+          "count": 2
+        }
+      }
+    },
+    {
+      "id": "already-aborted",
+      "label": "이미 취소된 요청은 fetch를 시작하지 않는다",
+      "probe": "const controller=new AbortController();controller.abort('before-start');let calls=0;const client=submission.createProductClient((url,init)=>{calls++;return fetch(url,init);});const result=await client.loadProducts('/_fixtures/http/slow',{signal:controller.signal});observe({result,calls});",
+      "expected": {
+        "result": {
+          "ok": false,
+          "kind": "aborted",
+          "status": null
+        },
+        "calls": 0
+      }
+    },
+    {
+      "id": "one-body-read-and-copy",
+      "label": "실제 본문은 한 번 읽고 반환 항목은 별도 데이터로 만든다",
+      "probe": "let reads=0;let received;const client=submission.createProductClient(async(url,init)=>{const response=await fetch(url,init);return {ok:response.ok,status:response.status,async json(){reads++;received=await response.json();return received;}};});const result=await client.loadProducts('/_fixtures/http/products');result.items[0].name='Changed';observe({reads,original:received[0].name,returned:result.items[0].name,separateArray:result.items!==received});",
+      "expected": {
+        "reads": 1,
+        "original": "Lemon",
+        "returned": "Changed",
+        "separateArray": true
+      }
+    },
+    {
+      "id": "duplicate-product-id",
+      "label": "실제 HTTP 응답의 중복 상품 id를 거부",
+      "probe": "const client=submission.createProductClient((url,init)=>fetch(url,init));const result=await client.loadProducts('/_fixtures/http/duplicate-id');observe(result);",
+      "expected": {
+        "ok": false,
+        "kind": "schema",
+        "status": 200
+      }
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "exerciseId": "capstone-host-product-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-host-product-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "actual-fetch-core-dom",
+      "label": "실제 HTTP 자료를 주입 core로 처리하고 접근 가능한 목록을 그린다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{const calls=[];let coreCalls=0;app=submission.mountSearchDashboard(root,(rows,options)=>{coreCalls++;return queryProducts(rows,options);},{key,fetcher:(url,init)=>{calls.push({method:init.method,signal:init.signal instanceof AbortSignal,accept:new Headers(init.headers).get('accept')});return fetch(url,init);},endpoint:context.httpBase+'products'});const result=await app.search('');observe({status:result.status,count:result.report.count,total:result.report.total,ids:[...root.querySelectorAll('li')].map(x=>x.dataset.id),coreCalls,calls,label:root.querySelector('input').getAttribute('aria-label'),live:root.querySelector('[role=status]').getAttribute('aria-live'),busy:root.getAttribute('aria-busy')});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "status": "ready",
+        "count": 2,
+        "total": 350,
+        "ids": [
+          "p1",
+          "p2"
+        ],
+        "coreCalls": 1,
+        "calls": [
+          {
+            "method": "GET",
+            "signal": true,
+            "accept": "application/json"
+          }
+        ],
+        "label": "상품 검색어",
+        "live": "polite",
+        "busy": "false"
+      }
+    },
+    {
+      "id": "empty-and-input",
+      "label": "빈 정상 결과와 입력 오류를 구분하고 불량 입력의 요청을 막는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{let calls=0;app=submission.mountSearchDashboard(root,queryProducts,{key,fetcher:(...args)=>{calls++;return fetch(...args);}});const empty=await app.search('',context.httpBase+'empty');const bad=await app.search('가'.repeat(41),context.httpBase+'products');observe({empty:empty.status,count:empty.report.count,bad:bad.status,calls,rows:root.querySelectorAll('li').length});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "empty": "empty",
+        "count": 0,
+        "bad": "input-error",
+        "calls": 1,
+        "rows": 0
+      }
+    },
+    {
+      "id": "upstream-failures",
+      "label": "404·503·깨진 JSON·잘못된 스키마를 빈 성공으로 만들지 않는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{app=submission.mountSearchDashboard(root,queryProducts,{key});const results=[];for(const path of ['not-found','unavailable','invalid-json','invalid-schema']){const result=await app.search('',context.httpBase+path);results.push({status:result.status,error:result.error,rows:root.querySelectorAll('li').length});}observe(results);}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": [
+        {
+          "status": "error",
+          "error": {
+            "kind": "http",
+            "status": 404
+          },
+          "rows": 0
+        },
+        {
+          "status": "error",
+          "error": {
+            "kind": "http",
+            "status": 503
+          },
+          "rows": 0
+        },
+        {
+          "status": "error",
+          "error": {
+            "kind": "json",
+            "status": 200
+          },
+          "rows": 0
+        },
+        {
+          "status": "error",
+          "error": {
+            "kind": "schema",
+            "status": 200
+          },
+          "rows": 0
+        }
+      ]
+    },
+    {
+      "id": "storage-restore",
+      "label": "실제 저장소의 버전 있는 한글 검색어를 요청 없이 복원한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{localStorage.setItem(key,JSON.stringify({version:1,query:' 한글 '}));let calls=0;app=submission.mountSearchDashboard(root,queryProducts,{key,fetcher:(...args)=>{calls++;return fetch(...args);}});const restored={value:root.querySelector('input').value,state:app.getState().query,calls};await app.search('Lemon',context.httpBase+'products');observe({restored,saved:JSON.parse(localStorage.getItem(key))});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "restored": {
+          "value": "한글",
+          "state": "한글",
+          "calls": 0
+        },
+        "saved": {
+          "version": 1,
+          "query": "Lemon"
+        }
+      }
+    },
+    {
+      "id": "keyboard-and-composition",
+      "label": "Enter 검색·IME 보호·Escape 취소와 초점을 유지한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{let calls=0;app=submission.mountSearchDashboard(root,queryProducts,{key,endpoint:context.httpBase+'products',fetcher:(...args)=>{calls++;return fetch(...args);}});const input=root.querySelector('input');input.focus();input.value='Lemon';input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true,cancelable:true}));const before=calls;input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));for(let n=0;n<150&&app.getState().status==='loading';n++)await new Promise(r=>setTimeout(r,10));const after={status:app.getState().status,ids:[...root.querySelectorAll('li')].map(x=>x.dataset.id),focused:document.activeElement===input};const pending=app.search('',context.httpBase+'slow');input.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));await pending;observe({before,calls,after,cancelled:app.getState().status});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "before": 0,
+        "calls": 2,
+        "after": {
+          "status": "ready",
+          "ids": [
+            "p1"
+          ],
+          "focused": true
+        },
+        "cancelled": "cancelled"
+      }
+    },
+    {
+      "id": "late-response-cannot-overwrite",
+      "label": "취소를 무시한 오래된 실제 응답도 최신 검색을 덮어쓰지 못한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{const signals=[];app=submission.mountSearchDashboard(root,queryProducts,{key,fetcher:(url,init)=>{signals.push(init.signal);return fetch(url,{...init,signal:undefined});}});const old=app.search('Lemon',context.httpBase+'slow');const fresh=app.search('Pista',context.httpBase+'products');await fresh;const oldResult=await old;observe({old:oldResult.status,aborted:signals[0].aborted,query:app.getState().query,ids:[...root.querySelectorAll('li')].map(x=>x.dataset.id)});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "old": "stale",
+        "aborted": true,
+        "query": "Pista",
+        "ids": [
+          "p2"
+        ]
+      }
+    },
+    {
+      "id": "dispose-and-recovery",
+      "label": "실제 fetch 취소 뒤 복구하고 dispose 뒤 이벤트·결과를 차단한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{const signals=[];let calls=0;app=submission.mountSearchDashboard(root,queryProducts,{key,fetcher:(url,init)=>{calls++;signals.push(init.signal);return fetch(url,init);}});const pending=app.search('',context.httpBase+'slow');app.cancel();await pending;const recovered=await app.search('',context.httpBase+'products');const oldInput=root.querySelector('input');app.dispose();app.dispose();oldInput.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));let name;try{await app.search('x');}catch(error){name=error.name;}observe({aborted:signals[0].aborted,recovered:recovered.status,calls,status:app.getState().status,children:root.childElementCount,name});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "aborted": true,
+        "recovered": "ready",
+        "calls": 2,
+        "status": "disposed",
+        "children": 0,
+        "name": "InvalidStateError"
+      }
+    },
+    {
+      "id": "text-and-storage-failure",
+      "label": "저장 불가에도 검색하고 상품명을 실행 가능한 HTML로 만들지 않는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{const unavailable={getItem(){throw new DOMException('blocked','SecurityError');},setItem(){throw new DOMException('blocked','SecurityError');}};app=submission.mountSearchDashboard(root,queryProducts,{key,storage:unavailable,fetcher:async()=>new Response(JSON.stringify([{id:'x',name:'<img src=x onerror=alert(1)>',price:0}]),{status:200,headers:{'Content-Type':'application/json'}})});const result=await app.search('');observe({status:result.status,storage:result.storageStatus,images:root.querySelectorAll('img').length,text:root.querySelector('li').textContent});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}",
+      "expected": {
+        "status": "ready",
+        "storage": "unavailable",
+        "images": 0,
+        "text": "<img src=x onerror=alert(1)> · 0"
+      }
+    },
+    {
+      "id": "storage-getter-unavailable",
+      "label": "localStorage getter 자체가 차단되어도 검색을 제공",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const descriptor=Object.getOwnPropertyDescriptor(globalThis,'localStorage');let app;try{Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw new DOMException('blocked','SecurityError');}});app=submission.mountSearchDashboard(root,queryProducts,{key:context.storagePrefix+'blocked'});const initial=app.getState();const result=await app.search('',context.httpBase+'products');observe({initial:initial.storageStatus,status:result.status,storage:result.storageStatus,count:result.report.count});}finally{app?.dispose();if(descriptor)Object.defineProperty(globalThis,'localStorage',descriptor);else delete globalThis.localStorage;root.replaceChildren();}",
+      "expected": {
+        "initial": "unavailable",
+        "status": "ready",
+        "storage": "unavailable",
+        "count": 2
+      }
+    }
+  ]
+}

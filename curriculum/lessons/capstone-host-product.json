@@ -1,0 +1,171 @@
+{
+  "id": "capstone-host-product",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "통합 2 · 취소와 복원이 있는 브라우저 검색 대시보드",
+  "track": "capstone",
+  "level": "advanced",
+  "goals": [
+    "C01 core를 주입해 실제 DOM·HTTP·저장소를 하나의 조회 흐름으로 합성한다.",
+    "정상·빈 결과·입력 오류·상류 실패·취소·늦은 응답을 별도 상태로 처리한다.",
+    "키보드·IME·상태 알림·텍스트 렌더링과 화면 수명 정리를 구현한다."
+  ],
+  "prerequisites": [
+    "capstone-domain-core",
+    "browser-behavior-and-accessibility"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2017 async functions; DOM/Fetch/Storage/AbortController are browser-host APIs",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 제17판 — Promise·async 함수·배열·오류 계약",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG Fetch — 요청·응답·본문·취소",
+      "url": "https://fetch.spec.whatwg.org/",
+      "edition": "Living Standard / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML — form submission and controls",
+      "url": "https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#implicit-submission",
+      "edition": "Living Standard / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML — Web Storage",
+      "url": "https://html.spec.whatwg.org/multipage/webstorage.html",
+      "edition": "Living Standard / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "W3C WCAG 2.2 Understanding 4.1.3 — Status Messages",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html",
+      "edition": "WCAG 2.2 supporting guidance / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "capstone-host-product-exercise",
+  "steps": {
+    "theory": "검색어를 바꾸자 이전 응답이 늦게 도착해 화면을 되돌리고, 네트워크 오류는 '0개'로 표시된다. 제품의 상태를 단순히 결과 배열 하나로 두면 이런 차이를 표현할 수 없다. idle·loading·ready·empty·input-error·error·cancelled·disposed를 구분하고 각 전환에서 화면·진행 알림·취소 가능 여부를 함께 바꾼다. count=0인 정상 보고서는 empty이며 HTTP 실패와 다르다.\n\n계산 규칙은 C01 queryProducts(records,{query})에 맡긴다. 화면 함수는 폼 입력, fetch, JSON 해석, core 호출, DOM 렌더링을 합성한다. Fetch가 완료되어도 404/503은 성공 자료가 아니므로 response.ok를 먼저 확인한다. 정상 HTTP의 깨진 JSON과 유효 JSON의 잘못된 스키마도 구분한다. DOM·Fetch·Storage·AbortController는 ECMAScript 자체 API가 아니라 브라우저 호스트의 기능이다.\n\n새 요청은 이전 AbortController를 취소하고 요청 번호를 바꾼다. 실제 signal을 fetch에 전달하더라도 협력자가 취소를 무시하거나 이미 완료가 진행됐을 수 있으므로 각 await 뒤 현재 번호도 확인한다. transport 취소는 불필요한 일을 줄이고 번호 검사는 오래된 화면 반영을 막는다. 둘을 함께 사용한다.\n\n폼·label·button 같은 네이티브 요소로 조작 의미를 제공하고 role=status/aria-live=polite로 결과 변화를 알린다. IME 조합 중 Enter는 검색으로 가로채지 않는다. 입력 요소 자체를 매번 교체하지 않아 초점과 조합 상태를 보존한다. 상품명은 textContent로 넣어 데이터가 HTML 실행 경로가 되지 않게 한다. 저장된 검색어는 v1 스키마를 검증하며 저장 불가가 검색 자체를 막지 않게 한다.",
+    "example": "예제는 실제 실행 origin의 고정 HTTP fixture에 순서대로 요청한다. products를 'pista'로 검색하면 ready/count=1, empty fixture는 empty/count=0, unavailable은 error/http/503이다. C01과 같은 고정 core 구현을 주입하며 UI 함수 안에서 정규화·중복·집계를 다시 구현하지 않는다.\n\n예제에는 실제 document·fetch·localStorage가 필요하다. Node 구문 검사만으로 예제가 동작했다고 기록하지 않는다. 표시된 JSON 세 줄은 예상 로그다. DOM 테스트의 합성 KeyboardEvent는 이벤트 처리 검증이고 실제 기기 키보드·IME 검증은 별도다.",
+    "quiz": "한 번의 요청을 HTTP → JSON → 스키마 → 도메인 → DOM 단계로 나누고 어느 단계가 실패했는지 답한다. 정상 빈 결과와 실패를 같은 값으로 숨기지 않는다. AbortSignal 전달과 최신 요청 판별을 서로 대신할 수 있는 조건으로 생각하지 않는다.",
+    "practice": "사용 흐름은 저장된 검색어 복원 → 사용자의 검색 → 진행 알림 → 결과 또는 실패 알림이다. 복원만으로 네트워크를 시작하지 않으며 잘못된 저장값은 빈 입력으로 시작한다. 검색어는 trim/NFC 후 코드 포인트 40자 이내로 제한한다. 한글 조합·이모지의 표시 글자 수와 코드 포인트 수가 완전히 같다는 뜻은 아니므로 이 제한의 단위를 사용 설명에 적는다.\n\n좁은 화면에서 폼이 줄바꿈하고 긴 이름이 넘치지 않게 배치하되 실제 320/390·태블릿·데스크톱·짧은 높이·200%·키보드와 보조기술 검수는 따로 수행한다. 설계 메모에는 저장 거부 시 사용자에게 보일 안내, 재시도 버튼의 책임, 취소 뒤 기존 결과를 지우는 정책과 보존하는 정책의 차이를 적는다. 현재 구현은 브라우저 검색 제품이며 Node CLI/HTTP 변형은 후속 단계다.",
+    "lab": "mountSearchDashboard(root,queryProducts,options={})의 본문만 작성한다. options는 fetcher=fetch, storage=localStorage, key, endpoint를 받는다. key 기본값은 capstone-query-v1이며 검사에서는 context.storagePrefix로 분리한 키를 준다. 반환 API는 search(query=input.value,url=endpoint), cancel(), getState(), dispose()다. 생성 시 {version:1,query} 저장값을 검증·복원하고 요청은 시작하지 않는다.\n\n실제 form·label의 검색 input·submit 버튼·취소 버튼·role=status/aria-live=polite output·ul 목록을 만든다. input aria-label은 '상품 검색어', ul은 '검색 결과'다. Enter는 검색, Escape는 취소이며 isComposing 또는 keyCode=229이면 가로채지 않는다. form submit은 기본 이동을 막고 검색한다. 검색마다 GET/credentials:same-origin/Accept:application/json과 새 signal로 fetch를 한 번 호출한다. 새 검색·취소·종료는 이전 요청을 무효화하고 signal을 abort한다.\n\n성공 응답을 JSON으로 읽어 주입 core에 {query}로 전달한다. count가 0이면 empty, 아니면 ready이며 li.dataset.id와 textContent='이름 · 가격'으로 표시한다. 상태는 {status,query,report,error,storageStatus} 복사본이다. error는 {kind:'input'|'http'|'json'|'schema'|'network',status:HTTP번호 또는 null}, 정상은 null이다. 잘못된 입력은 input-error이며 요청하지 않는다. 늦은 작업은 {status:'stale'}만 반환하고 현재 화면을 바꾸지 않는다. cancel은 cancelled·빈 목록, dispose는 리스너·요청·자식 DOM을 정리하며 이후 search는 InvalidStateError다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-empty-failure",
+        "prompt": "HTTP 503 응답을 []로 바꾸면 무엇을 잃는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "상품이 실제로 없는 상태와 조회에 실패한 상태의 차이",
+            "explanation": "사용자는 재시도나 장애 확인이 필요한지 알 수 없게 된다."
+          },
+          {
+            "id": "b",
+            "text": "아무것도 잃지 않는다.",
+            "explanation": "HTTP 실패는 정상적인 빈 도메인 결과가 아니다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-cancel-race",
+        "prompt": "이전 fetch에 abort를 호출했으므로 요청 번호 확인은 항상 불필요한가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그렇다. 어떤 협력자도 완료할 수 없다.",
+            "explanation": "취소를 무시하거나 완료 경합이 있는 작업이 있을 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "아니다. 각 완료 지점에서 현재 요청인지도 확인한다.",
+            "explanation": "취소와 최신 결과 반영은 서로 다른 책임이다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-ime",
+        "prompt": "한글 조합 중 Enter 입력은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "무조건 검색하고 input을 새 요소로 교체한다.",
+            "explanation": "조합 확정과 검색을 혼동하고 초점을 잃을 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "isComposing/229를 확인해 조합 입력을 가로채지 않는다.",
+            "explanation": "네이티브 입력 수명을 유지하면서 명시적 검색을 처리한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-storage",
+        "prompt": "Storage 쓰기가 실패했지만 조회는 정상이라면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "조회 결과는 표시하고 저장 불가 상태를 별도로 남긴다.",
+            "explanation": "검색 기능과 복원 기능의 실패 범위를 나눈다."
+          },
+          {
+            "id": "b",
+            "text": "무조건 빈 검색 성공을 표시한다.",
+            "explanation": "저장 실패가 도메인 결과를 바꿀 이유는 없다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q4-storage"
+      ],
+      "caseIds": [
+        "actual-fetch-core-dom",
+        "storage-restore"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q1-empty-failure",
+        "q2-cancel-race"
+      ],
+      "caseIds": [
+        "empty-and-input",
+        "upstream-failures",
+        "late-response-cannot-overwrite"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-ime",
+        "q4-storage"
+      ],
+      "caseIds": [
+        "keyboard-and-composition",
+        "dispose-and-recovery",
+        "text-and-storage-failure",
+        "storage-getter-unavailable"
+      ]
+    }
+  ]
+}

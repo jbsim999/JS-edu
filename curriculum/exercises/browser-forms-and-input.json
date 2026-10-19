@@ -1,0 +1,78 @@
+{
+  "id": "browser-forms-and-input-exercise",
+  "lessonId": "browser-forms-and-input",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-forms-and-input-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "mountSearchForm(form,onSearch,delay=200)는 즉시 연결하고 반복 안전한 {dispose}를 반환한다. delay는 0~60000 정수다.",
+    "form은 required input[name=query], id가 있는 [data-error], submit 버튼을 가진다. 연결 중 noValidate=true로 두고 dispose에 원래 값을 복구한다.",
+    "trim 결과가 비면 '검색어를 입력하세요.', UTF-16 길이 40 초과면 '검색어는 40자 이내로 입력하세요.'를 setCustomValidity로 설정한다. 다른 네이티브 유효성 실패는 '입력 형식을 확인하세요.'를 안내한다.",
+    "checkValidity, 오류 textContent, aria-invalid를 갱신한다. aria-describedby의 기존 ID를 보존하며 오류 ID를 추가하고 오류 영역 aria-live는 polite다. 유효해지면 이전 customValidity·오류를 지운다.",
+    "일반 input의 마지막 유효 검색어만 delay 후 콜백으로 보낸다. invalid 입력·조합 시작·isComposing input·dispose는 예약을 취소한다. 화면 input.value는 바꾸지 않는다.",
+    "submit은 항상 preventDefault하며 조합 중에는 검색하지 않는다. 유효 제출은 지연 예약을 취소하고 즉시 한 번 검색한다. invalid 제출만 input.focus를 수행한다.",
+    "compositionend는 최종 검색을 다시 예약한다. dispose는 타이머·모든 등록 리스너를 해제한다. 콜백은 동기이며 네트워크 완료 계약은 별도다."
+  ],
+  "template": "export function mountSearchForm(form, onSearch, delay = 200) {\n  // TODO: 폼 유효성·조합 입력·debounce와 dispose를 연결하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/browser-forms-and-input.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "명시적 제출은 trim 값으로 즉시 검색하고 예약 중복을 없앤다",
+    "공백 제출을 거부하고 오류·설명 연결·실제 focus를 제공한다",
+    "requestSubmit 경로와 네이티브 patternMismatch를 확인한다",
+    "빠른 연속 입력은 마지막 값만 한 번 검색한다",
+    "조합 시작은 이전 예약을 취소하고 조합 중 제출을 막는다",
+    "invalid 입력은 이전 검색을 취소하고 타이핑 경로에서 focus를 빼앗지 않는다",
+    "dispose 뒤 예약·리스너가 남지 않고 다시 연결할 수 있다",
+    "InputEvent.isComposing도 기존 예약을 취소한다"
+  ],
+  "rubric": [
+    "네이티브 유효성과 오류 안내·focus를 연결하면서 입력값을 보존한다.",
+    "조합 입력과 일반 입력·제출을 구분해 중간 검색과 중복 제출을 막는다.",
+    "debounce 예약 작업과 리스너를 수명 종료 시 취소한다."
+  ],
+  "available": false,
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "mountSearchForm",
+    "parameters": [
+      "form",
+      "onSearch",
+      "delay = 200"
+    ],
+    "async": false,
+    "hostRequirements": [
+      "browser-dom"
+    ],
+    "runProbe": "const form=document.createElement('form');const label=document.createElement('label');const input=document.createElement('input');input.name='query';input.id='query-input';input.type='search';input.required=true;input.setAttribute('aria-describedby','query-help');label.htmlFor=input.id;label.textContent='검색어';const help=document.createElement('p');help.id='query-help';help.textContent='상품 이름을 입력하세요.';const error=document.createElement('p');error.id='query-error';error.dataset.error='';const button=document.createElement('button');button.type='submit';button.textContent='검색';form.append(label,input,help,error,button);document.body.append(form);const searches=[];let controller;try{controller=submission.mountSearchForm(form,value=>searches.push(value),10);if(typeof controller?.dispose!=='function')throw new Error('Missing dispose method');input.value=' Lemon ';input.dispatchEvent(new InputEvent('input',{bubbles:true}));const event=new SubmitEvent('submit',{bubbles:true,cancelable:true});form.dispatchEvent(event);const immediate=searches.length;await new Promise(resolve=>setTimeout(resolve,30));observe({searches,immediate,prevented:event.defaultPrevented,value:input.value,error:error.textContent,invalid:input.getAttribute('aria-invalid')});}finally{controller?.dispose?.();form.remove();}"
+  },
+  "editable": {
+    "prefix": "export function mountSearchForm(form, onSearch, delay = 200) {\n",
+    "suffix": "}\n",
+    "initialBody": "  // TODO: 폼 유효성·조합 입력·debounce와 dispose를 연결하세요.\n"
+  },
+  "graderFile": "curriculum/checks/browser-forms-and-input.json",
+  "referenceFile": "reference/browser-forms-and-input.mjs",
+  "incorrectFile": "reference/incorrect/browser-forms-and-input.mjs",
+  "exampleFile": "curriculum/examples/browser-forms-and-input.mjs",
+  "exampleExpectedLogs": [
+    "{\"count\":0,\"error\":\"검색어를 입력하세요.\",\"focused\":true}",
+    "{\"duringComposition\":0}",
+    "{\"searches\":[\"한글\"],\"error\":\"\"}"
+  ],
+  "verificationRecord": "docs/execution/browser-forms-and-input-exercise.json"
+}

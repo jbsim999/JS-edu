@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "exerciseId": "capstone-domain-core-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-domain-core-checks-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / native ES module Worker",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:7cbc01a9ff51f0a45d4b5c9c439a3f127dacd6ee2bd96bdf4be23b8f46e8b039",
+  "referenceChecks": [
+    "normalize-dedupe-filter-sort",
+    "limit-after-aggregate",
+    "unicode-and-empty",
+    "invalid-rows-and-options",
+    "immutable-and-independent",
+    "safe-aggregate",
+    "stable-serialization"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": false,
+  "exampleMethod": "Native creator example verified separately",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

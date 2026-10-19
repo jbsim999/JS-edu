@@ -32,7 +32,7 @@ test('learning server exposes only public resources with separate document and W
   assert.equal(checks.status, 200);
   assert.match(checks.headers['content-type'], /^application\/json/);
   assert.equal(JSON.parse(checks.body).cases.length, 7);
-  for (const path of ['/', '/index.html', '/styles.css', '/app.mjs', '/glossary-data.mjs', '/features/workspace-state.mjs', '/adapters/storage.mjs', '/adapters/runner.mjs', '/curriculum/catalog.json', '/curriculum/lessons/bindings-and-closures.json', '/starter/create-counter.mjs', '/curriculum/examples/bindings-and-closures.mjs']) {
+  for (const path of ['/', '/index.html', '/styles.css', '/app.mjs', '/glossary-data.mjs', '/glossary-expanded.mjs', '/features/workspace-state.mjs', '/adapters/storage.mjs', '/adapters/runner.mjs', '/execution/dom-runner.mjs', '/curriculum/catalog.json', '/curriculum/lessons/bindings-and-closures.json', '/starter/create-counter.mjs', '/curriculum/examples/bindings-and-closures.mjs']) {
     const resource = await get(path);
     assert.equal(resource.status, 200, path);
     assert.ok(resource.body.length > 0, path);

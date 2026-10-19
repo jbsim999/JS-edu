@@ -1,0 +1,158 @@
+{
+  "id": "capstone-failure-and-scale",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "통합 3 · 입력·동시성·출력을 제한하고 관측하기",
+  "track": "capstone",
+  "level": "advanced",
+  "goals": [
+    "작업 수·응답 레코드 수·활성 수·결과 크기의 상한을 각각 적용한다.",
+    "동기 throw·reject·취소 뒤 슬롯과 DOM 수명을 정리하고 반복 실행을 분리한다.",
+    "주입 시계와 대기 gate로 관측 정보를 측정하고 성능 보장과 구분한다."
+  ],
+  "prerequisites": [
+    "capstone-host-product",
+    "bounded-concurrency-and-retries"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "ES2017 async functions; DOM/Fetch/Storage/AbortController are browser-host APIs",
+  "preview": false,
+  "sources": [
+    {
+      "title": "ECMA-262 제17판 — Promise·async 함수·배열·오류 계약",
+      "url": "https://ecma-international.org/wp-content/uploads/ECMA-262_17th_edition_june_2026.pdf",
+      "edition": "17th edition / June 2026",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM — AbortController and AbortSignal",
+      "url": "https://dom.spec.whatwg.org/#interface-abortcontroller",
+      "edition": "Living Standard / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG Fetch — fetch methods and abort processing",
+      "url": "https://fetch.spec.whatwg.org/#fetch-method",
+      "edition": "Living Standard / accessed 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "capstone-failure-and-scale-exercise",
+  "steps": {
+    "theory": "작은 fixture에서는 잘 동작한 검색이 많은 요청을 Promise.all로 한꺼번에 시작하자 메모리와 연결을 소모한다. 제한은 하나의 숫자가 아니다. maxInputs는 배치 작업 수, maxRecords는 응답 하나의 행 수, concurrency는 동시에 기다리는 load 수, maxOutputs는 결과 보고서 하나에 보관할 항목 수다. 어떤 상한이 어느 자원을 제한하는지 구분해야 한다.\n\n이번 배치는 유효한 작업 목록을 먼저 복사하고 제한된 수의 worker 루프만 만든다. 각 worker는 다음 입력 인덱스를 가져와 load를 한 번 실행하고 core로 보고서를 만든다. 결과는 완료 순서가 아니라 입력 순서에 둔다. 실패한 슬롯은 finally에서 회수하며 뒤 작업이 진행된다. 자동 재시도는 하지 않는다. 재시도가 필요하면 멱등성·시도 수·지연·취소를 별도로 설계해야 한다.\n\nmaxRecords 검사는 응답 배열을 받은 뒤 core에 넘기기 전에 수행한다. 이 검사로 이미 수신한 HTTP 바이트나 JSON 파싱 메모리까지 제한했다고 말할 수 없다. 실제 전송 바이트 상한은 스트림·서버·전송 어댑터에서 다뤄야 한다. 결과에는 제한된 items만 보관하고 raw 배열을 모아 두지 않는다. 최대 보관 항목은 maxInputs×maxOutputs로 설명할 수 있지만 객체당 실제 메모리까지 일정한 것은 아니다.\n\n취소는 한 AbortSignal을 활성 load에 전달하고 새 작업 시작을 중지한다. 이 실습의 load는 abort에 협력해 settle해야 하며, 반환한 run은 시작한 작업의 정리까지 기다린다. 임의로 멈추지 않는 함수의 실행을 강제로 끝내는 샌드박스가 아니다. 반복 실행은 새 카운터와 runId를 사용해 앞 실행의 누적을 이어받지 않는다.",
+    "example": "예제는 실제 products/empty fixture를 concurrency=1로 읽고 같은 core를 사용한다. maxOutputs=1이므로 products의 전체 count는 2여도 표시 항목은 하나다. 두 작업 뒤 returnedItems=1이다. 예제의 now는 완료할 때마다 5를 더하는 주입 시계여서 elapsedMs=10이다.\n\n10은 실제 네트워크 지연이나 처리 성능이 아니라 측정 경로를 검증하기 위한 값이다. 고정 probe는 대기 gate를 열어 완료 순서를 바꾸고 활성 수가 2를 넘지 않는지 확인하도록 작성한다. 저자 단계에서 브라우저 실행을 하지 않았다면 이 예상값을 실측 PASS로 쓰지 않는다.",
+    "quiz": "입력 작업 수와 응답 행 수, 동시 활성 수와 결과 보관 수를 각각 대응한다. 응답 배열 제한이 HTTP 바이트 제한을 대체하는지 판단한다. 출력 개수와 전체 집계는 C01 계약 그대로 유지한다. 취소 완료는 협력자의 정리 조건까지 포함한다.",
+    "practice": "관측 정보는 total, started, completed, failed, active, peakActive, returnedItems, elapsedMs다. completed에는 정상·실패로 settle한 작업이 포함되며 취소된 작업은 제외한다. active는 시작한 load/core 처리 경로의 현재 수이고 finally에서 감소한다. elapsedMs는 정상적인 단조 증가 주입 시계의 종료값−시작값이다. now는 유한한 숫자를 반환하고 예외를 던지지 않는 의존성 계약이다.\n\n실제 성능을 비교하려면 데이터 크기·정규화 비용·브라우저 버전·장치·동시성·워밍업·반복 횟수를 먼저 고정한다. fixture 한 번의 빠른 성공을 운영 SLO로 확대하지 않는다. 설계 메모에는 현재 상한이 보호하지 못하는 전송량, 느린 협력자에 대한 deadline 정책, 실패율과 취소율을 구분해 관찰할 이유를 적는다.",
+    "lab": "createBoundedQueryBatch(root,queryProducts,options)의 본문을 작성한다. options는 정상 동기 단조시계 now, 협력적 load(task,{signal}), concurrency=2(1–4), maxInputs=8(1–32), maxRecords=100(1–1000), maxOutputs=3(0–100)이다. 상한은 정수이며 잘못되면 RangeError다. root에 role=status/aria-live=polite output과 취소 버튼을 만든다. API는 run(tasks), cancel(), getState(), dispose()다.\n\ntasks는 최대 maxInputs개의 조밀 배열이며 각 {id,query}는 비어 있지 않은 고유 문자열 ID와 문자열 query다. 입력 오류는 load 전에 거부한다. 동시에 concurrency개 이하로 load를 호출하고 각 작업은 한 번만 시도한다. 응답이 배열이 아니거나 maxRecords를 넘으면 input 실패이며 core를 호출하지 않는다. 정상 자료는 queryProducts(records,{query:task.query,limit:maxOutputs})로 처리한다. 결과 행은 {id,status:'fulfilled',report}, 실패는 {id,status:'rejected',error:'load'|'input'|'core'}, 취소는 {id,status:'cancelled'}다.\n\nrun은 {status:'done'|'cancelled',runId,results,metrics}를 반환하며 입력 순서를 유지한다. metrics/getState 필드는 status,runId,total,started,completed,failed,active,peakActive,returnedItems,elapsedMs다. 취소하면 새 작업을 시작하지 않고 활성 load에 abort를 알린 뒤 settle을 기다린다. 다음 run은 새 metrics를 쓴다. 활성 실행 중 중복 run과 dispose 뒤 run은 InvalidStateError다. dispose는 여러 번 호출해도 안전하고 리스너·자식 DOM을 정리한다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-bounds",
+        "prompt": "maxOutputs=1이면 입력 100만 행의 파싱 메모리도 제한되는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그렇다. 반환 배열이 작기 때문이다.",
+            "explanation": "출력 제한은 이미 읽은 입력의 크기를 줄이지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "아니다. 작업·행·전송 바이트 상한은 별도다.",
+            "explanation": "상한이 적용되는 단계와 자원을 구분해야 한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-order",
+        "prompt": "두 번째 작업이 먼저 끝나면 결과 순서를 바꿔도 되는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이 계약에서는 입력 인덱스에 저장해 입력 순서를 지킨다.",
+            "explanation": "완료 순서가 결과의 안정성을 바꾸지 않게 한다."
+          },
+          {
+            "id": "b",
+            "text": "완료되는 대로 push하면 언제나 결정적이다.",
+            "explanation": "네트워크와 대기 순서에 따라 결과 순서가 바뀐다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-cancel",
+        "prompt": "AbortSignal을 무시하고 끝나지 않는 load는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "AbortController가 함수 실행을 강제로 종료한다.",
+            "explanation": "signal은 협력적 통지이며 강제 실행 중단이 아니다."
+          },
+          {
+            "id": "b",
+            "text": "이 실습의 협력적 load 전제를 위반하며 별도 격리·deadline 정책이 필요하다.",
+            "explanation": "정리까지 기다리는 run은 settle되지 않은 협력자를 자동 종료하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-measurement",
+        "prompt": "주입 시계로 elapsedMs=25를 확인했다. 무엇을 입증했는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이 제품은 모든 장치에서 25ms 내에 처리한다.",
+            "explanation": "주입값은 실제 장치 성능 측정이 아니다."
+          },
+          {
+            "id": "b",
+            "text": "측정 구간과 차이 계산 경로가 계약에 맞는다.",
+            "explanation": "성능 주장은 실제 fixture·환경·반복 측정 후 별도로 한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-bounds",
+        "q2-order"
+      ],
+      "caseIds": [
+        "bounded-gates-and-measurement",
+        "input-bound-before-load",
+        "record-bound-and-no-retry"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q3-cancel"
+      ],
+      "caseIds": [
+        "core-failure-and-slot-release",
+        "cancel-drain-and-repeat",
+        "dispose-and-invalid-overlap"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-measurement"
+      ],
+      "caseIds": [
+        "bounded-gates-and-measurement",
+        "cancel-drain-and-repeat",
+        "constructor-bound-validation"
+      ]
+    }
+  ]
+}

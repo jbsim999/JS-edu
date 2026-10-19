@@ -1,0 +1,72 @@
+{
+  "id": "browser-url-and-navigation-exercise",
+  "lessonId": "browser-url-and-navigation",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-url-and-navigation-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createLessonRouter(root,allowedIds,defaultId)를 구현한다. root는 실제 DOM 요소, allowedIds는 중복 없는 비어 있지 않은 문자열 배열이며 defaultId는 그 안에 있다. 잘못된 목록은 TypeError다. root 안에 output[data-current-lesson]과 textarea[data-draft]를 만들고 textarea의 접근 가능한 이름은 학습 메모로 한다. 외부의 다른 DOM은 변경하지 않는다.\n\n초기 선택과 popstate 선택은 location.href의 lesson query를 기준으로 한다. 없거나 허용하지 않은 ID면 defaultId로 정규화한다. 중복 lesson은 첫 값이 유효할 때 그 값을 택하고 하나로 줄인다. 정규화는 replaceState이며 다른 query·pathname·hash와 기존 history.state를 보존한다. output.textContent와 root.dataset.lesson은 현재 ID, textarea.value는 그 ID의 메모리 초안이다. 최초 초안은 빈 문자열이다. textarea input에서 ID별 초안을 갱신한다.\n\n반환 API는 {navigate,getState,dispose}다. navigate(id)는 유효한 다른 ID일 때 pushState 후 즉시 렌더링하고 getState와 같은 {lessonId,draft}를 반환한다. 같은 ID는 새 History 항목을 만들지 않는다. 허용하지 않은 ID는 RangeError이며 URL·화면을 보존한다. getState는 새 객체로 현재 선택과 초안을 반환한다. 강의 간 이동과 popstate에서 다른 강의의 초안을 덮어쓰지 않는다. 다시 mount한 인스턴스는 URL 선택만 복원하고 메모리 초안은 새로 시작한다.\n\ndispose는 여러 번 호출해도 안전하며 popstate·input 리스너를 해제한다. 마지막 화면과 getState 스냅샷은 남지만 이후 이벤트는 반영하지 않는다. dispose 뒤 navigate는 InvalidStateError를 던진다. 이 과제는 문서 reload 자체를 호출하지 않으며 reload 이후 영속 초안 복원은 B05 계층의 별도 책임이다."
+  ],
+  "template": "export function createLessonRouter(root, allowedIds, defaultId) {\n  // TODO: URL에서 선택을 복원하고 History·초안·리스너 수명을 연결하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/browser-url-and-navigation.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "현재 주소의 유효한 ID를 실제 DOM에 복원한다",
+    "잘못되거나 중복된 query를 replace하며 소유하지 않은 값을 보존한다",
+    "탐색 즉시 렌더링하고 같은 ID의 History 항목은 중복하지 않는다",
+    "실제 History.back 후 URL·화면·강의별 초안이 함께 복원된다",
+    "한글·구분자가 있는 ID를 roundtrip하고 잘못된 이동은 거부한다",
+    "새 인스턴스는 URL 선택만 복원하고 영속 저장을 가장하지 않는다",
+    "해제한 인스턴스는 실제 popstate와 입력을 더 이상 반영하지 않는다"
+  ],
+  "rubric": [
+    "URL·query 인코딩과 History 상태를 역할별로 구분한다.",
+    "뒤로 가기와 재연결에서 URL의 강의 ID를 검증해 복원한다.",
+    "강의별 초안을 보존하고 탐색·리스너 정리의 수명을 관리한다."
+  ],
+  "executionVerified": true,
+  "requiredFeatures": [
+    "URL",
+    "AbortController",
+    "History.prototype.pushState",
+    "History.prototype.replaceState"
+  ],
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createLessonRouter",
+    "parameters": [
+      "root",
+      "allowedIds",
+      "defaultId"
+    ],
+    "async": false,
+    "runProbe": "const root=document.getElementById(context.rootId);const originalURL=location.href;const originalState=history.state;let router;try{const initial=new URL(location.href);initial.search=\"?lesson=b&keep=yes\";initial.hash='notes';history.replaceState({kept:'state'},'',initial);router=submission.createLessonRouter(root,['a','b'],'a');observe({state:router.getState(),text:root.querySelector('output').textContent,dataset:root.dataset.lesson,label:root.querySelector('textarea').getAttribute('aria-label')});}finally{router?.dispose();history.replaceState(originalState,'',originalURL);root.replaceChildren();}"
+  },
+  "editable": {
+    "prefix": "export function createLessonRouter(root, allowedIds, defaultId) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: URL에서 선택을 복원하고 History·초안·리스너 수명을 연결하세요."
+  },
+  "graderFile": "curriculum/checks/browser-url-and-navigation.json",
+  "referenceFile": "reference/browser-url-and-navigation.mjs",
+  "incorrectFile": "reference/incorrect/browser-url-and-navigation.mjs",
+  "exampleFile": "curriculum/examples/browser-url-and-navigation.mjs",
+  "exampleExpectedLogs": [
+    "{\"lesson\":\"한글 & 기초\",\"keep\":\"yes\",\"hash\":\"#notes\"}",
+    "{\"popstateAfterPush\":0}"
+  ],
+  "verificationRecord": "docs/execution/browser-url-and-navigation-exercise.json"
+}

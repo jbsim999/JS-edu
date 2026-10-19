@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-url-and-navigation-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-url-and-navigation-checks-v1",
+  "executedTests": 7,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:9d9a05bc15f77f9a3f0fc18ffe4df9de226ccae6760b2daee498fb1b5f599196",
+  "referenceChecks": [
+    "restore-from-url",
+    "canonicalize-invalid-and-duplicate",
+    "programmatic-navigation",
+    "drafts-survive-actual-back",
+    "encoded-id-and-invalid-navigation",
+    "remount-url-not-memory",
+    "dispose-detaches-events"
+  ],
+  "referenceChecksPassed": 7,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

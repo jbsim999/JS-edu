@@ -1,0 +1,72 @@
+{
+  "id": "capstone-host-product-exercise",
+  "lessonId": "capstone-host-product",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-host-product-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "mountSearchDashboard(root,queryProducts,options={})의 본문만 작성한다. options는 fetcher=fetch, storage=localStorage, key, endpoint를 받는다. key 기본값은 capstone-query-v1이며 검사에서는 context.storagePrefix로 분리한 키를 준다. 반환 API는 search(query=input.value,url=endpoint), cancel(), getState(), dispose()다. 생성 시 {version:1,query} 저장값을 검증·복원하고 요청은 시작하지 않는다.\n\n실제 form·label의 검색 input·submit 버튼·취소 버튼·role=status/aria-live=polite output·ul 목록을 만든다. input aria-label은 '상품 검색어', ul은 '검색 결과'다. Enter는 검색, Escape는 취소이며 isComposing 또는 keyCode=229이면 가로채지 않는다. form submit은 기본 이동을 막고 검색한다. 검색마다 GET/credentials:same-origin/Accept:application/json과 새 signal로 fetch를 한 번 호출한다. 새 검색·취소·종료는 이전 요청을 무효화하고 signal을 abort한다.\n\n성공 응답을 JSON으로 읽어 주입 core에 {query}로 전달한다. count가 0이면 empty, 아니면 ready이며 li.dataset.id와 textContent='이름 · 가격'으로 표시한다. 상태는 {status,query,report,error,storageStatus} 복사본이다. error는 {kind:'input'|'http'|'json'|'schema'|'network',status:HTTP번호 또는 null}, 정상은 null이다. 잘못된 입력은 input-error이며 요청하지 않는다. 늦은 작업은 {status:'stale'}만 반환하고 현재 화면을 바꾸지 않는다. cancel은 cancelled·빈 목록, dispose는 리스너·요청·자식 DOM을 정리하며 이후 search는 InvalidStateError다."
+  ],
+  "template": "export function mountSearchDashboard(root, queryProducts, options = {}) {\n  // TODO: 주입된 core와 실제 DOM·fetch·Storage를 연결하고 요청 수명을 관리하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/capstone-host-product.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 HTTP 자료를 주입 core로 처리하고 접근 가능한 목록을 그린다",
+    "빈 정상 결과와 입력 오류를 구분하고 불량 입력의 요청을 막는다",
+    "404·503·깨진 JSON·잘못된 스키마를 빈 성공으로 만들지 않는다",
+    "실제 저장소의 버전 있는 한글 검색어를 요청 없이 복원한다",
+    "Enter 검색·IME 보호·Escape 취소와 초점을 유지한다",
+    "취소를 무시한 오래된 실제 응답도 최신 검색을 덮어쓰지 못한다",
+    "실제 fetch 취소 뒤 복구하고 dispose 뒤 이벤트·결과를 차단한다",
+    "저장 불가에도 검색하고 상품명을 실행 가능한 HTML로 만들지 않는다"
+  ],
+  "rubric": [
+    "core 합성과 호스트 경계",
+    "실패·취소·늦은 결과의 구분",
+    "접근성·입력·저장·수명 정리"
+  ],
+  "available": false,
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "mountSearchDashboard",
+    "parameters": [
+      "root",
+      "queryProducts",
+      "options = {}"
+    ],
+    "async": false,
+    "hostRequirements": [
+      "browser-dom"
+    ],
+    "runProbe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const key=context.storagePrefix+'c02';let app;try{app=submission.mountSearchDashboard(root,queryProducts,{key});const state=await app.search('pista',context.httpBase+'products');observe({status:state.status,count:state.report.count,text:root.querySelector('li').textContent});}finally{app?.dispose();localStorage.removeItem(key);root.replaceChildren();}"
+  },
+  "editable": {
+    "prefix": "export function mountSearchDashboard(root, queryProducts, options = {}) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 주입된 core와 실제 DOM·fetch·Storage를 연결하고 요청 수명을 관리하세요."
+  },
+  "graderFile": "curriculum/checks/capstone-host-product.json",
+  "referenceFile": "reference/capstone-host-product.mjs",
+  "incorrectFile": "reference/incorrect/capstone-host-product.mjs",
+  "exampleFile": "curriculum/examples/capstone-host-product.mjs",
+  "exampleExpectedLogs": [
+    "{\"status\":\"ready\",\"count\":1,\"error\":null}",
+    "{\"status\":\"empty\",\"count\":0,\"error\":null}",
+    "{\"status\":\"error\",\"count\":null,\"error\":{\"kind\":\"http\",\"status\":503}}"
+  ],
+  "verificationRecord": "docs/execution/capstone-host-product-exercise.json"
+}

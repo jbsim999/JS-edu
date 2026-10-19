@@ -1,5 +1,7 @@
 import { createBrowserRunner, fingerprintSource } from './browser-runner.mjs';
 import { createModuleRunner, serializeModuleSource } from './module-runner.mjs';
+import { createDomRunner } from './dom-runner.mjs';
+import { qualificationPassed } from './qualification-completion.mjs';
 
 const byId = id => document.getElementById(id);
 const output = byId('qualification-results');
@@ -64,7 +66,8 @@ async function qualifyExercise(exercise) {
   show('running', exercise.id);
   try {
     const module = exercise.runner.kind === 'module-files';
-    const adapter = (module ? createModuleRunner : createBrowserRunner)({ exercises: [exercise] });
+    const dom = exercise.hostRequirements?.includes('browser-dom');
+    const adapter = (dom ? createDomRunner : module ? createModuleRunner : createBrowserRunner)({ exercises: [exercise] });
     activeRunner = adapter;
     const reference = bodyFromReference(await readText(`/_qualification/reference/${encodeURIComponent(exercise.id)}`), exercise);
     const incorrect = bodyFromReference(await readText(`/_qualification/incorrect/${encodeURIComponent(exercise.id)}`), exercise);
@@ -79,7 +82,52 @@ async function qualifyExercise(exercise) {
       show('running', `${exercise.id} · ${name}`);
     }
     record.passed = record.tests.length === 4 && record.tests.every(item => item.passed);
-  } catch (error) { record.error = error.message; }
+    if (dom && !stopped) await qualifyDomExample(exercise);
+  } catch (error) { record.passed = false; record.error = error.message; }
+}
+
+async function qualifyDomExample(exercise) {
+  const record = { exerciseId: exercise.id, passed: false };
+  report.examples.push(record);
+  try {
+    const source = await readText(`/${exercise.exampleFile}`);
+    const example = { ...internalContract(`qualification-example-${exercise.lessonId}`, { asynchronous: true }),
+      lessonId: exercise.lessonId, requiredFeatures: exercise.requiredFeatures,
+      runner: { kind: 'function-body', exportName: 'example', parameters: ['context'], async: true,
+        runProbe: 'await submission.example(context); observe(true);' } };
+    const adapter = createDomRunner({ exercises: [example] });
+    const result = await invoke(adapter, 'run', example, source);
+    const actualLogs = result.stdout === '' ? [] : result.stdout.split('\n');
+    Object.assign(record, { passed: result.status === 'success' &&
+      Array.isArray(exercise.exampleExpectedLogs) && JSON.stringify(actualLogs) === JSON.stringify(exercise.exampleExpectedLogs),
+      actualLogs, expectedLogs: exercise.exampleExpectedLogs, result });
+    show('running', `${exercise.id} · actual DOM example`);
+  } catch (error) { record.error = error.message; throw error; }
+}
+
+async function qualifyDomIsolation() {
+  const exercise = { ...internalContract('qualification-dom-isolation', { asynchronous: true }),
+    lessonId: 'qualification-dom-isolation',
+    runner: { kind: 'function-body', exportName: 'check', parameters: ['context'], async: true,
+      runProbe: 'observe(await submission.check(context));' } };
+  const adapter = createDomRunner({ exercises: [exercise] });
+  const source = `
+    let parentBlocked = false, fetchBlocked = false, importBlocked = false;
+    try { void parent.document.body; } catch { parentBlocked = true; }
+    try { await fetch(${JSON.stringify(location.origin + '/curriculum/catalog.json')}); } catch { fetchBlocked = true; }
+    try { await import(${JSON.stringify(location.origin + '/execution/protocol.mjs')}); } catch { importBlocked = true; }
+    const response = await fetch(context.httpBase + 'products');
+    const fixture = response.ok && (await response.json()).length === 2;
+    localStorage.setItem(context.storagePrefix + 'qualification', 'temporary');
+    const isolatedStorage = localStorage.getItem(context.storagePrefix + 'qualification') === 'temporary';
+    return { parentBlocked, fetchBlocked, importBlocked, fixture, isolatedStorage };
+  `;
+  const environment = await adapter.getEnvironment();
+  const result = await invoke(adapter, 'run', exercise, source);
+  report.runtime.push({ name: 'dom-cross-origin-and-fixture-isolation', passed: result.status === 'success' &&
+    ['parentBlocked', 'fetchBlocked', 'importBlocked', 'fixture', 'isolatedStorage'].every(key => result.runValue?.[key] === true), result });
+  report.runtime.push({ name: 'dom-limits-disclosed', passed: environment.available && environment.limits.hardTimeout === false &&
+    environment.limits.hardMemoryLimit === false && environment.limits.forcedTermination === false, environment });
 }
 
 function internalContract(id, { asynchronous = false } = {}) {
@@ -212,14 +260,14 @@ byId('qualification-form').addEventListener('submit', async event => {
   stopped = false;
   runButton.disabled = true;
   cancelButton.disabled = false;
-  report = { startedAt: new Date().toISOString(), runtime: [], exercises: [], passed: false, browser: navigator.userAgent, limits: ['실제 브라우저 Worker 검증이며 실제 기기 검증과 구별합니다.', '메모리의 절대 상한·같은 출처 저장 권한의 제거·공인 성적은 보장하지 않습니다.'] };
+  report = { startedAt: new Date().toISOString(), runtime: [], exercises: [], examples: [], passed: false, browser: navigator.userAgent, limits: ['실제 브라우저 검증이며 실제 기기 검증과 구별합니다.', '메모리의 절대 상한·공인 성적은 보장하지 않습니다. DOM 동기 무한 반복의 강제 중지는 보장하지 않습니다.'] };
   show('running', '과제 목록 읽기');
   try {
     const catalog = JSON.parse(await readText('/curriculum/exercises.json'));
     const ids = byId('exercise-filter').value.split(',').map(value => value.trim()).filter(Boolean);
     const exercises = catalog.exercises.filter(exercise => ['function-body', 'module-files'].includes(exercise.runner?.kind)
-      && !(exercise.hostRequirements?.length) && (ids.length === 0 || ids.includes(exercise.id)));
-    if (!exercises.length || ids.some(id => !exercises.some(exercise => exercise.id === id))) throw new Error('검증할 브라우저 Worker 과제 ID를 확인하세요.');
+      && !(exercise.hostRequirements?.includes('node-native')) && (ids.length === 0 || ids.includes(exercise.id)));
+    if (!exercises.length || ids.some(id => !exercises.some(exercise => exercise.id === id))) throw new Error('검증할 브라우저 과제 ID를 확인하세요.');
     report.selectedExerciseCount = exercises.length;
     for (const exercise of exercises) {
       if (stopped) break;
@@ -228,7 +276,8 @@ byId('qualification-form').addEventListener('submit', async event => {
     if (!stopped) await qualifyLimits();
     if (!stopped) { show('running', 'Worker CSP'); await qualifyCsp(); }
     if (!stopped && exercises.some(exercise => exercise.runner.kind === 'module-files')) await qualifyModules();
-    report.passed = !stopped && report.exercises.length === exercises.length && report.exercises.every(item => item.passed) && report.runtime.length >= 6 && report.runtime.every(item => item.passed);
+    if (!stopped && exercises.some(exercise => exercise.hostRequirements?.includes('browser-dom'))) await qualifyDomIsolation();
+    report.passed = qualificationPassed(report, exercises, stopped);
   } catch (error) { report.error = error.message; }
   finally {
     await activeRunner?.cancel();

@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-events-and-lifecycle-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-events-and-lifecycle-checks-v1",
+  "executedTests": 6,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:e5e0fd5251874c645d3f0914e1a5d9101f7fe75960a1b354ed100c3057d0439b",
+  "referenceChecks": [
+    "nested-click-and-propagation",
+    "dynamic-item",
+    "connect-dispose-reconnect",
+    "keyboard-row-focus",
+    "editing-and-composition-ignored",
+    "unowned-and-disabled-ignored"
+  ],
+  "referenceChecksPassed": 6,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

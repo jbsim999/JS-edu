@@ -1,0 +1,68 @@
+{
+  "id": "capstone-failure-and-scale-exercise",
+  "lessonId": "capstone-failure-and-scale",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-failure-and-scale-checks-v1",
+  "mode": "body",
+  "instructions": [
+    "createBoundedQueryBatch(root,queryProducts,options)의 본문을 작성한다. options는 정상 동기 단조시계 now, 협력적 load(task,{signal}), concurrency=2(1–4), maxInputs=8(1–32), maxRecords=100(1–1000), maxOutputs=3(0–100)이다. 상한은 정수이며 잘못되면 RangeError다. root에 role=status/aria-live=polite output과 취소 버튼을 만든다. API는 run(tasks), cancel(), getState(), dispose()다.\n\ntasks는 최대 maxInputs개의 조밀 배열이며 각 {id,query}는 비어 있지 않은 고유 문자열 ID와 문자열 query다. 입력 오류는 load 전에 거부한다. 동시에 concurrency개 이하로 load를 호출하고 각 작업은 한 번만 시도한다. 응답이 배열이 아니거나 maxRecords를 넘으면 input 실패이며 core를 호출하지 않는다. 정상 자료는 queryProducts(records,{query:task.query,limit:maxOutputs})로 처리한다. 결과 행은 {id,status:'fulfilled',report}, 실패는 {id,status:'rejected',error:'load'|'input'|'core'}, 취소는 {id,status:'cancelled'}다.\n\nrun은 {status:'done'|'cancelled',runId,results,metrics}를 반환하며 입력 순서를 유지한다. metrics/getState 필드는 status,runId,total,started,completed,failed,active,peakActive,returnedItems,elapsedMs다. 취소하면 새 작업을 시작하지 않고 활성 load에 abort를 알린 뒤 settle을 기다린다. 다음 run은 새 metrics를 쓴다. 활성 실행 중 중복 run과 dispose 뒤 run은 InvalidStateError다. dispose는 여러 번 호출해도 안전하고 리스너·자식 DOM을 정리한다."
+  ],
+  "template": "export function createBoundedQueryBatch(root, queryProducts, options) {\n  // TODO: 입력·동시성·출력 상한, 협력적 취소, 반복 실행과 관측 상태를 연결하세요.\n}\n",
+  "profileId": "browser-dom",
+  "profileByVersion": {
+    "ES2026": "browser-dom"
+  },
+  "hostRequirements": [
+    "browser-dom"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/capstone-failure-and-scale.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "대기 gate로 동시성·입력 순서·출력 상한·측정값을 관찰한다",
+    "작업 개수·희소·중복 ID를 I/O 전에 거부한다",
+    "큰 응답을 core 전에 거부하고 실패 작업을 자동 재시도하지 않는다",
+    "core 실패와 동기 throw 뒤 슬롯을 회수하고 뒤 작업을 실행한다",
+    "협력적 취소로 활성 작업을 정리하고 다음 실행을 독립적으로 시작한다",
+    "중복 실행을 막고 dispose 뒤 자원과 화면을 정리한다"
+  ],
+  "rubric": [
+    "단계별 상한과 입력 순서",
+    "실패·취소·슬롯 회수·반복 실행",
+    "측정 경로와 실제 성능 주장 구분"
+  ],
+  "available": false,
+  "executionVerified": true,
+  "runner": {
+    "kind": "function-body",
+    "exportName": "createBoundedQueryBatch",
+    "parameters": [
+      "root",
+      "queryProducts",
+      "options"
+    ],
+    "async": false,
+    "hostRequirements": [
+      "browser-dom"
+    ],
+    "runProbe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);let batch;try{batch=submission.createBoundedQueryBatch(root,queryProducts,{load:async()=>[{id:'p1',name:'Lemon',price:120},{id:'p2',name:'Pistachio',price:230}],now:()=>0,maxOutputs:1});const result=await batch.run([{id:'sample',query:''}]);observe({status:result.status,count:result.results[0].report.count,shown:result.results[0].report.items.length,active:result.metrics.active});}finally{batch?.dispose();root.replaceChildren();}"
+  },
+  "editable": {
+    "prefix": "export function createBoundedQueryBatch(root, queryProducts, options) {\n",
+    "suffix": "\n}\n",
+    "initialBody": "  // TODO: 입력·동시성·출력 상한, 협력적 취소, 반복 실행과 관측 상태를 연결하세요."
+  },
+  "graderFile": "curriculum/checks/capstone-failure-and-scale.json",
+  "referenceFile": "reference/capstone-failure-and-scale.mjs",
+  "incorrectFile": "reference/incorrect/capstone-failure-and-scale.mjs",
+  "exampleFile": "curriculum/examples/capstone-failure-and-scale.mjs",
+  "exampleExpectedLogs": [
+    "{\"status\":\"done\",\"ids\":[\"products\",\"empty\"],\"returnedItems\":1,\"elapsedMs\":10}"
+  ],
+  "verificationRecord": "docs/execution/capstone-failure-and-scale-exercise.json"
+}

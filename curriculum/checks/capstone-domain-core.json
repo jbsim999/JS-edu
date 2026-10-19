@@ -1,0 +1,154 @@
+{
+  "exerciseId": "capstone-domain-core-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-domain-core-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "normalize-dedupe-filter-sort",
+      "label": "정규화한 ID는 첫 값을 보존하고 필터 뒤 가격·ID 순으로 정렬한다",
+      "probe": "observe(submission.queryProducts([{id:' b ',name:' PISTACHIO ',price:230},{id:'a',name:'Pistachio cake',price:230},{id:'b',name:'other',price:1},{id:'c',name:'Lemon',price:120}],{query:' PISTA '}));",
+      "expected": {
+        "version": 1,
+        "query": "pista",
+        "count": 2,
+        "total": 460,
+        "items": [
+          {
+            "id": "a",
+            "name": "Pistachio cake",
+            "price": 230
+          },
+          {
+            "id": "b",
+            "name": "PISTACHIO",
+            "price": 230
+          }
+        ]
+      }
+    },
+    {
+      "id": "limit-after-aggregate",
+      "label": "출력 제한이 전체 일치 개수와 합계를 바꾸지 않는다",
+      "probe": "observe([submission.queryProducts([{id:'p2',name:'Pistachio',price:230},{id:'p1',name:'Lemon',price:120}],{limit:1}),submission.queryProducts([{id:'zero',name:'Free',price:0}],{maxPrice:0,limit:0})]);",
+      "expected": [
+        {
+          "version": 1,
+          "query": "",
+          "count": 2,
+          "total": 350,
+          "items": [
+            {
+              "id": "p1",
+              "name": "Lemon",
+              "price": 120
+            }
+          ]
+        },
+        {
+          "version": 1,
+          "query": "",
+          "count": 1,
+          "total": 0,
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "unicode-and-empty",
+      "label": "한글·결합문자 검색과 빈 결과를 결정적으로 처리한다",
+      "probe": "observe([submission.queryProducts([{id:'e',name:' Cafe\\u0301 ',price:5},{id:'h',name:' 한글 ',price:10}],{query:' CAFÉ '}),submission.queryProducts([]),submission.queryProducts([{id:'h',name:'한글',price:10}],{query:'없는'})]);",
+      "expected": [
+        {
+          "version": 1,
+          "query": "café",
+          "count": 1,
+          "total": 5,
+          "items": [
+            {
+              "id": "e",
+              "name": "Café",
+              "price": 5
+            }
+          ]
+        },
+        {
+          "version": 1,
+          "query": "",
+          "count": 0,
+          "total": 0,
+          "items": []
+        },
+        {
+          "version": 1,
+          "query": "없는",
+          "count": 0,
+          "total": 0,
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "invalid-rows-and-options",
+      "label": "누락·희소·중복 속 불량 행과 잘못된 옵션을 거부한다",
+      "probe": "const names=[];for(const [rows,options] of [[[{id:'a',name:'A'}],{}],[new Array(1),{}],[[{id:'a',name:'A',price:1},{id:'a',name:'bad',price:'2'}],{}],[[],{query:null}],[[],{limit:-1}],[[],{maxPrice:NaN}],[[],null]]){try{submission.queryProducts(rows,options);names.push('returned');}catch(error){names.push(error.name);}}observe(names);",
+      "expected": [
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "TypeError",
+        "TypeError"
+      ]
+    },
+    {
+      "id": "immutable-and-independent",
+      "label": "동결 원본과 반복 호출을 서로 분리한다",
+      "probe": "const row=Object.freeze({id:'a',name:'A',price:2});const input=Object.freeze([row]);const a=submission.queryProducts(input);a.items[0].name='changed';const b=submission.queryProducts(input);observe({b,input,distinct:b.items[0]!==row,empty:submission.queryProducts([]).count});",
+      "expected": {
+        "b": {
+          "version": 1,
+          "query": "",
+          "count": 1,
+          "total": 2,
+          "items": [
+            {
+              "id": "a",
+              "name": "A",
+              "price": 2
+            }
+          ]
+        },
+        "input": [
+          {
+            "id": "a",
+            "name": "A",
+            "price": 2
+          }
+        ],
+        "distinct": true,
+        "empty": 0
+      }
+    },
+    {
+      "id": "safe-aggregate",
+      "label": "안전한 정수 범위를 넘는 합계를 조용히 반올림하지 않는다",
+      "probe": "let name='returned';try{submission.queryProducts([{id:'a',name:'A',price:Number.MAX_SAFE_INTEGER},{id:'b',name:'B',price:1}]);}catch(error){name=error.name;}observe(name);",
+      "expected": "RangeError"
+    },
+    {
+      "id": "stable-serialization",
+      "label": "정한 스키마·키 순서로 JSON을 만들고 다시 읽을 수 있다",
+      "probe": "const report=submission.queryProducts([{id:'x',name:'\"<한글>\"',price:0}]);const json=submission.serializeReport(report);observe({json,same:JSON.parse(json).items[0].name===report.items[0].name,exports:Object.keys(submission).sort()});",
+      "expected": {
+        "json": "{\"version\":1,\"query\":\"\",\"count\":1,\"total\":0,\"items\":[{\"id\":\"x\",\"name\":\"\\\"<한글>\\\"\",\"price\":0}]}",
+        "same": true,
+        "exports": [
+          "queryProducts",
+          "serializeReport"
+        ]
+      }
+    }
+  ]
+}

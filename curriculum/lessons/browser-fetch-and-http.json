@@ -1,0 +1,197 @@
+{
+  "id": "browser-fetch-and-http",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "Fetch와 HTTP: 응답 수신·본문 해석·취소를 따로 처리하기",
+  "track": "browser",
+  "level": "transition",
+  "goals": [
+    "fetch 완료와 HTTP 성공·JSON 해석·스키마 검증을 별도 단계로 처리한다.",
+    "AbortSignal을 실제 fetch에 전달하고 네트워크 실패와 취소를 구분한다.",
+    "요청 옵션·본문 소비·데이터 반환 계약을 고정하고 CORS의 한계를 설명한다."
+  ],
+  "prerequisites": [
+    "browser-forms-and-input"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "WHATWG Fetch: fetch method와 Response.ok",
+      "url": "https://fetch.spec.whatwg.org/#fetch-method",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG Fetch: Body mixin과 json()",
+      "url": "https://fetch.spec.whatwg.org/#body-mixin",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG Fetch: CORS protocol과 credentials",
+      "url": "https://fetch.spec.whatwg.org/#http-cors-protocol",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM: AbortSignal과 API 연동",
+      "url": "https://dom.spec.whatwg.org/#interface-abortsignal",
+      "edition": "Living Standard",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "browser-fetch-and-http-exercise",
+  "steps": {
+    "theory": "await fetch가 끝났으니 요청이 성공했다고 표시해도 될까? 404와 503도 HTTP 응답을 받은 것이어서 Response를 얻을 수 있다. 먼저 response.ok/status를 확인하고 성공 응답에서만 본문을 읽는다. response.json은 본문 소비와 JSON 파싱이라는 추가 비동기 단계다. JSON 문법이 올바르더라도 price가 문자열이거나 id가 중복인 응답은 도메인 데이터 계약을 만족하지 못한다.\n\n연결 실패·브라우저 정책 차단 등은 응답 상태 없이 fetch가 거부되는 경로가 될 수 있다. 오류 메시지만 보고 CORS·오프라인·서버 끊김을 정확히 분류할 수 있다고 주장하지 않는다. 취소는 호출자의 AbortSignal을 fetch에 전달하고 signal.aborted도 확인한다. 오류 이름이 항상 AbortError라고 가정하면 사용자 지정 abort reason을 놓칠 수 있다. 본문을 읽는 도중의 취소도 파싱 실패와 구분한다.\n\nCORS는 서버와 브라우저의 교차 출처 접근 계약이다. no-cors는 JSON을 읽을 권한을 얻는 해결책이 아니며 opaque 응답의 읽기 제약을 만든다. credentials:'same-origin'은 동일 출처 요청의 자격 정보 정책이고 include는 별도 설계 판단이다. Fetch는 호스트 API다. 이 단원의 모든 검사는 제품 실행 origin의 고정 fixture만 호출하며 외부 인터넷·실제 상품 서버를 사용하지 않는다.",
+    "example": "브라우저 실행 origin에서 products, empty, not-found, invalid-json, invalid-schema를 순서대로 읽는다. 정상 2개와 정상 빈 배열은 success, 404는 http, 깨진 JSON은 json, 문자열 price는 schema로 구분된다. 예제의 endpoint와 응답은 교육 제품이 고정한다. fetch를 호출하는 wrapper를 주입할 수 있지만 검사는 그 wrapper 안에서 실제 fetch를 호출한다. Node의 fetch나 모형 Response 통과를 브라우저 네트워크 검증으로 표시하지 않는다.",
+    "quiz": "q1은 HTTP 404와 Promise rejection의 차이, q2는 JSON 파싱과 스키마, q3은 전달하지 않은 AbortSignal, q4는 no-cors와 credentials의 의미를 묻는다. 성공/실패를 하나의 boolean만으로 표시했을 때 재시도·안내·로그가 어떻게 달라지는지 설명한다.",
+    "practice": "교육용 상품 조회 경계는 자동 재시도를 하지 않는다. 503을 무조건 반복하면 요청량이 늘고 사용자 취소도 지연될 수 있다. 공통 단원의 재시도 정책을 연결할 때는 전체 시간·시도 횟수·대상 오류를 별도로 정한다. 오류 결과에는 브라우저의 상세 메시지나 토큰을 그대로 노출하지 않고 고정 kind/status를 제공한다. CORS의 실제 교차 출처 허용/차단과 인증 쿠키 동작은 이 동일 출처 fixture 검사에 포함되지 않으므로 별도 환경에서 확인한다.",
+    "lab": "createProductClient(fetcher=fetch)는 {loadProducts}를 반환한다. loadProducts(url='/_fixtures/http/products',{signal}={})는 GET, credentials:'same-origin', Accept:'application/json', 같은 signal로 fetcher를 최대 한 번 부른다. 미리 취소됐다면 호출하지 않는다. 성공은 {ok:true,status,items}이며 각 item은 새 {id,name,price}다. 응답은 배열이며 고유한 비어 있지 않은 문자열 id, 비어 있지 않은 문자열 name, 0 이상 안전 정수 price여야 한다. 실패는 {ok:false,kind,status}: 비정상 HTTP는 http/실제 status, JSON SyntaxError는 json/실제 status, 스키마는 schema/실제 status, 본문·전송 네트워크 실패는 network/null, signal 취소 또는 AbortError는 aborted/null이다. HTTP 오류에서는 본문을 읽지 않고 성공 본문은 한 번만 읽는다. 취소는 빈 성공 목록으로 바꾸지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-http-status",
+        "prompt": "서버가 HTTP 404를 정상적으로 응답하면 fetch는 반드시 reject하는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "아니다. 응답을 받은 뒤 ok/status를 확인해야 한다.",
+            "explanation": "전송 완료와 HTTP 성공 상태는 서로 다른 판단이다."
+          },
+          {
+            "id": "b",
+            "text": "그렇다. catch만 있으면 모든 HTTP 오류를 잡는다.",
+            "explanation": "HTTP 오류 응답이 Response로 resolve되는 경로를 놓친다."
+          },
+          {
+            "id": "c",
+            "text": "404는 항상 빈 성공 목록이다.",
+            "explanation": "리소스 실패와 성공한 빈 조회의 의미를 구분한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-json-schema",
+        "prompt": "response.json()이 성공했고 price가 문자열 '120'이다. 이 과제에서는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "JSON 성공이므로 그대로 승인한다.",
+            "explanation": "JSON 문법과 도메인 필드 타입은 별개다."
+          },
+          {
+            "id": "b",
+            "text": "schema 오류로 구분한다.",
+            "explanation": "0 이상 안전 정수인 number를 요구하는 계약을 적용한다."
+          },
+          {
+            "id": "c",
+            "text": "HTTP 상태를 500으로 바꿔 기록한다.",
+            "explanation": "받은 상태와 클라이언트의 스키마 판단을 혼동하지 않는다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-abort",
+        "prompt": "AbortController는 만들었지만 signal을 fetch에 넘기지 않았다. abort()의 효과는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "페이지의 모든 요청이 취소된다.",
+            "explanation": "signal은 특정 작업에 전달하여 연결해야 한다."
+          },
+          {
+            "id": "b",
+            "text": "실행 중인 JavaScript가 강제 중단된다.",
+            "explanation": "협력적 취소 신호와 프로세스 종료는 다르다."
+          },
+          {
+            "id": "c",
+            "text": "그 fetch와 연결되지 않아 요청 취소를 보장하지 못한다.",
+            "explanation": "같은 signal을 전달하고 취소 결과도 별도로 처리한다."
+          }
+        ],
+        "correctChoiceId": "c"
+      },
+      {
+        "id": "q4-cors",
+        "prompt": "교차 출처 JSON 읽기가 CORS로 막혔다. no-cors로 바꾸면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "읽기 권한이 생겨 JSON을 정상 파싱할 수 있다.",
+            "explanation": "no-cors는 서버의 접근 허용 계약을 우회하는 읽기 권한이 아니다."
+          },
+          {
+            "id": "b",
+            "text": "opaque 응답 등 읽기 제약을 고려해야 하며 서버·출처 계약을 해결해야 한다.",
+            "explanation": "credentials 설정도 별도의 자격 정보 전송 정책이다."
+          },
+          {
+            "id": "c",
+            "text": "credentials:'include'가 모든 CORS 제한을 해제한다.",
+            "explanation": "자격 정보 포함은 서버 허용 조건과 보안 판단을 추가한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-http-status",
+        "q2-json-schema"
+      ],
+      "caseIds": [
+        "empty-is-success",
+        "http-errors-before-body",
+        "invalid-json",
+        "invalid-schema"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q3-abort"
+      ],
+      "caseIds": [
+        "network-failure",
+        "abort-forwarded-and-recovery",
+        "already-aborted"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-cors"
+      ],
+      "caseIds": [
+        "products-and-request-contract",
+        "one-body-read-and-copy",
+        "duplicate-product-id"
+      ]
+    }
+  ],
+  "example": {
+    "file": "curriculum/examples/browser-fetch-and-http.mjs",
+    "expectedLogs": [
+      "{\"ok\":true,\"status\":200,\"items\":[{\"id\":\"p1\",\"name\":\"Lemon\",\"price\":120},{\"id\":\"p2\",\"name\":\"Pistachio\",\"price\":230}]}",
+      "{\"ok\":true,\"status\":200,\"items\":[]}",
+      "{\"ok\":false,\"kind\":\"http\",\"status\":404}",
+      "{\"ok\":false,\"kind\":\"json\",\"status\":200}",
+      "{\"ok\":false,\"kind\":\"schema\",\"status\":200}"
+    ],
+    "hostRequirements": [
+      "browser-dom"
+    ]
+  }
+}

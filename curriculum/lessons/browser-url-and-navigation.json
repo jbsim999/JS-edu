@@ -1,0 +1,182 @@
+{
+  "id": "browser-url-and-navigation",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "URL과 탐색: 주소를 기준으로 화면을 복원하기",
+  "track": "browser",
+  "level": "advanced",
+  "goals": [
+    "URL·query 인코딩과 History 상태를 역할별로 구분한다.",
+    "뒤로 가기와 재연결에서 URL의 강의 ID를 검증해 복원한다.",
+    "강의별 초안을 보존하고 탐색·리스너 정리의 수명을 관리한다."
+  ],
+  "prerequisites": [
+    "browser-storage-and-migrations"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": null,
+  "preview": false,
+  "sources": [
+    {
+      "title": "WHATWG URL — URL and URLSearchParams",
+      "url": "https://url.spec.whatwg.org/#urlsearchparams",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML — History interface, pushState/replaceState",
+      "url": "https://html.spec.whatwg.org/multipage/nav-history-apis.html#the-history-interface",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG HTML — session history and navigation",
+      "url": "https://html.spec.whatwg.org/multipage/browsing-the-web.html#history-traversal",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "WHATWG DOM — event listeners and AbortSignal",
+      "url": "https://dom.spec.whatwg.org/#concept-event-listener",
+      "edition": "Living Standard / checked 2026-10-15",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "browser-url-and-navigation-exercise",
+  "steps": {
+    "theory": "목록에서 강의를 선택한 뒤 주소를 복사했는데 다른 브라우저에서는 첫 강의가 열렸다. 화면 상태가 메모리에만 있었기 때문이다. 공유·새로고침으로 복원할 선택은 URL에 표현하고, 현재 URL을 파싱해 화면 상태를 만드는 함수를 먼저 정한다. 입력 중인 코드나 민감한 내용까지 query에 넣으면 주소 기록·로그·공유로 유출될 수 있으므로 선택 ID와 초안 저장은 다른 책임으로 둔다.\n\nURL 문자열을 직접 +와 &로 이어 붙이면 한글, 공백, &, +의 경계를 잘못 처리하기 쉽다. new URL(location.href)와 searchParams.set을 사용하면 값의 인코딩과 직렬화를 맡길 수 있다. searchParams.get은 첫 값을 읽고 getAll은 중복을 보여 준다. 이 과제는 lesson을 하나로 정규화하고 나머지 query와 hash를 보존한다. 해독된 ID도 외부 입력이므로 허용 목록을 확인한다.\n\npushState는 같은 출처의 새 History 항목을 만들고 replaceState는 현재 항목을 바꾼다. 두 메서드를 호출했다고 popstate가 자동으로 발생하는 것은 아니다. 프로그램 탐색은 직접 화면을 갱신하고, 사용자가 뒤로/앞으로 이동하면 popstate에서 그때의 URL을 다시 읽는다. event.state만을 유일한 정보로 쓰면 복사한 주소나 첫 진입의 null 상태를 복원하지 못할 수 있다. 초기 잘못된 주소를 정규화할 때는 불필요한 뒤로 가기 항목을 만들지 않도록 replace를 선택한다.\n\n초안이 있는 상태에서 이동할 때 막을지, 저장할지, 강의별로 보관할지는 제품의 정책이다. 이 과제는 메모리 Map에 ID별 초안을 보관하고 이동 자체는 허용한다. 따라서 a→b→뒤로 가기에서 a의 초안을 다시 표시하지만 문서 전체 reload 뒤까지 메모리 초안이 지속된다고 보장하지 않는다. 영속 복원은 B05 저장 계층과 따로 연결한다. dispose는 전역 popstate와 입력 리스너를 해제해 이전 화면 인스턴스가 새 화면을 덮어쓰지 않게 한다.",
+    "example": "브라우저 전용 예제는 현재 주소를 보관한 뒤 lesson 값에 한글·&가 들어간 query를 설정한다. searchParams.get으로 원래 ID를 복원하고 다른 query keep=yes와 hash #notes가 남아 있음을 JSON으로 출력한다. pushState 직후 popstate 횟수는 0이다. finally에서 리스너와 주소를 복원한다. 전체 문서 reload 검사는 별도 브라우저 인수 검사이며 이 예제는 실제 URL·History API의 호출 동작을 보여 준다.",
+    "quiz": "주소의 상태와 메모리 상태, push와 replace, 프로그램 탐색과 popstate, 초안 보존과 영속 저장의 경계를 판단한다.",
+    "practice": "학습 목록/상세 화면의 주소 계약을 먼저 적는다. 어떤 값은 URL에 넣고 어떤 값은 저장소·메모리에 둘지 정한 뒤, 잘못된 ID·중복 query·없는 ID·한글 ID를 같은 parser로 처리한다. URL 정규화가 무한 push나 popstate 재진입을 만들지 않도록 상태 전이별 쓰기 방식을 구분한다.\n\n검사는 실제 History.back() 이후의 URL·DOM·메모를 관찰한다. 페이지를 다시 연결할 때는 같은 URL에서 선택이 복원되는지 검사하고, 문서 전체 reload 및 BFCache 복귀는 별도 실제 브라우저 시나리오로 확인한다. hash/scroll 복원, 외부 링크, unsaved 경고를 추가하면 추가 계약이 필요하다. 설계 메모에는 초안을 자동 삭제하지 않을 기준, URL source of truth의 적용 범위와 dispose 후 이벤트 차단을 적는다.",
+    "lab": "createLessonRouter(root,allowedIds,defaultId)를 구현한다. root는 실제 DOM 요소, allowedIds는 중복 없는 비어 있지 않은 문자열 배열이며 defaultId는 그 안에 있다. 잘못된 목록은 TypeError다. root 안에 output[data-current-lesson]과 textarea[data-draft]를 만들고 textarea의 접근 가능한 이름은 학습 메모로 한다. 외부의 다른 DOM은 변경하지 않는다.\n\n초기 선택과 popstate 선택은 location.href의 lesson query를 기준으로 한다. 없거나 허용하지 않은 ID면 defaultId로 정규화한다. 중복 lesson은 첫 값이 유효할 때 그 값을 택하고 하나로 줄인다. 정규화는 replaceState이며 다른 query·pathname·hash와 기존 history.state를 보존한다. output.textContent와 root.dataset.lesson은 현재 ID, textarea.value는 그 ID의 메모리 초안이다. 최초 초안은 빈 문자열이다. textarea input에서 ID별 초안을 갱신한다.\n\n반환 API는 {navigate,getState,dispose}다. navigate(id)는 유효한 다른 ID일 때 pushState 후 즉시 렌더링하고 getState와 같은 {lessonId,draft}를 반환한다. 같은 ID는 새 History 항목을 만들지 않는다. 허용하지 않은 ID는 RangeError이며 URL·화면을 보존한다. getState는 새 객체로 현재 선택과 초안을 반환한다. 강의 간 이동과 popstate에서 다른 강의의 초안을 덮어쓰지 않는다. 다시 mount한 인스턴스는 URL 선택만 복원하고 메모리 초안은 새로 시작한다.\n\ndispose는 여러 번 호출해도 안전하며 popstate·input 리스너를 해제한다. 마지막 화면과 getState 스냅샷은 남지만 이후 이벤트는 반영하지 않는다. dispose 뒤 navigate는 InvalidStateError를 던진다. 이 과제는 문서 reload 자체를 호출하지 않으며 reload 이후 영속 초안 복원은 B05 계층의 별도 책임이다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-push-event",
+        "prompt": "history.pushState를 호출한 직후 화면을 갱신하려면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "자동 발생하는 popstate만 기다린다.",
+            "explanation": "pushState 호출 자체는 popstate를 자동 발생시키지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "프로그램 탐색 경로에서 렌더를 직접 호출한다.",
+            "explanation": "뒤로/앞으로 이동의 popstate 경로와 함께 같은 URL parser를 재사용할 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "주소가 바뀌면 반드시 전체 문서가 reload된다.",
+            "explanation": "History API의 같은 문서 이동과 전체 navigation은 다르다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q2-id-validation",
+        "prompt": "query에서 얻은 lesson ID를 처리하는 순서는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "URLSearchParams로 읽은 뒤 허용 목록을 검증한다.",
+            "explanation": "문법 파싱과 업무상 유효한 ID 검증은 서로 다른 단계다."
+          },
+          {
+            "id": "b",
+            "text": "URL에 들어 있으므로 신뢰하고 innerHTML에 넣는다.",
+            "explanation": "주소 값은 외부 입력이며 HTML 해석도 필요하지 않다."
+          },
+          {
+            "id": "c",
+            "text": "& 문자를 모두 삭제한 뒤 ID를 합친다.",
+            "explanation": "값과 구분자 경계를 수동 보정하면 원래 ID를 손상할 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q3-initial-invalid",
+        "prompt": "최초 진입의 잘못된 ID를 기본 ID로 고칠 때 적절한 기본 정책은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "렌더마다 pushState하여 같은 항목을 누적한다.",
+            "explanation": "불필요한 History 항목과 뒤로 가기 루프를 만들 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "현재 항목을 replaceState로 정규화한다.",
+            "explanation": "사용자가 실제로 선택하지 않은 오류 주소를 새 이동으로 쌓지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "다른 query도 모두 삭제한다.",
+            "explanation": "이 과제의 router가 소유하지 않은 주소 정보까지 지울 필요가 없다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-draft-lifetime",
+        "prompt": "ID별 Map에 초안을 저장하면 무엇을 보장할 수 있는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "그 인스턴스의 강의 이동 중 초안을 분리한다.",
+            "explanation": "메모리 수명 안의 보존이며 전체 reload 뒤 영속 저장을 뜻하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "브라우저를 종료해도 자동 복원된다.",
+            "explanation": "메모리 Map은 영속 저장소가 아니다."
+          },
+          {
+            "id": "c",
+            "text": "주소를 받은 다른 사용자에게 초안도 자동 전달된다.",
+            "explanation": "URL에는 선택 ID만 담았으며 초안은 공유하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-push-event",
+        "q2-id-validation"
+      ],
+      "caseIds": [
+        "programmatic-navigation",
+        "encoded-id-and-invalid-navigation"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q3-initial-invalid"
+      ],
+      "caseIds": [
+        "restore-from-url",
+        "canonicalize-invalid-and-duplicate",
+        "drafts-survive-actual-back",
+        "remount-url-not-memory"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q4-draft-lifetime"
+      ],
+      "caseIds": [
+        "drafts-survive-actual-back",
+        "dispose-detaches-events"
+      ]
+    }
+  ]
+}

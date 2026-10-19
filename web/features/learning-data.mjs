@@ -25,8 +25,12 @@ export function browserModuleProfile(profile) {
   return profile?.execution?.provider === "browser-module-worker";
 }
 
+export function browserDomProfile(profile) {
+  return profile?.execution?.provider === "browser-dom";
+}
+
 export function supportsExerciseProvider(exercise, profile) {
-  return (exercise?.runner?.kind === "function-body" && browserWorkerProfile(profile))
+  return (exercise?.runner?.kind === "function-body" && (browserWorkerProfile(profile) || browserDomProfile(profile)))
     || (exercise?.runner?.kind === "module-files" && browserModuleProfile(profile));
 }
 

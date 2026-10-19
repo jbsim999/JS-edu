@@ -1,3 +1,5 @@
+import { expandedGlossary } from './glossary-expanded.mjs';
+
 const specification = "https://262.ecma-international.org/17.0/#";
 
 function term(id, name, english, summary, definition, example, misconception, lessons, anchor, aliases = []) {
@@ -11,7 +13,7 @@ function term(id, name, english, summary, definition, example, misconception, le
 }
 
 // 기존 개념 설명 28개를 재사용한다. 용어 개정은 교재 개정과 독립적이며 성취를 기록하지 않는다.
-export const glossary = Object.freeze([
+const legacyGlossary = Object.freeze([
   term("primitive", "원시값", "Primitive value", "객체가 아닌 값. 값 자체의 일부를 바꿀 수 없습니다.",
     "undefined, null, boolean, number, bigint, string, symbol 값은 원시값입니다. 변수에 다른 값을 다시 할당하는 것과 원시값 자체를 변경하는 것은 다릅니다.",
     'let name = "JS";\nname = name + "-edu";\n// 새 문자열을 name에 할당한다.',
@@ -133,6 +135,137 @@ export const glossary = Object.freeze([
     "class Base { label() { return " + '"기본"' + "; } }\nclass Detail extends Base {\n  label() { return super.label() + " + '" / 상세"' + "; }\n}",
     "공유해야 할 동작과 각 인스턴스의 가변 데이터를 구분해야 합니다. 상속이 항상 합성보다 적합하지는 않습니다.", ["classes", "prototypes"], "sec-super-keyword", ["extends", "super", "클래스 상속", "상위 클래스"]),
 ]);
+
+const currentLessonLinks = {
+  "primitive": [
+    "values-and-types",
+    "coercion-and-equality",
+    "references-mutation-and-copy"
+  ],
+  "reference": [
+    "values-and-types",
+    "function-parameters-and-contracts",
+    "references-mutation-and-copy"
+  ],
+  "binding": [
+    "scope-tdz-and-declarations",
+    "bindings-and-closures",
+    "esm-and-live-bindings"
+  ],
+  "immutable": [
+    "references-mutation-and-copy",
+    "classes-and-private-state",
+    "composition-and-domain-contracts"
+  ],
+  "shallow-copy": [
+    "references-mutation-and-copy",
+    "array-pipelines-and-sorting"
+  ],
+  "deep-copy": [
+    "references-mutation-and-copy",
+    "json-and-serialization",
+    "browser-workers-and-performance"
+  ],
+  "undefined": [
+    "values-and-types",
+    "coercion-and-equality",
+    "control-flow-and-operators",
+    "function-parameters-and-contracts"
+  ],
+  "null": [
+    "values-and-types",
+    "coercion-and-equality",
+    "control-flow-and-operators"
+  ],
+  "execution-context": [
+    "scope-tdz-and-declarations",
+    "bindings-and-closures",
+    "call-stack-and-completion"
+  ],
+  "lexical-environment": [
+    "scope-tdz-and-declarations",
+    "bindings-and-closures"
+  ],
+  "variable-environment": [
+    "scope-tdz-and-declarations"
+  ],
+  "environment-record": [
+    "scope-tdz-and-declarations",
+    "bindings-and-closures"
+  ],
+  "scope": [
+    "scope-tdz-and-declarations",
+    "bindings-and-closures"
+  ],
+  "hoisting": [
+    "scope-tdz-and-declarations",
+    "esm-and-live-bindings"
+  ],
+  "this": [
+    "this-and-arrow-functions",
+    "browser-events-and-lifecycle",
+    "node-events-and-lifecycle"
+  ],
+  "explicit-this": [
+    "this-and-arrow-functions",
+    "higher-order-functions"
+  ],
+  "this-arg": [
+    "this-and-arrow-functions",
+    "array-pipelines-and-sorting"
+  ],
+  "arrow": [
+    "this-and-arrow-functions",
+    "higher-order-functions"
+  ],
+  "callback": [
+    "higher-order-functions",
+    "bindings-and-closures",
+    "browser-events-and-lifecycle",
+    "node-events-and-lifecycle"
+  ],
+  "closure": [
+    "bindings-and-closures",
+    "higher-order-functions",
+    "composition-and-domain-contracts"
+  ],
+  "garbage-collection": [
+    "bindings-and-closures",
+    "browser-events-and-lifecycle",
+    "node-events-and-lifecycle"
+  ],
+  "partial": [
+    "bindings-and-closures",
+    "higher-order-functions"
+  ],
+  "currying": [
+    "bindings-and-closures",
+    "higher-order-functions"
+  ],
+  "prototype": [
+    "prototype-delegation",
+    "classes-and-private-state"
+  ],
+  "constructor": [
+    "prototype-delegation",
+    "classes-and-private-state",
+    "this-and-arrow-functions"
+  ],
+  "prototype-chain": [
+    "prototype-delegation",
+    "properties-and-descriptors"
+  ],
+  "class": [
+    "classes-and-private-state",
+    "composition-and-domain-contracts"
+  ],
+  "super": [
+    "classes-and-private-state",
+    "prototype-delegation"
+  ]
+};
+
+export const glossary = Object.freeze([...legacyGlossary.map(item => Object.freeze({ ...item, lessons: Object.freeze(currentLessonLinks[item.id] ?? item.lessons) })), ...expandedGlossary]);
 
 export function normalizeSearch(value) {
   return value.normalize("NFKC").toLocaleLowerCase("en-US").trim().replace(/\s+/gu, " ");

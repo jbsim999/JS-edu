@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "exerciseId": "browser-storage-and-migrations-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "browser-storage-and-migrations-checks-v1",
+  "executedTests": 12,
+  "checkedAt": "2026-10-19T01:13:02.527Z",
+  "startedAt": "2026-10-19T01:12:37.819Z",
+  "actualRuntime": "Chrome155 / Windows / isolated-loopback DOM iframe",
+  "method": "Actual browser qualification, 44-course regression batch",
+  "referenceSourceFingerprint": "sha256:6f049c29d3014f11015591f552d7fa489b052659730a65d3cbf2be48ec9ab572",
+  "referenceChecks": [
+    "empty-preserves-input",
+    "save-and-load",
+    "revision-and-file-isolation",
+    "corrupt-preserved",
+    "unsupported-version",
+    "explicit-migration",
+    "sequence-conflict",
+    "storage-denial-injection",
+    "migration-does-not-overwrite",
+    "schema-and-identity",
+    "migration-corrupt-source",
+    "migration-write-denied"
+  ],
+  "referenceChecksPassed": 12,
+  "referenceRunPassed": true,
+  "starterRejected": true,
+  "incorrectRejected": true,
+  "exampleOutputChecked": true,
+  "exampleMethod": "Actual isolated DOM context; logs equal fixed expected output",
+  "scope": "Public self-study checks, not certification, hard timeout or OS isolation"
+}

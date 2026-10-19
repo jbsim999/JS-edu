@@ -1,0 +1,132 @@
+{
+  "exerciseId": "capstone-acceptance-review-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-acceptance-review-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "actual-product-acceptance",
+      "label": "실제 HTTP·core 검사를 실행·대기하고 식별정보와 결과를 표시한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{let calls=0;review=submission.createAcceptanceReview(root,queryProducts,identity);const result=await review.run([{id:'products',async check({queryProducts,signal}){calls++;const response=await fetch(context.httpBase+'products',{signal});const report=queryProducts(await response.json());return response.ok&&report.count===2&&report.total===350;}},{id:'empty',check({queryProducts}){calls++;return queryProducts([]).count===0;}}]);observe({status:result.status,calls,identity:result.identity,checks:result.checks,rows:root.querySelectorAll('li').length,busy:root.getAttribute('aria-busy')});}finally{review?.dispose();root.replaceChildren();}",
+      "expected": {
+        "status": "PASS",
+        "calls": 2,
+        "identity": {
+          "contentRevision": "draft-1",
+          "sourceFingerprint": "source-a",
+          "graderRevision": "checks-v1",
+          "environmentFingerprint": "browser-fixture"
+        },
+        "checks": [
+          {
+            "id": "products",
+            "status": "PASS",
+            "reason": null
+          },
+          {
+            "id": "empty",
+            "status": "PASS",
+            "reason": null
+          }
+        ],
+        "rows": 2,
+        "busy": "false"
+      }
+    },
+    {
+      "id": "zero-tests-never-pass",
+      "label": "빈 검사·중복 ID·호출 불가 검사를 성공으로 만들지 않는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{let calls=0;review=submission.createAcceptanceReview(root,queryProducts,identity);const names=[];for(const tests of [[],[{id:'a',check:()=>{calls++;return true;}},{id:'a',check:()=>true}],[{id:'bad',check:1}]]){try{await review.run(tests);names.push('returned');}catch(error){names.push(error.name);}}observe({names,calls,status:review.getState().status,checks:review.getState().checks});}finally{review?.dispose();root.replaceChildren();}",
+      "expected": {
+        "names": [
+          "RangeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "calls": 0,
+        "status": "INVALID",
+        "checks": []
+      }
+    },
+    {
+      "id": "false-throw-and-async",
+      "label": "false·truthy 값·throw를 실패로 기록하고 뒤 비동기 검사를 계속한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{const order=[];review=submission.createAcceptanceReview(root,queryProducts,identity);const result=await review.run([{id:'false',check(){order.push('a');return false;}},{id:'truthy',check(){order.push('b');return 'PASS';}},{id:'throw',check(){order.push('c');throw undefined;}},{id:'async',async check(){await Promise.resolve();order.push('d');return true;}}]);observe({status:result.status,order,checks:result.checks});}finally{review?.dispose();root.replaceChildren();}",
+      "expected": {
+        "status": "FAIL",
+        "order": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "checks": [
+          {
+            "id": "false",
+            "status": "FAIL",
+            "reason": "returned-false"
+          },
+          {
+            "id": "truthy",
+            "status": "FAIL",
+            "reason": "returned-false"
+          },
+          {
+            "id": "throw",
+            "status": "FAIL",
+            "reason": "threw"
+          },
+          {
+            "id": "async",
+            "status": "PASS",
+            "reason": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "candidate-change-invalidates",
+      "label": "새 소스·검사개정·환경은 이전 통과를 지우고 새 core를 검사한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{const tests=[{id:'count',check:({queryProducts})=>queryProducts([{id:'a',name:'A',price:1}]).count===1}];review=submission.createAcceptanceReview(root,queryProducts,identity);const first=await review.run(tests);const changed={...identity,contentRevision:'draft-2',sourceFingerprint:'source-b',graderRevision:'checks-v2',environmentFingerprint:'browser-other'};review.invalidate(changed,()=>({count:0}));const stale=review.getState();const second=await review.run(tests);observe({first:first.status,stale:stale.status,staleChecks:stale.checks.length,second:second.status,identity:second.identity});}finally{review?.dispose();root.replaceChildren();}",
+      "expected": {
+        "first": "PASS",
+        "stale": "STALE",
+        "staleChecks": 0,
+        "second": "FAIL",
+        "identity": {
+          "contentRevision": "draft-2",
+          "sourceFingerprint": "source-b",
+          "graderRevision": "checks-v2",
+          "environmentFingerprint": "browser-other"
+        }
+      }
+    },
+    {
+      "id": "old-completion-cannot-replace",
+      "label": "실행 중 소스가 바뀌면 옛 비동기 통과를 새 결과에 덮어쓰지 않는다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{let release,signal,started;const startSignal=new Promise(resolve=>{started=resolve;});review=submission.createAcceptanceReview(root,queryProducts,identity);const old=review.run([{id:'old',check(context){signal=context.signal;started();return new Promise(resolve=>{release=resolve;});}}]);await Promise.race([startSignal,old.then(()=>false,()=>false)]);review.invalidate({...identity,sourceFingerprint:'new'},queryProducts);const fresh=await review.run([{id:'new',check:()=>true}]);release(true);const oldResult=await old;observe({old:oldResult.status,aborted:signal.aborted,fresh:fresh.status,current:review.getState().status,source:review.getState().identity.sourceFingerprint,ids:review.getState().checks.map(x=>x.id)});}finally{review?.dispose();root.replaceChildren();}",
+      "expected": {
+        "old": "STALE",
+        "aborted": true,
+        "fresh": "PASS",
+        "current": "PASS",
+        "source": "new",
+        "ids": [
+          "new"
+        ]
+      }
+    },
+    {
+      "id": "dispose-and-result-copy",
+      "label": "보고서 외부 변경을 분리하고 종료 뒤 미완료 결과를 차단한다",
+      "probe": "function normalizeProduct(value) {\n  if (!value || typeof value !== 'object' || Array.isArray(value) ||\n      !['id', 'name', 'price'].every(key => Object.hasOwn(value, key)) ||\n      typeof value.id !== 'string' || typeof value.name !== 'string' ||\n      !Number.isSafeInteger(value.price) || value.price < 0) throw new TypeError('invalid product');\n  const id = value.id.trim().normalize('NFC');\n  const name = value.name.trim().normalize('NFC');\n  if (!id || !name) throw new TypeError('missing product text');\n  return { id, name, price: value.price };\n}\nfunction normalizeQuery(value) {\n  if (typeof value !== 'string') throw new TypeError('query must be a string');\n  return value.trim().normalize('NFC').toLowerCase();\n}\n\nfunction queryProducts(records, options = {}) {\n  if (!Array.isArray(records) || !options || typeof options !== 'object' || Array.isArray(options)) {\n    throw new TypeError('records and options are invalid');\n  }\n  const { query = '', maxPrice = Infinity, limit = Infinity } = options;\n  const normalized = normalizeQuery(query);\n  if (typeof maxPrice !== 'number' || Number.isNaN(maxPrice) || maxPrice < 0 ||\n      !(limit === Infinity || Number.isSafeInteger(limit) && limit >= 0)) throw new TypeError('invalid query options');\n  const unique = new Map();\n  for (let index = 0; index < records.length; index++) {\n    if (!Object.hasOwn(records, index)) throw new TypeError('sparse input');\n    const item = normalizeProduct(records[index]);\n    if (!unique.has(item.id)) unique.set(item.id, item);\n  }\n  const matched = [...unique.values()].filter(item => item.name.toLowerCase().includes(normalized) && item.price <= maxPrice);\n  matched.sort((a, b) => a.price - b.price || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));\n  let total = 0;\n  for (const item of matched) {\n    total += item.price;\n    if (!Number.isSafeInteger(total)) throw new RangeError('unsafe total');\n  }\n  return { version: 1, query: normalized, count: matched.length, total, items: matched.slice(0, limit) };\n}\n\nfunction serializeReport(report) {\n  return JSON.stringify({ version: report.version, query: report.query, count: report.count, total: report.total,\n    items: report.items.map(({ id, name, price }) => ({ id, name, price })) });\n}\n\nconst root=document.getElementById(context.rootId);const identity={\"contentRevision\":\"draft-1\",\"sourceFingerprint\":\"source-a\",\"graderRevision\":\"checks-v1\",\"environmentFingerprint\":\"browser-fixture\"};let review;try{review=submission.createAcceptanceReview(root,queryProducts,identity);const done=await review.run([{id:'ok',check:()=>true}]);try{done.checks[0].status='FAIL';}catch{}const preserved=review.getState().checks[0].status;let release,signal,started;const startSignal=new Promise(resolve=>{started=resolve;});const pending=review.run([{id:'pending',check(context){signal=context.signal;started();return new Promise(resolve=>{release=resolve;});}}]);await Promise.race([startSignal,pending.then(()=>false,()=>false)]);review.dispose();review.dispose();release(true);await pending;let name;try{await review.run([{id:'again',check:()=>true}]);}catch(error){name=error.name;}observe({preserved,aborted:signal.aborted,status:review.getState().status,children:root.childElementCount,name});}finally{review?.dispose();root.replaceChildren();}",
+      "expected": {
+        "preserved": "PASS",
+        "aborted": true,
+        "status": "DISPOSED",
+        "children": 0,
+        "name": "InvalidStateError"
+      }
+    }
+  ]
+}
