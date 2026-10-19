@@ -2,6 +2,8 @@
 
 ## 2026-10-19 M5 원격 CI 후속 보완
 
+제품 보완16b4a45의 [고정Node Windows/Ubuntu CI](https://github.com/jbsim999/JS-edu/actions/runs/39191401477) success를 확인했다. 일반Ubuntu22/24도 success다. Windows 일반검사에서 남은 테스트 후처리의 별칭/실제경로 assertion을 동일 별칭TEMP의 FAIL로 재현하고 parent/target realpath 뒤 기존 삭제 경계 검사를 유지하도록 수정했다. 같은환경의 학습서버5/5·skip0 PASS. 제품 실행 소스 변경은 없으며 최종 일반검사는 후속 커밋의 Actions 결과를 따른다.
+
 첫 M5 원격검사의 private 완료/Worker exit 경합과 Windows 임시 parent 별칭 권한 오류를 실제 로그 및 로컬 FAIL로 재현·수정했다. 완료 전 native idle을 유지하고 완료 응답 전송 구간에만 Worker 수명을 유지한다. canonical parent에서 권한/컨텍스트/삭제 경계를 파생하며 권한 범위는 넓히지 않는다.
 
 최종 index 분리본의 구문296·회귀281/281·skip0, 경계5회귀와 실제Node11과제110조건·예제11·각11starter/오답 거부·정리 PASS(02:39:24.514–02:40:32.367Z). 원본87개와 실행기록11개 일치. 변경소스3개의 index/분리본/작업본 SHA집계3548312fb82354089a17625ed0517cbeab9b51ec968c4dec70d25d8f7fab897d. [상세·독립 판정](runtime-ci-verification.md), [스냅샷](runtime-ci-verification-evidence.json)을 따른다. 브라우저/UI 변경 없이 M5기준선의 실제361조건 증거와 한계 고지를 유지한다. 후속 원격검사는 정확한 커밋의 Actions에서 확인한다.

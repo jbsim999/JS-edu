@@ -2,6 +2,8 @@
 
 ## 2026-10-19 M5 원격 CI 보완 최종 로컬 검증
 
+제품 보완 커밋 `16b4a45aaa312c16d746395b3653cd34827625d0`까지 푸시했다. [고정Node CI39191401477](https://github.com/jbsim999/JS-edu/actions/runs/39191401477)는 Windows/Ubuntu 모두 success다. 일반Ubuntu22/24도 success이며 Windows22/24는 테스트 후처리의 tmpdir 별칭/실제경로 비교만 실패했다. 같은 별칭TEMP에서 FAIL 재현 후 parent/target realpath 비교와 기존 삭제 경계 검사를 유지하도록 테스트만 보완했고 학습서버5/5·skip0 PASS를 확인했다. 제품 소스 변경은 없다. 최종 일반 CI는 후속 테스트 보완 커밋의 Actions를 확인한다.
+
 M5를 `5c991e6a19b479d286193c79b012723ccce8c9e2`로 커밋·푸시했고 공개 저장소/원격 SHA 일치를 확인했다. 첫 원격 [일반 검사](https://github.com/jbsim999/JS-edu/actions/runs/39189509471)와 [고정 Node 검사](https://github.com/jbsim999/JS-edu/actions/runs/39189509624)에서 Worker private 완료 이전 자연 종료와 Windows 임시 폴더 별칭 경로 권한 불일치를 발견했다. Ubuntu 고정 Node110은 통과했으며 실패를 숨기거나 완료로 처리하지 않는다.
 
 두 문제를 로컬에서 각각 FAIL로 재현했다. 실행 폴더는 canonical parent에서 생성하고 권한/컨텍스트/삭제 경계를 일치시켰다. Worker는 complete가 이미 확인된 전송 구간에서만 숨은 ref 타이머로 유지하고 supervisor가 종료한다. 처음부터 타이머를 두는 중간안은 N06 오답/N08 node:test idle을 변경해 전수검사에서 거부했으며 폐기했다. 현재 beforeExit·완료 후 수명·별칭·출력 제한·활성 핸들 위조5회귀 PASS다. 최종 index 분리본 전체 검사 구문296·회귀281/281·skip0와 실제Node11과제110조건·예제11·각11negative 거부·정리 PASS를 확인했다(02:39:24.514–02:40:32.367Z). 변경 소스3개 지문집계3548312fb82354089a17625ed0517cbeab9b51ec968c4dec70d25d8f7fab897d. 상세와 독립 판정은 [CI 보완 검증](runtime-ci-verification.md)을 따른다. 후속 커밋/원격검사를 확인하며 패키징은 계속 보류한다. 아래 M5 로컬 검증은 첫 커밋 당시 기록이다.

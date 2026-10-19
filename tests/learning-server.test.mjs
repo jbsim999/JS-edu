@@ -175,10 +175,12 @@ test('server close reports Node cleanup failure after still closing its browser 
     assert.equal(await new Promise(resolve => server.close(resolve)), error);
   } finally {
     removal.mock.restore(); interval.mock.restore(); syncBuiltinESMExports();
+    const temporaryParent = await filesystem.realpath(tmpdir());
     for (const directory of failedDirectories) {
-      const relative = path.relative(tmpdir(), directory);
-      assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative) && path.basename(directory).startsWith('javascript-edu-node-'));
-      await nativeRemove(directory, { recursive: true, force: true });
+      const canonicalDirectory = await filesystem.realpath(directory);
+      const relative = path.relative(temporaryParent, canonicalDirectory);
+      assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative) && path.basename(canonicalDirectory).startsWith('javascript-edu-node-'));
+      await nativeRemove(canonicalDirectory, { recursive: true, force: true });
     }
   }
 });

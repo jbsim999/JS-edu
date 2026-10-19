@@ -20,4 +20,8 @@ initialize부터 interval을 유지했던 중간안은 N06 오답의 자연 종�
 
 ## 범위
 
+후속 제품 커밋 `16b4a45aaa312c16d746395b3653cd34827625d0`의 [고정 Node CI](https://github.com/jbsim999/JS-edu/actions/runs/39191401477)는 Windows/Ubuntu 모두 success다. [일반 CI](https://github.com/jbsim999/JS-edu/actions/runs/39191401370)는 Ubuntu22/24가 success이며 Windows22/24는 오류 주입 테스트의 후처리 경계 비교에서 실패했다. 제품의 canonical target과 테스트의 원래 tmpdir 별칭이 달랐기 때문이다.
+
+테스트 후처리에서 parent와 target을 모두 realpath로 확인하고 기존 descendant·absolute·폴더 prefix 검사를 유지한 뒤 canonical target만 삭제하도록 수정했다. 소유한 별칭 TEMP/TMP의 동일 assertion FAIL을 로컬에서 재현했고, 수정 후 같은 환경과 고정24.22.0으로 학습 서버5회귀·skip0 PASS를 확인했다. 별도 코드 리뷰어가 diff와 전후 로그를 읽기 전용으로 대조해 삭제 범위 완화·외부 경로 우회 없음, PASS로 판정했다. 제품 실행 소스는 이 후처리 수정에서 바뀌지 않았다. 최종 일반 CI는 이 테스트 보완을 포함한 후속 커밋의 결과를 따른다.
+
 후속 커밋의 원격 Windows/Ubuntu 결과는 해당 SHA의 GitHub Actions에서 확인한다. 설치 패키징·main 병합·외부 배포는 수행하지 않았다. 실제 기기·실제200% 확대·OS IME·스크린리더는 미검증이다. Node Permission Model·네트워크 허용·Worker opt-in·힙과 RAM 및 DOM 강제 종료의 기존 한계 고지를 유지한다.
