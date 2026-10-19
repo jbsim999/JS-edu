@@ -1,0 +1,70 @@
+{
+  "id": "node-events-and-lifecycle-exercise",
+  "lessonId": "node-events-and-lifecycle",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-events-and-lifecycle-checks-v2",
+  "mode": "files",
+  "instructions": [
+    "createTaskService(handler,{maxQueued=2,onError=()=>{}}={})를 export한다. handler/onError는 함수, maxQueued는 0..32 정수다. 실제 EventEmitter인 events, submit(value), watch(), close(), stats()를 반환한다. 동시 handler는 1개, 대기열은 maxQueued개 FIFO다. 가득 차면 submit은 code=QUEUE_FULL로 reject하며 submitted를 늘리지 않는다.\n\n승인한 작업에는 1부터 id를 붙인다. 성공은 handler 결과를 그대로 resolve하고 settled 이벤트 {id,status:'fulfilled',value}를 발생시킨다. 실패는 원래 reason으로 reject하고 error 이벤트 및 {id,status:'rejected',reason}의 settled 이벤트를 발생시킨다. 소유한 error 리스너가 onError를 호출하므로 오류 후 다음 작업도 처리한다. 이 과제의 관찰 콜백/외부 이벤트 리스너는 예외 없이 반환한다.\n\nwatch는 events.on 기반의 취소 가능한 async iterator다. settled 객체를 순서대로 yield하고 handler error는 원래 오류로 reject한다. 정상 close는 대기 중 watch를 끝낸다. 이벤트를 기다리는 pending next가 있어도 watch.return()이 해당 next와 return을 done:true로 정착시켜야 한다. 각 구독의 AbortController를 사용해 서비스 전체를 닫지 않고 구독을 정리한다. watch return과 close가 소유 리스너를 해제하되 외부 리스너를 삭제하지 않는다. close는 항상 같은 Promise이며 open→closing 전환 직후 신규 submit을 code=CLOSED로 거부하고, 모든 승인 작업이 정착하면 closed가 된다. stats는 {state,active,queued,submitted,settled}다. 영구 pending handler의 강제 종료는 이 drain 계약에 포함하지 않으므로 실습 handler는 유한 시간에 끝난다."
+  ],
+  "template": "export function createTaskService(handler, options = {}) {\n  // TODO: EventEmitter, bounded queue, async event stream, drain shutdown.\n}\n",
+  "profileId": "node-native",
+  "profileByVersion": {
+    "ES2026": "node-native"
+  },
+  "hostRequirements": [
+    "node-native"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/node-events-and-lifecycle.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "한 개의 active 작업과 제한된 FIFO 대기열을 유지한다",
+    "handler 오류의 동일성을 보존하고 다음 작업은 계속 처리한다",
+    "실제 EventEmitter에서 미리 등록한 once가 정착 이벤트를 받는다",
+    "async iterable의 return은 자신이 등록한 리스너를 해제한다",
+    "error 이벤트는 관찰 스트림도 reject하고 리스너를 정리한다",
+    "처리 중 close는 신규 요청을 거부하고 승인한 작업을 모두 마친다",
+    "빈 서비스 종료는 대기 중 iterable을 끝내고 반복 호출에 같은 Promise를 반환한다",
+    "종료 시 호출자가 소유한 이벤트 리스너를 임의로 삭제하지 않는다",
+    "함수 및 큐 상한 계약 위반을 시작 전에 거부한다",
+    "다음 이벤트가 없어도 pending next와 구독 return이 종료되고 리스너를 해제한다"
+  ],
+  "rubric": [
+    "EventEmitter의 동기 호출·once 등록 시점·error 전파를 설명하고 관찰한다.",
+    "처리량과 대기열을 제한하고 종료 중 새 작업을 거부하면서 승인한 작업을 정리한다.",
+    "async iterable·timer·리스너의 소유권을 관리하고 프로세스 종료와 구분한다."
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const { setTimeout: delay } = await import('node:timers/promises');\nconst seen = [];\nconst service = submission.createTaskService(async value => { seen.push(value); await delay(15); return value * 2; }, { maxQueued: 1 });\ntry {\n  const first = service.submit(3);\n  const second = service.submit(4);\n  const third = service.submit(5).catch(error => error.code);\n  const during = service.stats();\n  const results = await Promise.all([first, second, third]);\n  await service.close();\n  observe({ during, results, seen, final: service.stats() });\n} finally { await service.close(); }"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "export function createTaskService(handler, options = {}) {\n  // TODO: EventEmitter, bounded queue, async event stream, drain shutdown.\n}\n",
+        "editable": true
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/node-events-and-lifecycle.json",
+  "referenceFile": "reference/node-events-and-lifecycle.mjs",
+  "incorrectFile": "reference/incorrect/node-events-and-lifecycle.mjs",
+  "exampleFile": "curriculum/examples/node-events-and-lifecycle.mjs",
+  "exampleExpectedLogs": [
+    "[[\"A\"],[\"B\"]]",
+    "{\"value\":12,\"valueListeners\":0,\"errorListeners\":0}",
+    "{\"timer\":\"AbortError\",\"listeners\":0}"
+  ],
+  "available": true,
+  "verificationRecord": "docs/execution/node-events-and-lifecycle-exercise.json"
+}

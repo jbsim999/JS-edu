@@ -1,0 +1,12 @@
+{
+  "vendor": "Node.js",
+  "version": "24.22.0",
+  "distribution": "Official complete Windows x64 ZIP",
+  "archive": "node-v24.22.0-win-x64.zip",
+  "downloadUrl": "https://nodejs.org/dist/v24.22.0/node-v24.22.0-win-x64.zip",
+  "checksumUrl": "https://nodejs.org/dist/v24.22.0/SHASUMS256.txt",
+  "sha256": "f9683a19877e12a9b167305c8db71040d812876359de21f0d2e97c3f321f80c3",
+  "licenseUrl": "https://github.com/nodejs/node/blob/v24.22.0/LICENSE",
+  "packagingState": "deferred",
+  "notes": "개발 검증에 공식 전체 배포본을 사용한다. 저장소는 바이너리를 포함하지 않으며 설치/압축 패키징은 최종 단계로 보류한다."
+}

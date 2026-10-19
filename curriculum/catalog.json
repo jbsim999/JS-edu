@@ -580,6 +580,121 @@
       "exerciseId": "browser-behavior-and-accessibility-exercise"
     },
     {
+      "id": "node-esm-packages-and-cli",
+      "order": 41,
+      "displayNumber": "N01",
+      "title": "Node resolve·Packages·CJS 경계·argv/env/cwd",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Node 패키지와 CLI",
+      "file": "curriculum/lessons/node-esm-packages-and-cli.json",
+      "prerequisites": [
+        "bounded-concurrency-and-retries"
+      ],
+      "exerciseId": "node-esm-packages-and-cli-exercise"
+    },
+    {
+      "id": "node-files-and-paths",
+      "order": 42,
+      "displayNumber": "N02",
+      "title": "fs/promises·URL/path·핸들·쓰기 순서",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "파일과 경로",
+      "file": "curriculum/lessons/node-files-and-paths.json",
+      "prerequisites": [
+        "node-esm-packages-and-cli"
+      ],
+      "exerciseId": "node-files-and-paths-exercise"
+    },
+    {
+      "id": "node-buffers-and-streams",
+      "order": 43,
+      "displayNumber": "N03",
+      "title": "Buffer·encoding·pipeline·backpressure",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Buffer와 스트림",
+      "file": "curriculum/lessons/node-buffers-and-streams.json",
+      "prerequisites": [
+        "node-files-and-paths"
+      ],
+      "exerciseId": "node-buffers-and-streams-exercise"
+    },
+    {
+      "id": "node-http-and-validation",
+      "order": 44,
+      "displayNumber": "N04",
+      "title": "method/status·URL/본문·byte 상한",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "HTTP 서버와 검증",
+      "file": "curriculum/lessons/node-http-and-validation.json",
+      "prerequisites": [
+        "node-buffers-and-streams"
+      ],
+      "exerciseId": "node-http-and-validation-exercise"
+    },
+    {
+      "id": "node-outbound-requests-and-cancellation",
+      "order": 45,
+      "displayNumber": "N05",
+      "title": "Fetch·deadline·AbortSignal·재시도",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "외부 요청과 취소",
+      "file": "curriculum/lessons/node-outbound-requests-and-cancellation.json",
+      "prerequisites": [
+        "node-http-and-validation"
+      ],
+      "exerciseId": "node-outbound-requests-and-cancellation-exercise"
+    },
+    {
+      "id": "node-events-and-lifecycle",
+      "order": 46,
+      "displayNumber": "N06",
+      "title": "phases·EventEmitter·timer·signal·shutdown",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "이벤트와 종료",
+      "file": "curriculum/lessons/node-events-and-lifecycle.json",
+      "prerequisites": [
+        "node-outbound-requests-and-cancellation"
+      ],
+      "exerciseId": "node-events-and-lifecycle-exercise"
+    },
+    {
+      "id": "node-workers-and-resource-limits",
+      "order": 47,
+      "displayNumber": "N07",
+      "title": "CPU Worker·pool·대기열·프로세스 경계",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Worker와 자원 제한",
+      "file": "curriculum/lessons/node-workers-and-resource-limits.json",
+      "prerequisites": [
+        "node-events-and-lifecycle",
+        "iterators-and-generators",
+        "cancellation-and-stale-results",
+        "bounded-concurrency-and-retries"
+      ],
+      "exerciseId": "node-workers-and-resource-limits-exercise"
+    },
+    {
+      "id": "node-testing-and-delivery",
+      "order": 48,
+      "displayNumber": "N08",
+      "title": "node:test·대역·실제 임시 파일/loopback·환경·의존성",
+      "track": "node",
+      "unit": "Node.js 트랙",
+      "shortTitle": "Node 검사와 전달",
+      "file": "curriculum/lessons/node-testing-and-delivery.json",
+      "prerequisites": [
+        "node-workers-and-resource-limits"
+      ],
+      "exerciseId": "node-testing-and-delivery-exercise"
+    },
+    {
       "id": "capstone-domain-core",
       "order": 49,
       "displayNumber": "C01",
@@ -606,7 +721,11 @@
         "capstone-domain-core",
         "browser-behavior-and-accessibility"
       ],
-      "exerciseId": "capstone-host-product-exercise"
+      "exerciseId": "capstone-host-product-exercise",
+      "exerciseByHost": {
+        "browser": "capstone-host-product-exercise",
+        "node": "capstone-host-product-node-exercise"
+      }
     },
     {
       "id": "capstone-failure-and-scale",
@@ -621,7 +740,11 @@
         "capstone-host-product",
         "bounded-concurrency-and-retries"
       ],
-      "exerciseId": "capstone-failure-and-scale-exercise"
+      "exerciseId": "capstone-failure-and-scale-exercise",
+      "exerciseByHost": {
+        "browser": "capstone-failure-and-scale-exercise",
+        "node": "capstone-failure-and-scale-node-exercise"
+      }
     },
     {
       "id": "capstone-acceptance-review",
@@ -637,7 +760,11 @@
         "capstone-host-product",
         "capstone-failure-and-scale"
       ],
-      "exerciseId": "capstone-acceptance-review-exercise"
+      "exerciseId": "capstone-acceptance-review-exercise",
+      "exerciseByHost": {
+        "browser": "capstone-acceptance-review-exercise",
+        "node": "capstone-acceptance-review-node-exercise"
+      }
     }
   ],
   "roadmap": [

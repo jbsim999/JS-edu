@@ -1,0 +1,921 @@
+{
+  "snapshot": "M5 Git index source; reports excluded; matches work/m5-review-final",
+  "baseCommit": "10fa0d7a6dae4535a2265714a7b688e5f4a43743",
+  "algorithm": "SHA256 of file + NUL + sha256 + LF in sorted path order",
+  "aggregateSha256": "804db39718e1e0f0abf0699512b4781154b076520f4444dcaec925873cdcbb89",
+  "sourceCount": 119,
+  "files": [
+    {
+      "file": ".github/workflows/node-native-check.yml",
+      "sha256": "d755e82f2f3581622f02683d6ec481f868569a3047aac759b45baa66f2820385"
+    },
+    {
+      "file": "curriculum/catalog.json",
+      "sha256": "e2da5ad20160bff3fd9c38987f31a58e5e7983e57097efc259db767b0ab49489"
+    },
+    {
+      "file": "curriculum/checks/capstone-acceptance-review-node.json",
+      "sha256": "7a5a210917b6ed7def708444a627f90b58eb04ab17747b9c9f7b62f4d0873454"
+    },
+    {
+      "file": "curriculum/checks/capstone-failure-and-scale-node.json",
+      "sha256": "5d1600afd79d89d799b2186e1dc2dd78f6f004fc322a58e149ad9db9184c11e7"
+    },
+    {
+      "file": "curriculum/checks/capstone-host-product-node.json",
+      "sha256": "c392d492ba8b716c4f8242b717fdcd7d65155eb318440bb520d5076921e65892"
+    },
+    {
+      "file": "curriculum/checks/node-buffers-and-streams.json",
+      "sha256": "9e4a309d3b54755e2ce46805a58b5e5577ba1947d2b6d4f62062ccd13687df38"
+    },
+    {
+      "file": "curriculum/checks/node-esm-packages-and-cli.json",
+      "sha256": "fdb67680d24af823754b11aebf5791f9cc0f6ed11a2e23e287a258b93077489a"
+    },
+    {
+      "file": "curriculum/checks/node-events-and-lifecycle.json",
+      "sha256": "37d5eb5b50b6207d11651f1915e0f606554060f2ad46ae17b32035795b031ce5"
+    },
+    {
+      "file": "curriculum/checks/node-files-and-paths.json",
+      "sha256": "402264e8aa519db535a6787f5a2d47b985b2dc6cbc59fedfd1e2dcf2b05162fe"
+    },
+    {
+      "file": "curriculum/checks/node-http-and-validation.json",
+      "sha256": "5197eb32dd089e2429706271480f5bc71bf39e290cb59f9af170c4e9f0df7be3"
+    },
+    {
+      "file": "curriculum/checks/node-outbound-requests-and-cancellation.json",
+      "sha256": "7d2ff88e9659c6ea062c9a12ac19f8ad6cbfa5189fbc95f97e30af448f941be5"
+    },
+    {
+      "file": "curriculum/checks/node-testing-and-delivery.json",
+      "sha256": "986b0c59e8e77f954541508e384398cfb9b4690ee8474f9b4174a4bee8da6316"
+    },
+    {
+      "file": "curriculum/checks/node-workers-and-resource-limits.json",
+      "sha256": "2511fbdfde875874ef61c48eba9d81306bb0bce6e8c68c8fb136c9a4832a9eff"
+    },
+    {
+      "file": "curriculum/examples/capstone-acceptance-review-node.mjs",
+      "sha256": "b54518a54c7c1e211e9f3e43ee4998b6dfbfd68c134783029eea1ad56015d733"
+    },
+    {
+      "file": "curriculum/examples/capstone-acceptance-review-node/reader/core.mjs",
+      "sha256": "32a85190dc1dc881dd6dea970efe9b5a65b0f362a5eb4f9bd4b120fbb5a0599e"
+    },
+    {
+      "file": "curriculum/examples/capstone-acceptance-review-node/reader/normalize.mjs",
+      "sha256": "e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+    },
+    {
+      "file": "curriculum/examples/capstone-failure-and-scale-node.mjs",
+      "sha256": "577c992f8e2e9c6a4748465289ba4796ffc72ac21887152025338efbc078ebda"
+    },
+    {
+      "file": "curriculum/examples/capstone-failure-and-scale-node/reader/core.mjs",
+      "sha256": "32a85190dc1dc881dd6dea970efe9b5a65b0f362a5eb4f9bd4b120fbb5a0599e"
+    },
+    {
+      "file": "curriculum/examples/capstone-failure-and-scale-node/reader/normalize.mjs",
+      "sha256": "e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+    },
+    {
+      "file": "curriculum/examples/capstone-host-product-node.mjs",
+      "sha256": "43796b6bda6ca9306330fd2622f0b7ab8dc145bd8ec5e1df898f2270335e96be"
+    },
+    {
+      "file": "curriculum/examples/capstone-host-product-node/reader/core.mjs",
+      "sha256": "32a85190dc1dc881dd6dea970efe9b5a65b0f362a5eb4f9bd4b120fbb5a0599e"
+    },
+    {
+      "file": "curriculum/examples/capstone-host-product-node/reader/normalize.mjs",
+      "sha256": "e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+    },
+    {
+      "file": "curriculum/examples/node-buffers-and-streams.mjs",
+      "sha256": "0295f09afbd9a6d3ce64a40c245160bbfa824ed56444e3dacbbb7dbb7a3f26b9"
+    },
+    {
+      "file": "curriculum/examples/node-esm-packages-and-cli.mjs",
+      "sha256": "02b1e9964a5081457299e33f5c8994d7c814c7f9c3a255191df0f75b726ef5db"
+    },
+    {
+      "file": "curriculum/examples/node-esm-packages-and-cli/format.cjs",
+      "sha256": "6c67bd5c62ac0ff843feb178295a34a30091755cfa98c5044b7b6938c976dce2"
+    },
+    {
+      "file": "curriculum/examples/node-events-and-lifecycle.mjs",
+      "sha256": "d69feb9ad28a8812e2ee019a04036658f849a58a80cb331905e396044e0ccb55"
+    },
+    {
+      "file": "curriculum/examples/node-files-and-paths.mjs",
+      "sha256": "bb21e382dd0b4d2383e7448f9e37f8bde2a6ec4654ffb52ee1d8c5e9ec043c57"
+    },
+    {
+      "file": "curriculum/examples/node-http-and-validation.mjs",
+      "sha256": "bffc7393b5766e12a576ce040583546acc699c10ea4c2543edbff3804360ca1e"
+    },
+    {
+      "file": "curriculum/examples/node-outbound-requests-and-cancellation.mjs",
+      "sha256": "714d6db6a57fe825ad0f5420b10aae0c503a855c60562153f16f1d355157dd26"
+    },
+    {
+      "file": "curriculum/examples/node-testing-and-delivery-acceptance.test.mjs",
+      "sha256": "f04481664b338b9c6201435f1c7788a9ef53c8f6c1b684ce9eba254a692f0f03"
+    },
+    {
+      "file": "curriculum/examples/node-testing-and-delivery-example-app.mjs",
+      "sha256": "7ea9a3553bac28aebafc9960606b147c00f439bb09362eecc0d5093c1367f1b6"
+    },
+    {
+      "file": "curriculum/examples/node-testing-and-delivery.mjs",
+      "sha256": "9e01b0102d1cbcac71b2a58b62688275a9595f570cf8bd47a53b486a21c6df73"
+    },
+    {
+      "file": "curriculum/examples/node-workers-and-resource-limits-worker.mjs",
+      "sha256": "f75d9bfd8f4c9a352410eaf25bc5670dbb472b9b59fa149642fff3e37c08e132"
+    },
+    {
+      "file": "curriculum/examples/node-workers-and-resource-limits.mjs",
+      "sha256": "6bd5c29d3fbd58ebbdad64665dac881e8c36ccd70e8f57b750ab21390121510f"
+    },
+    {
+      "file": "curriculum/exercises.json",
+      "sha256": "6ec7792298f9cf717c460290b21c1a6113c73122090824bf7953e764825390f5"
+    },
+    {
+      "file": "curriculum/exercises/capstone-acceptance-review-node.json",
+      "sha256": "a8cb0a03177806c3870297afe74cd1809e64146d820bfe553b4b57851e6a516f"
+    },
+    {
+      "file": "curriculum/exercises/capstone-failure-and-scale-node.json",
+      "sha256": "d530d21ea676cbd3317dda1299143354346b4489fa30e48578cc2009e91de1bb"
+    },
+    {
+      "file": "curriculum/exercises/capstone-host-product-node.json",
+      "sha256": "7823ca5d503107629832fe0aa15202fa35427b0daa338b33a4b65c07841ceb62"
+    },
+    {
+      "file": "curriculum/exercises/node-buffers-and-streams.json",
+      "sha256": "dda928d366f41a4194c318aab37398af78812b3ffb89b09c88177044120517a8"
+    },
+    {
+      "file": "curriculum/exercises/node-esm-packages-and-cli.json",
+      "sha256": "55026b77cb3f2aa18646d3bb33f04fe5ee3a17470c15ff14f48abcb7c4a4a8bf"
+    },
+    {
+      "file": "curriculum/exercises/node-events-and-lifecycle.json",
+      "sha256": "3e0039b151e7c91fcc27d2a9fd72e8a524c8f77d77597b13e843cb29c096dfba"
+    },
+    {
+      "file": "curriculum/exercises/node-files-and-paths.json",
+      "sha256": "8b99f2c9ff3bfc2de21f878ea7b889b60a2ad42f3702f1bdef7356b60fedeb41"
+    },
+    {
+      "file": "curriculum/exercises/node-http-and-validation.json",
+      "sha256": "f7868dc4fb9d63c9b1b4224151bbbe94f601fb24b16856725a304886a837da68"
+    },
+    {
+      "file": "curriculum/exercises/node-outbound-requests-and-cancellation.json",
+      "sha256": "f502fff80a8480e3c0370fea2ffa1f686e2cd65d3493b9fe178fb1727a0ba76d"
+    },
+    {
+      "file": "curriculum/exercises/node-testing-and-delivery.json",
+      "sha256": "5bbcfb350d93b1928f72cfb61daaeb6ce47a84469f7c69f2d71bea0036fe621a"
+    },
+    {
+      "file": "curriculum/exercises/node-workers-and-resource-limits.json",
+      "sha256": "2bca1d538d94273437d28b1be6f28f7ad7bb9981141554ea238678c893e9e9f4"
+    },
+    {
+      "file": "curriculum/lessons/capstone-acceptance-review.json",
+      "sha256": "a59099a545b3327b3cc3b1f4643b9db761c3b6128720e1a2a41bd82f0e135b25"
+    },
+    {
+      "file": "curriculum/lessons/capstone-failure-and-scale.json",
+      "sha256": "879a093b6994acb51996b346352043a8611e8539ed7f3935f2ccf6b721d53bfb"
+    },
+    {
+      "file": "curriculum/lessons/capstone-host-product.json",
+      "sha256": "f6c34a0cf0903079b3eb52be448a4662498f9f716b6cf4267600b827522ff78d"
+    },
+    {
+      "file": "curriculum/lessons/node-buffers-and-streams.json",
+      "sha256": "aadd5e550029fe74bbd2d6d06aed84cf1e38d8c5d584c1e86abe2bc14353def4"
+    },
+    {
+      "file": "curriculum/lessons/node-esm-packages-and-cli.json",
+      "sha256": "345516f6caa6ee5cb764f50cf7a6b39dd9a8de1bf3785aa3810874ed0b7acc19"
+    },
+    {
+      "file": "curriculum/lessons/node-events-and-lifecycle.json",
+      "sha256": "794b491a72581f7dc4d65de0e556f270be2e3a31e4c48e69fcd78e38cf662849"
+    },
+    {
+      "file": "curriculum/lessons/node-files-and-paths.json",
+      "sha256": "3a524ec786d6a8159c13dc3a0e9a6a444c0c3dae102a940e28c85c197aeff4f0"
+    },
+    {
+      "file": "curriculum/lessons/node-http-and-validation.json",
+      "sha256": "f70e67d89b59107780dd264e2842c38197a72b7ef452632326e1fa8ae73b88e4"
+    },
+    {
+      "file": "curriculum/lessons/node-outbound-requests-and-cancellation.json",
+      "sha256": "088196448a527901a4a1b4b379a3fcd314ec0845e3783eb43bbf2edf6387bfba"
+    },
+    {
+      "file": "curriculum/lessons/node-testing-and-delivery.json",
+      "sha256": "1c5d5e0844b0b55407972cd5c87a428784e4cceeea367bd5a192ef1c7595678c"
+    },
+    {
+      "file": "curriculum/lessons/node-workers-and-resource-limits.json",
+      "sha256": "dcc375b28bb7763b11b1f1cd04f0cd7f6485130ecec5dac1bf1780dcffbf72df"
+    },
+    {
+      "file": "education.config.json",
+      "sha256": "63cbf6a208507cd43de825a58b3a090318cfc589f71a08886051b3834826f158"
+    },
+    {
+      "file": "package.json",
+      "sha256": "5c6b8a32a9b6fa60a65c2afe774b325ae8a3ca770f36325dd7c9a96ae5e2b0ca"
+    },
+    {
+      "file": "reference/capstone-acceptance-review-node.mjs",
+      "sha256": "deada0b565b697511523fe2fd2caa1ddeefff28bdfc3ed62ead1164dfc814224"
+    },
+    {
+      "file": "reference/capstone-failure-and-scale-node.mjs",
+      "sha256": "aeab9c304f41f13bbabbc72b9072e3b99a9fb53b86c281ba45b81de2f643dbe4"
+    },
+    {
+      "file": "reference/capstone-host-product-node.mjs",
+      "sha256": "a419511f9a6c6c35ce3036650dadaa756fc054548b512077ada8a46a71969538"
+    },
+    {
+      "file": "reference/incorrect/capstone-acceptance-review-node.mjs",
+      "sha256": "169b22a30f21012827eca9ab7ca7b1079b0380b38d37d1d2f49cd359791026ec"
+    },
+    {
+      "file": "reference/incorrect/capstone-failure-and-scale-node.mjs",
+      "sha256": "fbd0b8c88fc83286248babd927726e57b707f00ebad2da14ce36b499b3199081"
+    },
+    {
+      "file": "reference/incorrect/capstone-host-product-node.mjs",
+      "sha256": "547da5adff6ba9cd10c77441ec5a1d5fb1d1506773f44da54ce7fa2bdb8d7762"
+    },
+    {
+      "file": "reference/incorrect/node-buffers-and-streams.mjs",
+      "sha256": "93b023e26de241034bbf893ceca6ea47fa1a5e3202bef7411975b4cf66a0d0ef"
+    },
+    {
+      "file": "reference/incorrect/node-esm-packages-and-cli.mjs",
+      "sha256": "2a6baf2baad80ecdbca59c2c474a8e897722a344d98c73a40a8982743127eb92"
+    },
+    {
+      "file": "reference/incorrect/node-events-and-lifecycle.mjs",
+      "sha256": "dd39ef9a6408e22e33531d57232ee521468d590772718528bdf26b6893f9034c"
+    },
+    {
+      "file": "reference/incorrect/node-files-and-paths.mjs",
+      "sha256": "a65a9edf7aa0d11d57ea6f41d76f9afc1e790c3d7bc4d339f83de931bbcc7c6f"
+    },
+    {
+      "file": "reference/incorrect/node-http-and-validation.mjs",
+      "sha256": "fba34b707e9e6a3d75d1bf6490f6655b1bdb8c7126ff1394815618829044d709"
+    },
+    {
+      "file": "reference/incorrect/node-outbound-requests-and-cancellation.mjs",
+      "sha256": "48dd5a63bb5bad0449c0dccfda5e89cb16dcb29bde4b80ca890017b22cf18da2"
+    },
+    {
+      "file": "reference/incorrect/node-testing-and-delivery.mjs",
+      "sha256": "8e046af80426c0b3a79282ae67e34e3e4ef064c50f14a535961e1f0843ca079e"
+    },
+    {
+      "file": "reference/incorrect/node-workers-and-resource-limits.mjs",
+      "sha256": "72f00ae66cc83675c1ce8152a9762b8da39e10e9398cf17dbed73ede6b835d92"
+    },
+    {
+      "file": "reference/node-buffers-and-streams.mjs",
+      "sha256": "14b4d14575693c7311aad8f616e7f5440d0f92fc1746a93b87201092d9b46c87"
+    },
+    {
+      "file": "reference/node-esm-packages-and-cli.mjs",
+      "sha256": "35892691647e3fb33cede6725406fe52bc0ba44de27b92e75640b61999967ab8"
+    },
+    {
+      "file": "reference/node-events-and-lifecycle.mjs",
+      "sha256": "520c201bdf097b416c276719e6a6a957fdfa30386aaa2e7f2d5d9b268046e3a9"
+    },
+    {
+      "file": "reference/node-files-and-paths.mjs",
+      "sha256": "8b8146b4dd015ed5560c75287a228006c901f7ddd3bccbb5ed1637a9001d5daf"
+    },
+    {
+      "file": "reference/node-http-and-validation.mjs",
+      "sha256": "59d8530d90173283ce186b4301132c4f5a4191753103daab795983fe9a108e13"
+    },
+    {
+      "file": "reference/node-outbound-requests-and-cancellation.mjs",
+      "sha256": "634247460fe37684296415d14248bff36e2b012e113231342c8647d95b43dd24"
+    },
+    {
+      "file": "reference/node-testing-and-delivery.mjs",
+      "sha256": "7e5481f57394a7ea414e195e62c4d8c24598d7aee4de3302016a37758114a51e"
+    },
+    {
+      "file": "reference/node-workers-and-resource-limits.mjs",
+      "sha256": "ee47af06a67dab7e377725171ed3ef4fd89163108fc62a422fba544214e178c3"
+    },
+    {
+      "file": "runtime/node-contract.mjs",
+      "sha256": "51c362834bff8589d247931c8b176d02dd675c56cde96c3e62b6704455d02896"
+    },
+    {
+      "file": "runtime/node-supervisor.mjs",
+      "sha256": "f884e39c24b3042991d827644f4d0352a1f3269ad76664e2eb9a7bc45d4f8038"
+    },
+    {
+      "file": "runtime/node-vendor.json",
+      "sha256": "2f1cd78752f2813cd4b7794c56a7fc0b3b9296d2390e2b88f784fa5682b20caf"
+    },
+    {
+      "file": "runtime/node-worker.mjs",
+      "sha256": "ac9f4c27efa9db9e5044a3067e67b3102102e93244f726dcdcb70560d426e92c"
+    },
+    {
+      "file": "runtime/profiles.json",
+      "sha256": "5c16d0b4b5c9a37b5fc9ecf65bb6f27cf8642c403031f4dd07398e267b033ece"
+    },
+    {
+      "file": "scripts/check-syntax.mjs",
+      "sha256": "e299ddfd081dbeb813d888518784142a789a0027514f27f68a8a8d18e1dba890"
+    },
+    {
+      "file": "scripts/validate-lesson-hosts.mjs",
+      "sha256": "199d38bb51b4650bb8d341c51b5b544906c9a5154c9c143f33269e505c6d31b5"
+    },
+    {
+      "file": "scripts/validate-node-exercise.mjs",
+      "sha256": "6da5c15721640a308e2df32f6b0443dc2be6c478e8bb1959f0fdb90f6699bbcd"
+    },
+    {
+      "file": "scripts/validate-project.mjs",
+      "sha256": "3194476bbf1b533e3d626d217ad8435ec93378b456db20297f679ef40ee679a7"
+    },
+    {
+      "file": "scripts/verify-node-curriculum.mjs",
+      "sha256": "319ce39cb389c36d5493d0c8e857ec75084aa003c8489dc57cd2594a86a38386"
+    },
+    {
+      "file": "starter/capstone-acceptance-review-node.mjs",
+      "sha256": "dfd32bc9dd6695078dc523105fd8eb09e47b3215756eace45c60638c9c0b5f70"
+    },
+    {
+      "file": "starter/capstone-failure-and-scale-node.mjs",
+      "sha256": "f7b009532ed2da94269b317984251fed01cd97e571427893530f925f56800c39"
+    },
+    {
+      "file": "starter/capstone-host-product-node.mjs",
+      "sha256": "4475064c624694e493cdbf222f06b962502c9c0e97d543711ac0933ca592d9e9"
+    },
+    {
+      "file": "starter/node-buffers-and-streams.mjs",
+      "sha256": "97e8194f2912bdd2b93190a021590708ad71bbd74aa47733b4e440c799495cea"
+    },
+    {
+      "file": "starter/node-esm-packages-and-cli.mjs",
+      "sha256": "27937cab0dd20567943d4929d56eb96b424772c98c892d6a643e356b8126188d"
+    },
+    {
+      "file": "starter/node-events-and-lifecycle.mjs",
+      "sha256": "ed30e0709c8ce936fb7f5a6cfb90a6316e6de6c67c0360840b5b1b44d031ff4a"
+    },
+    {
+      "file": "starter/node-files-and-paths.mjs",
+      "sha256": "bee94294f07d0be5324f6c78f4dc56f4fb8291caf78a4ed486d7b4e3b8b97e85"
+    },
+    {
+      "file": "starter/node-http-and-validation.mjs",
+      "sha256": "69f73ee76394cfd0858fe4e7fa5304be5ad83f115dfbcf62bbde87d7bc80a07a"
+    },
+    {
+      "file": "starter/node-outbound-requests-and-cancellation.mjs",
+      "sha256": "b3fddb0eae10da9fc4e68c13ff4cbba47a8fe96977ee50a9077d21fa55ac314b"
+    },
+    {
+      "file": "starter/node-testing-and-delivery.mjs",
+      "sha256": "f0397e90069b84d200ca9015cb0a8d6bfda026cfd2fe47354bde912261fa7324"
+    },
+    {
+      "file": "starter/node-workers-and-resource-limits.mjs",
+      "sha256": "7a9ad3360ff1854d726ca13b404132badda7299d17114c0c2bd461b8715882a4"
+    },
+    {
+      "file": "tests/learning-server.test.mjs",
+      "sha256": "45e6a3e72c5a7c79c3b81e0c6b7cffd28ec842cfda6d86774033b71793bb7c97"
+    },
+    {
+      "file": "tests/learning-ui-state.test.mjs",
+      "sha256": "de8d4d9b54b5ba5afd454c36e407bbc96d2817ea258b56037cda4223ea756f2d"
+    },
+    {
+      "file": "tests/lesson-host-contract.test.mjs",
+      "sha256": "63bfe5359cdd95bd05cee3f3fb26d0fdd12fe6424731adbbc51e3591c50295f8"
+    },
+    {
+      "file": "tests/module-workspace-state.test.mjs",
+      "sha256": "518d180f60babffa17956eaae47760d6702d4d0950099962a6efd5763a0921c8"
+    },
+    {
+      "file": "tests/node-curriculum-verifier.test.mjs",
+      "sha256": "c7e0d546a69250bdd744ac0667f663e1cbef135b033e2e215b895ff7f2e7af85"
+    },
+    {
+      "file": "tests/node-exercise-contract.test.mjs",
+      "sha256": "72808dfc6f66db55486d1e807e3fedbf922b170aae34298587d2b7eb035ce48a"
+    },
+    {
+      "file": "tests/node-fixtures.test.mjs",
+      "sha256": "2bdfdfb11408accce55ed847339ff9e687f7a6536d770d92cc2167881a9cf169"
+    },
+    {
+      "file": "tests/node-runtime.test.mjs",
+      "sha256": "3614d38f9e063148d1a88f813cccd5f1a42e8161f1e7be797e082d15da654a68"
+    },
+    {
+      "file": "tests/validator.test.mjs",
+      "sha256": "1f707b43fd714a01994296e1afddecf0502135e486a868c51a2f6755bdfd4600"
+    },
+    {
+      "file": "web/app.mjs",
+      "sha256": "4b7ef0abc7c2e041a5cbbd084c0cb40a8f83cbc513159b6a7646fcf3054dd3f3"
+    },
+    {
+      "file": "web/execution/node-runner.mjs",
+      "sha256": "0891be8ddfb4659d77698ccbc3783e392809ed5864b7a34c1eb5f972fa68689c"
+    },
+    {
+      "file": "web/features/execution-state.mjs",
+      "sha256": "ffb083355b0b1fb303519a7bdcefaf641fc0793f855ffb1d4644e31eb0e3a484"
+    },
+    {
+      "file": "web/features/learning-data.mjs",
+      "sha256": "255cea529da39aa78b59bb881b8810579d01d4cd2e5fc8529ccfcb3ab4643ecc"
+    },
+    {
+      "file": "web/features/module-workspace-state.mjs",
+      "sha256": "78569a7ea9519cdedad709584735445c3099616f1dbca7bb22133cfe7c75876a"
+    },
+    {
+      "file": "web/serve.mjs",
+      "sha256": "039ba348196d9fc93f49beeb61d8f31bcaf5c35854bffce2e1759a0c6a65238e"
+    },
+    {
+      "file": "web/server/node-execution.mjs",
+      "sha256": "fbde89841c050ce4762ae3a12216fb57e32fc73466e986d89349beb9bcbfc41b"
+    },
+    {
+      "file": "web/styles.css",
+      "sha256": "99ae6b944b8d7b4ca2032aeed525758f3ded525e2e7b75194d957159f04a6f31"
+    }
+  ],
+  "actualChecks": {
+    "native": {
+      "runtime": "Windows Node22.17.0",
+      "command": "npm run check on staged copy",
+      "syntax": 296,
+      "regressionTests": 278,
+      "regressionSkips": 0,
+      "creatorStatus": "PARTIAL",
+      "creatorReferenceChecks": 271,
+      "creatorExamples": 33,
+      "hostSkips": 22
+    },
+    "browser": {
+      "runtime": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "startedAt": "2026-10-19T02:11:09.698Z",
+      "completedAt": "2026-10-19T02:12:07.256Z",
+      "exercises": 44,
+      "referenceChecks": 361,
+      "negativeSubmissions": 88,
+      "domExamples": 11,
+      "runtimeConditions": 16
+    },
+    "node": {
+      "environment": {
+        "available": true,
+        "actualRuntime": "Node.js 24.22.0 (win32/x64; native process + Worker)",
+        "runtimeVersion": "24.22.0",
+        "environmentFingerprint": "javascript-edu-node-v1:sha256:0873bf3c57638bb7dec01cc63374a5cc345a342a65d6b7f5392677fd73ee70e4",
+        "limits": {
+          "files": 16,
+          "fileBytes": 102400,
+          "totalBytes": 524288,
+          "bodyBytes": 800000,
+          "bodyTimeoutMs": 5000,
+          "active": 1,
+          "pending": 1,
+          "queue": 0,
+          "caseTimeoutMs": 2500,
+          "totalTimeoutMs": 15000,
+          "outputBytes": 65536,
+          "outputLines": 200,
+          "resultBytes": 262144,
+          "heapMb": 64,
+          "hardMemoryLimit": false,
+          "networkRestricted": false
+        },
+        "limitations": "자기 PC에서 Node.js 코드를 실행합니다. fs API의 허용 경로를 임시 실습 폴더로 설정하지만 Node Permission Model은 OS 보안 샌드박스가 아니며, 기존 파일 디스크립터·링크·네트워크 접근 전체를 격리하지 않습니다. 64MB는 JavaScript 힙 설정이며 전체 메모리의 강제 상한이 아닙니다. 하위 Worker를 허용한 과제에서는 Worker 실행 옵션으로 권한 제한을 벗어날 수 있습니다. 신뢰할 수 있는 학습 코드만 실행하세요.",
+        "reason": "고정 Node 실행 파일과 임시 실습 폴더를 사용합니다."
+      },
+      "startedAt": "2026-10-19T02:12:33.218Z",
+      "completedAt": "2026-10-19T02:13:47.014Z",
+      "summary": {
+        "exercises": 11,
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "referenceChecks": 110,
+        "examplesRun": 11,
+        "examplesCompared": 11,
+        "exampleFailures": 0
+      },
+      "cleanupConfirmed": true,
+      "sourceInputs": [
+        {
+          "file": "curriculum/exercises/node-esm-packages-and-cli.json",
+          "sourceFingerprint": "sha256:55026b77cb3f2aa18646d3bb33f04fe5ee3a17470c15ff14f48abcb7c4a4a8bf"
+        },
+        {
+          "file": "curriculum/lessons/node-esm-packages-and-cli.json",
+          "sourceFingerprint": "sha256:345516f6caa6ee5cb764f50cf7a6b39dd9a8de1bf3785aa3810874ed0b7acc19"
+        },
+        {
+          "file": "starter/node-esm-packages-and-cli.mjs",
+          "sourceFingerprint": "sha256:27937cab0dd20567943d4929d56eb96b424772c98c892d6a643e356b8126188d"
+        },
+        {
+          "file": "reference/node-esm-packages-and-cli.mjs",
+          "sourceFingerprint": "sha256:35892691647e3fb33cede6725406fe52bc0ba44de27b92e75640b61999967ab8"
+        },
+        {
+          "file": "reference/incorrect/node-esm-packages-and-cli.mjs",
+          "sourceFingerprint": "sha256:2a6baf2baad80ecdbca59c2c474a8e897722a344d98c73a40a8982743127eb92"
+        },
+        {
+          "file": "curriculum/checks/node-esm-packages-and-cli.json",
+          "sourceFingerprint": "sha256:fdb67680d24af823754b11aebf5791f9cc0f6ed11a2e23e287a258b93077489a"
+        },
+        {
+          "file": "curriculum/examples/node-esm-packages-and-cli.mjs",
+          "sourceFingerprint": "sha256:02b1e9964a5081457299e33f5c8994d7c814c7f9c3a255191df0f75b726ef5db"
+        },
+        {
+          "file": "curriculum/examples/node-esm-packages-and-cli/format.cjs",
+          "sourceFingerprint": "sha256:6c67bd5c62ac0ff843feb178295a34a30091755cfa98c5044b7b6938c976dce2"
+        },
+        {
+          "file": "curriculum/exercises/node-files-and-paths.json",
+          "sourceFingerprint": "sha256:8b99f2c9ff3bfc2de21f878ea7b889b60a2ad42f3702f1bdef7356b60fedeb41"
+        },
+        {
+          "file": "curriculum/lessons/node-files-and-paths.json",
+          "sourceFingerprint": "sha256:3a524ec786d6a8159c13dc3a0e9a6a444c0c3dae102a940e28c85c197aeff4f0"
+        },
+        {
+          "file": "starter/node-files-and-paths.mjs",
+          "sourceFingerprint": "sha256:bee94294f07d0be5324f6c78f4dc56f4fb8291caf78a4ed486d7b4e3b8b97e85"
+        },
+        {
+          "file": "reference/node-files-and-paths.mjs",
+          "sourceFingerprint": "sha256:8b8146b4dd015ed5560c75287a228006c901f7ddd3bccbb5ed1637a9001d5daf"
+        },
+        {
+          "file": "reference/incorrect/node-files-and-paths.mjs",
+          "sourceFingerprint": "sha256:a65a9edf7aa0d11d57ea6f41d76f9afc1e790c3d7bc4d339f83de931bbcc7c6f"
+        },
+        {
+          "file": "curriculum/checks/node-files-and-paths.json",
+          "sourceFingerprint": "sha256:402264e8aa519db535a6787f5a2d47b985b2dc6cbc59fedfd1e2dcf2b05162fe"
+        },
+        {
+          "file": "curriculum/examples/node-files-and-paths.mjs",
+          "sourceFingerprint": "sha256:bb21e382dd0b4d2383e7448f9e37f8bde2a6ec4654ffb52ee1d8c5e9ec043c57"
+        },
+        {
+          "file": "curriculum/exercises/node-buffers-and-streams.json",
+          "sourceFingerprint": "sha256:dda928d366f41a4194c318aab37398af78812b3ffb89b09c88177044120517a8"
+        },
+        {
+          "file": "curriculum/lessons/node-buffers-and-streams.json",
+          "sourceFingerprint": "sha256:aadd5e550029fe74bbd2d6d06aed84cf1e38d8c5d584c1e86abe2bc14353def4"
+        },
+        {
+          "file": "starter/node-buffers-and-streams.mjs",
+          "sourceFingerprint": "sha256:97e8194f2912bdd2b93190a021590708ad71bbd74aa47733b4e440c799495cea"
+        },
+        {
+          "file": "reference/node-buffers-and-streams.mjs",
+          "sourceFingerprint": "sha256:14b4d14575693c7311aad8f616e7f5440d0f92fc1746a93b87201092d9b46c87"
+        },
+        {
+          "file": "reference/incorrect/node-buffers-and-streams.mjs",
+          "sourceFingerprint": "sha256:93b023e26de241034bbf893ceca6ea47fa1a5e3202bef7411975b4cf66a0d0ef"
+        },
+        {
+          "file": "curriculum/checks/node-buffers-and-streams.json",
+          "sourceFingerprint": "sha256:9e4a309d3b54755e2ce46805a58b5e5577ba1947d2b6d4f62062ccd13687df38"
+        },
+        {
+          "file": "curriculum/examples/node-buffers-and-streams.mjs",
+          "sourceFingerprint": "sha256:0295f09afbd9a6d3ce64a40c245160bbfa824ed56444e3dacbbb7dbb7a3f26b9"
+        },
+        {
+          "file": "curriculum/exercises/node-http-and-validation.json",
+          "sourceFingerprint": "sha256:f7868dc4fb9d63c9b1b4224151bbbe94f601fb24b16856725a304886a837da68"
+        },
+        {
+          "file": "curriculum/lessons/node-http-and-validation.json",
+          "sourceFingerprint": "sha256:f70e67d89b59107780dd264e2842c38197a72b7ef452632326e1fa8ae73b88e4"
+        },
+        {
+          "file": "starter/node-http-and-validation.mjs",
+          "sourceFingerprint": "sha256:69f73ee76394cfd0858fe4e7fa5304be5ad83f115dfbcf62bbde87d7bc80a07a"
+        },
+        {
+          "file": "reference/node-http-and-validation.mjs",
+          "sourceFingerprint": "sha256:59d8530d90173283ce186b4301132c4f5a4191753103daab795983fe9a108e13"
+        },
+        {
+          "file": "reference/incorrect/node-http-and-validation.mjs",
+          "sourceFingerprint": "sha256:fba34b707e9e6a3d75d1bf6490f6655b1bdb8c7126ff1394815618829044d709"
+        },
+        {
+          "file": "curriculum/checks/node-http-and-validation.json",
+          "sourceFingerprint": "sha256:5197eb32dd089e2429706271480f5bc71bf39e290cb59f9af170c4e9f0df7be3"
+        },
+        {
+          "file": "curriculum/examples/node-http-and-validation.mjs",
+          "sourceFingerprint": "sha256:bffc7393b5766e12a576ce040583546acc699c10ea4c2543edbff3804360ca1e"
+        },
+        {
+          "file": "curriculum/exercises/node-outbound-requests-and-cancellation.json",
+          "sourceFingerprint": "sha256:f502fff80a8480e3c0370fea2ffa1f686e2cd65d3493b9fe178fb1727a0ba76d"
+        },
+        {
+          "file": "curriculum/lessons/node-outbound-requests-and-cancellation.json",
+          "sourceFingerprint": "sha256:088196448a527901a4a1b4b379a3fcd314ec0845e3783eb43bbf2edf6387bfba"
+        },
+        {
+          "file": "starter/node-outbound-requests-and-cancellation.mjs",
+          "sourceFingerprint": "sha256:b3fddb0eae10da9fc4e68c13ff4cbba47a8fe96977ee50a9077d21fa55ac314b"
+        },
+        {
+          "file": "reference/node-outbound-requests-and-cancellation.mjs",
+          "sourceFingerprint": "sha256:634247460fe37684296415d14248bff36e2b012e113231342c8647d95b43dd24"
+        },
+        {
+          "file": "reference/incorrect/node-outbound-requests-and-cancellation.mjs",
+          "sourceFingerprint": "sha256:48dd5a63bb5bad0449c0dccfda5e89cb16dcb29bde4b80ca890017b22cf18da2"
+        },
+        {
+          "file": "curriculum/checks/node-outbound-requests-and-cancellation.json",
+          "sourceFingerprint": "sha256:7d2ff88e9659c6ea062c9a12ac19f8ad6cbfa5189fbc95f97e30af448f941be5"
+        },
+        {
+          "file": "curriculum/examples/node-outbound-requests-and-cancellation.mjs",
+          "sourceFingerprint": "sha256:714d6db6a57fe825ad0f5420b10aae0c503a855c60562153f16f1d355157dd26"
+        },
+        {
+          "file": "curriculum/exercises/node-events-and-lifecycle.json",
+          "sourceFingerprint": "sha256:3e0039b151e7c91fcc27d2a9fd72e8a524c8f77d77597b13e843cb29c096dfba"
+        },
+        {
+          "file": "curriculum/lessons/node-events-and-lifecycle.json",
+          "sourceFingerprint": "sha256:794b491a72581f7dc4d65de0e556f270be2e3a31e4c48e69fcd78e38cf662849"
+        },
+        {
+          "file": "starter/node-events-and-lifecycle.mjs",
+          "sourceFingerprint": "sha256:ed30e0709c8ce936fb7f5a6cfb90a6316e6de6c67c0360840b5b1b44d031ff4a"
+        },
+        {
+          "file": "reference/node-events-and-lifecycle.mjs",
+          "sourceFingerprint": "sha256:520c201bdf097b416c276719e6a6a957fdfa30386aaa2e7f2d5d9b268046e3a9"
+        },
+        {
+          "file": "reference/incorrect/node-events-and-lifecycle.mjs",
+          "sourceFingerprint": "sha256:dd39ef9a6408e22e33531d57232ee521468d590772718528bdf26b6893f9034c"
+        },
+        {
+          "file": "curriculum/checks/node-events-and-lifecycle.json",
+          "sourceFingerprint": "sha256:37d5eb5b50b6207d11651f1915e0f606554060f2ad46ae17b32035795b031ce5"
+        },
+        {
+          "file": "curriculum/examples/node-events-and-lifecycle.mjs",
+          "sourceFingerprint": "sha256:d69feb9ad28a8812e2ee019a04036658f849a58a80cb331905e396044e0ccb55"
+        },
+        {
+          "file": "curriculum/exercises/node-workers-and-resource-limits.json",
+          "sourceFingerprint": "sha256:2bca1d538d94273437d28b1be6f28f7ad7bb9981141554ea238678c893e9e9f4"
+        },
+        {
+          "file": "curriculum/lessons/node-workers-and-resource-limits.json",
+          "sourceFingerprint": "sha256:dcc375b28bb7763b11b1f1cd04f0cd7f6485130ecec5dac1bf1780dcffbf72df"
+        },
+        {
+          "file": "starter/node-workers-and-resource-limits.mjs",
+          "sourceFingerprint": "sha256:7a9ad3360ff1854d726ca13b404132badda7299d17114c0c2bd461b8715882a4"
+        },
+        {
+          "file": "reference/node-workers-and-resource-limits.mjs",
+          "sourceFingerprint": "sha256:ee47af06a67dab7e377725171ed3ef4fd89163108fc62a422fba544214e178c3"
+        },
+        {
+          "file": "reference/incorrect/node-workers-and-resource-limits.mjs",
+          "sourceFingerprint": "sha256:72f00ae66cc83675c1ce8152a9762b8da39e10e9398cf17dbed73ede6b835d92"
+        },
+        {
+          "file": "curriculum/checks/node-workers-and-resource-limits.json",
+          "sourceFingerprint": "sha256:2511fbdfde875874ef61c48eba9d81306bb0bce6e8c68c8fb136c9a4832a9eff"
+        },
+        {
+          "file": "curriculum/examples/node-workers-and-resource-limits.mjs",
+          "sourceFingerprint": "sha256:6bd5c29d3fbd58ebbdad64665dac881e8c36ccd70e8f57b750ab21390121510f"
+        },
+        {
+          "file": "curriculum/examples/node-workers-and-resource-limits-worker.mjs",
+          "sourceFingerprint": "sha256:f75d9bfd8f4c9a352410eaf25bc5670dbb472b9b59fa149642fff3e37c08e132"
+        },
+        {
+          "file": "curriculum/exercises/node-testing-and-delivery.json",
+          "sourceFingerprint": "sha256:5bbcfb350d93b1928f72cfb61daaeb6ce47a84469f7c69f2d71bea0036fe621a"
+        },
+        {
+          "file": "curriculum/lessons/node-testing-and-delivery.json",
+          "sourceFingerprint": "sha256:1c5d5e0844b0b55407972cd5c87a428784e4cceeea367bd5a192ef1c7595678c"
+        },
+        {
+          "file": "starter/node-testing-and-delivery.mjs",
+          "sourceFingerprint": "sha256:f0397e90069b84d200ca9015cb0a8d6bfda026cfd2fe47354bde912261fa7324"
+        },
+        {
+          "file": "reference/node-testing-and-delivery.mjs",
+          "sourceFingerprint": "sha256:7e5481f57394a7ea414e195e62c4d8c24598d7aee4de3302016a37758114a51e"
+        },
+        {
+          "file": "reference/incorrect/node-testing-and-delivery.mjs",
+          "sourceFingerprint": "sha256:8e046af80426c0b3a79282ae67e34e3e4ef064c50f14a535961e1f0843ca079e"
+        },
+        {
+          "file": "curriculum/checks/node-testing-and-delivery.json",
+          "sourceFingerprint": "sha256:986b0c59e8e77f954541508e384398cfb9b4690ee8474f9b4174a4bee8da6316"
+        },
+        {
+          "file": "curriculum/examples/node-testing-and-delivery.mjs",
+          "sourceFingerprint": "sha256:9e01b0102d1cbcac71b2a58b62688275a9595f570cf8bd47a53b486a21c6df73"
+        },
+        {
+          "file": "curriculum/examples/node-testing-and-delivery-example-app.mjs",
+          "sourceFingerprint": "sha256:7ea9a3553bac28aebafc9960606b147c00f439bb09362eecc0d5093c1367f1b6"
+        },
+        {
+          "file": "curriculum/examples/node-testing-and-delivery-acceptance.test.mjs",
+          "sourceFingerprint": "sha256:f04481664b338b9c6201435f1c7788a9ef53c8f6c1b684ce9eba254a692f0f03"
+        },
+        {
+          "file": "curriculum/exercises/capstone-host-product-node.json",
+          "sourceFingerprint": "sha256:7823ca5d503107629832fe0aa15202fa35427b0daa338b33a4b65c07841ceb62"
+        },
+        {
+          "file": "curriculum/lessons/capstone-host-product.json",
+          "sourceFingerprint": "sha256:f6c34a0cf0903079b3eb52be448a4662498f9f716b6cf4267600b827522ff78d"
+        },
+        {
+          "file": "starter/capstone-host-product-node.mjs",
+          "sourceFingerprint": "sha256:4475064c624694e493cdbf222f06b962502c9c0e97d543711ac0933ca592d9e9"
+        },
+        {
+          "file": "reference/capstone-host-product-node.mjs",
+          "sourceFingerprint": "sha256:a419511f9a6c6c35ce3036650dadaa756fc054548b512077ada8a46a71969538"
+        },
+        {
+          "file": "reference/incorrect/capstone-host-product-node.mjs",
+          "sourceFingerprint": "sha256:547da5adff6ba9cd10c77441ec5a1d5fb1d1506773f44da54ce7fa2bdb8d7762"
+        },
+        {
+          "file": "curriculum/checks/capstone-host-product-node.json",
+          "sourceFingerprint": "sha256:c392d492ba8b716c4f8242b717fdcd7d65155eb318440bb520d5076921e65892"
+        },
+        {
+          "file": "curriculum/examples/capstone-host-product-node.mjs",
+          "sourceFingerprint": "sha256:43796b6bda6ca9306330fd2622f0b7ab8dc145bd8ec5e1df898f2270335e96be"
+        },
+        {
+          "file": "curriculum/examples/capstone-host-product-node/reader/core.mjs",
+          "sourceFingerprint": "sha256:32a85190dc1dc881dd6dea970efe9b5a65b0f362a5eb4f9bd4b120fbb5a0599e"
+        },
+        {
+          "file": "curriculum/examples/capstone-host-product-node/reader/normalize.mjs",
+          "sourceFingerprint": "sha256:e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+        },
+        {
+          "file": "curriculum/exercises/capstone-failure-and-scale-node.json",
+          "sourceFingerprint": "sha256:d530d21ea676cbd3317dda1299143354346b4489fa30e48578cc2009e91de1bb"
+        },
+        {
+          "file": "curriculum/lessons/capstone-failure-and-scale.json",
+          "sourceFingerprint": "sha256:879a093b6994acb51996b346352043a8611e8539ed7f3935f2ccf6b721d53bfb"
+        },
+        {
+          "file": "starter/capstone-failure-and-scale-node.mjs",
+          "sourceFingerprint": "sha256:f7b009532ed2da94269b317984251fed01cd97e571427893530f925f56800c39"
+        },
+        {
+          "file": "reference/capstone-failure-and-scale-node.mjs",
+          "sourceFingerprint": "sha256:aeab9c304f41f13bbabbc72b9072e3b99a9fb53b86c281ba45b81de2f643dbe4"
+        },
+        {
+          "file": "reference/incorrect/capstone-failure-and-scale-node.mjs",
+          "sourceFingerprint": "sha256:fbd0b8c88fc83286248babd927726e57b707f00ebad2da14ce36b499b3199081"
+        },
+        {
+          "file": "curriculum/checks/capstone-failure-and-scale-node.json",
+          "sourceFingerprint": "sha256:5d1600afd79d89d799b2186e1dc2dd78f6f004fc322a58e149ad9db9184c11e7"
+        },
+        {
+          "file": "curriculum/examples/capstone-failure-and-scale-node.mjs",
+          "sourceFingerprint": "sha256:577c992f8e2e9c6a4748465289ba4796ffc72ac21887152025338efbc078ebda"
+        },
+        {
+          "file": "curriculum/examples/capstone-failure-and-scale-node/reader/core.mjs",
+          "sourceFingerprint": "sha256:32a85190dc1dc881dd6dea970efe9b5a65b0f362a5eb4f9bd4b120fbb5a0599e"
+        },
+        {
+          "file": "curriculum/examples/capstone-failure-and-scale-node/reader/normalize.mjs",
+          "sourceFingerprint": "sha256:e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+        },
+        {
+          "file": "curriculum/exercises/capstone-acceptance-review-node.json",
+          "sourceFingerprint": "sha256:a8cb0a03177806c3870297afe74cd1809e64146d820bfe553b4b57851e6a516f"
+        },
+        {
+          "file": "curriculum/lessons/capstone-acceptance-review.json",
+          "sourceFingerprint": "sha256:a59099a545b3327b3cc3b1f4643b9db761c3b6128720e1a2a41bd82f0e135b25"
+        },
+        {
+          "file": "starter/capstone-acceptance-review-node.mjs",
+          "sourceFingerprint": "sha256:dfd32bc9dd6695078dc523105fd8eb09e47b3215756eace45c60638c9c0b5f70"
+        },
+        {
+          "file": "reference/capstone-acceptance-review-node.mjs",
+          "sourceFingerprint": "sha256:deada0b565b697511523fe2fd2caa1ddeefff28bdfc3ed62ead1164dfc814224"
+        },
+        {
+          "file": "reference/incorrect/capstone-acceptance-review-node.mjs",
+          "sourceFingerprint": "sha256:169b22a30f21012827eca9ab7ca7b1079b0380b38d37d1d2f49cd359791026ec"
+        },
+        {
+          "file": "curriculum/checks/capstone-acceptance-review-node.json",
+          "sourceFingerprint": "sha256:7a5a210917b6ed7def708444a627f90b58eb04ab17747b9c9f7b62f4d0873454"
+        },
+        {
+          "file": "curriculum/examples/capstone-acceptance-review-node.mjs",
+          "sourceFingerprint": "sha256:b54518a54c7c1e211e9f3e43ee4998b6dfbfd68c134783029eea1ad56015d733"
+        },
+        {
+          "file": "curriculum/examples/capstone-acceptance-review-node/reader/core.mjs",
+          "sourceFingerprint": "sha256:32a85190dc1dc881dd6dea970efe9b5a65b0f362a5eb4f9bd4b120fbb5a0599e"
+        },
+        {
+          "file": "curriculum/examples/capstone-acceptance-review-node/reader/normalize.mjs",
+          "sourceFingerprint": "sha256:e4aa73dc226f67ab5bfff9238ed4271b9ac3ee65bdfe2e5861d76a5199d2527c"
+        }
+      ]
+    },
+    "ui": {
+      "widths": [
+        320,
+        360,
+        390,
+        768,
+        1440
+      ],
+      "shortHeight": [
+        1280,
+        420
+      ],
+      "physicalDevices": false,
+      "actual200PercentZoom": false
+    }
+  },
+  "limitations": [
+    "Public self-study checks, not certification",
+    "DOM synchronous infinite loops have no guaranteed forced termination; no hard RAM cap or OS isolation",
+    "Node Permission Model is not an OS sandbox or network isolation; heap setting is not a RAM cap; nested Worker opt-in weakens permission boundary",
+    "Physical devices, actual 200% browser zoom, OS IME and screen reader unverified",
+    "Packaging deferred"
+  ]
+}

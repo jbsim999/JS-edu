@@ -1,0 +1,133 @@
+{
+  "exerciseId": "node-buffers-and-streams-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-buffers-and-streams-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "arbitrary-chunks-utf8",
+      "label": "한글·이모지 바이트가 임의 chunk 경계에서 잘려도 두 레코드를 집계한다",
+      "probe": "const {Readable,Writable}=await import('node:stream'); const {Buffer}=await import('node:buffer'); let text=''; const output=new Writable({write(chunk,enc,done){text+=chunk.toString();done();}}); const bytes=Buffer.from('{\"name\":\"한글 🍋\",\"amount\":3}\\n{\"name\":\"둘\",\"amount\":-1}\\n');const chunks=[...bytes].map(byte=>Buffer.from([byte])); const result=await submission.aggregateNdjson(Readable.from(chunks),output);observe({result,text});",
+      "expected": {
+        "result": {
+          "count": 2,
+          "total": 2
+        },
+        "text": "{\"count\":2,\"total\":2}\n"
+      }
+    },
+    {
+      "id": "crlf-empty-and-final-line",
+      "label": "CRLF·빈 줄·마지막 개행 없는 줄을 구분해 처리한다",
+      "probe": "const {Readable,Writable}=await import('node:stream'); const {Buffer}=await import('node:buffer'); let text=''; const output=new Writable({write(chunk,enc,done){text+=chunk.toString();done();}}); const input=Readable.from([Buffer.from('\\n{\"name\":\"a\",\"amount\":0}\\r\\n\\r\\n{\"name\":\"b\",\"amount\":7}')]); const result=await submission.aggregateNdjson(input,output);observe({result,text});",
+      "expected": {
+        "result": {
+          "count": 2,
+          "total": 7
+        },
+        "text": "{\"count\":2,\"total\":7}\n"
+      }
+    },
+    {
+      "id": "empty-stream",
+      "label": "빈 입력은 정상 빈 집계를 한 번 출력한다",
+      "probe": "const {Readable,Writable}=await import('node:stream'); const {Buffer}=await import('node:buffer'); let text=''; const output=new Writable({write(chunk,enc,done){text+=chunk.toString();done();}}); const result=await submission.aggregateNdjson(Readable.from([]),output);observe({result,text});",
+      "expected": {
+        "result": {
+          "count": 0,
+          "total": 0
+        },
+        "text": "{\"count\":0,\"total\":0}\n"
+      }
+    },
+    {
+      "id": "byte-limit-not-characters",
+      "label": "멀티바이트 줄이 바이트 상한을 넘으면 출력 없이 거부한다",
+      "probe": "const {Readable,Writable}=await import('node:stream'); const {Buffer}=await import('node:buffer'); let text=''; const output=new Writable({write(chunk,enc,done){text+=chunk.toString();done();}}); const input=Readable.from([Buffer.from('{\"name\":\"한글\",\"amount\":1}\\n')]);let name='';try{await submission.aggregateNdjson(input,output,{maxLineBytes:26});}catch(error){name=error.name;}observe({name,text,inputDestroyed:input.destroyed,outputDestroyed:output.destroyed});",
+      "expected": {
+        "name": "RangeError",
+        "text": "",
+        "inputDestroyed": true,
+        "outputDestroyed": true
+      }
+    },
+    {
+      "id": "invalid-json-after-valid-row",
+      "label": "뒤쪽 JSON 오류가 앞쪽 집계를 정상 결과로 내보내지 않게 한다",
+      "probe": "const {Readable,Writable}=await import('node:stream'); const {Buffer}=await import('node:buffer'); let text=''; const output=new Writable({write(chunk,enc,done){text+=chunk.toString();done();}}); let name='';try{await submission.aggregateNdjson(Readable.from([Buffer.from('{\"name\":\"ok\",\"amount\":1}\\n{broken}\\n')]),output);}catch(error){name=error.name;}observe({name,text});",
+      "expected": {
+        "name": "SyntaxError",
+        "text": ""
+      }
+    },
+    {
+      "id": "strict-utf8-and-schema",
+      "label": "잘못된 UTF-8·숫자 문자열·합 오버플로를 각각 거부한다",
+      "probe": "const {Readable,Writable}=await import('node:stream');const {Buffer}=await import('node:buffer');const errors=[];const texts=[];for(const bytes of [Buffer.concat([Buffer.from('{\"name\":\"'),Buffer.from([255]),Buffer.from('\",\"amount\":1}\\n')]),Buffer.from('{\"name\":\"a\",\"amount\":\"2\"}\\n'),Buffer.from('{\"name\":\"a\",\"amount\":9007199254740991}\\n{\"name\":\"b\",\"amount\":1}\\n')]){let text='';const output=new Writable({write(chunk,e,done){text+=chunk.toString();done();}});try{await submission.aggregateNdjson(Readable.from([bytes]),output);errors.push('returned');}catch(error){errors.push(error.name);}texts.push(text);}observe({errors,texts});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "RangeError"
+        ],
+        "texts": [
+          "",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "slow-output-finish",
+      "label": "느린 Writable의 쓰기와 final 완료를 기다려 성공을 반환한다",
+      "probe": "const {Readable,Writable}=await import('node:stream');const {Buffer}=await import('node:buffer');const events=[];let text='';const output=new Writable({highWaterMark:1,write(chunk,e,done){events.push('write');setTimeout(()=>{text+=chunk.toString();events.push('written');done();},15);},final(done){setTimeout(()=>{events.push('final');done();},5);}});const result=await submission.aggregateNdjson(Readable.from([Buffer.from('{\"name\":\"a\",\"amount\":4}\\n')]),output);events.push('returned');observe({result,text,events,finished:output.writableFinished});",
+      "expected": {
+        "result": {
+          "count": 1,
+          "total": 4
+        },
+        "text": "{\"count\":1,\"total\":4}\n",
+        "events": [
+          "write",
+          "written",
+          "final",
+          "returned"
+        ],
+        "finished": true
+      }
+    },
+    {
+      "id": "destination-error-propagates",
+      "label": "출력 스트림의 오류를 같은 실패로 전달한다",
+      "probe": "const {Readable,Writable}=await import('node:stream');const failure=Object.assign(new Error('destination unavailable'),{code:'EIO'});const input=Readable.from([Buffer.from('{\"name\":\"a\",\"amount\":1}\\n')]);const output=new Writable({write(chunk,e,done){done(failure);}});let same=false;try{await submission.aggregateNdjson(input,output);}catch(error){same=error===failure;}observe({same,inputDestroyed:input.destroyed,outputDestroyed:output.destroyed});",
+      "expected": {
+        "same": true,
+        "inputDestroyed": true,
+        "outputDestroyed": true
+      }
+    },
+    {
+      "id": "abort-destroys-streams",
+      "label": "완료 전 AbortSignal 취소가 입력·출력을 파괴하고 부분 요약을 내보내지 않는다",
+      "probe": "const {Readable,Writable}=await import('node:stream'); const {Buffer}=await import('node:buffer'); let text=''; const output=new Writable({write(chunk,enc,done){text+=chunk.toString();done();}}); const controller=new AbortController();const input=new Readable({read(){}});const operation=submission.aggregateNdjson(input,output,{signal:controller.signal});setTimeout(()=>controller.abort(),10);setTimeout(()=>input.push(null),30);let name='';try{await operation;}catch(error){name=error.name;}observe({name,text,inputDestroyed:input.destroyed,outputDestroyed:output.destroyed});",
+      "expected": {
+        "name": "AbortError",
+        "text": "",
+        "inputDestroyed": true,
+        "outputDestroyed": true
+      }
+    },
+    {
+      "id": "invalid-limit",
+      "label": "줄 상한의 타입·최소·최대 범위를 시작 전에 검증한다",
+      "probe": "const {Readable,Writable}=await import('node:stream');const errors=[];for(const maxLineBytes of [0,-1,1.5,'10',1048577]){const input=Readable.from([]);const output=new Writable({write(c,e,done){done();}});try{await submission.aggregateNdjson(input,output,{maxLineBytes});errors.push('returned');}catch(error){errors.push(error.name);}finally{input.destroy();output.destroy();}}observe(errors);",
+      "expected": [
+        "RangeError",
+        "RangeError",
+        "RangeError",
+        "RangeError",
+        "RangeError"
+      ]
+    }
+  ]
+}

@@ -43,6 +43,28 @@ test('valid curriculum, exercise and source connections pass', async context => 
   const { directory } = await fixture(context);
   assert.equal((await validateProject(directory)).status, 'PASS');
 });
+test('Node trusted fixture declarations must name an actual fixed grader case', async context => {
+  const { directory } = await fixture(context);
+  await changeJson(directory, 'curriculum/exercises.json', value => {
+    const exercise = value.exercises.find(item => item.id === 'node-files-and-paths-exercise');
+    assert.ok(exercise.nodeFixtures.length > 0);
+    exercise.nodeFixtures[0].caseId = 'missing-fixed-case';
+  });
+  const result = await validateProject(directory);
+  assert.equal(result.status, 'FAIL');
+  assert.ok(result.errors.some(error => error.includes('Node fixture references unknown grader case')));
+});
+test('project validation rejects reused host quizzes and a prerequisite cycle hidden in the Node variant', async context => {
+  const { directory } = await fixture(context);
+  await changeJson(directory, 'curriculum/lessons/capstone-host-product.json', value => {
+    value.hostVariants.node.quiz.revision = value.quiz.revision ?? value.contentRevision;
+    value.hostVariants.node.prerequisites = [value.id];
+  });
+  const result = await validateProject(directory);
+  assert.equal(result.status, 'FAIL');
+  assert.ok(result.errors.some(error => error.includes('Host quiz revision must be distinct')));
+  assert.ok(result.errors.some(error => error.includes('Host prerequisite cycle: node:capstone-host-product')));
+});
 test('missing starter and trusted test references fail', async context => {
   const { directory } = await fixture(context);
   await changeJson(directory, 'curriculum/exercises.json', value => {

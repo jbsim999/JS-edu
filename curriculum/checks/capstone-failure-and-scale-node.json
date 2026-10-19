@@ -1,0 +1,342 @@
+{
+  "exerciseId": "capstone-failure-and-scale-node-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-failure-and-scale-node-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "native-file-batch",
+      "label": "기본 loader로 실제 NDJSON·빈 파일·파일 부재·JSON 실패를 입력 순서대로 처리한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));await write('empty.ndjson','');await write('bad.ndjson','{');\nconst batch=submission.createNodeQueryBatch({workspaceRoot:root,maxOutputs:1,now:()=>0});\ntry{const result=await batch.run([{id:'p',file:'products.ndjson',query:'pista'},{id:'empty',file:'empty.ndjson',query:''},{id:'missing',file:'missing.ndjson',query:''},{id:'bad',file:'bad.ndjson',query:''}]);\nobserve({status:result.status,results:result.results,metrics:result.metrics});}finally{batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "status": "done",
+        "results": [
+          {
+            "id": "p",
+            "status": "fulfilled",
+            "report": {
+              "version": 1,
+              "query": "pista",
+              "count": 2,
+              "total": 330,
+              "items": [
+                {
+                  "id": "a",
+                  "name": "Pistachio mini",
+                  "price": 100
+                }
+              ]
+            }
+          },
+          {
+            "id": "empty",
+            "status": "fulfilled",
+            "report": {
+              "version": 1,
+              "query": "",
+              "count": 0,
+              "total": 0,
+              "items": []
+            }
+          },
+          {
+            "id": "missing",
+            "status": "rejected",
+            "error": "load"
+          },
+          {
+            "id": "bad",
+            "status": "rejected",
+            "error": "input"
+          }
+        ],
+        "metrics": {
+          "status": "done",
+          "runId": 1,
+          "total": 4,
+          "started": 4,
+          "completed": 4,
+          "failed": 2,
+          "active": 0,
+          "peakActive": 2,
+          "returnedItems": 1,
+          "elapsedMs": 0
+        }
+      }
+    },
+    {
+      "id": "gated-order-and-metrics",
+      "label": "실제 시작 gate로 동시성·완료 역순·출력·주입 시계를 관찰한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nlet tick=0;const starts=[];const a=deferred(),b=deferred(),c=deferred(),two=deferred(),three=deferred();\nconst waits={a,b,c};const batch=submission.createNodeQueryBatch({workspaceRoot:root,concurrency:2,maxOutputs:1,now:()=>tick,load:task=>{starts.push(task.id);if(starts.length===2)two.resolve();if(starts.length===3)three.resolve();return waits[task.id].promise;}});\ntry{\nconst pending=batch.run(['a','b','c'].map(id=>({id,file:'products.ndjson',query:''})));await gate(two.promise);const during=batch.getState();\nb.resolve([{id:'b1',name:'B',price:2},{id:'b2',name:'B',price:3}]);await gate(three.promise);\ntick=25;c.resolve([{id:'c1',name:'C',price:7}]);a.resolve([{id:'a1',name:'A',price:1}]);const result=await pending;\nconst reset=await batch.run([]);\nobserve({during:{started:during.started,active:during.active,peak:during.peakActive},starts,ids:result.results.map(row=>row.id),counts:result.results.map(row=>row.report.count),shown:result.results.map(row=>row.report.items.length),metrics:result.metrics,reset:reset.metrics});\n}finally{a.resolve([]);b.resolve([]);c.resolve([]);batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "during": {
+          "started": 2,
+          "active": 2,
+          "peak": 2
+        },
+        "starts": [
+          "a",
+          "b",
+          "c"
+        ],
+        "ids": [
+          "a",
+          "b",
+          "c"
+        ],
+        "counts": [
+          1,
+          2,
+          1
+        ],
+        "shown": [
+          1,
+          1,
+          1
+        ],
+        "metrics": {
+          "status": "done",
+          "runId": 1,
+          "total": 3,
+          "started": 3,
+          "completed": 3,
+          "failed": 0,
+          "active": 0,
+          "peakActive": 2,
+          "returnedItems": 3,
+          "elapsedMs": 25
+        },
+        "reset": {
+          "status": "done",
+          "runId": 2,
+          "total": 0,
+          "started": 0,
+          "completed": 0,
+          "failed": 0,
+          "active": 0,
+          "peakActive": 0,
+          "returnedItems": 0,
+          "elapsedMs": 0
+        }
+      }
+    },
+    {
+      "id": "prevalidate-dense-tasks",
+      "label": "전체 입력·own slot·중복 ID와 설정을 load 호출 전에 거부한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nlet calls=0;const batch=submission.createNodeQueryBatch({workspaceRoot:root,maxInputs:2,load:async()=>{calls++;return [];},now:()=>0});\ntry{\nconst normal={id:'a',file:'products.ndjson',query:''};const inherited=new Array(1);Object.setPrototypeOf(inherited,Object.assign(Object.create(Array.prototype),{0:normal}));\nconst errors=[];for(const tasks of [null,new Array(1),inherited,[normal,normal],[normal,{id:'b',file:'../x.ndjson',query:''}],[{...normal,query:1}],[{...normal,file:'products.ndjson\\n'}],[normal,{...normal,id:'b'},{...normal,id:'c'}]])errors.push((await errorOf(()=>batch.run(tasks)))?.name);\nconst options=[];for(const bad of [{concurrency:0},{maxInputs:33},{maxFileBytes:0},{maxLineBytes:1.5},{maxRecords:1001},{maxOutputs:-1},{load:1},{now:null}])options.push((await errorOf(()=>submission.createNodeQueryBatch({workspaceRoot:root,...bad})))?.name);\nobserve({calls,errors,options,status:batch.getState().status});}finally{batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "calls": 0,
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "RangeError"
+        ],
+        "options": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "status": "idle"
+      }
+    },
+    {
+      "id": "failure-classification",
+      "label": "throw undefined·reject·불량 배열·core 실패 뒤 슬롯을 회수하고 재시도하지 않는다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst calls=[];const batch=submission.createNodeQueryBatch({workspaceRoot:root,maxInputs:8,maxRecords:3,maxOutputs:0,now:()=>0,load:task=>{\ncalls.push(task.id);if(task.id==='throw')throw undefined;if(task.id==='reject')return Promise.reject(null);if(task.id==='object')return {};if(task.id==='hole')return new Array(1);if(task.id==='schema')return [{id:'a',name:'A',price:-1}];if(task.id==='sum')return [{id:'a',name:'A',price:Number.MAX_SAFE_INTEGER},{id:'b',name:'B',price:1}];return [{id:'good',name:'Good',price:4}];}});\ntry{const result=await batch.run(['throw','reject','object','hole','schema','sum','good'].map(id=>({id,file:'products.ndjson',query:''})));\nobserve({calls,results:result.results,metrics:{started:result.metrics.started,completed:result.metrics.completed,failed:result.metrics.failed,active:result.metrics.active,returnedItems:result.metrics.returnedItems}});}finally{batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "calls": [
+          "throw",
+          "reject",
+          "object",
+          "hole",
+          "schema",
+          "sum",
+          "good"
+        ],
+        "results": [
+          {
+            "id": "throw",
+            "status": "rejected",
+            "error": "load"
+          },
+          {
+            "id": "reject",
+            "status": "rejected",
+            "error": "load"
+          },
+          {
+            "id": "object",
+            "status": "rejected",
+            "error": "input"
+          },
+          {
+            "id": "hole",
+            "status": "rejected",
+            "error": "input"
+          },
+          {
+            "id": "schema",
+            "status": "rejected",
+            "error": "core"
+          },
+          {
+            "id": "sum",
+            "status": "rejected",
+            "error": "core"
+          },
+          {
+            "id": "good",
+            "status": "fulfilled",
+            "report": {
+              "version": 1,
+              "query": "",
+              "count": 1,
+              "total": 4,
+              "items": []
+            }
+          }
+        ],
+        "metrics": {
+          "started": 7,
+          "completed": 7,
+          "failed": 6,
+          "active": 0,
+          "returnedItems": 0
+        }
+      }
+    },
+    {
+      "id": "native-byte-line-record-limits",
+      "label": "기본 loader의 UTF-8 바이트·행·중복 행 상한과 0 출력 집계를 구분한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson([{id:'a',name:'한글 🍋',price:4},{id:'a',name:'Duplicate',price:9}]));\nawait write('invalid.ndjson',Buffer.concat([Buffer.from('{\"id\":\"a\",\"name\":\"'),Buffer.from([255]),Buffer.from('\",\"price\":1}\\n')]));\nconst outcomes=[];\nfor(const [limits,file] of [[{maxFileBytes:40},'products.ndjson'],[{maxLineBytes:32},'products.ndjson'],[{maxRecords:1},'products.ndjson'],[{},'invalid.ndjson'],[{maxOutputs:0},'products.ndjson']]){\nconst batch=submission.createNodeQueryBatch({workspaceRoot:root,...limits,now:()=>0});try{const result=await batch.run([{id:'one',file,query:''}]);outcomes.push(result.results[0]);}finally{batch.dispose();}}\nobserve(outcomes);\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": [
+        {
+          "id": "one",
+          "status": "rejected",
+          "error": "input"
+        },
+        {
+          "id": "one",
+          "status": "rejected",
+          "error": "input"
+        },
+        {
+          "id": "one",
+          "status": "rejected",
+          "error": "input"
+        },
+        {
+          "id": "one",
+          "status": "rejected",
+          "error": "input"
+        },
+        {
+          "id": "one",
+          "status": "fulfilled",
+          "report": {
+            "version": 1,
+            "query": "",
+            "count": 1,
+            "total": 4,
+            "items": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel-drain-and-repeat",
+      "label": "취소된 활성 load의 실제 파일 정리까지 기다리고 대기 작업·중복 실행을 막는다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst started=deferred(),release=deferred();let first=true,calls=0,settled=false;const signals=[];\nconst batch=submission.createNodeQueryBatch({workspaceRoot:root,concurrency:2,now:()=>0,load:async(task,{signal})=>{calls++;if(!first)return [];signals.push(signal);if(signals.length===2)started.resolve();await release.promise;await write(task.id+'.done','closed');return [{id:task.id,name:'Late',price:1}];}});\ntry{\nconst pending=batch.run(['a','b','queued'].map(id=>({id,file:'products.ndjson',query:''}))).then(value=>{settled=true;return value;});\nawait gate(started.promise);const cancelled=batch.cancel(),again=batch.cancel();await new Promise(resolve=>setImmediate(resolve));\nconst before={settled,active:batch.getState().active,aborted:signals.every(signal=>signal.aborted)};\nconst duplicate=await errorOf(()=>batch.run([]));release.resolve();const result=await pending;first=false;\nconst next=await batch.run([{id:'next',file:'products.ndjson',query:''}]);\nobserve({cancelled,again,before,duplicate:duplicate?.name,results:result.results,metrics:{status:result.metrics.status,started:result.metrics.started,completed:result.metrics.completed,active:result.metrics.active},files:(await fs.readdir(root)).sort(),next:{status:next.status,runId:next.runId,started:next.metrics.started},calls});\n}finally{release.resolve();batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "cancelled": true,
+        "again": false,
+        "before": {
+          "settled": false,
+          "active": 2,
+          "aborted": true
+        },
+        "duplicate": "InvalidStateError",
+        "results": [
+          {
+            "id": "a",
+            "status": "cancelled"
+          },
+          {
+            "id": "b",
+            "status": "cancelled"
+          },
+          {
+            "id": "queued",
+            "status": "cancelled"
+          }
+        ],
+        "metrics": {
+          "status": "cancelled",
+          "started": 2,
+          "completed": 0,
+          "active": 0
+        },
+        "files": [
+          "a.done",
+          "b.done"
+        ],
+        "next": {
+          "status": "done",
+          "runId": 2,
+          "started": 1
+        },
+        "calls": 3
+      }
+    },
+    {
+      "id": "dispose-active-batch",
+      "label": "활성 폐기는 signal을 취소하고 drain 뒤에도 disposed를 유지한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst started=deferred(),release=deferred();let observedSignal;\nconst batch=submission.createNodeQueryBatch({workspaceRoot:root,now:()=>0,load:async(task,{signal})=>{observedSignal=signal;started.resolve();await release.promise;return [];}});\ntry{const pending=batch.run([{id:'a',file:'products.ndjson',query:''}]);await gate(started.promise);batch.dispose();batch.dispose();const before=batch.getState();const error=await errorOf(()=>batch.run([]));release.resolve();const result=await pending;\nobserve({before:before.status,aborted:observedSignal.aborted,error:error?.name,result:result.status,after:batch.getState().status,active:batch.getState().active,cancel:batch.cancel()});}finally{release.resolve();batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "before": "disposed",
+        "aborted": true,
+        "error": "InvalidStateError",
+        "result": "cancelled",
+        "after": "disposed",
+        "active": 0,
+        "cancel": false
+      }
+    },
+    {
+      "id": "copy-input-results",
+      "label": "원본 task·주입 loader 변경과 반환 객체 변경을 내부 결과에서 분리한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst started=deferred(),release=deferred();let count=0;\nconst batch=submission.createNodeQueryBatch({workspaceRoot:root,now:()=>0,load:async task=>{try{task.id='changed';task.query='changed';}catch{}if(count++===0){started.resolve();await release.promise;}return Object.freeze([Object.freeze({id:'p',name:'Pistachio',price:4})]);}});\ntry{const tasks=[{id:'original',file:'products.ndjson',query:'pista'}];const pending=batch.run(tasks);await gate(started.promise);tasks[0].id='outside';tasks[0].query='outside';const state=batch.getState();try{state.started=999;}catch{}release.resolve();const result=await pending;const row=result.results[0];const first={id:row.id,query:row.report.query,count:row.report.count};try{result.results[0].report.items[0].price=999;result.metrics.started=999;}catch{}\nconst next=await batch.run([{id:'next',file:'products.ndjson',query:'pista'}]);observe({first,nextPrice:next.results[0].report.items[0].price,started:batch.getState().started});}finally{release.resolve();batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "first": {
+          "id": "original",
+          "query": "pista",
+          "count": 1
+        },
+        "nextPrice": 4,
+        "started": 1
+      }
+    },
+    {
+      "id": "native-stream-cancel",
+      "label": "실제 파일 스트림 open gate 뒤 취소하고 close 완료까지 배치를 기다린다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));const {createReadStream}=await import('node:fs');const {finished}=await import('node:stream/promises');\nconst opened=deferred();let streamClosed=false;let sawAbort=false;\nconst batch=submission.createNodeQueryBatch({workspaceRoot:root,now:()=>0,load:async(task,{signal})=>{\nconst stream=createReadStream(path.join(root,task.file),{signal,highWaterMark:16});stream.once('open',()=>opened.resolve());stream.once('close',()=>{streamClosed=true;});\ntry{await new Promise((resolve,reject)=>{const abort=()=>{sawAbort=true;reject(signal.reason);};if(signal.aborted)abort();else signal.addEventListener('abort',abort,{once:true});stream.once('error',reject);});return [];}\nfinally{stream.destroy();await finished(stream).catch(()=>{});}\n}});\ntry{const pending=batch.run([{id:'file',file:'products.ndjson',query:''},{id:'queued',file:'products.ndjson',query:''}]);await gate(opened.promise);batch.cancel();const result=await pending;\nobserve({sawAbort,streamClosed,status:result.status,active:result.metrics.active,allCancelled:result.results.every(row=>row.status==='cancelled')});}finally{batch.dispose();}\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "sawAbort": true,
+        "streamClosed": true,
+        "status": "cancelled",
+        "active": 0,
+        "allCancelled": true
+      }
+    }
+  ]
+}

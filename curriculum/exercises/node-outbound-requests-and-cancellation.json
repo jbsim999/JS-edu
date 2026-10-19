@@ -1,0 +1,72 @@
+{
+  "id": "node-outbound-requests-and-cancellation-exercise",
+  "lessonId": "node-outbound-requests-and-cancellation",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-outbound-requests-and-cancellation-checks-v1",
+  "mode": "files",
+  "instructions": [
+    "main.mjs의 fetchRecord(url, options)를 export하라. GET/redirect:error만 사용한다. options 기본값은 signal 없음, timeoutMs=500, maxAttempts=3, maxBytes=4096, backoffMs=10이다. timeoutMs 1..10000, maxAttempts 1..3, maxBytes 1..65536, backoffMs 0..1000의 정수만 허용하고 위반은 요청 전 RangeError다. URL은 사용자 정보 없는 http/https만 허용한다.\n\n성공은 {record:{id,score},attempts}다. id는 비어 있지 않은 문자열, score는 0..100 정수이며 불필요한 필드는 버린다. reader의 실제 byteLength 누적 상한을 적용한다. 헤더 전 전송 실패와 HTTP 502/503/504만 남은 횟수 안에서 재시도하고, 이미 body를 읽기 시작한 뒤의 전송 실패는 재시도하지 않는다. 비성공 body는 cancel하고 고정 backoff도 deadline/취소를 따른다. 오류 code는 NETWORK, HTTP_STATUS(status 포함), PARSE, SCHEMA, BODY_LIMIT, TIMEOUT이며 자체 오류에는 attempts를 붙인다. 이미/진행 중 취소는 signal.reason 그 자체로 reject한다.\n\n하나의 총 타이머가 fetch·backoff·body 읽기를 덮어야 한다. 종료마다 타이머, 외부 abort 리스너, body reader lock을 정리한다. 실습은 전용 loopback fixture를 사용하며 외부 인터넷과 성능 순위는 채점하지 않는다."
+  ],
+  "template": "export async function fetchRecord(url, options = {}) {\n  // TODO: bounded GET adapter with cancellation and body validation.\n}\n",
+  "profileId": "node-native",
+  "profileByVersion": {
+    "ES2026": "node-native"
+  },
+  "hostRequirements": [
+    "node-native"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/node-outbound-requests-and-cancellation.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 응답 chunk를 합쳐 UTF-8 레코드를 정규화한다",
+    "502/503/504만 제한적으로 재시도하며 최종 시도 수를 반환한다",
+    "404는 본문을 해제하고 한 번에 실패한다",
+    "재시도 가능한 503도 최대 시도 횟수에서 멈춘다",
+    "헤더 전 연결 실패를 제한 안에서 재시도한다",
+    "JSON 문법 오류와 도메인 스키마 오류를 재시도 없이 구분한다",
+    "Content-Length 없이 전달된 실제 바이트 수에 상한을 적용한다",
+    "이미 취소된 요청은 송신하지 않고 원래 취소 원인을 전달한다",
+    "진행 중 body 읽기 취소는 재시도하지 않는다",
+    "재시도 대기까지 포함한 하나의 deadline을 지킨다",
+    "헤더 수신 뒤 멈춘 body에도 deadline이 남아 있다",
+    "잘못된 제한값은 요청 전 거부한다",
+    "재시도 전 아직 끝나지 않은 오류 body를 실제로 취소한다"
+  ],
+  "rubric": [
+    "전송 실패·HTTP 상태·파싱·도메인 검증을 구분하여 실패 정책을 설계한다.",
+    "단일 deadline과 호출자 AbortSignal을 연결하고 응답 body·타이머·리스너를 정리한다.",
+    "멱등 조회의 재시도 횟수와 실제 body 바이트 수를 제한한다."
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.setHeader('content-type', 'application/json');\nconst bytes = Buffer.from(JSON.stringify({ id: '한글', score: 81, secret: 'discard' }));\nres.write(bytes.subarray(0, 9));\ntimers.add(setTimeout(() => res.end(bytes.subarray(9)), 5));\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst result = await submission.fetchRecord(url);\nobserve({ result, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "export async function fetchRecord(url, options = {}) {\n  // TODO: bounded GET adapter with cancellation and body validation.\n}\n",
+        "editable": true
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/node-outbound-requests-and-cancellation.json",
+  "referenceFile": "reference/node-outbound-requests-and-cancellation.mjs",
+  "incorrectFile": "reference/incorrect/node-outbound-requests-and-cancellation.mjs",
+  "exampleFile": "curriculum/examples/node-outbound-requests-and-cancellation.mjs",
+  "exampleExpectedLogs": [
+    "{\"statuses\":[503,200],\"attempts\":2,\"value\":{\"id\":\"local\",\"score\":72}}",
+    "{\"cancelled\":true,\"attempts\":2}"
+  ],
+  "available": true,
+  "verificationRecord": "docs/execution/node-outbound-requests-and-cancellation-exercise.json"
+}

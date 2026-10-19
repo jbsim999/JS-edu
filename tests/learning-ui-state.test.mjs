@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { createExecutionRouter, createExecutionState, resultMatches, submissionPassed } from "../web/features/execution-state.mjs";
-import { createLearningProgress, assessQuiz, validSubmission, quizForRevision } from "../web/features/learning-progress.mjs";
-import { loadLearningData, normalizeRoute, browserWorkerProfile, browserModuleProfile, browserDomProfile, supportsExerciseProvider } from "../web/features/learning-data.mjs";
+import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, quizForRevision } from "../web/features/learning-progress.mjs";
+import { loadLearningData, normalizeRoute, browserWorkerProfile, browserModuleProfile, browserDomProfile, nodeNativeProfile, supportsExerciseProvider, resolveEntryHost, entryHostVariants, entryInTrack } from "../web/features/learning-data.mjs";
 
 const identity = { lessonId: "counter", exerciseId: "counter-task", contentRevision: "r1", targetVersion: "ES2026", profileId: "worker-1", graderRevision: "g1" };
 const environment = { available: true, actualRuntime: "test worker", environmentFingerprint: "environment-1" };
@@ -84,6 +85,52 @@ test("successful execution or empty checks never imply submission pass", () => {
   assert.equal(submissionPassed({ status: "ready", checks: [{ passed: true }] }), false);
   assert.equal(submissionPassed({ status: "success", checks: [{ passed: true }, { passed: false }] }), false);
   assert.equal(submissionPassed({ status: "success", checks: [{ passed: true }] }), true);
+  assert.equal(submissionPassed({ status: "success", checks: [{ passed: true }], cleanupWarning: "cleanup failed" }), false);
+  assert.equal(submissionPassed({ status: "success", checks: [{ passed: true }], cleanupPending: true }), false);
+});
+
+test("preparation cleanup warnings block execution and submission callbacks", async () => {
+  for (const cleanup of [{ cleanupWarning: "cleanup failed" }, { cleanupPending: true }]) {
+    let submissions = 0;
+    const completed = [];
+    const runner = fakeRunner({ prepare: async request => ({ ...answer(request, "ready", []), ...cleanup }),
+      submit: async request => { submissions++; return answer(request); } });
+    const state = createExecutionState({ runner, fingerprintSource: async source => source, onResult: result => completed.push(result) });
+    assert.equal((await state.start("submit", identity, "code")).status, "infrastructure-error");
+    assert.equal(submissions, 0);
+    assert.deepEqual(completed, []);
+    assert.equal(state.busy(), false);
+  }
+});
+
+test("cancel cleanup warnings reach the UI through router results without replacing a newer generation", async () => {
+  const cancellation = deferred();
+  const preparation = deferred();
+  const runner = fakeRunner({ prepare: () => preparation.promise,
+    cancel: async () => [{ status: "fulfilled", value: await cancellation.promise }] });
+  const state = createExecutionState({ runner, fingerprintSource: async source => source });
+  const pending = state.start("submit", identity, "code");
+  await checkpoint();
+  const cancelling = state.cancel();
+  cancellation.resolve({ status: "cancelled", cleanupWarning: "cleanup failed" });
+  await cancelling;
+  assert.match(state.snapshot().reason, /cleanup failed/);
+  state.invalidate("newer code");
+  preparation.resolve({});
+  assert.equal(await pending, null);
+  assert.equal(state.snapshot().reason, "newer code");
+  const lateCancellation = deferred();
+  const latePreparation = deferred();
+  const later = createExecutionState({ runner: fakeRunner({ prepare: () => latePreparation.promise, cancel: () => lateCancellation.promise }), fingerprintSource: async source => source });
+  const old = later.start("submit", identity, "old code");
+  await checkpoint();
+  const oldCancellation = later.cancel();
+  later.invalidate("new generation");
+  lateCancellation.resolve({ status: "cancelled", cleanupWarning: "old cleanup warning" });
+  await oldCancellation;
+  latePreparation.resolve({});
+  assert.equal(await old, null);
+  assert.equal(later.snapshot().reason, "new generation");
 });
 
 function memoryStorage() {
@@ -95,6 +142,8 @@ test("saved pass binds source, environment, lesson revision and grader/profile i
   const result = answer({ ...identity, requestId: "saved", sourceFingerprint: "body" });
   const saved = { identity, result };
   assert.equal(validSubmission(saved, identity, "body", environment.environmentFingerprint), true);
+  assert.equal(validSubmission({ ...saved, result: { ...result, cleanupWarning: "cleanup failed" } }, identity, "body", environment.environmentFingerprint), false);
+  assert.equal(validSubmission({ ...saved, result: { ...result, cleanupPending: true } }, identity, "body", environment.environmentFingerprint), false);
   for (const changed of [{ ...identity, contentRevision: "r2" }, { ...identity, graderRevision: "g2" }, { ...identity, profileId: "worker-2" }]) {
     assert.equal(validSubmission(saved, changed, "body", environment.environmentFingerprint), false);
   }
@@ -176,6 +225,58 @@ test("only dedicated browser-worker profiles are passed to the Worker provider",
   assert.equal(supportsExerciseProvider({ runner: { kind: "function-body" } }, domProfile), true);
   assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, domProfile), false);
   assert.equal(browserDomProfile({ id: "browser-dom", execution: { provider: "node-process" } }), false);
+  const nodeProfile = { id: "node-native", execution: { provider: "node-native" } };
+  assert.equal(nodeNativeProfile(nodeProfile), true);
+  assert.equal(browserModuleProfile(nodeProfile), false);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "module-files" } }, nodeProfile), true);
+  assert.equal(supportsExerciseProvider({ runner: { kind: "function-body" } }, nodeProfile), false);
+});
+
+test("the complete catalog keeps stable host variants and normalizes the Node learning path", async () => {
+  const data = await loadLearningData(async pathname => {
+    try {
+      const text = await readFile(new URL(`..${pathname}`, import.meta.url), "utf8");
+      return { ok: true, text: async () => text, json: async () => JSON.parse(text) };
+    } catch { return { ok: false, status: 404 }; }
+  });
+  assert.equal(data.entries.length, 52);
+  assert.equal(data.entries.filter(entry => entry.ready && entry.runnable).length, 52);
+  assert.equal(data.entries.flatMap(entryHostVariants).length, 55);
+  assert.equal(data.entries.filter(entry => entryInTrack(entry, "node")).length, 12);
+  assert.equal(entryInTrack(data.entries.find(entry => entry.id === "capstone-domain-core"), "node"), true);
+  const base = data.entries.find(entry => entry.id === "capstone-host-product");
+  const browser = resolveEntryHost(base, "browser");
+  const node = resolveEntryHost(base, "node");
+  assert.equal(resolveEntryHost(base, "node"), node);
+  assert.equal(resolveEntryHost(base, "invalid"), browser);
+  assert.equal(node.lesson.id, browser.lesson.id);
+  assert.equal(node.lesson.contentRevision, browser.lesson.contentRevision);
+  assert.equal(node.baseExerciseId, browser.exercise.id);
+  assert.notEqual(node.exercise.id, browser.exercise.id);
+  assert.notEqual(node.lesson.quiz.revision, browser.lesson.quiz.revision);
+  assert.match(node.exampleFile, /capstone-host-product-node\.mjs$/);
+  assert.equal(node.profile.execution.provider, "node-native");
+  assert.match(node.lesson.steps.lab, /queryProductFile/);
+  assert.match(browser.lesson.steps.lab, /mountSearchDashboard/);
+  const routeFor = query => normalizeRoute(new URLSearchParams(query), data.entries, ["ES2026"]);
+  assert.equal(routeFor("lesson=capstone-host-product&track=node&host=browser").host, "node");
+  assert.equal(routeFor("lesson=capstone-host-product&track=node").track, "node");
+  assert.equal(routeFor("lesson=capstone-host-product&track=all").host, "browser");
+  assert.equal(routeFor("lesson=capstone-host-product&track=capstone&host=node").host, "node");
+  assert.equal(routeFor("lesson=capstone-domain-core&track=node&host=node").track, "node");
+  assert.equal(routeFor("lesson=capstone-domain-core&track=node&host=node").host, undefined);
+  assert.equal(routeFor("lesson=node-esm-packages-and-cli&host=browser").host, undefined);
+  const storage = memoryStorage();
+  const progress = createLearningProgress(storage, "host-test");
+  const browserIdentity = progressIdentity(browser, "ES2026");
+  const nodeIdentity = progressIdentity(node, "ES2026");
+  progress.update(browserIdentity, { quiz: { revision: browser.lesson.quiz.revision, answers: { q: "a" }, assessed: true }, submission: { marker: "browser" } });
+  assert.equal(progress.load(nodeIdentity).value.quiz, null);
+  assert.equal(progress.load(nodeIdentity).value.submission, null);
+  progress.update(nodeIdentity, { quiz: { revision: node.lesson.quiz.revision, answers: { q: "b" }, assessed: false } });
+  const reopened = createLearningProgress(storage, "host-test");
+  assert.equal(reopened.load(browserIdentity).value.quiz.answers.q, "a");
+  assert.equal(reopened.load(nodeIdentity).value.quiz.answers.q, "b");
 });
 
 test("provider routing preserves each exercise environment and keeps unavailable feature reasons", async () => {

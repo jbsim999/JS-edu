@@ -125,3 +125,33 @@ test('initial manifest validation rejects missing entry and unsafe paths before 
   unsafe.workspace.files[1].path = '../counter.mjs';
   assert.throws(() => setup({ definition: unsafe }), /목록/);
 });
+
+test('Node workspaces preserve canonical .mjs/.cjs/.json snapshots and fixed package helpers', async () => {
+  const definition = { ...exercise('node-1'), id: 'node-module-counter', profileId: 'node-native',
+    runner: { kind: 'module-files', entry: 'main.mjs', runProbe: 'observe(submission.count);' },
+    workspace: { entry: 'main.mjs', files: [
+      { path: 'main.mjs', source: 'export { default as count } from "./count.cjs";', editable: true },
+      { path: 'count.cjs', source: 'module.exports = 1;', editable: true },
+      { path: 'package.json', source: '{"type":"module"}', editable: false },
+    ] } };
+  const { backend, drafts, workspace } = setup({ definition });
+  const initial = workspace.snapshot();
+  assert.deepEqual(Object.keys(JSON.parse(initial).files), ['count.cjs', 'main.mjs', 'package.json']);
+  workspace.select('package.json');
+  assert.equal(workspace.record().status, 'readonly');
+  assert.throws(() => workspace.update('package.json', '{}'), /읽기 전용/);
+  drafts.load(workspace.identity('package.json'), '{}');
+  drafts.update(workspace.identity('package.json'), '{}');
+  drafts.save(workspace.identity('package.json'));
+  workspace.update('count.cjs', 'module.exports = 2;');
+  workspace.save('count.cjs');
+  assert.notEqual(await fingerprintSource(initial), await fingerprintSource(workspace.snapshot()));
+  const restored = setup({ backend, definition }).workspace;
+  assert.equal(restored.record('count.cjs').value, 'module.exports = 2;');
+  assert.equal(restored.record('package.json').value, '{"type":"module"}');
+  assert.equal(JSON.parse(restored.snapshot()).files['package.json'], '{"type":"module"}');
+  assert.equal(setup({ backend, definition: { ...definition, id: 'other-host-exercise' } }).workspace.record('count.cjs').value, 'module.exports = 1;');
+  const collision = structuredClone(definition);
+  collision.workspace.files.push({ path: 'COUNT.cjs', source: '', editable: true });
+  assert.throws(() => setup({ definition: collision }), /목록|경로|대소문자/);
+});

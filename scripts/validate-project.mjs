@@ -2,6 +2,8 @@ import { readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateModuleExercise } from './verify-module-curriculum.mjs';
+import { validateNodeExercise } from './validate-node-exercise.mjs';
+import { validateLessonHosts, validateHostPrerequisiteGraphs } from './validate-lesson-hosts.mjs';
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const nonempty = value => typeof value === 'string' && value.trim().length > 0;
@@ -154,6 +156,8 @@ export async function validateProject(directory) {
   };
   const done = new Set();
   for (const id of lessons.keys()) visit(id, new Set(), done);
+  for (const [id, lesson] of lessons) errors.push(...validateLessonHosts(lesson, entries.get(id), exercises, new Set(lessons.keys())));
+  errors.push(...validateHostPrerequisiteGraphs(lessons));
   for (const [id, profile] of profiles) {
     need(versions.includes(profile.languageVersion), `Unsupported profile version: ${id}`);
     need(typeof profile.execution?.available === 'boolean', `Profile availability missing: ${id}`);
@@ -169,7 +173,8 @@ export async function validateProject(directory) {
       for (const [index, reference] of references.entries()) await verifyFile(reference, `${id}.${field}[${index}]`);
     }
     need(lessons.has(exercise.lessonId), `Unknown exercise lesson: ${id}`);
-    need(lessons.get(exercise.lessonId)?.exerciseId === id, `Exercise/lesson mismatch: ${id}`);
+    const exerciseLesson = lessons.get(exercise.lessonId);
+    need(exerciseLesson?.exerciseId === id || Object.values(exerciseLesson?.exerciseByHost ?? {}).includes(id), `Exercise/lesson mismatch: ${id}`);
     need(profiles.has(exercise.profileId), `Unknown exercise profile: ${id}`);
     need(lessons.get(exercise.lessonId)?.supportedVersions?.includes(profiles.get(exercise.profileId)?.languageVersion),
       `Exercise profile version not supported by lesson: ${id}`);
@@ -209,7 +214,7 @@ export async function validateProject(directory) {
       need(Array.isArray(exercise.behaviorCriteria) && exercise.behaviorCriteria.length > 0 && exercise.behaviorCriteria.every(nonempty),
         `Runner requires behavior criteria: ${id}`);
       if (runner?.kind === 'module-files') {
-        errors.push(...validateModuleExercise(exercise));
+        errors.push(...(exercise.profileId === 'node-native' ? validateNodeExercise(exercise) : validateModuleExercise(exercise)));
       } else if (runner?.kind === 'function-body') {
         need(nonempty(runner.exportName) && /^[A-Za-z_$][\w$]*$/.test(runner.exportName), `Invalid runner exportName: ${id}`);
         need(typeof runner.async === 'boolean', `Runner async flag missing: ${id}`);
@@ -254,6 +259,9 @@ export async function validateProject(directory) {
       need(grader?.observationMode === 'callback', `Grader requires callback observationMode: ${id}`);
       const cases = list(grader?.cases, `${id}.grader.cases`);
       need(cases.length > 0, `Grader must contain nonzero cases: ${id}`);
+      for (const fixture of Array.isArray(exercise.nodeFixtures) ? exercise.nodeFixtures : []) {
+        need(cases.some(check => check?.id === fixture?.caseId), `Node fixture references unknown grader case: ${id}:${fixture?.caseId}`);
+      }
       for (const [caseId, check] of unique(cases, `grader:${id}`)) {
         need(nonempty(check.label), `Missing grader case label: ${id}:${caseId}`);
         need(nonempty(check.probe), `Missing grader probe: ${id}:${caseId}`);

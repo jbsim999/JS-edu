@@ -1,0 +1,187 @@
+{
+  "id": "node-workers-and-resource-limits",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "N07. 실제 Worker 풀·대기열·자원 경계",
+  "track": "node-runtime",
+  "level": "advanced",
+  "goals": [
+    "CPU 작업을 실제 worker_threads에 전달하고 순차 결과 및 구조화 복사 의미를 검증한다.",
+    "worker 수·대기열·deadline을 제한하고 취소·오류·낡은 응답을 처리한다.",
+    "종료 완료와 자원 소유권을 검증하고 heap 제한·프로세스 격리의 한계를 설명한다."
+  ],
+  "prerequisites": [
+    "node-events-and-lifecycle",
+    "iterators-and-generators",
+    "cancellation-and-stale-results",
+    "bounded-concurrency-and-retries"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "Node.js host APIs; target runtime Node.js 24.22.0",
+  "preview": false,
+  "sources": [
+    {
+      "title": "Node.js Worker threads — constructor, resourceLimits, messages, terminate",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/worker_threads.html",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Events — once and error events",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/events.html#error-events",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Process — process.exit in a Worker",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/process.html#processexitcode",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "node-workers-and-resource-limits-exercise",
+  "steps": {
+    "theory": "배열 합계를 Worker로 옮기면 무조건 빨라지는가? 작은 배열은 스레드 시작·메시지 복사 비용이 계산보다 클 수 있다. Node의 비동기 I/O는 자체 비동기 기능을 먼저 쓰고, CPU 계산을 맡길 때 Worker와 풀을 검토한다. 이 수업은 속도 향상을 약속하지 않는다. 같은 입력에 대한 순차 결과, 실제 생성한 Worker 수, 대기열 상한과 종료 상태를 먼저 검증한다. 성능 비교는 입력 크기·동시 요청 수·워밍업·장치·지연 분포를 기록한 별도 실험이다.\n\npostMessage는 전달 가능한 값을 구조화 복사한다. 큐에 기다리는 원본 배열을 호출자가 수정하면 결과가 달라질 수 있으므로 승인 순간 입력 스냅샷을 만든다. 이 과제는 작은 정수 배열을 복사하며 SharedArrayBuffer와 transferList를 도입하지 않는다. transfer로 복사를 줄일 때는 원본 버퍼 소유권 이동과 detached 상태를 별도로 계약해야 한다.\n\nsize는 동시에 살아 있는 Worker 수의 상한이고 maxQueued는 아직 배정하지 않은 작업 수의 상한이다. 취소된 Worker에 terminate를 요청하고 바로 새 Worker를 만들면 두 개가 잠시 살아 상한을 어길 수 있다. terminate Promise 완료까지 해당 슬롯을 retiring으로 유지한다. 성공하면 재사용하고, timeout·취소·error·예기치 않은 exit는 현재 작업을 정착시킨 뒤 작업자를 교체한다. 모든 메시지에는 증가하는 id가 있으며 현재 작업 id와 일치하지 않는 늦은 응답은 무시한다.\n\nresourceLimits의 maxOldGenerationSizeMb=32는 V8의 일부 메모리 영역 제한이다. ArrayBuffer 등의 외부 메모리나 프로세스 전체 RAM을 32MiB로 고정하지 않으며 전역 메모리 부족은 프로세스에 영향을 줄 수 있다. Worker는 OS 보안 경계도 아니다. Node 24에서 worker 생성 권한을 허용하면 execArgv:[] 같은 옵션으로 부모 권한 플래그 승계를 바꾸는 경로를 고려해야 한다. 따라서 학습 Worker를 허용했다는 이유로 전체 파일 접근 제한·네트워크 차단·악성 코드 격리가 완성됐다고 주장하지 않는다. 이 수업은 고정 helper와 신뢰한 저작 검증에서 동작과 자원 정리를 검증한다.",
+    "example": "예제는 실제 worker_threads.Worker 하나에 [4,-1,8]을 전달한다. 결과는 id=1,sum=11이다. resourceLimits에서 지정한 old generation 제한을 읽되 이것을 총 사용 메모리 실측으로 해석하지 않는다. 결과를 받은 뒤에도 메시지 리스너가 붙은 Worker는 살아 있으므로 finally에서 terminate를 await한다.\n\n고정 worker.mjs의 delayMs·duplicateAfterMs·fail은 채점을 위한 유한 지연과 실패 주입 옵션이다. 실습에서는 같은 helper로 timeout, 늦은 이전 id 메시지, Worker 예외를 재현한다. 운영 API가 임의 코드나 무한 대기를 입력으로 받는다는 뜻이 아니다.",
+    "quiz": "Worker 선택 이유, terminate의 비동기 완료, 이전 id 응답, resourceLimits 범위를 판단한다. 성공 계산 결과뿐 아니라 물리적으로 살아 있는 작업자 수를 함께 확인한다.",
+    "practice": "size=1,maxQueued=1로 한 작업을 지연시키고 두 번째를 대기열에 넣어라. 세 번째는 QUEUE_FULL이어야 한다. 이제 첫 작업을 취소한 뒤 새 작업을 넣고 실제 Worker의 exit와 다음 생성 순서를 기록한다. peak live 수가 1을 넘으면 슬롯 해제를 너무 일찍 한 것이다.\n\n첫 결과 뒤 duplicateAfterMs=20의 이전 메시지를 보내고 다음 작업은 delayMs=80으로 늦춘다. id 검사를 제거한 구현은 두 번째 요청에 첫 번째 합계를 반환한다. 마지막에는 실행 중/대기 중 작업을 둔 상태로 close를 반복하고 모든 Promise와 Worker가 끝났는지 확인한다.",
+    "lab": "createSumPool({size=2,maxQueued=2,timeoutMs=1000,makeWorker=(url,options)=>new Worker(url,options)}={})를 export하라. size 1..4, maxQueued 0..8, timeoutMs 1..10000 정수다. 실제 helper URL new URL('./worker.mjs',import.meta.url)와 resourceLimits {maxOldGenerationSizeMb:32,stackSizeMb:4}로 주입된 makeWorker를 사용한다. helper는 읽기 전용이며 제출 파일은 main.mjs다. API는 submit(values,options), close(), stats()다.\n\nvalues는 길이 100000 이하 dense 배열이며 각 인덱스는 own 프로퍼티여야 하며 각 원소는 절댓값 1000000 이하 safe integer다. 프로토타입의 숫자 프로퍼티가 빈 슬롯을 대신할 수 없다. 승인 시 복사한다. 잘못된 배열은 TypeError로 reject한다. 옵션 signal, delayMs=0(0..3000 정수), duplicateAfterMs=0(0..1000 정수), fail=false는 고정 helper의 검증용 입력이다. 이미 취소되면 작업자 생성 없이 signal.reason으로 reject한다. 대기 중 취소는 큐에서 제거하고, active 취소/timeout은 해당 Worker를 종료한다. timeout은 dispatch부터 적용하며 큐 대기 전체 deadline은 별도 범위다.\n\n실제 Worker 수는 size 이하, 대기열은 maxQueued 이하다. 성공은 합계 숫자, 큐 초과는 QUEUE_FULL, deadline은 TIMEOUT, 작업자 장애는 WORKER_FAILURE, 종료 중/후 및 close가 취소한 작업은 POOL_CLOSED code로 reject한다. 원래 외부 취소 reason은 보존한다. timeout·장애 후 종료 완료를 기다린 슬롯만 재사용한다. 현재 id와 다른 메시지는 무시한다. close는 같은 Promise를 반환하고 큐/active를 모두 정착시킨 후 모든 Worker 종료를 기다린다. stats는 {state:'open'|'closing'|'closed',active,queued,workers}다. Worker 생성 옵션에 execArgv를 추가하지 않고 실행 제공자의 기본 승계를 유지한다. 이 과제만 고정 metadata로 worker 권한을 요청한다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "n07-cpu",
+        "prompt": "작은 HTTP I/O를 모두 Worker로 옮기는 결정은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "시작·복사 비용과 실제 병목을 측정한 뒤 판단한다.",
+            "explanation": "Worker는 CPU 작업 분리에 유용하지만 모든 I/O를 자동으로 빠르게 하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "Worker가 있으면 언제나 더 빠르다.",
+            "explanation": "작업 크기와 전송 비용을 무시한다."
+          },
+          {
+            "id": "c",
+            "text": "측정 없이 CPU 수만큼 요청을 무제한 큐에 넣는다.",
+            "explanation": "대기열 메모리와 상류 부하를 통제하지 못한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "n07-retire",
+        "prompt": "size=1에서 active 취소 직후 새 Worker를 만들면 생길 수 있는 문제는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "이전 terminate 완료 전 live 작업자가 2개가 될 수 있다.",
+            "explanation": "슬롯은 종료 Promise가 끝난 뒤 비워야 한다."
+          },
+          {
+            "id": "b",
+            "text": "terminate는 동기이므로 항상 1개다.",
+            "explanation": "실제 API는 비동기 Promise를 반환한다."
+          },
+          {
+            "id": "c",
+            "text": "취소는 결과만 버리므로 자원은 자동으로 사라진다.",
+            "explanation": "반환값 무시와 실제 종료는 다르다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "n07-id",
+        "prompt": "이전 작업의 지연된 응답이 재사용 Worker에서 도착하면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "현재 task id와 다르면 버린다.",
+            "explanation": "물리적 Worker와 논리적 요청의 생명주기를 분리한다."
+          },
+          {
+            "id": "b",
+            "text": "같은 Worker가 보냈으므로 현재 요청 결과다.",
+            "explanation": "재사용 중 낡은 메시지가 섞일 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "합계가 숫자면 현재 요청을 resolve한다.",
+            "explanation": "자료형만 맞아도 요청 상관관계가 틀릴 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "n07-limits",
+        "prompt": "maxOldGenerationSizeMb=32가 보장하는 범위는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "해당 JS 엔진의 지정 메모리 영역 제한이다.",
+            "explanation": "프로세스 전체 RAM·외부 버퍼·파일/네트워크 보안 경계가 아니다."
+          },
+          {
+            "id": "b",
+            "text": "전체 프로세스 RAM이 32MiB를 넘을 수 없다.",
+            "explanation": "외부 메모리와 다른 Worker 사용량이 포함되지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "어떤 제출도 호스트 파일을 볼 수 없다.",
+            "explanation": "메모리 옵션은 파일 권한을 규정하지 않는다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "n07-cpu"
+      ],
+      "caseIds": [
+        "actual-worker-results",
+        "input-and-snapshot",
+        "inherited-index-rejected"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "n07-retire",
+        "n07-id"
+      ],
+      "caseIds": [
+        "queue-limit",
+        "queued-abort",
+        "active-abort-replacement",
+        "timeout-and-recovery",
+        "stale-duplicate-message",
+        "worker-crash"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "n07-limits",
+        "n07-retire"
+      ],
+      "caseIds": [
+        "close-and-reject",
+        "pre-abort-no-worker",
+        "actual-worker-results"
+      ]
+    }
+  ],
+  "hostRequirements": [
+    "node-native"
+  ]
+}

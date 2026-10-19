@@ -42,7 +42,8 @@ export function resultMatches(result, request, environmentFingerprint) {
 }
 
 export function submissionPassed(result) {
-  return result?.status === "success" && Array.isArray(result.checks) && result.checks.length > 0
+  return result?.status === "success" && !result.cleanupWarning && !result.cleanupPending
+    && Array.isArray(result.checks) && result.checks.length > 0
     && result.checks.every(check => check.passed === true);
 }
 
@@ -56,10 +57,20 @@ export function createExecutionState({ runner, fingerprintSource, onChange = () 
   const publish = next => { state = { ...state, ...next }; onChange(state); };
   const invalidate = (reason = "") => {
     generation += 1;
+    const operation = generation;
     const requestId = active?.requestId;
     active = null;
-    if (requestId) void runner.cancel(requestId);
     publish({ phase: "idle", kind: null, result: null, reason });
+    if (requestId) return Promise.resolve(runner.cancel(requestId)).then(result => {
+      const warnings = value => Array.isArray(value) ? value.flatMap(warnings)
+        : value?.status === "fulfilled" ? warnings(value.value)
+        : typeof value?.cleanupWarning === "string" && value.cleanupWarning ? [value.cleanupWarning] : [];
+      const messages = [...new Set(warnings(result))];
+      if (operation === generation && messages.length) publish({ reason: [reason, ...messages].filter(Boolean).join(" ") });
+      return result;
+    }).catch(() => {
+      if (operation === generation) publish({ reason: [reason, "이전 작업의 중지·정리 완료를 확인하지 못했습니다."].filter(Boolean).join(" ") });
+    });
   };
   const cancel = () => invalidate("작업을 중지했습니다. 현재 코드는 그대로 유지됩니다.");
   const start = async (kind, context, source) => {
@@ -73,9 +84,10 @@ export function createExecutionState({ runner, fingerprintSource, onChange = () 
       if (operation !== generation) return null;
       const request = { requestId, lessonId: context.lessonId, exerciseId: context.exerciseId,
         contentRevision: context.contentRevision, targetVersion: context.targetVersion, source, sourceFingerprint };
-      const prepared = await runner.prepare(request);
+      let prepared = await runner.prepare(request);
       if (operation !== generation) return null;
       if (!resultMatches(prepared, request, environment.environmentFingerprint)) throw new Error("환경 응답이 현재 작업과 일치하지 않습니다.");
+      if (prepared.cleanupWarning || prepared.cleanupPending) prepared = { ...prepared, status: "infrastructure-error" };
       if (prepared.status !== "ready" || kind === "prepare") {
         active = null;
         publish({ phase: "idle", result: prepared, reason: "" });

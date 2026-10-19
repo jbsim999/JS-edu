@@ -1,0 +1,194 @@
+{
+  "id": "node-testing-and-delivery",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "N08. 실제 인수 검사와 Node 조회 도구 전달",
+  "track": "node-runtime",
+  "level": "advanced",
+  "goals": [
+    "node:test·assert·주입 시계·대역을 사용하면서 실제 파일과 loopback HTTP 경계도 검증한다.",
+    "NDJSON 조회의 검증·정렬·오류 계약을 CLI/HTTP에서 동일하게 제공한다.",
+    "실행 버전·소스 식별자·입력 상한을 전달하고 비동기 자원과 fixture를 정리한다."
+  ],
+  "prerequisites": [
+    "node-workers-and-resource-limits"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "Node.js host APIs; target runtime Node.js 24.22.0",
+  "preview": false,
+  "sources": [
+    {
+      "title": "Node.js Test runner — run isolation, assertions, mocks",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/test.html#runoptions",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js File system — createReadStream, mkdtemp, realpath",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/fs.html",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js HTTP — server lifecycle",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/http.html#serverclosecallback",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Process — version and exitCode",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/process.html#processversion",
+      "edition": "Node.js v24.22.0 API documentation",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "node-testing-and-delivery-exercise",
+  "steps": {
+    "theory": "단위 테스트가 통과한 조회 도구를 동료에게 전달했는데 다른 데이터 파일에서 깨진다면 무엇이 빠졌는가? 순수 함수의 예제와 실제 파일 인코딩·경로·포트·프로세스 환경은 별도 경계다. 이번 마지막 Node 수업은 NDJSON→검증→중복 처리→필터/정렬이라는 한 모델을 CLI와 loopback HTTP에 연결한다. 통합 프로젝트의 브라우저 경로와 함께 사용할 수 있는 Node 전달 예제이며 기본 강의 수를 늘리는 별도 트랙이 아니다.\n\n결정적 테스트는 시계·입력·정렬 기준·환경을 고정한다. clock 함수를 주입하고 동점 id는 localeCompare 대신 명시한 코드 단위 순서로 비교한다. 실제 runtime은 process.version으로 기록하고 sourceRevision은 호출자가 제공한 식별자임을 밝힌다. 이름을 적었다는 사실만으로 커밋 해시 검증이나 재현 가능한 빌드를 완료한 것은 아니다. 생성 시각을 현재 시간과 대조하거나 임의 포트를 하드코딩하면 검사는 쉽게 흔들린다.\n\nnode:test는 Promise를 반환하는 검사를 기다린다. test 내부의 비동기 작업을 반환하거나 await하지 않으면 검사가 끝난 뒤 오류가 발생할 수 있다. t.mock.fn은 출력 호출을 기록하는 대역으로 쓰고, 실제 파일 읽기와 HTTP는 별도 통합 검사로 실행한다. 예제의 run({isolation:'none'})는 테스트 파일을 현재 프로세스에서 import한다. 기본 process 격리는 child process를 만들기 때문에 이 학습 실행 권한에 맞지 않는다. none은 하위 프로세스가 필요 없는 선택인 동시에 전역 상태가 공유되는 선택이다. 테스트 간 mutable 전역, 환경 변경, 전역 mock 잔재를 남기지 않는다.\n\n입력 파일은 허용된 data 폴더 안에서만 다룬다. NDJSON chunk와 행 경계는 다르며 UTF-8 문자도 chunk 사이에서 나뉠 수 있다. 바이트 상한·행 수 상한·잘못된 뒤쪽 행을 모두 처리한 뒤 성공 결과를 반환한다. '중간까지 유효했으니 stdout에 먼저 출력'하면 뒤쪽 오류에서 취소하기 어려워진다. CLI는 한 JSON 줄 또는 안전한 오류 JSON을 내보내고 HTTP는 상태 코드와 동일 데이터 모델을 제공한다. 파일명 검증과 realpath 확인은 애플리케이션 계약이며 동시 파일 교체까지 막는 OS 격리 보장이라고 부르지 않는다.\n\n오류 행 번호는 수신 chunk 번호와 다르다. chunk 전체를 fatal decode한 뒤 줄을 세면 같은 chunk 앞쪽의 정상 줄도 세지 못하고 잘못된 행 번호를 보고할 수 있다. LF 바이트로 물리 행을 먼저 나누고 각 행을 엄격하게 decode하면 빈 줄과 chunk 경계 뒤의 오류도 정확히 찾는다.",
+    "example": "작동 예제는 읽기 전용 example-app.mjs와 acceptance.test.mjs를 사용한다. 작은 정상 NDJSON fixture를 실제 data 폴더에 만들고, 고정 시계로 조회 결과를 검사한다. CLI 출력은 t.mock.fn으로 한 번 호출됐는지 확인하고, HTTP는 127.0.0.1의 임의 포트에서 실제 요청한다. 정렬을 뒤집은 대표 오답이 assert에 거부되는지도 검사한다. 마지막으로 fixture 디렉터리를 삭제하고 포트가 닫혔음을 확인한다.\n\n예제 실행자는 import 전에 globalThis.__javascriptEduExampleContext={workspaceRoot,runtimeVersion,httpBase}를 제공한다. 이 컨텍스트가 없으면 ENVIRONMENT_UNSUPPORTED로 끝나며 임의 사용자 폴더로 우회하지 않는다. 예상 JSON은 passed=4,failed=0과 고정 실행 버전을 담는다. 예제 앱은 정상 fixture의 흐름만 보여 주므로 실습의 바이트 제한·모든 실패 정책을 대체하지 않는다.",
+    "quiz": "실제 경계와 대역의 역할, await 누락, 격리 none의 의미, 버전 표기의 증거 범위를 판단한다. 테스트 개수보다 실패 조건이 실제로 거부되는지가 중요하다.",
+    "practice": "예제의 첫 테스트에서 await를 빼면 테스트가 언제 완료되는지 추적하되 미처리 Promise를 방치한 코드를 제품에 남기지 않는다. 다음에는 파일 마지막 줄에 잘못된 레코드를 추가하고 CLI stdout이 빈 문자열인지 확인한다. HTTP 응답도 200의 부분 목록 대신 DATA 오류 상태여야 한다.\n\n시계만 대역으로 고정한 테스트와 실제 loopback/파일 테스트를 구분해 기록하라. fixture 경로를 사용자 문서 폴더로 바꾸지 않는다. 매 실행마다 data 하위의 새 임시 디렉터리를 사용하고 finally에서 그 경로만 삭제한다. 인수 기록에는 sourceRevision, process.version, 입력 상한, 실제 확인한 정답·대표 오답·정리 결과와 미확인 운영 조건을 적는다.",
+    "lab": "main.mjs에서 lookupRecords(options), runLookupCli(argv,options), createLookupServer(options)를 export한다. 읽기 전용 delivery-contract.mjs의 LIMITS/parseMinScore/deliveryError를 사용할 수 있다. options={workspaceRoot,fileName:'records.ndjson',minScore:0,clock:()=>new Date(),sourceRevision:'local'}다. workspaceRoot는 제공자가 허용한 data 폴더이고, fileName은 ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}\\.ndjson$만 허용한다. realpath 후 폴더 밖으로 나가는 파일도 거부한다. minScore는 0..100 정수, sourceRevision은 [A-Za-z0-9._-] 1..64자, clock은 유효 Date를 반환한다. 위반 code는 ARGS, 파일 읽기 실패는 FILE이다.\n\n입력은 UTF-8 NDJSON, 최대 32768바이트·빈 줄을 제외한 최대 100행이다. 잘못된 UTF-8/JSON/레코드는 DATA(1부터 물리 line 포함), 상한 초과는 LIMIT다. 레코드는 id 1..32자 문자열과 score 0..100 정수이며 다른 필드를 버린다. 중복 id는 첫 행을 유지하되 모든 비어 있지 않은 행을 상한에 센다. minScore 이상만 남기고 score 내림차순, 동점 id 코드 단위 오름차순으로 정렬한다. 결과는 {records,total,source:{file,revision,runtime:process.version,language:'ES2026'},generatedAt:clock().toISOString()}다. 각 호출은 새 결과 객체·records 배열·레코드 객체를 반환한다. 이 값들을 freeze해도 되며 검사도 변경 불가능한 결과를 허용한다. 내부 경로나 원문 오류 메시지를 결과에 넣지 않는다.\n\nCLI는 argv=[fileName] 또는 [fileName,'--min-score',정규형0..100문자열]이다. 주입 writeOut/writeError는 문자열을 받는 함수다. 성공은 writeOut(JSON.stringify(result)+'\\n') 한 번과 반환 0, 실패는 stdout 없이 writeError({error:code,line?} JSON 한 줄)와 반환 2다. process.exit를 호출하지 않는다. HTTP는 createServer 결과만 반환하고 자체 listen하지 않는다. GET /records?minScore=...만 지원하며 성공 200, 경로 404, 메서드 405(Allow:GET), 잘못된 query/입력 400, 파일·데이터·상한 실패 500이다. query 중복·알 수 없는 key도 400이다. 반환 전 파일 스트림을 정리하고 서버 포트는 생성한 호출자가 finally에서 닫는다. 읽기 전용 예제 테스트 helper는 학습 예제의 별도 인수 검사이며 제출 정답을 담지 않는다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "n08-real",
+        "prompt": "writeOut을 mock.fn으로 검사했다면 무엇이 아직 별도 확인 대상인가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "실제 파일 읽기·인코딩·HTTP 포트 정리",
+            "explanation": "대역이 관찰하는 계약과 실제 OS 경계는 다르다."
+          },
+          {
+            "id": "b",
+            "text": "아무것도 없다. 대역이 OS 동작까지 증명한다.",
+            "explanation": "mock 호출 기록은 파일/네트워크를 실행하지 않는다."
+          },
+          {
+            "id": "c",
+            "text": "고정 시계는 테스트를 불안정하게 만든다.",
+            "explanation": "주입 시계는 현재 시간 의존을 줄인다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "n08-await",
+        "prompt": "async test 안의 조회 Promise를 await/return하지 않으면?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "검사 완료 뒤 실패하거나 자원이 남을 수 있다.",
+            "explanation": "테스트 러너가 기다릴 비동기 체인에 연결해야 한다."
+          },
+          {
+            "id": "b",
+            "text": "test가 모든 떠도는 Promise를 자동 추적한다.",
+            "explanation": "명시적으로 기다리지 않은 비동기 작업은 검사 수명에서 벗어날 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "조회 속도가 빠르면 계약상 항상 안전하다.",
+            "explanation": "우연한 실행 속도는 동기화가 아니다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "n08-isolation",
+        "prompt": "run({isolation:\"none\"})의 의미는?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "현재 프로세스에서 테스트 파일을 import하므로 전역 상태 공유를 관리한다.",
+            "explanation": "child process가 필요 없는 실행이지만 격리 범위가 달라진다."
+          },
+          {
+            "id": "b",
+            "text": "OS 수준으로 모든 자원을 격리한다.",
+            "explanation": "none은 프로세스 격리를 끈 설정이다."
+          },
+          {
+            "id": "c",
+            "text": "일반 기본 설정처럼 각 파일마다 child process를 만든다.",
+            "explanation": "process와 none을 구분해야 한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "n08-delivery",
+        "prompt": "sourceRevision 문자열과 process.version을 기록하면 무엇을 말할 수 있는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "제공한 소스 식별자와 실제 실행 Node 버전을 명시했다.",
+            "explanation": "식별자 자체의 진위·빌드 재현성은 별도 검증이다."
+          },
+          {
+            "id": "b",
+            "text": "서명된 재현 가능 패키지 검증이 끝났다.",
+            "explanation": "버전 필드 출력은 패키지 무결성 검증이 아니다."
+          },
+          {
+            "id": "c",
+            "text": "파일 오류를 원문 경로와 함께 사용자에게 보내도 된다.",
+            "explanation": "내부 경로와 운영 정보는 반환 계약에서 제외한다."
+          }
+        ],
+        "correctChoiceId": "a"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "n08-real",
+        "n08-await",
+        "n08-isolation"
+      ],
+      "caseIds": [
+        "real-ndjson",
+        "cli-success",
+        "http-contract",
+        "http-data-error"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "n08-real",
+        "n08-await"
+      ],
+      "caseIds": [
+        "late-invalid-record",
+        "json-error-and-utf8",
+        "byte-record-limits",
+        "cli-args",
+        "repeat-and-empty",
+        "invalid-utf8-physical-lines"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "n08-delivery",
+        "n08-isolation"
+      ],
+      "caseIds": [
+        "cli-success",
+        "missing-file-redaction",
+        "invalid-clock-metadata",
+        "http-contract"
+      ]
+    }
+  ],
+  "hostRequirements": [
+    "node-native"
+  ]
+}

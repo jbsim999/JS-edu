@@ -7,7 +7,7 @@ let checked = 0;
 let failed = false;
 async function visit(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (['.git', 'node_modules', 'work', 'build', 'dist', 'coverage'].includes(entry.name)) continue;
+    if (['.git', 'node_modules', 'work', 'artifacts', 'build', 'dist', 'coverage'].includes(entry.name)) continue;
     const filename = path.join(directory, entry.name);
     if (entry.isDirectory()) await visit(filename);
     else if (entry.isFile() && ['.mjs', '.js', '.cjs'].includes(path.extname(entry.name))) {

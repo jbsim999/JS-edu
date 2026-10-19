@@ -1,0 +1,118 @@
+{
+  "exerciseId": "node-esm-packages-and-cli-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-esm-packages-and-cli-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "summary-and-channels",
+      "label": "실제 JSON 파일을 집계하고 stdout과 종료 코드를 구분한다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; await fs.writeFile(path.join(context.workspaceRoot,'숫자 자료.json'),'[3,-1,8]'); const code=await submission.runSummaryCli(['--file','숫자 자료.json'],io); observe({code,out,err});",
+      "expected": {
+        "code": 0,
+        "out": "{\"label\":\"summary\",\"count\":3,\"total\":10}\n",
+        "err": ""
+      }
+    },
+    {
+      "id": "cwd-is-explicit",
+      "label": "모듈 위치와 별개의 cwd 기준으로 상대 경로를 읽는다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; const dir=path.join(context.workspaceRoot,'다른 작업 폴더'); await fs.mkdir(dir); await fs.writeFile(path.join(dir,'data.json'),'[7]'); const code=await submission.runSummaryCli(['--file','data.json'],{...io,cwd:dir}); observe({code,out,err});",
+      "expected": {
+        "code": 0,
+        "out": "{\"label\":\"summary\",\"count\":1,\"total\":7}\n",
+        "err": ""
+      }
+    },
+    {
+      "id": "label-precedence",
+      "label": "명시 옵션, 환경 변수, 기본값의 우선순위를 적용한다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; await fs.writeFile(path.join(context.workspaceRoot,'data.json'),'[]'); const codes=[]; codes.push(await submission.runSummaryCli(['--file','data.json'],{...io,env:{SUMMARY_LABEL:' 환경 '}})); codes.push(await submission.runSummaryCli(['--label',' 옵션 ','--file','data.json'],{...io,env:{SUMMARY_LABEL:'환경'}})); observe({codes,out,err});",
+      "expected": {
+        "codes": [
+          0,
+          0
+        ],
+        "out": "{\"label\":\"환경\",\"count\":0,\"total\":0}\n{\"label\":\"옵션\",\"count\":0,\"total\":0}\n",
+        "err": ""
+      }
+    },
+    {
+      "id": "invalid-arguments",
+      "label": "누락·중복·미지 옵션·빈 값은 파일 접근 전에 사용 오류로 끝낸다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; const codes=[]; for(const argv of [[],['--file'],['--unknown','x'],['--file','a','--file','b'],['--file',''],['--label','a'],['--file','a','--label','']]) codes.push(await submission.runSummaryCli(argv,io)); observe({codes,out,errors:err.split('\\n').filter(Boolean)});",
+      "expected": {
+        "codes": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "out": "",
+        "errors": [
+          "사용법: --file <JSON 파일> [--label <이름>]",
+          "사용법: --file <JSON 파일> [--label <이름>]",
+          "사용법: --file <JSON 파일> [--label <이름>]",
+          "사용법: --file <JSON 파일> [--label <이름>]",
+          "사용법: --file <JSON 파일> [--label <이름>]",
+          "사용법: --file <JSON 파일> [--label <이름>]",
+          "사용법: --file <JSON 파일> [--label <이름>]"
+        ]
+      }
+    },
+    {
+      "id": "missing-file",
+      "label": "없는 파일은 오류 채널과 운영 실패 코드 1을 사용한다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; const code=await submission.runSummaryCli(['--file','missing.json'],io); observe({code,out,err,leaked:err.includes(context.workspaceRoot)});",
+      "expected": {
+        "code": 1,
+        "out": "",
+        "err": "입력 파일을 처리할 수 없습니다.\n",
+        "leaked": false
+      }
+    },
+    {
+      "id": "invalid-data-and-overflow",
+      "label": "잘못된 JSON·숫자 문자열·안전 범위 초과를 정상 집계로 처리하지 않는다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; const codes=[]; for(const data of ['{','{}','[1,\"2\"]','[1.5]','[9007199254740991,1]']){await fs.writeFile(path.join(context.workspaceRoot,'data.json'),data); codes.push(await submission.runSummaryCli(['--file','data.json'],io));} observe({codes,out,errorLines:err.split('\\n').filter(Boolean).length});",
+      "expected": {
+        "codes": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "out": "",
+        "errorLines": 5
+      }
+    },
+    {
+      "id": "environment-does-not-mutate",
+      "label": "환경 객체를 보존하고 잘못된 환경 값을 사용 오류로 처리한다",
+      "probe": "const fs = await import('node:fs/promises'); const path = await import('node:path'); let out=''; let err=''; const io={cwd:context.workspaceRoot,env:{},stdout:{write:s=>{out+=s;}},stderr:{write:s=>{err+=s;}}}; const env=Object.freeze({SUMMARY_LABEL:'   ',KEEP:'yes'}); const code=await submission.runSummaryCli(['--file','data.json'],{...io,env}); observe({code,out,err,env});",
+      "expected": {
+        "code": 2,
+        "out": "",
+        "err": "사용법: --file <JSON 파일> [--label <이름>]\n",
+        "env": {
+          "SUMMARY_LABEL": "   ",
+          "KEEP": "yes"
+        }
+      }
+    },
+    {
+      "id": "package-public-boundary",
+      "label": "실제 Node 패키지 공개 경로는 로드되고 비공개 하위 경로는 거부된다",
+      "probe": "const boundary=submission.inspectPackageBoundary();observe({...boundary,entryType:typeof submission.runSummaryCli});",
+      "expected": {
+        "publicType": "function",
+        "privateError": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+        "entryType": "function"
+      }
+    }
+  ]
+}

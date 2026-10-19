@@ -1,0 +1,188 @@
+{
+  "id": "node-files-and-paths",
+  "contentRevision": "draft-1",
+  "status": "draft",
+  "title": "파일과 경로: 허용 영역·쓰기 순서·실패 정리",
+  "track": "node-runtime",
+  "level": "advanced",
+  "goals": [
+    "파일 URL·OS 경로·허용 root의 경계를 구분하고 상대 입력을 검증한다.",
+    "실제 비동기 파일 읽기와 쓰기를 순서화하고 UTF-8 바이트 수를 계산한다.",
+    "부분 쓰기·없음·권한 실패 뒤 원본과 핸들·임시 파일의 상태를 보존한다."
+  ],
+  "prerequisites": [
+    "node-esm-packages-and-cli"
+  ],
+  "supportedVersions": [
+    "ES2026"
+  ],
+  "featureSince": "Node.js fs/promises, path, URL and FileHandle host APIs",
+  "preview": false,
+  "hostRequirements": [
+    "node-native"
+  ],
+  "sources": [
+    {
+      "title": "Node.js File system — fsPromises, FileHandle.close/writeFile/sync, rename, realpath, lstat",
+      "url": "https://nodejs.org/docs/v24.22.0/api/fs.json",
+      "edition": "Node.js 24.22.0 official version-pinned API JSON; host API, not ECMAScript edition",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Path — resolve, relative, isAbsolute",
+      "url": "https://nodejs.org/docs/v24.22.0/api/path.json",
+      "edition": "Node.js 24.22.0 official version-pinned API JSON; host API, not ECMAScript edition",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js URL — fileURLToPath and pathToFileURL",
+      "url": "https://nodejs.org/docs/v24.22.0/api/url.json",
+      "edition": "Node.js 24.22.0 official version-pinned API JSON; host API, not ECMAScript edition",
+      "checkedAt": "2026-10-15"
+    },
+    {
+      "title": "Node.js Permissions — File System Permissions and unsupported descriptor operations",
+      "url": "https://nodejs.org/docs/v24.22.0/api/permissions.json",
+      "edition": "Node.js 24.22.0 official version-pinned API JSON; product permissions are narrower than the general Node API",
+      "checkedAt": "2026-10-15"
+    }
+  ],
+  "exerciseId": "node-files-and-paths-exercise",
+  "steps": {
+    "theory": "노트 저장이 중간에 실패한 뒤 원래 문서까지 빈 파일이 되었다. 'w'로 대상 파일을 열면 완성된 새 내용을 확보하기 전에 기존 내용을 잘라낼 수 있다. 이번 저장소는 같은 디렉터리의 고유한 임시 파일에 먼저 기록하고, 쓰기를 기다리고 핸들을 닫은 뒤 rename으로 대상을 교체한다. 그 전 단계가 실패하면 기존 대상은 보존하고 임시 파일과 핸들을 정리한다.\n\nroot는 허용한 기존 디렉터리다. 파일 URL은 fileURLToPath로 OS 경로로 변환하며 URL.pathname의 인코딩된 문자열을 직접 사용하지 않는다. 이름을 resolve했다고 root 내부가 보장되지는 않는다. 절대 입력·상위 '..' 세그먼트·드라이브 구문·NUL을 거부하고 path.relative로 경계를 재확인한다. 존재하는 각 경로 구성 요소는 lstat으로 확인해 이번 과제에서는 심볼릭 링크를 허용하지 않는다. root 자체는 realpath로 확정한다.\n\nreadFile은 UTF-8 텍스트를 반환하고, writeFile의 완료는 기다려야 다음 쓰기의 시작을 정할 수 있다. 동일 파일의 두 쓰기를 Promise.all로 묶어도 실행 순서는 보장되지 않는다. 이번 계약은 호출자가 같은 대상의 쓰기를 await해 순서화한다. 동시 여러 작성자의 충돌 해결은 구현하지 않는다.\n\n'한글 🍋'은 UTF-16 코드 단위 수와 다른 11 UTF-8 바이트다. 저장 결과에 text.length를 넣으면 기록 단위를 잘못 설명한다. FileHandle을 얻은 함수가 close 책임을 갖고, 실패도 finally에서 정리한다. I/O 예외를 빈 문자열로 바꾸면 파일이 없다는 사실과 실제 빈 파일을 구별할 수 없으므로 ENOENT 등의 실패를 전달한다.\n\n일반 Node API에는 FileHandle.sync()와 fsync가 있지만, 이 제품의 Node 24.22.0 Permission Model 프로필에서는 해당 파일 디스크립터 연산을 지원하지 않는다. 파일 쓰기 권한을 받았어도 sync는 ERR_ACCESS_DENIED가 되므로 실습에서는 호출하지 않는다. 여기서 저장 완료는 쓰기·close·rename의 완료를 뜻하며 전원 손실 시 디스크 내구성을 보장하지 않는다. 그 보장이 필요한 독립 Node 프로그램은 다른 권한 환경에서 파일·디렉터리 동기화와 저장 장치 조건을 별도로 검증해야 한다.",
+    "example": "예제는 운영 폴더 대신 mkdtemp로 만든 자기 임시 디렉터리에서 실행한다. 한글·공백 파일 이름을 file URL로 전달해 '한글 🍋'을 쓰고 다시 읽는다. 텍스트와 바이트 수의 예상은 각각 같은 문자열과 11이다. path.relative(root, 안쪽 파일)는 부모 이동을 포함하지 않고 root의 형제 경로는 '..'로 시작한다.\n\n파일이 없는 읽기는 예외의 플랫폼 독립 코드 ENOENT만 출력한다. 예제 종료는 finally에서 자기 임시 폴더를 정리한다. 출력에는 개인 절대 경로를 포함하지 않으며 실제 OS 권한 변경을 시도하지 않는다.\n\n예제의 writeFile 완료와 이어지는 읽기는 실제 파일 I/O를 보여 준다. fsync를 실행하거나 전원 손실 내구성을 확인한 예제는 아니다.",
+    "quiz": "경로 계산, 포함 관계, 링크 해석과 운영체제 권한을 분리해 판단한다. 저장 도중 실패한 정확한 지점에서 원본·임시 파일·핸들이 각각 어떤 상태인지 추적하고, 직렬 호출의 책임이 누구에게 있는지 설명한다. 바이트 단위와 문자열 길이를 비교한다.",
+    "practice": "임시 파일을 같은 디렉터리에 두는 선택은 다른 파일 시스템 사이의 이동 문제를 줄인다. 하지만 rename 성공을 모든 저장 장치의 전원 장애 내구성으로 확대하지 않는다. 디렉터리 동기화·백업·여러 프로세스의 충돌 정책은 운영 요구에 따라 별도로 설계해야 한다. 검사 후 경로 구성 요소가 다른 프로세스에 의해 바뀌는 TOCTOU 경쟁도 이 고수준 경로 검사만으로 제거되지 않는다. 악성 사용자가 함께 수정하는 디렉터리의 보안 격리는 OS와 실행 제공자의 책임이다.\n\n실습은 writeContent(handle,text)라는 작은 실패 주입 지점을 둔다. 기본은 실제 handle.writeFile이며, 검사는 실제 임시 파일에 'part'를 쓴 뒤 실패시켜 원본 보존과 close를 관찰한다. EACCES를 주입하는 검사는 오류 전달·정리 정책의 검사다. Windows ACL이나 Unix 권한을 실제로 변경한 검증이라고 보고하지 않는다. 정리 자체가 실패할 수 있는 환경에서는 원래 오류와 정리 오류를 함께 기록하는 운영 정책이 추가로 필요하다.\n\nexisting-link-boundary 검사는 신뢰한 실행 제공자가 data 폴더 안에 미리 만든 allowed/linked → outside 디렉터리 링크와 outside/secret.txt를 사용한다. 학습 코드나 고정 검사가 symlink 생성 권한을 받는 것은 아니다. 검사에서는 링크를 통한 읽기·쓰기를 거부하고 원본 내용 original을 유지하는지만 관찰한다.",
+    "lab": "createTextStore(root,{writeContent})를 async 함수로 export한다. root는 기존 디렉터리 경로 또는 file URL이며 다른 타입·프로토콜은 TypeError다. writeContent 기본값은 (handle,text)=>handle.writeFile(text,'utf8')이고 함수만 허용한다. 반환 객체는 readText(name), writeText(name,text)를 제공한다.\n\nname은 root 내부의 상대 파일 이름이다. 빈 이름·'.'로 root 자체를 가리키는 값·절대 경로·':'·NUL·'..' 세그먼트와 존재하는 심볼릭 링크를 거부한다. 상위 폴더를 임의 생성하지 않으며 존재하지 않으면 ENOENT다. readText는 UTF-8 문자열을 반환한다. writeText는 문자열만 받고 같은 폴더에 배타적 'wx'로 임시 파일을 연다. writeContent → close → rename 순서를 기다린 뒤 {bytes:UTF-8 바이트 수}를 반환한다. 성공과 실패 모두 핸들과 임시 파일을 정리한다. 교체 전 실패는 원본 내용을 보존하고 같은 실패 값을 전파한다. 동일 대상 쓰기는 호출자가 순차 await한다. 현재 실행 권한에서 지원하지 않는 sync/fsync는 호출하지 않는다. 이 순서는 전원 손실 내구성 보장이 아니다."
+  },
+  "quiz": {
+    "questions": [
+      {
+        "id": "q1-path-boundary",
+        "prompt": "resolve(root, input)가 절대 경로를 반환하면 그 경로가 root 안에 있다는 뜻인가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "아니다. 상위 이동·절대 입력과 실제 링크 경계를 별도로 확인해야 한다.",
+            "explanation": "정규화는 접근 권한이나 디렉터리 포함 관계를 보장하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "그렇다. resolve는 보안 경계를 검증한다.",
+            "explanation": "resolve는 경로 계산 API이며 접근 제어 장치가 아니다."
+          },
+          {
+            "id": "c",
+            "text": "문자열이 root로 시작하기만 하면 충분하다.",
+            "explanation": "root-other 같은 이웃 폴더와 심볼릭 링크를 놓칠 수 있다."
+          }
+        ],
+        "correctChoiceId": "a"
+      },
+      {
+        "id": "q2-write-order",
+        "prompt": "같은 파일에 두 writeFile을 await 없이 실행하면 호출 순서대로 저장되는가?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "Promise가 있으므로 항상 호출 순서대로 저장된다.",
+            "explanation": "Promise 자체는 같은 자원의 작업을 직렬화하지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "보장되지 않는다. 호출자가 순서를 기다리거나 별도의 직렬화 정책을 둔다.",
+            "explanation": "동일 파일 동시 쓰기는 데이터 경합을 만든다."
+          },
+          {
+            "id": "c",
+            "text": "마지막 코드 줄의 내용이 반드시 남는다.",
+            "explanation": "코드의 실행 순서와 I/O의 완료 순서는 다를 수 있다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q3-partial-write",
+        "prompt": "대상 파일을 먼저 'w'로 열고 쓰다 실패했다. 안전한 복구 정책에 가장 가까운 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "실패하면 원래 파일이 자동 복구된다.",
+            "explanation": "열기와 일부 쓰기는 이미 원래 내용을 변경했을 수 있다."
+          },
+          {
+            "id": "b",
+            "text": "같은 폴더의 임시 파일에 완성한 뒤 교체하고 실패 시 핸들·임시 파일을 정리한다.",
+            "explanation": "이번 과제는 교체 전 실패가 기존 파일을 건드리지 않게 설계한다. 전원 장애 내구성 전체를 보장하지는 않는다."
+          },
+          {
+            "id": "c",
+            "text": "예외를 무시하면 파일 핸들만 자동 정리된다.",
+            "explanation": "핸들을 명시적으로 닫고 실패를 전달해야 한다."
+          }
+        ],
+        "correctChoiceId": "b"
+      },
+      {
+        "id": "q4-encoding-and-error",
+        "prompt": "'한글 🍋'을 UTF-8로 저장한 바이트 수와 쓰기 실패 검증의 설명으로 맞는 것은?",
+        "choices": [
+          {
+            "id": "a",
+            "text": "문자열 length를 바이트 수로 보고 EACCES 주입을 실제 OS 권한 검사라고 기록한다.",
+            "explanation": "UTF-16 길이와 UTF-8 바이트 수가 다르며 주입 실패는 OS 권한을 바꾸지 않는다."
+          },
+          {
+            "id": "b",
+            "text": "Buffer.byteLength로 11바이트를 구하고 주입 오류의 정리 검사를 OS 권한 검사와 구분한다.",
+            "explanation": "인코딩 단위와 검증 환경을 모두 명시해야 결과를 재현할 수 있다."
+          },
+          {
+            "id": "c",
+            "text": "어떤 인코딩에서도 항상 5바이트다.",
+            "explanation": "한글과 보조 평면 문자 때문에 인코딩별 크기가 달라진다."
+          }
+        ],
+        "correctChoiceId": "b"
+      }
+    ]
+  },
+  "assessmentMap": [
+    {
+      "goalIndex": 0,
+      "quizQuestionIds": [
+        "q1-path-boundary"
+      ],
+      "caseIds": [
+        "unicode-path-and-url-root",
+        "reject-escape-before-write",
+        "validate-content-and-root",
+        "existing-link-boundary"
+      ]
+    },
+    {
+      "goalIndex": 1,
+      "quizQuestionIds": [
+        "q2-write-order",
+        "q4-encoding-and-error"
+      ],
+      "caseIds": [
+        "unicode-path-and-url-root",
+        "sequential-replacement",
+        "successful-handle-close"
+      ]
+    },
+    {
+      "goalIndex": 2,
+      "quizQuestionIds": [
+        "q3-partial-write",
+        "q4-encoding-and-error"
+      ],
+      "caseIds": [
+        "missing-file-and-parent",
+        "partial-write-cleanup",
+        "permission-failure-propagation"
+      ]
+    }
+  ]
+}

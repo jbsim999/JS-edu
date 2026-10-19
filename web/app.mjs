@@ -2,8 +2,9 @@ import { glossary, findTerms, normalizeSearch } from "./glossary-data.mjs";
 import { createBrowserRunner, fingerprintSource } from "./execution/browser-runner.mjs";
 import { createModuleRunner } from "./execution/module-runner.mjs";
 import { createDomRunner } from "./execution/dom-runner.mjs";
-import { loadLearningData, normalizeRoute, trackLabels, conceptAliases, supportsExerciseProvider, browserWorkerProfile, browserDomProfile } from "./features/learning-data.mjs";
-import { createExecutionRouter, createExecutionState } from "./features/execution-state.mjs";
+import { createNodeRunner } from "./execution/node-runner.mjs";
+import { loadLearningData, normalizeRoute, trackLabels, conceptAliases, supportsExerciseProvider, browserWorkerProfile, browserModuleProfile, browserDomProfile, nodeNativeProfile, entryInTrack, resolveEntryHost, entryHostVariants } from "./features/learning-data.mjs";
+import { createExecutionRouter, createExecutionState, submissionPassed } from "./features/execution-state.mjs";
 import { createLearningProgress, progressIdentity, assessQuiz, validSubmission, quizForRevision } from "./features/learning-progress.mjs";
 import { createWorkspaceState, readPreferences, writePreferences } from "./features/workspace-state.mjs";
 import { createModuleWorkspaceState } from "./features/module-workspace-state.mjs";
@@ -62,8 +63,9 @@ let executionInitiator = null;
 let navigationLayoutFrame = null;
 let navigationRevealPending = false;
 const moduleWorkspaces = new WeakMap();
+const nodeConsents = new Set();
 
-function currentEntry() { return lessons.find(entry => entry.id === route?.lesson); }
+function currentEntry() { return resolveEntryHost(lessons.find(entry => entry.id === route?.lesson), route?.host); }
 
 function runnableForVersion(entry, version = route.version) {
   const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[version] || entry.exercise?.profileId));
@@ -86,7 +88,7 @@ function currentSource(entry = currentEntry()) {
 function draftIdentity(kind, entry = currentEntry()) {
   if (kind === "code" && entry.moduleWorkspace) return moduleWorkspace(entry).identity();
   return { lessonId: entry.id, contentRevision: entry.lesson.contentRevision,
-    exerciseId: entry.exercise?.id || "reading", fileId: kind === "code" ? entry.file.id : "lesson-note" };
+    exerciseId: (kind === "note" ? entry.baseExerciseId : entry.exercise?.id) || "reading", fileId: kind === "code" ? entry.file.id : "lesson-note" };
 }
 
 function field(kind, entry = currentEntry()) {
@@ -186,10 +188,18 @@ function notesBlock() {
 
 function environmentForEntry(entry) {
   const environment = product.environment.exerciseAvailability?.[entry.exercise?.id] || product.environment;
-  if (browserDomProfile(entry.profile) && location.hostname === "localhost") {
-    return { ...environment, available: false, reason: "DOM 실습은 정확한 실행 출처를 사용합니다. 같은 학습 화면을 127.0.0.1 주소에서 열어 주세요." };
+  if ((browserDomProfile(entry.profile) || nodeNativeProfile(entry.profile)) && location.hostname === "localhost") {
+    return { ...environment, available: false, reason: "이 실습은 정확한 실행 출처를 사용합니다. 같은 학습 화면을 127.0.0.1 주소에서 열어 주세요." };
   }
   return environment;
+}
+
+function nodeConsentKey(entry) {
+  return `${entry.exercise.id}:${environmentForEntry(entry).environmentFingerprint}`;
+}
+
+function nodeConsented(entry = currentEntry()) {
+  return !nodeNativeProfile(entry?.profile) || nodeConsents.has(nodeConsentKey(entry));
 }
 
 function executionContent() {
@@ -197,16 +207,23 @@ function executionContent() {
   const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[route.version] || entry.profile?.id));
   const environment = environmentForEntry(entry);
   const available = runnableForVersion(entry) && environment.available;
-  const description = browserDomProfile(profile)
+  const isNode = nodeNativeProfile(profile);
+  const description = isNode
+    ? "이 PC의 고정 Node.js 런타임에서 전체 파일을 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 서버의 고정 행동 조건을 모두 확인합니다."
+    : browserDomProfile(profile)
     ? "학습 화면과 다른 로컬 출처의 실제 DOM에서 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다."
     : entry.moduleWorkspace
     ? "현재 브라우저의 네이티브 ES 모듈 Worker에서 전체 파일을 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다."
     : "현재 브라우저의 전용 Worker에서 실행합니다. 실행은 호출 결과를 확인하고, 제출 검사는 고정된 행동 조건을 모두 확인합니다.";
   const canonicalUrl = new URL(location.href);
   canonicalUrl.hostname = "127.0.0.1";
-  const limitation = browserDomProfile(profile)
-    ? `<p class="runtime-limitation">${escapeHtml(environment.limitations || "동기 무한 루프의 시간 초과·강제 중지와 절대 메모리 한도를 보장하지 않습니다.")} 실행을 멈추려면 학습 화면의 중지 버튼을 누르세요.</p>${location.hostname === "localhost" ? `<a class="runtime-address" href="${escapeHtml(canonicalUrl.href)}" target="_blank" rel="noopener noreferrer">127.0.0.1 학습 화면 열기 ↗ <span class="sr-only">(새 탭)</span></a><p class="code-note">주소별 브라우저 저장 공간이 다릅니다. 현재 초안은 복사해 옮길 수 있습니다.</p>` : ""}` : "";
-  return `<section class="execution-section" aria-labelledby="execution-title"><h3 id="execution-title">실행과 제출 검사</h3><dl class="runtime-details"><div><dt>언어 기준</dt><dd>${escapeHtml(route.version)}</dd></div><div><dt>실제 런타임</dt><dd>${escapeHtml(environment.actualRuntime || "연결할 수 없음")}</dd></div><div><dt>변환 대상</dt><dd>${escapeHtml(profile?.compilerTarget || "별도 변환 없음")}</dd></div></dl><p class="runtime-note" id="runtime-note">${available ? description : escapeHtml((!environment.available && environment.reason) || entry.runtimeReason || profile?.execution?.reason || "이 과제의 실행 환경을 준비하고 있습니다.")}</p>${limitation}<div class="execution-actions"><button type="button" class="plain-button" data-execute="prepare"${available ? "" : " disabled"}>환경 확인</button><button type="button" class="secondary-button" data-execute="run"${available ? "" : " disabled"}>코드 실행</button><button type="button" class="primary-button" data-execute="submit"${available ? "" : " disabled"}>제출 검사</button><button type="button" class="secondary-button" id="cancel-execution" hidden>중지</button></div><p id="execution-announcement" class="save-status" role="status" aria-live="polite"></p><div id="execution-result"></div><p class="code-note">공개된 행동 검사를 이용하는 자가 학습용 결과입니다. 언어 기준과 현재 브라우저의 전체 기능 지원은 별개입니다.</p></section>`;
+  const limitation = isNode
+    ? `<div class="node-consent"><p id="node-execution-scope" class="runtime-limitation">${escapeHtml(environment.limitations || profile.execution?.isolation)} 네트워크 접근은 허용됩니다.</p><label><input type="checkbox" id="node-execution-consent" aria-describedby="node-execution-scope node-consent-help"${nodeConsented(entry) ? " checked" : ""}${available ? "" : " disabled"}><span>실행 범위를 확인했고, 이 과제의 신뢰할 수 있는 코드를 내 PC에서 실행하는 데 동의합니다.</span></label><p id="node-consent-help" class="code-note">동의는 이 탭에서 과제별로 유지됩니다. 화면을 다시 불러오면 해제됩니다. 환경 확인은 동의 없이 가능하며 학습 코드를 실행하지 않습니다.</p></div>`
+    : browserDomProfile(profile)
+    ? `<p class="runtime-limitation">${escapeHtml(environment.limitations || "동기 무한 루프의 시간 초과·강제 중지와 절대 메모리 한도를 보장하지 않습니다.")} 실행을 멈추려면 학습 화면의 중지 버튼을 누르세요.</p>` : "";
+  const addressHelp = (isNode || browserDomProfile(profile)) && location.hostname === "localhost"
+    ? `<a class="runtime-address" href="${escapeHtml(canonicalUrl.href)}" target="_blank" rel="noopener noreferrer">127.0.0.1 학습 화면 열기 ↗ <span class="sr-only">(새 탭)</span></a><p class="code-note">주소별 브라우저 저장 공간이 다릅니다. 현재 초안은 복사해 옮길 수 있습니다.</p>` : "";
+  return `<section class="execution-section" aria-labelledby="execution-title"><h3 id="execution-title">실행과 제출 검사</h3><dl class="runtime-details"><div><dt>언어 기준</dt><dd>${escapeHtml(route.version)}</dd></div><div><dt>실제 런타임</dt><dd>${escapeHtml(environment.actualRuntime || "연결할 수 없음")}</dd></div><div><dt>변환 대상</dt><dd>${escapeHtml(profile?.compilerTarget || "별도 변환 없음")}</dd></div></dl><p class="runtime-note" id="runtime-note">${available ? description : escapeHtml((!environment.available && environment.reason) || entry.runtimeReason || profile?.execution?.reason || "이 과제의 실행 환경을 준비하고 있습니다.")}</p>${limitation}${addressHelp}<div class="execution-actions"><button type="button" class="plain-button" data-execute="prepare"${available ? "" : " disabled"}>환경 확인</button><button type="button" class="secondary-button" data-execute="run"${available && nodeConsented(entry) ? "" : " disabled"}>코드 실행</button><button type="button" class="primary-button" data-execute="submit"${available && nodeConsented(entry) ? "" : " disabled"}>제출 검사</button><button type="button" class="secondary-button" id="cancel-execution" hidden>중지</button></div><p id="execution-announcement" class="save-status" role="status" aria-live="polite"></p><div id="execution-result"></div><p class="code-note">고정된 행동 조건을 확인하는 자가 학습용 결과입니다. 언어 기준과 실제 런타임의 전체 기능 지원은 별개입니다.</p></section>`;
 }
 
 function codingContent() {
@@ -294,13 +311,16 @@ function readRoute() {
 function writeRoute(next, { replace = false, termEntry = false } = {}) {
   const url = new URL(location.href);
   const requested = { ...route, ...next };
-  for (const key of ["lesson", "step", "version", "track"]) {
+  for (const key of ["lesson", "step", "version", "track", "host"]) {
     if (requested[key]) url.searchParams.set(key, requested[key]);
+    else url.searchParams.delete(key);
   }
   if (requested.term) url.searchParams.set("term", requested.term);
   else url.searchParams.delete("term");
   const normalized = normalizeRoute(url.searchParams, lessons, product.config.languageVersions);
   for (const key of ["lesson", "step", "version", "track"]) url.searchParams.set(key, normalized[key]);
+  if (normalized.host) url.searchParams.set("host", normalized.host);
+  else url.searchParams.delete("host");
   history[replace ? "replaceState" : "pushState"]({ jsEduWorkspace: true, jsEduWorkspaceTerm: termEntry }, "", url);
   applyRoute(normalized);
 }
@@ -315,7 +335,7 @@ function ensureActiveTabVisible(target) {
 }
 
 function renderNavigation() {
-  const visible = lessons.filter(entry => route.track === "all" || entry.track === route.track);
+  const visible = lessons.filter(entry => entryInTrack(entry, route.track));
   byId("track-filter").value = route.track;
   const supported = currentEntry().lesson?.supportedVersions || product.config.languageVersions;
   byId("version-filter").innerHTML = supported.map(version => `<option value="${escapeHtml(version)}">${escapeHtml(version)}</option>`).join("");
@@ -384,6 +404,7 @@ function renderLesson() {
   elements.lessonKicker.textContent = `${trackLabels[entry.track]} / ${entry.displayNumber || String(entry.order).padStart(2, "0")}${entry.unit ? ` · ${entry.unit}` : ""}`;
   elements.lessonHeading.textContent = entry.name;
   elements.lessonLead.textContent = entry.ready ? entry.lesson.title : "확정한 로드맵 순서로 준비하는 강의입니다.";
+  renderHostSelection();
   byId("lesson-meta").innerHTML = entry.ready
     ? `<span>${entry.lesson.status === "draft" ? "교재 초안" : "학습 교재"}</span><span>${escapeHtml(route.version)}</span><span>${entry.runnable ? "코드 실행·제출" : "실행 환경 준비 중"}</span>`
     : '<span>강의 준비 중</span>';
@@ -391,6 +412,19 @@ function renderLesson() {
   renderNavigation();
   renderPanel();
   renderSearch();
+}
+
+function renderHostSelection() {
+  let container = byId("host-selection");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "host-selection";
+    container.className = "host-selection";
+    elements.lessonLead.insertAdjacentElement("afterend", container);
+  }
+  const base = lessons.find(entry => entry.id === route.lesson);
+  container.hidden = !base?.hostEntries || route.track === "node";
+  container.innerHTML = container.hidden ? "" : `<label for="lesson-host">실습 호스트</label><select id="lesson-host" aria-describedby="host-selection-help"><option value="browser"${route.host === "browser" ? " selected" : ""}>브라우저</option><option value="node"${route.host === "node" ? " selected" : ""}>Node.js</option></select><p id="host-selection-help">코드·퀴즈·제출 기록은 호스트별로 저장하고, 설계 메모는 함께 사용합니다.</p>`;
 }
 
 function renderPanel() {
@@ -404,7 +438,7 @@ function renderPanel() {
     updateFieldStatus(input.dataset.draft);
   });
   const next = steps[(currentIndex + 1) % steps.length];
-  const following = lessons[lessons.indexOf(entry) + 1];
+  const following = lessons[lessons.findIndex(item => item.id === entry.id) + 1];
   elements.footer.innerHTML = `<span>학습 단계 ${currentIndex + 1} / ${steps.length}</span>${currentIndex === steps.length - 1 && following ? `<button type="button" class="next-step" data-lesson="${escapeHtml(following.id)}">다음 강의<span aria-hidden="true">→</span></button>` : `<button type="button" class="next-step" data-step="${next.id}">${currentIndex === steps.length - 1 ? "이론으로 돌아가기" : `다음: ${next.name}`}<span aria-hidden="true">→</span></button>`}`;
   renderQuizFeedback();
   renderExecution();
@@ -426,7 +460,9 @@ function renderExecution() {
   const profile = product.profiles.find(item => item.id === (entry.exercise?.profileByVersion?.[route.version] || entry.profile?.id));
   const busy = executionState.busy();
   const available = runnableForVersion(entry) && environmentForEntry(entry).available;
-  document.querySelectorAll("[data-execute]").forEach(button => { button.disabled = busy || !available; });
+  document.querySelectorAll("[data-execute]").forEach(button => {
+    button.disabled = busy || !available || (button.dataset.execute !== "prepare" && !nodeConsented(entry));
+  });
   byId("cancel-execution").hidden = !busy;
   if (!busy && executionInitiator) {
     const initiator = executionInitiator;
@@ -449,7 +485,7 @@ function renderExecution() {
   const checks = Array.isArray(result.checks) ? result.checks : [];
   const passed = checks.filter(check => check.passed === true).length;
   const checkSummary = state.kind === "submit" && result.status !== "ready"
-    ? `<p class="check-summary">${checks.length ? `${checks.length}개 중 ${passed}개 통과${passed === checks.length && result.status === "success" ? " · 현재 코드 통과" : ""}` : "완료된 검사 없음 · 통과로 기록하지 않습니다"}</p>` : "";
+    ? `<p class="check-summary">${checks.length ? `${checks.length}개 중 ${passed}개 통과${submissionPassed(result) ? " · 현재 코드 통과" : ""}` : "완료된 검사 없음 · 통과로 기록하지 않습니다"}</p>` : "";
   const streams = [["stdout · 표준 출력", result.stdout], ["stderr · 오류 출력", result.stderr], ["문법 진단", result.compilerOutput]]
     .filter(([, text]) => text).map(([name, text]) => `<details class="output-detail" open><summary>${name}</summary><pre tabindex="0"><code>${escapeHtml(text)}</code></pre></details>`).join("");
   output.innerHTML = `<div class="execution-outcome" data-status="${escapeHtml(result.status)}"><h4>${escapeHtml(messages[result.status] || "실행 결과를 확인해 주세요")}</h4>${checkSummary}${state.kind === "run" && Object.hasOwn(result, "runValue") ? `<p class="code-note">호출 결과</p><pre tabindex="0"><code>${escapeHtml(formatValue(result.runValue))}</code></pre>` : ""}${checks.length ? `<ol class="behavior-checks">${checks.map(check => `<li data-passed="${check.passed === true}"><div><strong>${check.passed === true ? "통과" : "확인 필요"}</strong><span>${escapeHtml(check.label || check.id)}</span></div>${check.passed !== true ? `<details><summary>기대값과 실제값 보기</summary><p class="code-note">기대값</p><pre tabindex="0">${escapeHtml(formatValue(check.expected))}</pre><p class="code-note">실제값</p><pre tabindex="0">${escapeHtml(formatValue(check.actual))}</pre>${check.error ? `<p>${escapeHtml(check.error)}</p>` : ""}</details>` : ""}</li>`).join("")}</ol>` : ""}${streams}${result.cleanupWarning || result.cleanupPending ? `<p class="field-warning">${escapeHtml(result.cleanupWarning || "임시 실행 파일을 정리하고 있습니다.")}</p>` : ""}${result.outputTruncated ? '<p class="field-warning">출력 한도에 도달해 나머지 출력을 생략했습니다.</p>' : ""}${Number.isFinite(result.durationMs) ? `<p class="code-note">실행 시간 ${Math.round(result.durationMs)}ms</p>` : ""}</div>`;
@@ -512,22 +548,26 @@ async function refreshAchievement() {
 async function refreshCourseProgress() {
   const generation = ++courseGeneration;
   const version = route.version;
-  const eligible = lessons.filter(entry => runnableForVersion(entry, version) && entry.lesson.supportedVersions.includes(version));
+  const eligible = lessons.filter(base => entryHostVariants(base).some(entry => runnableForVersion(entry, version) && entry.lesson.supportedVersions.includes(version)));
   try {
-    const completion = await Promise.all(eligible.map(async entry => {
-      try {
-      const environment = await product.runner.getEnvironment({ exerciseId: entry.exercise.id });
-      if (!environment.available) return false;
-      const identity = progressIdentity(entry, version);
-      const saved = progress.load(identity).value;
-      const quiz = saved.quiz;
-      if (!quiz?.assessed || quiz.revision !== (entry.lesson.quiz?.revision || entry.lesson.contentRevision)
-        || !assessQuiz(entry.lesson.quiz?.questions || [], quiz.answers).passed || !saved.submission) return false;
-      const note = field("note", entry).value;
-      const rubric = entry.lesson.memoRubric || [1, 2, 3];
-      if (!note.trim() || saved.reviewedNote !== note || !rubric.length || !rubric.every((_, index) => saved.rubric[index] === true)) return false;
-      return validSubmission(saved.submission, identity, await fingerprintSource(currentSource(entry)), environment.environmentFingerprint);
-      } catch { return false; }
+    const completion = await Promise.all(eligible.map(async base => {
+      for (const entry of entryHostVariants(base)) {
+        if (!runnableForVersion(entry, version) || !entry.lesson.supportedVersions.includes(version)) continue;
+        try {
+          const environment = await product.runner.getEnvironment({ exerciseId: entry.exercise.id });
+          if (!environment.available) continue;
+          const identity = progressIdentity(entry, version);
+          const saved = progress.load(identity).value;
+          const quiz = saved.quiz;
+          if (!quiz?.assessed || quiz.revision !== (entry.lesson.quiz?.revision || entry.lesson.contentRevision)
+            || !assessQuiz(entry.lesson.quiz?.questions || [], quiz.answers).passed || !saved.submission) continue;
+          const note = field("note", entry).value;
+          const rubric = entry.lesson.memoRubric || [1, 2, 3];
+          if (!note.trim() || saved.reviewedNote !== note || !rubric.length || !rubric.every((_, index) => saved.rubric[index] === true)) continue;
+          if (validSubmission(saved.submission, identity, await fingerprintSource(currentSource(entry)), environment.environmentFingerprint)) return true;
+        } catch { /* Try the other host without turning a stale result into completion. */ }
+      }
+      return false;
     }));
     if (generation === courseGeneration) updateCourseProgressLabel(`자가 학습 완료 ${completion.filter(Boolean).length} / ${eligible.length}강`);
   } catch {
@@ -658,7 +698,8 @@ function applyRoute(next) {
   const stepChanged = !route || route.step !== next.step;
   const versionChanged = !route || route.version !== next.version;
   const filterChanged = !route || route.track !== next.track;
-  if (lessonChanged || stepChanged || versionChanged) {
+  const hostChanged = !route || route.host !== next.host;
+  if (lessonChanged || stepChanged || versionChanged || hostChanged) {
     flushDrafts();
     executionState?.invalidate();
     progressGeneration += 1;
@@ -666,9 +707,9 @@ function applyRoute(next) {
     if (byId("reset-dialog").open) byId("reset-dialog").close("cancel");
   }
   route = next;
-  if (lessonChanged || versionChanged) renderLesson();
+  if (lessonChanged || versionChanged || hostChanged) renderLesson();
   else if (stepChanged) renderPanel();
-  else if (filterChanged) renderNavigation();
+  else if (filterChanged) { renderNavigation(); renderHostSelection(); }
   if (next.term) {
     renderTerm(next.term);
   } else if (modalMode === "term") {
@@ -724,7 +765,7 @@ function selectLesson(id) {
   if (!lessons.some(item => item.id === id)) return;
   returnToSearch = false;
   if (elements.dialog.open) closeDialogNow({ restoreFocus: false });
-  writeRoute({ lesson: id, step: "theory", term: null });
+  writeRoute({ lesson: id, step: "theory", term: null, host: null });
   elements.lessonHeading.focus({ preventScroll: true });
   elements.lessonHeading.scrollIntoView({ block: "start", behavior: "instant" });
   elements.status.textContent = `${lessons.find(item => item.id === id).name} · 이론`;
@@ -916,8 +957,8 @@ document.addEventListener("input", event => {
 
 byId("track-filter").addEventListener("change", event => {
   const track = event.target.value;
-  const entry = currentEntry();
-  const selected = track === "all" || entry.track === track ? entry : lessons.find(item => item.track === track);
+  const entry = lessons.find(item => item.id === route.lesson);
+  const selected = entryInTrack(entry, track) ? entry : lessons.find(item => entryInTrack(item, track));
   if (selected) writeRoute({ ...route, track, lesson: selected.id, step: selected.id === entry.id ? route.step : "theory", term: null });
 });
 byId("version-filter").addEventListener("change", event => writeRoute({ ...route, version: event.target.value, term: null }));
@@ -928,7 +969,20 @@ byId("progress-save-retry").addEventListener("click", () => {
 
 document.addEventListener("change", event => {
   const input = event.target;
+  if (input instanceof HTMLSelectElement && input.id === "lesson-host") {
+    writeRoute({ ...route, host: input.value, term: null });
+    byId("lesson-host")?.focus({ preventScroll: true });
+    elements.status.textContent = `${currentEntry().name} · ${route.host === "node" ? "Node.js" : "브라우저"} 호스트`;
+    return;
+  }
   if (!(input instanceof HTMLInputElement) || !currentEntry()?.ready) return;
+  if (input.id === "node-execution-consent") {
+    const key = nodeConsentKey(currentEntry());
+    if (input.checked) nodeConsents.add(key);
+    else { nodeConsents.delete(key); executionState.invalidate("Node 실행 동의를 해제했습니다. 현재 코드는 유지됩니다."); }
+    renderExecution();
+    return;
+  }
   if (input.dataset.question) {
     const record = currentProgress();
     progress.update(record.identity, { quiz: { answers: { ...currentQuiz()?.answers, [input.dataset.question]: input.value }, assessed: false,
@@ -965,6 +1019,7 @@ document.addEventListener("click", event => {
   const button = target?.closest("[data-execute]");
   if (!button || button.disabled || !runnableForVersion(currentEntry()) || executionState.busy()) return;
   const kind = button.dataset.execute;
+  if (kind !== "prepare" && !nodeConsented()) return;
   executionInitiator = button;
   const identity = progressIdentity(currentEntry(), route.version);
   flushDrafts();
@@ -1073,14 +1128,18 @@ window.addEventListener("beforeunload", event => {
 try {
   product = await loadLearningData();
   lessons = product.entries;
-  const supported = lessons.filter(entry => entry.ready && supportsExerciseProvider(entry.exercise, entry.profile));
+  const supported = lessons.flatMap(entryHostVariants).filter(entry => entry.ready && supportsExerciseProvider(entry.exercise, entry.profile));
   const functionExercises = supported.filter(entry => entry.exercise.runner.kind === "function-body" && browserWorkerProfile(entry.profile)).map(entry => entry.exercise);
-  const moduleExercises = supported.filter(entry => entry.exercise.runner.kind === "module-files").map(entry => entry.exercise);
+  const moduleExercises = supported.filter(entry => entry.exercise.runner.kind === "module-files" && browserModuleProfile(entry.profile)).map(entry => entry.exercise);
   const domExercises = supported.filter(entry => entry.exercise.runner.kind === "function-body" && browserDomProfile(entry.profile)).map(entry => entry.exercise);
+  const nodeExercises = supported.filter(entry => nodeNativeProfile(entry.profile)).map(entry => entry.exercise);
   const providers = [];
   if (functionExercises.length) providers.push({ runner: createBrowserRunner({ exercises: functionExercises }), exerciseIds: functionExercises.map(exercise => exercise.id) });
   if (moduleExercises.length) providers.push({ runner: createModuleRunner({ exercises: moduleExercises }), exerciseIds: moduleExercises.map(exercise => exercise.id) });
   if (domExercises.length) providers.push({ runner: createDomRunner({ exercises: domExercises }), exerciseIds: domExercises.map(exercise => exercise.id) });
+  if (nodeExercises.length) providers.push({ runner: createNodeRunner({ exercises: nodeExercises,
+    getConsent: exercise => currentEntry()?.exercise?.id === exercise.id && nodeConsented(currentEntry()) }),
+    exerciseIds: nodeExercises.map(exercise => exercise.id) });
   product.runner = createExecutionRouter(providers);
   product.environment = await product.runner.getEnvironment();
   try { browserStorage = window.localStorage; } catch { /* Storage access can be blocked. */ }

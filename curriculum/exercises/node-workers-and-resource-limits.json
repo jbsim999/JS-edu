@@ -1,0 +1,83 @@
+{
+  "id": "node-workers-and-resource-limits-exercise",
+  "lessonId": "node-workers-and-resource-limits",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-workers-and-resource-limits-checks-v2",
+  "mode": "files",
+  "instructions": [
+    "createSumPool({size=2,maxQueued=2,timeoutMs=1000,makeWorker=(url,options)=>new Worker(url,options)}={})를 export하라. size 1..4, maxQueued 0..8, timeoutMs 1..10000 정수다. 실제 helper URL new URL('./worker.mjs',import.meta.url)와 resourceLimits {maxOldGenerationSizeMb:32,stackSizeMb:4}로 주입된 makeWorker를 사용한다. helper는 읽기 전용이며 제출 파일은 main.mjs다. API는 submit(values,options), close(), stats()다.\n\nvalues는 길이 100000 이하 dense 배열이며 각 인덱스는 own 프로퍼티여야 하며 각 원소는 절댓값 1000000 이하 safe integer다. 프로토타입의 숫자 프로퍼티가 빈 슬롯을 대신할 수 없다. 승인 시 복사한다. 잘못된 배열은 TypeError로 reject한다. 옵션 signal, delayMs=0(0..3000 정수), duplicateAfterMs=0(0..1000 정수), fail=false는 고정 helper의 검증용 입력이다. 이미 취소되면 작업자 생성 없이 signal.reason으로 reject한다. 대기 중 취소는 큐에서 제거하고, active 취소/timeout은 해당 Worker를 종료한다. timeout은 dispatch부터 적용하며 큐 대기 전체 deadline은 별도 범위다.\n\n실제 Worker 수는 size 이하, 대기열은 maxQueued 이하다. 성공은 합계 숫자, 큐 초과는 QUEUE_FULL, deadline은 TIMEOUT, 작업자 장애는 WORKER_FAILURE, 종료 중/후 및 close가 취소한 작업은 POOL_CLOSED code로 reject한다. 원래 외부 취소 reason은 보존한다. timeout·장애 후 종료 완료를 기다린 슬롯만 재사용한다. 현재 id와 다른 메시지는 무시한다. close는 같은 Promise를 반환하고 큐/active를 모두 정착시킨 후 모든 Worker 종료를 기다린다. stats는 {state:'open'|'closing'|'closed',active,queued,workers}다. Worker 생성 옵션에 execArgv를 추가하지 않고 실행 제공자의 기본 승계를 유지한다. 이 과제만 고정 metadata로 worker 권한을 요청한다."
+  ],
+  "template": "import { Worker } from 'node:worker_threads';\n\nexport function createSumPool(options = {}) {\n  // TODO: fixed worker.mjs, bounded workers/queue, cancellation and termination.\n}\n",
+  "profileId": "node-native",
+  "profileByVersion": {
+    "ES2026": "node-native"
+  },
+  "hostRequirements": [
+    "node-native"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/node-workers-and-resource-limits.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 CPU Worker 결과가 순차 합계와 일치하고 worker 상한을 지킨다",
+    "대기열 초과를 거부하고 종료까지 실제 작업자 수를 제한한다",
+    "대기 중 취소는 원래 reason을 전달하고 작업자를 추가 생성하지 않는다",
+    "active 취소는 terminate 완료 후 작업자를 교체하여 실제 live 상한을 유지한다",
+    "deadline을 넘긴 실제 작업자를 종료하고 뒤 작업을 처리한다",
+    "재사용 Worker가 늦게 보낸 이전 request id 응답을 무시한다",
+    "실제 Worker error/exit를 관찰하고 다음 작업에 새 작업자를 배정한다",
+    "반복 close는 같은 Promise이며 active·queued·신규 작업을 모두 정착시킨다",
+    "입력의 희소·비정상 정수를 거부하고 승인한 배열은 복사한다",
+    "이미 취소된 작업과 잘못된 풀 설정은 Worker 생성 전에 거부한다",
+    "프로토타입의 숫자 프로퍼티를 dense own 원소로 인정하지 않는다"
+  ],
+  "rubric": [
+    "CPU 작업을 실제 worker_threads에 전달하고 순차 결과 및 구조화 복사 의미를 검증한다.",
+    "worker 수·대기열·deadline을 제한하고 취소·오류·낡은 응답을 처리한다.",
+    "종료 완료와 자원 소유권을 검증하고 heap 제한·프로세스 격리의 한계를 설명한다."
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 2, maxQueued: 2, timeoutMs: 2000, makeWorker });\ntry {\n  const jobs = [[1, 2, 3], [-2, 5], [], [1000000, -1000000, 7]];\n  const results = await Promise.all(jobs.map(values => pool.submit(values)));\n  await pool.close();\n  observe({ results, created: observed.created, peak: observed.peak, live: observed.live, limits: observed.limits, final: pool.stats() });\n} finally { await pool.close(); }"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import { Worker } from 'node:worker_threads';\n\nexport function createSumPool(options = {}) {\n  // TODO: fixed worker.mjs, bounded workers/queue, cancellation and termination.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "worker.mjs",
+        "source": "import { parentPort } from 'node:worker_threads';\n\nparentPort.on('message', ({ id, values, delayMs = 0, duplicateAfterMs = 0, fail = false }) => {\n  const complete = () => {\n    if (fail) throw new Error('fixture-worker-failure');\n    let sum = 0;\n    for (const value of values) sum += value;\n    const message = { id, sum };\n    parentPort.postMessage(message);\n    if (duplicateAfterMs > 0) setTimeout(() => parentPort.postMessage(message), duplicateAfterMs);\n  };\n  if (delayMs > 0) setTimeout(complete, delayMs);\n  else complete();\n});\n",
+        "editable": false
+      },
+      {
+        "path": "node-workers-and-resource-limits-worker.mjs",
+        "source": "import { parentPort } from 'node:worker_threads';\n\nparentPort.on('message', ({ id, values, delayMs = 0, duplicateAfterMs = 0, fail = false }) => {\n  const complete = () => {\n    if (fail) throw new Error('fixture-worker-failure');\n    let sum = 0;\n    for (const value of values) sum += value;\n    const message = { id, sum };\n    parentPort.postMessage(message);\n    if (duplicateAfterMs > 0) setTimeout(() => parentPort.postMessage(message), duplicateAfterMs);\n  };\n  if (delayMs > 0) setTimeout(complete, delayMs);\n  else complete();\n});\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/node-workers-and-resource-limits.json",
+  "referenceFile": "reference/node-workers-and-resource-limits.mjs",
+  "incorrectFile": "reference/incorrect/node-workers-and-resource-limits.mjs",
+  "exampleFile": "curriculum/examples/node-workers-and-resource-limits.mjs",
+  "exampleExpectedLogs": [
+    "{\"id\":1,\"sum\":11,\"oldGenerationMb\":32}",
+    "{\"terminated\":true}"
+  ],
+  "nodeCapabilities": {
+    "allowWorker": true
+  },
+  "available": true,
+  "verificationRecord": "docs/execution/node-workers-and-resource-limits-exercise.json"
+}

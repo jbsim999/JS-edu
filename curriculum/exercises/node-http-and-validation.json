@@ -1,0 +1,74 @@
+{
+  "id": "node-http-and-validation-exercise",
+  "lessonId": "node-http-and-validation",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-http-and-validation-checks-v1",
+  "mode": "files",
+  "instructions": [
+    "createProductServer({maxBodyBytes=128})를 export하고 listen하지 않은 실제 http.Server를 반환한다. 상한은 1~1048576의 안전한 정수만 허용하며 아니면 RangeError다. 상품은 p1/Lemon/120, p2/Pistachio/230이다. GET /products는 {products:[...]}, 단일 id query는 {product:{...}}를 200으로 반환한다. unknown path/id는 404 {error:'not-found'}다. 미지 query·중복 id·잘못된 id·불량 URL은 400 {error:'bad-request'}다.\n\nPOST /lookup은 query 없이 application/json(선택 charset 포함)만 받는다. 미디어 타입이 다르면 415 {error:'unsupported-media-type'}다. JSON 객체의 유효한 id를 조회하며 잘못된 JSON·UTF-8·스키마는 400이다. 경로에 맞지 않는 method는 405 {error:'method-not-allowed'}와 Allow: GET 또는 POST다. 모든 응답은 application/json; charset=utf-8이다.\n\n본문 실제 바이트가 상한을 넘으면 413 {error:'body-too-large'} 한 번만 보낸다. 부분 본문 취소를 관찰하고 요청 오류를 소비해 서버가 후속 요청을 처리하게 한다. 아직 listen하지 않은 서버의 requestTimeout/headersTimeout을 5000ms로 설정하되 전체 핸들러 deadline이라고 설명하지 않는다. 호출자는 listen과 close의 소유자이며 검사도 종료를 기다린다.",
+    "실제 loopback HTTP 검사이며 외부 API 호출이 아닙니다. 서버를 import 시 자동으로 listen하지 마세요."
+  ],
+  "template": "import http from 'node:http';\nimport { Buffer } from 'node:buffer';\nimport { TextDecoder } from 'node:util';\n\nexport function createProductServer({maxBodyBytes = 128} = {}) {\n  // TODO: 아직 listen하지 않은 실제 http.Server를 반환하세요.\n  // TODO: GET /products, GET /products?id=..., POST /lookup의 입력과 상태 코드를 분리하세요.\n  // TODO: 본문 바이트 상한, 취소된 요청, 중복 응답, 요청 오류를 처리하세요.\n}\n",
+  "profileId": "node-native",
+  "profileByVersion": {
+    "ES2026": "node-native"
+  },
+  "hostRequirements": [
+    "node-native"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/node-http-and-validation.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 loopback HTTP로 목록·단건을 조회하고 아직 listen하지 않은 서버를 반환한다",
+    "알 수 없는 자원과 잘못된 method를 404·405로 구분한다",
+    "중복·미지 query와 불량 percent 인코딩을 정상 조회로 바꾸지 않는다",
+    "JSON 조회의 성공·미존재·불량 스키마·잘못된 JSON을 구분한다",
+    "조회 endpoint의 미디어 타입과 method 계약을 지킨다",
+    "UTF-8 본문 바이트 상한을 적용한 뒤 다음 요청도 한 번씩 정상 처리한다",
+    "본문을 여러 조각으로 받고 중간 취소 뒤 서버가 새 요청을 처리한다",
+    "서버 close 완료를 기다리며 잘못된 본문 상한을 거부한다",
+    "실제 HTTP 본문의 불량 UTF-8 바이트를 대체 문자로 허용하지 않고 400으로 거부하며 다음 정상 요청을 처리한다"
+  ],
+  "rubric": [
+    "HTTP 요청·도메인 입력 검증",
+    "바이트 제한과 단일 응답",
+    "취소와 서버 자원 정리"
+  ],
+  "available": true,
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{observe(await request('/products?id=p1'));}finally{await close();}"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import http from 'node:http';\nimport { Buffer } from 'node:buffer';\nimport { TextDecoder } from 'node:util';\n\nexport function createProductServer({maxBodyBytes = 128} = {}) {\n  // TODO: 아직 listen하지 않은 실제 http.Server를 반환하세요.\n  // TODO: GET /products, GET /products?id=..., POST /lookup의 입력과 상태 코드를 분리하세요.\n  // TODO: 본문 바이트 상한, 취소된 요청, 중복 응답, 요청 오류를 처리하세요.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "package.json",
+        "source": "{\"type\":\"module\",\"private\":true}\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/node-http-and-validation.json",
+  "referenceFile": "reference/node-http-and-validation.mjs",
+  "incorrectFile": "reference/incorrect/node-http-and-validation.mjs",
+  "exampleFile": "curriculum/examples/node-http-and-validation.mjs",
+  "exampleExpectedLogs": [
+    "{\"status\":200,\"body\":{\"id\":\"p1\"}}",
+    "{\"listening\":false}"
+  ],
+  "verificationRecord": "docs/execution/node-http-and-validation-exercise.json"
+}

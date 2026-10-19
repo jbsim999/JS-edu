@@ -1,0 +1,295 @@
+{
+  "exerciseId": "node-http-and-validation-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-http-and-validation-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "get-list-and-item",
+      "label": "실제 loopback HTTP로 목록·단건을 조회하고 아직 listen하지 않은 서버를 반환한다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const list=await request('/products');const item=await request('/products?id=p2');observe({before,list,item});}finally{await close();}",
+      "expected": {
+        "before": false,
+        "list": {
+          "status": 200,
+          "body": {
+            "products": [
+              {
+                "id": "p1",
+                "name": "Lemon",
+                "price": 120
+              },
+              {
+                "id": "p2",
+                "name": "Pistachio",
+                "price": 230
+              }
+            ]
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        },
+        "item": {
+          "status": 200,
+          "body": {
+            "product": {
+              "id": "p2",
+              "name": "Pistachio",
+              "price": 230
+            }
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        }
+      }
+    },
+    {
+      "id": "not-found-and-method",
+      "label": "알 수 없는 자원과 잘못된 method를 404·405로 구분한다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const unknown=await request('/missing');const missing=await request('/products?id=p99');const method=await request('/products','POST','{}',{'content-type':'application/json'});observe({unknown,missing,method});}finally{await close();}",
+      "expected": {
+        "unknown": {
+          "status": 404,
+          "body": {
+            "error": "not-found"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        },
+        "missing": {
+          "status": 404,
+          "body": {
+            "error": "not-found"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        },
+        "method": {
+          "status": 405,
+          "body": {
+            "error": "method-not-allowed"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": "GET"
+        }
+      }
+    },
+    {
+      "id": "query-validation",
+      "label": "중복·미지 query와 불량 percent 인코딩을 정상 조회로 바꾸지 않는다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const results=[];for(const path of ['/products?id=p1&id=p2','/products?other=1','/products?id=','/products?id=%ZZ']){const value=await request(path);results.push({status:value.status,body:value.body});}observe(results);}finally{await close();}",
+      "expected": [
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        },
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        },
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        },
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        }
+      ]
+    },
+    {
+      "id": "post-lookup-and-schema",
+      "label": "JSON 조회의 성공·미존재·불량 스키마·잘못된 JSON을 구분한다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const results=[];for(const body of ['{\"id\":\"p1\"}','{\"id\":\"p99\"}','{\"id\":1}','[]','{']){const value=await request('/lookup','POST',body,{'content-type':'application/json; charset=utf-8'});results.push({status:value.status,body:value.body});}observe(results);}finally{await close();}",
+      "expected": [
+        {
+          "status": 200,
+          "body": {
+            "product": {
+              "id": "p1",
+              "name": "Lemon",
+              "price": 120
+            }
+          }
+        },
+        {
+          "status": 404,
+          "body": {
+            "error": "not-found"
+          }
+        },
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        },
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        },
+        {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          }
+        }
+      ]
+    },
+    {
+      "id": "content-type-and-lookup-method",
+      "label": "조회 endpoint의 미디어 타입과 method 계약을 지킨다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{observe({type:await request('/lookup','POST','{\"id\":\"p1\"}'),method:await request('/lookup','GET'),query:await request('/lookup?x=1','POST','{\"id\":\"p1\"}',{'content-type':'application/json'})});}finally{await close();}",
+      "expected": {
+        "type": {
+          "status": 415,
+          "body": {
+            "error": "unsupported-media-type"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        },
+        "method": {
+          "status": 405,
+          "body": {
+            "error": "method-not-allowed"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": "POST"
+        },
+        "query": {
+          "status": 400,
+          "body": {
+            "error": "bad-request"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        }
+      }
+    },
+    {
+      "id": "byte-limit-and-recovery",
+      "label": "UTF-8 본문 바이트 상한을 적용한 뒤 다음 요청도 한 번씩 정상 처리한다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const body=JSON.stringify({id:'p1',note:'가'.repeat(12)});const large=await request('/lookup','POST',body,{'content-type':'application/json'});const next=await request('/products?id=p1');observe({characterCount:body.length,byteCount:Buffer.byteLength(body),large,next});}finally{await close();}",
+      "expected": {
+        "characterCount": 33,
+        "byteCount": 57,
+        "large": {
+          "status": 413,
+          "body": {
+            "error": "body-too-large"
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        },
+        "next": {
+          "status": 200,
+          "body": {
+            "product": {
+              "id": "p1",
+              "name": "Lemon",
+              "price": 120
+            }
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        }
+      }
+    },
+    {
+      "id": "chunked-body-and-cancel",
+      "label": "본문을 여러 조각으로 받고 중간 취소 뒤 서버가 새 요청을 처리한다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const chunked=await new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path:'/lookup',method:'POST',headers:{'content-type':'application/json'},agent:false},res=>{let text='';res.on('data',chunk=>text+=chunk);res.on('end',()=>resolve({status:res.statusCode,body:JSON.parse(text)}));res.on('error',reject);});req.on('error',reject);req.write('{\"id\":');setTimeout(()=>req.end('\"p2\"}'),5);});let sawAbort=false;const serverAbort=new Promise(resolve=>server.once('request',incoming=>{incoming.once('aborted',()=>{sawAbort=true;resolve();});}));await new Promise(resolve=>{const req=http.request({host:'127.0.0.1',port,path:'/lookup',method:'POST',headers:{'content-type':'application/json'},agent:false});req.on('error',()=>{});req.on('close',resolve);req.write('{\"id\":');setTimeout(()=>req.destroy(),15);});await serverAbort;const next=await request('/products');observe({chunked,sawAbort,next});}finally{await close();}",
+      "expected": {
+        "chunked": {
+          "status": 200,
+          "body": {
+            "product": {
+              "id": "p2",
+              "name": "Pistachio",
+              "price": 230
+            }
+          }
+        },
+        "sawAbort": true,
+        "next": {
+          "status": 200,
+          "body": {
+            "products": [
+              {
+                "id": "p1",
+                "name": "Lemon",
+                "price": 120
+              },
+              {
+                "id": "p2",
+                "name": "Pistachio",
+                "price": 230
+              }
+            ]
+          },
+          "type": "application/json; charset=utf-8",
+          "allow": null
+        }
+      }
+    },
+    {
+      "id": "close-and-option-validation",
+      "label": "서버 close 완료를 기다리며 잘못된 본문 상한을 거부한다",
+      "probe": "const {once}=await import('node:events');const errors=[];for(const maxBodyBytes of [0,-1,1.5,'48',1048577]){try{const value=submission.createProductServer({maxBodyBytes});value?.close();errors.push('returned');}catch(error){errors.push(error.name);}}const server=submission.createProductServer();server.listen(0,'127.0.0.1');await once(server,'listening');await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));observe({errors,listening:server.listening,requestTimeout:server.requestTimeout,headersTimeout:server.headersTimeout});",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "listening": false,
+        "requestTimeout": 5000,
+        "headersTimeout": 5000
+      }
+    },
+    {
+      "id": "strict-utf8-body-and-recovery",
+      "label": "불량 UTF-8 원시 바이트를 400으로 거부하고 정상 요청을 계속 처리한다",
+      "probe": "const http=await import('node:http');const {once}=await import('node:events');const server=submission.createProductServer({maxBodyBytes:48});const before=server.listening;server.listen(0,'127.0.0.1');await once(server,'listening');const port=server.address().port;async function request(path,method='GET',body,headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path,method,headers,agent:false},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>text+=chunk);res.on('end',()=>{try{resolve({status:res.statusCode,body:JSON.parse(text),type:res.headers['content-type'],allow:res.headers.allow??null});}catch(error){reject(error);}});res.on('error',reject);});req.on('error',reject);req.setTimeout(1500,()=>req.destroy(new Error('request timeout')));if(body!==undefined)req.write(body);req.end();});}async function close(){await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));} try{const invalid=[];for(const bytes of [[255],[195,40]]){const body=Buffer.concat([Buffer.from('{\"id\":\"p1\",\"note\":\"'),Buffer.from(bytes),Buffer.from('\"}')]);const result=await request('/lookup','POST',body,{'content-type':'application/json; charset=utf-8'});invalid.push({status:result.status,body:result.body});}const good=await request('/lookup','POST',JSON.stringify({id:'p2',note:'한글'}),{'content-type':'application/json; charset=utf-8'});observe({invalid,next:{status:good.status,body:good.body}});}finally{await close();}",
+      "expected": {
+        "invalid": [
+          {
+            "status": 400,
+            "body": {
+              "error": "bad-request"
+            }
+          },
+          {
+            "status": 400,
+            "body": {
+              "error": "bad-request"
+            }
+          }
+        ],
+        "next": {
+          "status": 200,
+          "body": {
+            "product": {
+              "id": "p2",
+              "name": "Pistachio",
+              "price": 230
+            }
+          }
+        }
+      }
+    }
+  ]
+}

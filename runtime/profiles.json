@@ -99,6 +99,53 @@
         "isolation": "다른 포트의 loopback iframe. 제품 저장 출처를 분리하지만 동기 무한 반복의 강제 중지·OS 격리·절대 RAM 한도는 보장하지 않는다."
       },
       "publication": "draft"
+    },
+    {
+      "id": "node-native",
+      "languageVersion": "ES2026",
+      "compilerTarget": null,
+      "compilerTargetReason": "Native .mjs/.cjs/.json source is read by the Node loader without transpilation.",
+      "runtimeRequirement": "Exactly Node.js 24.22.0 and the local learning server",
+      "runtimeRequirementReason": "The ECMAScript lesson edition, actual engine support and Node host APIs are separate.",
+      "dependencies": [],
+      "resources": [],
+      "capabilities": [
+        "module-files",
+        "native-import",
+        "commonjs",
+        "node-files",
+        "node-http",
+        "nested-worker-opt-in",
+        "run",
+        "behavior-checks",
+        "cancel",
+        "bounded-output"
+      ],
+      "execution": {
+        "available": true,
+        "provider": "node-native",
+        "reason": "고정 Node.js 24.22.0 제공자의 정답·오답·예제를 실제 검증했다. 이 PC의 실행 파일·버전·동의 상태는 실행 시 따로 확인한다.",
+        "limits": {
+          "files": 16,
+          "fileBytes": 102400,
+          "totalBytes": 524288,
+          "bodyBytes": 800000,
+          "bodyTimeoutMs": 5000,
+          "active": 1,
+          "pending": 1,
+          "queue": 0,
+          "caseTimeoutMs": 2500,
+          "totalTimeoutMs": 15000,
+          "outputBytes": 65536,
+          "outputLines": 200,
+          "resultBytes": 262144,
+          "heapMb": 64,
+          "hardMemoryLimit": false,
+          "networkRestricted": false
+        },
+        "isolation": "자기 PC에서 Node.js 코드를 실행합니다. fs API의 허용 경로를 임시 실습 폴더로 설정하지만 Node Permission Model은 OS 보안 샌드박스가 아니며, 기존 파일 디스크립터·링크·네트워크 접근 전체를 격리하지 않습니다. 64MB는 JavaScript 힙 설정이며 전체 메모리의 강제 상한이 아닙니다. 하위 Worker를 허용한 과제에서는 Worker 실행 옵션으로 권한 제한을 벗어날 수 있습니다. 신뢰할 수 있는 학습 코드만 실행하세요."
+      },
+      "publication": "draft"
     }
   ]
 }

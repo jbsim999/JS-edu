@@ -1,0 +1,132 @@
+{
+  "exerciseId": "node-files-and-paths-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-files-and-paths-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "unicode-path-and-url-root",
+      "label": "파일 URL root와 한글·공백 파일에서 UTF-8 바이트 수를 보존한다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); const {pathToFileURL}=await import('node:url'); const store=await submission.createTextStore(pathToFileURL(context.workspaceRoot)); const saved=await store.writeText('피스타치오 노트 #1.txt','한글 🍋'); const text=await store.readText('피스타치오 노트 #1.txt'); observe({saved,text,files:(await fs.readdir(context.workspaceRoot)).sort()});",
+      "expected": {
+        "saved": {
+          "bytes": 11
+        },
+        "text": "한글 🍋",
+        "files": [
+          "피스타치오 노트 #1.txt"
+        ]
+      }
+    },
+    {
+      "id": "sequential-replacement",
+      "label": "동일 파일의 쓰기를 await하여 이전 내용과 새 내용을 분리한다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); const store=await submission.createTextStore(context.workspaceRoot); const first=await store.writeText('note.txt','first long value'); const before=await store.readText('note.txt'); const second=await store.writeText('note.txt','새'); const after=await store.readText('note.txt'); observe({first,before,second,after,files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "first": {
+          "bytes": 16
+        },
+        "before": "first long value",
+        "second": {
+          "bytes": 3
+        },
+        "after": "새",
+        "files": [
+          "note.txt"
+        ]
+      }
+    },
+    {
+      "id": "reject-escape-before-write",
+      "label": "상위 경로·절대 경로·빈 이름·드라이브 구문을 거부한다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); const store=await submission.createTextStore(context.workspaceRoot); const errors=[]; for(const name of ['../escape.txt',path.join(context.workspaceRoot,'absolute.txt'),'','.', 'C:escape.txt','sub/../escape.txt']){try{await store.writeText(name,'x');errors.push('returned');}catch(error){errors.push(error.name);}} observe({errors,files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "files": []
+      }
+    },
+    {
+      "id": "missing-file-and-parent",
+      "label": "없는 파일·없는 상위 폴더는 ENOENT를 전달하고 폴더를 임의 생성하지 않는다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); const store=await submission.createTextStore(context.workspaceRoot); const codes=[]; for(const action of [()=>store.readText('missing.txt'),()=>store.writeText('missing/child.txt','x')]){try{await action();codes.push('returned');}catch(error){codes.push(error.code);}} observe({codes,files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "codes": [
+          "ENOENT",
+          "ENOENT"
+        ],
+        "files": []
+      }
+    },
+    {
+      "id": "partial-write-cleanup",
+      "label": "실제 일부 바이트를 쓴 뒤 실패하면 원본을 보존하고 핸들과 임시 파일을 정리한다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); await fs.writeFile(path.join(context.workspaceRoot,'note.txt'),'original'); const sentinel=Object.assign(new Error('simulated partial write'),{code:'EIO'}); let handle; const store=await submission.createTextStore(context.workspaceRoot,{writeContent:async(h)=>{handle=h;await h.writeFile('part');throw sentinel;}}); let same=false;try{await store.writeText('note.txt','replacement');}catch(error){same=error===sentinel;} let closed=false;try{await handle.stat();}catch(error){closed=error.code==='EBADF';} observe({same,closed,text:await fs.readFile(path.join(context.workspaceRoot,'note.txt'),'utf8'),files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "same": true,
+        "closed": true,
+        "text": "original",
+        "files": [
+          "note.txt"
+        ]
+      }
+    },
+    {
+      "id": "successful-handle-close",
+      "label": "성공한 쓰기도 핸들을 닫고 쓰기가 완료된 뒤 이름을 교체한다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); let handle; const store=await submission.createTextStore(context.workspaceRoot,{writeContent:async(h,text)=>{handle=h;await h.writeFile(text,'utf8');}}); await store.writeText('ok.txt','done'); let closed=false;try{await handle.stat();}catch(error){closed=error.code==='EBADF';} observe({closed,text:await store.readText('ok.txt'),files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "closed": true,
+        "text": "done",
+        "files": [
+          "ok.txt"
+        ]
+      }
+    },
+    {
+      "id": "permission-failure-propagation",
+      "label": "주입된 권한 실패를 같은 오류로 전달하며 빈 대상 파일을 남기지 않는다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); const denial=Object.assign(new Error('injected permission denial'),{code:'EACCES'}); const store=await submission.createTextStore(context.workspaceRoot,{writeContent:async()=>{throw denial;}}); let same=false;try{await store.writeText('denied.txt','x');}catch(error){same=error===denial;} observe({same,files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "same": true,
+        "files": []
+      }
+    },
+    {
+      "id": "validate-content-and-root",
+      "label": "문자열 내용·파일 URL·기존 디렉터리 root의 입력 계약을 지킨다",
+      "probe": "const fs=await import('node:fs/promises'); const path=await import('node:path'); const errors=[]; for(const root of [null,'',new URL('https://example.invalid/'),123]){try{await submission.createTextStore(root);errors.push('returned');}catch(error){errors.push(error.name);}} const store=await submission.createTextStore(context.workspaceRoot);try{await store.writeText('x.txt',42);errors.push('returned');}catch(error){errors.push(error.name);} observe({errors,files:await fs.readdir(context.workspaceRoot)});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "files": []
+      }
+    },
+    {
+      "id": "existing-link-boundary",
+      "label": "실제 링크가 허용 하위 root 밖의 데이터를 가리키면 읽기와 쓰기를 거부한다",
+      "probe": "const fs=await import('node:fs/promises');const path=await import('node:path');const allowed=path.join(context.workspaceRoot,'allowed');const outside=path.join(context.workspaceRoot,'outside');const store=await submission.createTextStore(allowed);const errors=[];for(const action of [()=>store.readText('linked/secret.txt'),()=>store.writeText('linked/secret.txt','changed')]){try{await action();errors.push('returned');}catch(error){errors.push(error.name);}}observe({errors,outside:await fs.readFile(path.join(outside,'secret.txt'),'utf8'),files:await fs.readdir(outside)});",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError"
+        ],
+        "outside": "original",
+        "files": [
+          "secret.txt"
+        ]
+      }
+    }
+  ]
+}

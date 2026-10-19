@@ -1,0 +1,350 @@
+{
+  "exerciseId": "capstone-host-product-node-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "capstone-host-product-node-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "native-query-core",
+      "label": "실제 NDJSON·CRLF·중복·전체 집계와 고정 코어의 정렬을 유지한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson', '\\r\\n'+rows.map(row=>JSON.stringify(row)).join('\\r\\n'));\nconst {pathToFileURL}=await import('node:url');\nconst report=await submission.queryProductFile(pathToFileURL(root+path.sep),'products.ndjson',{query:' PISTA ',maxPrice:250,limit:1});\nobserve(report);\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "version": 1,
+        "query": "pista",
+        "count": 2,
+        "total": 330,
+        "items": [
+          {
+            "id": "a",
+            "name": "Pistachio mini",
+            "price": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "cli-http-parity",
+      "label": "같은 실제 파일을 CLI와 loopback HTTP로 조회하고 포트를 닫는다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));\nconst stdout=[],stderr=[];\nconst code=await submission.runProductCli(['products.ndjson','--query',' PISTA ','--limit','1','--max-price','250'],{workspaceRoot:root,stdout:text=>stdout.push(text),stderr:text=>stderr.push(text)});\nconst server=submission.createProductServer({workspaceRoot:root});const before=server.listening;\nawait listen(server);\nconst response=await request(server,'/products?query=%20PISTA%20&limit=1&maxPrice=250');\nawait close(server);\nobserve({code,output:stdout.map(text=>JSON.parse(text)),oneLine:stdout.length===1&&stdout[0].endsWith('\\n')&&stdout[0].split('\\n').length===2,errors:stderr,before,response:{status:response.status,body:response.body,type:response.type,lengthMatches:response.length===response.actualLength},closed:!server.listening,timeouts:[server.requestTimeout,server.headersTimeout]});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "code": 0,
+        "output": [
+          {
+            "version": 1,
+            "query": "pista",
+            "count": 2,
+            "total": 330,
+            "items": [
+              {
+                "id": "a",
+                "name": "Pistachio mini",
+                "price": 100
+              }
+            ]
+          }
+        ],
+        "oneLine": true,
+        "errors": [],
+        "before": false,
+        "response": {
+          "status": 200,
+          "body": {
+            "version": 1,
+            "query": "pista",
+            "count": 2,
+            "total": 330,
+            "items": [
+              {
+                "id": "a",
+                "name": "Pistachio mini",
+                "price": 100
+              }
+            ]
+          },
+          "type": "application/json; charset=utf-8",
+          "lengthMatches": true
+        },
+        "closed": true,
+        "timeouts": [
+          5000,
+          5000
+        ]
+      }
+    },
+    {
+      "id": "input-before-success",
+      "label": "불량 파일명·옵션·CLI 중복·상속 희소 인자를 입력 오류로 거부한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst errors=[];\nfor(const file of ['../x.ndjson','C:\\\\x.ndjson','/x.ndjson','','x.json','products.ndjson\\n'])errors.push((await errorOf(()=>submission.queryProductFile(root,file)))?.code);\nfor(const options of [null,[],{query:1},{maxPrice:-1},{limit:101},{signal:{aborted:false}}])errors.push((await errorOf(()=>submission.queryProductFile(root,'absent.ndjson',options)))?.code);\nconst ownHole=new Array(3);ownHole[0]='products.ndjson';ownHole[1]='--query';Object.setPrototypeOf(ownHole,Object.assign(Object.create(Array.prototype),{2:''}));\nconst outputs=[],codes=[];\nfor(const argv of [[],['products.ndjson','--unknown','a'],['products.ndjson','--query','a','--query','b'],['products.ndjson','--limit','01'],['products.ndjson','--max-price','1e2'],['products.ndjson','--limit','1\\n'],ownHole]){\n  const out=[],err=[];codes.push(await submission.runProductCli(argv,{workspaceRoot:root,stdout:text=>out.push(text),stderr:text=>err.push(text)}));outputs.push({out,error:JSON.parse(err[0]).error});\n}\nobserve({errors,codes,outputs});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "errors": [
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT",
+          "INPUT"
+        ],
+        "codes": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "outputs": [
+          {
+            "out": [],
+            "error": "INPUT"
+          },
+          {
+            "out": [],
+            "error": "INPUT"
+          },
+          {
+            "out": [],
+            "error": "INPUT"
+          },
+          {
+            "out": [],
+            "error": "INPUT"
+          },
+          {
+            "out": [],
+            "error": "INPUT"
+          },
+          {
+            "out": [],
+            "error": "INPUT"
+          },
+          {
+            "out": [],
+            "error": "INPUT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "late-data-and-utf8",
+      "label": "뒤쪽 JSON·스키마·불량 UTF-8을 물리 행 번호로 거부한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst good=JSON.stringify({id:'a',name:'한글 🍋',price:7});\nawait write('json.ndjson',good+'\\n{');\nawait write('schema.ndjson',good+'\\r\\n\\r\\n'+JSON.stringify({id:'b',name:'B',price:-1}));\nawait write('utf8.ndjson',Buffer.concat([Buffer.from(good+'\\n\\n{\"id\":\"b\",\"name\":\"'),Buffer.from([255]),Buffer.from('\",\"price\":1}') ]));\nconst errors=[];\nfor(const file of ['json.ndjson','schema.ndjson','utf8.ndjson'])errors.push(await errorOf(()=>submission.queryProductFile(root,file,{limit:0})));\nconst out=[],err=[];const code=await submission.runProductCli(['json.ndjson'],{workspaceRoot:root,stdout:text=>out.push(text),stderr:text=>err.push(text)});\nawait write('products.ndjson',good);const recovered=await submission.queryProductFile(root,'products.ndjson');\nobserve({errors,code,out,cliError:JSON.parse(err[0]),recovered:recovered.items});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "errors": [
+          {
+            "name": "Error",
+            "code": "DATA",
+            "line": 2
+          },
+          {
+            "name": "Error",
+            "code": "DATA",
+            "line": 3
+          },
+          {
+            "name": "Error",
+            "code": "DATA",
+            "line": 3
+          }
+        ],
+        "code": 2,
+        "out": [],
+        "cliError": {
+          "error": "DATA",
+          "line": 2
+        },
+        "recovered": [
+          {
+            "id": "a",
+            "name": "한글 🍋",
+            "price": 7
+          }
+        ]
+      }
+    },
+    {
+      "id": "byte-line-record-limits",
+      "label": "파일·행·중복 포함 행 수 상한과 정확한 경계값을 검사한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nconst row=JSON.stringify({id:'a',name:'A',price:1});\nawait write('bytes.ndjson',(JSON.stringify({id:'a',name:'A',price:1,padding:'x'.repeat(80)})+'\\n').repeat(700));\nawait write('line.ndjson',JSON.stringify({id:'a',name:'A',price:1,padding:'한'.repeat(1500)}));\nawait write('records.ndjson',(row+'\\n').repeat(1001));\nawait write('exact.ndjson',row+'\\n'.repeat(65536-Buffer.byteLength(row)));\nconst prefix=JSON.stringify({id:'a',name:'A',price:1,padding:''});\nawait write('exact-line.ndjson',JSON.stringify({id:'a',name:'A',price:1,padding:'x'.repeat(4096-Buffer.byteLength(prefix))}));\nawait write('sum.ndjson',ndjson([{id:'a',name:'A',price:Number.MAX_SAFE_INTEGER},{id:'b',name:'B',price:1}]));\nconst errors=[];for(const file of ['bytes.ndjson','line.ndjson','records.ndjson','sum.ndjson'])errors.push((await errorOf(()=>submission.queryProductFile(root,file)))?.code);\nconst exact=await submission.queryProductFile(root,'exact.ndjson');const exactLine=await submission.queryProductFile(root,'exact-line.ndjson');\nobserve({errors,exact:[exact.count,exact.total],exactLine:[exactLine.count,exactLine.total]});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "errors": [
+          "LIMIT",
+          "LIMIT",
+          "LIMIT",
+          "DATA"
+        ],
+        "exact": [
+          1,
+          1
+        ],
+        "exactLine": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "http-error-policy",
+      "label": "HTTP 경로·method·query·파일 오류와 빈 정상 결과를 구분한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));await write('bad.ndjson','{');\nconst server=submission.createProductServer({workspaceRoot:root});await listen(server);\nconst answers=[];\nfor(const [route,method] of [['/else','GET'],['/products','POST'],['/products?query=a&query=b','GET'],['/products?unknown=1','GET'],['/products?query=%ZZ','GET'],['/products?limit=1e2','GET'],['/products?file=..%2Fsecret.ndjson','GET'],['/products?file=missing.ndjson','GET'],['/products?file=bad.ndjson','GET']]){\n  const response=await request(server,route,method);answers.push({status:response.status,body:response.body,allow:response.allow});\n}\nconst empty=await request(server,'/products?query=not-present');\nobserve({answers,empty:{status:empty.status,body:empty.body}});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "answers": [
+          {
+            "status": 404,
+            "body": {
+              "error": "NOT_FOUND"
+            },
+            "allow": null
+          },
+          {
+            "status": 405,
+            "body": {
+              "error": "METHOD"
+            },
+            "allow": "GET"
+          },
+          {
+            "status": 400,
+            "body": {
+              "error": "INPUT"
+            },
+            "allow": null
+          },
+          {
+            "status": 400,
+            "body": {
+              "error": "INPUT"
+            },
+            "allow": null
+          },
+          {
+            "status": 400,
+            "body": {
+              "error": "INPUT"
+            },
+            "allow": null
+          },
+          {
+            "status": 400,
+            "body": {
+              "error": "INPUT"
+            },
+            "allow": null
+          },
+          {
+            "status": 400,
+            "body": {
+              "error": "INPUT"
+            },
+            "allow": null
+          },
+          {
+            "status": 404,
+            "body": {
+              "error": "FILE"
+            },
+            "allow": null
+          },
+          {
+            "status": 500,
+            "body": {
+              "error": "DATA",
+              "line": 1
+            },
+            "allow": null
+          }
+        ],
+        "empty": {
+          "status": 200,
+          "body": {
+            "version": 1,
+            "query": "not-present",
+            "count": 0,
+            "total": 0,
+            "items": []
+          }
+        }
+      }
+    },
+    {
+      "id": "abort-reason-and-recovery",
+      "label": "사전·조회 중 취소의 reason을 보존하고 CLI 130 뒤 정상 복구한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));\nconst reasons=[{why:'before'},{why:'during'}];const same=[];\nfor(let index=0;index<2;index++){\n const controller=new AbortController();if(index===0)controller.abort(reasons[index]);\n const pending=submission.queryProductFile(root,'products.ndjson',{signal:controller.signal});\n if(index===1)controller.abort(reasons[index]);\n try{await pending;same.push(false);}catch(error){same.push(error===reasons[index]);}\n}\nconst controller=new AbortController();controller.abort('cancelled');const out=[],err=[];\nconst code=await submission.runProductCli(['products.ndjson'],{workspaceRoot:root,signal:controller.signal,stdout:text=>out.push(text),stderr:text=>err.push(text)});\nconst result=await submission.queryProductFile(root,'products.ndjson');\nobserve({same,code,out,error:JSON.parse(err[0]),next:{count:result.count,total:result.total}});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "same": [
+          true,
+          true
+        ],
+        "code": 130,
+        "out": [],
+        "error": {
+          "error": "ABORTED"
+        },
+        "next": {
+          "count": 3,
+          "total": 450
+        }
+      }
+    },
+    {
+      "id": "socket-disconnect-and-close",
+      "label": "실제 요청 도착 gate에서 연결을 끊은 뒤 새 요청과 close가 완료된다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));const server=submission.createProductServer({workspaceRoot:root});await listen(server);\nconst arrived=deferred(),closed=deferred();\nserver.once('request',(incoming,response)=>{response.once('close',()=>closed.resolve());arrived.resolve();});\nconst outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:'/products',agent:false});\noutgoing.on('error',()=>{});outgoing.end();await gate(arrived.promise);outgoing.destroy();await gate(closed.promise);\nconst next=await request(server);await close(server);\nobserve({nextStatus:next.status,count:next.body.count,closed:!server.listening});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "nextStatus": 200,
+        "count": 3,
+        "closed": true
+      }
+    },
+    {
+      "id": "fresh-results-and-safe-error",
+      "label": "반복 조회를 분리하고 내부 파일 경로를 공개하지 않는다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));const first=await submission.queryProductFile(root,'products.ndjson');\ntry{first.items[0].name='tampered';first.items.push({id:'extra',name:'extra',price:0});}catch{}\nconst second=await submission.queryProductFile(root,'products.ndjson');\nawait write('products.ndjson',ndjson([{id:'new',name:'New',price:8}]));const third=await submission.queryProductFile(root,'products.ndjson');\nconst out=[],err=[];const code=await submission.runProductCli(['absent.ndjson'],{workspaceRoot:root,stdout:text=>out.push(text),stderr:text=>err.push(text)});\nobserve({second:second.items.map(row=>row.name),third,code,out,error:JSON.parse(err[0]),safe:!err[0].includes(root)});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "second": [
+          "Pistachio mini",
+          "Lemon",
+          "Pistachio"
+        ],
+        "third": {
+          "version": 1,
+          "query": "",
+          "count": 1,
+          "total": 8,
+          "items": [
+            {
+              "id": "new",
+              "name": "New",
+              "price": 8
+            }
+          ]
+        },
+        "code": 2,
+        "out": [],
+        "error": {
+          "error": "FILE"
+        },
+        "safe": true
+      }
+    },
+    {
+      "id": "output-dependency-failure",
+      "label": "출력 함수를 await하고 throw undefined도 원래 실패로 전파한다",
+      "probe": "\nconst fs=await import('node:fs/promises');\nconst path=await import('node:path');\nconst http=await import('node:http');\nconst base=await fs.realpath(context.workspaceRoot);\nconst root=await fs.mkdtemp(path.join(base,'capstone-check-'));\nconst servers=[];\nconst rows=[{id:'b',name:' Pistachio ',price:230},{id:'a',name:'Pistachio mini',price:100},{id:'b',name:'ignored',price:1},{id:'z',name:'Lemon',price:120}];\nconst ndjson=values=>values.map(row=>JSON.stringify(row)).join('\\n')+'\\n';\nasync function write(name,value){await fs.writeFile(path.join(root,name),value);}\nasync function close(server){if(!server?.listening)return;await new Promise((resolve,reject)=>{server.close(error=>error?reject(error):resolve());server.closeAllConnections();});}\nasync function listen(server){servers.push(server);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>{server.off('error',reject);resolve();});});}\nasync function request(server,route='/products',method='GET'){\n  return new Promise((resolve,reject)=>{\n    const outgoing=http.request({host:'127.0.0.1',port:server.address().port,path:route,method,agent:false},incoming=>{\n      let text='';incoming.setEncoding('utf8');incoming.on('data',chunk=>text+=chunk);\n      incoming.on('end',()=>{try{resolve({status:incoming.statusCode,body:JSON.parse(text),type:incoming.headers['content-type'],length:Number(incoming.headers['content-length']),actualLength:Buffer.byteLength(text),allow:incoming.headers.allow??null});}catch(error){reject(error);}});\n      incoming.on('error',reject);\n    });outgoing.on('error',reject);outgoing.setTimeout(1500,()=>outgoing.destroy(new Error('fixture request timeout')));outgoing.end();\n  });\n}\nconst deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};\nasync function gate(promise){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('expected operation did not start')),900);})]);}finally{clearTimeout(timer);}}\nasync function errorOf(action){try{await action();return null;}catch(error){return {name:error?.name??'undefined',code:error?.code??null,line:error?.line??null};}}\n\ntry {\n\nawait write('products.ndjson',ndjson(rows));let outCalls=0,errCalls=0;const failures=[];\ntry{await submission.runProductCli(['products.ndjson'],{workspaceRoot:root,stdout:async()=>{outCalls++;await Promise.resolve();throw undefined;},stderr:()=>{errCalls++;}});failures.push(false);}catch(error){failures.push(error===undefined);}\ntry{await submission.runProductCli(['missing.ndjson'],{workspaceRoot:root,stdout:()=>{outCalls++;},stderr:async()=>{errCalls++;await Promise.resolve();throw undefined;}});failures.push(false);}catch(error){failures.push(error===undefined);}\nobserve({failures,outCalls,errCalls});\n\n} finally {\nfor(const server of servers)await close(server);\nconst relative=path.relative(base,root);if(!relative||relative.startsWith(\"..\")||path.isAbsolute(relative))throw new Error(\"fixture escaped data root\");\nawait fs.rm(root,{recursive:true,force:true});\n}\n",
+      "expected": {
+        "failures": [
+          true,
+          true
+        ],
+        "outCalls": 1,
+        "errCalls": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "id": "node-files-and-paths-exercise",
+  "lessonId": "node-files-and-paths",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-files-and-paths-checks-v1",
+  "mode": "files",
+  "instructions": [
+    "createTextStore(root,{writeContent})를 async 함수로 export한다. root는 기존 디렉터리 경로 또는 file URL이며 다른 타입·프로토콜은 TypeError다. writeContent 기본값은 (handle,text)=>handle.writeFile(text,'utf8')이고 함수만 허용한다. 반환 객체는 readText(name), writeText(name,text)를 제공한다.\n\nname은 root 내부의 상대 파일 이름이다. 빈 이름·'.'로 root 자체를 가리키는 값·절대 경로·':'·NUL·'..' 세그먼트와 존재하는 심볼릭 링크를 거부한다. 상위 폴더를 임의 생성하지 않으며 존재하지 않으면 ENOENT다. readText는 UTF-8 문자열을 반환한다. writeText는 문자열만 받고 같은 폴더에 배타적 'wx'로 임시 파일을 연다. writeContent → close → rename 순서를 기다린 뒤 {bytes:UTF-8 바이트 수}를 반환한다. 성공과 실패 모두 핸들과 임시 파일을 정리한다. 교체 전 실패는 원본 내용을 보존하고 같은 실패 값을 전파한다. 동일 대상 쓰기는 호출자가 순차 await한다. 현재 실행 권한에서 지원하지 않는 sync/fsync는 호출하지 않는다. 이 순서는 전원 손실 내구성 보장이 아니다.",
+    "검사는 데이터용 임시 root만 사용합니다. 권한 오류 주입과 실제 OS ACL 검증은 다르며 이 과제는 후자를 요구하지 않습니다. 링크 경계 사례의 고정 디렉터리 링크와 original 파일은 신뢰한 실행 제공자가 사전 생성하며 학습 Worker에 symlink 생성 권한을 추가하지 않는다."
+  ],
+  "template": "import * as fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { fileURLToPath } from 'node:url';\nimport { randomUUID } from 'node:crypto';\n\nexport async function createTextStore(root, {\n  writeContent = (handle, text) => handle.writeFile(text, 'utf8')\n} = {}) {\n  // TODO: 정규화한 실제 root와 상대 이름을 검증하세요.\n  // TODO: readText(name), writeText(name,text)를 가진 저장소를 반환하세요.\n  // TODO: 임시 파일 → writeContent → close → rename, 실패 시 close와 임시 파일 정리.\n}\n",
+  "profileId": "node-native",
+  "profileByVersion": {
+    "ES2026": "node-native"
+  },
+  "hostRequirements": [
+    "node-native"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/node-files-and-paths.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "파일 URL root와 한글·공백 파일에서 UTF-8 바이트 수를 보존한다",
+    "동일 파일의 쓰기를 await하여 이전 내용과 새 내용을 분리한다",
+    "상위 경로·절대 경로·빈 이름·드라이브 구문을 거부한다",
+    "없는 파일·없는 상위 폴더는 ENOENT를 전달하고 폴더를 임의 생성하지 않는다",
+    "실제 일부 바이트를 쓴 뒤 실패하면 원본을 보존하고 핸들과 임시 파일을 정리한다",
+    "성공한 쓰기도 핸들을 닫고 쓰기가 완료된 뒤 이름을 교체한다",
+    "주입된 권한 실패를 같은 오류로 전달하며 빈 대상 파일을 남기지 않는다",
+    "문자열 내용·파일 URL·기존 디렉터리 root의 입력 계약을 지킨다",
+    "실제 링크가 허용 하위 root 밖의 데이터를 가리키면 읽기와 쓰기를 거부한다"
+  ],
+  "rubric": [
+    "상대 경로와 root 경계",
+    "명시적 I/O 순서와 바이트 단위",
+    "부분 실패와 자원 정리"
+  ],
+  "available": true,
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const store=await submission.createTextStore(context.workspaceRoot);const saved=await store.writeText('sample.txt','한글 🍋');observe({saved,text:await store.readText('sample.txt')});"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import * as fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { fileURLToPath } from 'node:url';\nimport { randomUUID } from 'node:crypto';\n\nexport async function createTextStore(root, {\n  writeContent = (handle, text) => handle.writeFile(text, 'utf8')\n} = {}) {\n  // TODO: 정규화한 실제 root와 상대 이름을 검증하세요.\n  // TODO: readText(name), writeText(name,text)를 가진 저장소를 반환하세요.\n  // TODO: 임시 파일 → writeContent → close → rename, 실패 시 close와 임시 파일 정리.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "package.json",
+        "source": "{\"type\":\"module\",\"private\":true}\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/node-files-and-paths.json",
+  "referenceFile": "reference/node-files-and-paths.mjs",
+  "incorrectFile": "reference/incorrect/node-files-and-paths.mjs",
+  "exampleFile": "curriculum/examples/node-files-and-paths.mjs",
+  "exampleExpectedLogs": [
+    "{\"text\":\"한글 🍋\",\"bytes\":11}",
+    "{\"inside\":true,\"outside\":true}",
+    "{\"code\":\"ENOENT\"}"
+  ],
+  "nodeFixtures": [
+    {
+      "caseId": "existing-link-boundary",
+      "kind": "linked-directory"
+    }
+  ],
+  "verificationRecord": "docs/execution/node-files-and-paths-exercise.json"
+}

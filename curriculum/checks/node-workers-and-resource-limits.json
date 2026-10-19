@@ -1,0 +1,216 @@
+{
+  "exerciseId": "node-workers-and-resource-limits-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-workers-and-resource-limits-checks-v2",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "actual-worker-results",
+      "label": "실제 CPU Worker 결과가 순차 합계와 일치하고 worker 상한을 지킨다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 2, maxQueued: 2, timeoutMs: 2000, makeWorker });\ntry {\n  const jobs = [[1, 2, 3], [-2, 5], [], [1000000, -1000000, 7]];\n  const results = await Promise.all(jobs.map(values => pool.submit(values)));\n  await pool.close();\n  observe({ results, created: observed.created, peak: observed.peak, live: observed.live, limits: observed.limits, final: pool.stats() });\n} finally { await pool.close(); }",
+      "expected": {
+        "results": [
+          6,
+          3,
+          0,
+          7
+        ],
+        "created": 2,
+        "peak": 2,
+        "live": 0,
+        "limits": [
+          {
+            "oldGenerationMb": 32,
+            "stackMb": 4,
+            "execArgvPresent": false
+          },
+          {
+            "oldGenerationMb": 32,
+            "stackMb": 4,
+            "execArgvPresent": false
+          }
+        ],
+        "final": {
+          "state": "closed",
+          "active": 0,
+          "queued": 0,
+          "workers": 0
+        }
+      }
+    },
+    {
+      "id": "queue-limit",
+      "label": "대기열 초과를 거부하고 종료까지 실제 작업자 수를 제한한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\ntry {\n  const a = pool.submit([1], { delayMs: 30 });\n  const b = pool.submit([2]);\n  const c = pool.submit([3]).catch(error => error.code);\n  const during = pool.stats();\n  const values = await Promise.all([a, b, c]);\n  await pool.close();\n  observe({ during, values, created: observed.created, peak: observed.peak, live: observed.live });\n} finally { await pool.close(); }",
+      "expected": {
+        "during": {
+          "state": "open",
+          "active": 1,
+          "queued": 1,
+          "workers": 1
+        },
+        "values": [
+          1,
+          2,
+          "QUEUE_FULL"
+        ],
+        "created": 1,
+        "peak": 1,
+        "live": 0
+      }
+    },
+    {
+      "id": "queued-abort",
+      "label": "대기 중 취소는 원래 reason을 전달하고 작업자를 추가 생성하지 않는다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\nconst controller = new AbortController();\nconst reason = { code: 'NO_LONGER_NEEDED' };\ntry {\n  const first = pool.submit([4], { delayMs: 35 });\n  const queued = pool.submit([100], { signal: controller.signal }).catch(error => ({ reason: error, same: error === reason }));\n  controller.abort(reason);\n  const replacement = pool.submit([6]);\n  const values = await Promise.all([first, queued, replacement]);\n  await pool.close();\n  observe({ values, created: observed.created, live: observed.live });\n} finally { await pool.close(); }",
+      "expected": {
+        "values": [
+          4,
+          {
+            "reason": {
+              "code": "NO_LONGER_NEEDED"
+            },
+            "same": true
+          },
+          6
+        ],
+        "created": 1,
+        "live": 0
+      }
+    },
+    {
+      "id": "active-abort-replacement",
+      "label": "active 취소는 terminate 완료 후 작업자를 교체하여 실제 live 상한을 유지한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\nconst controller = new AbortController();\nconst reason = new Error('stop-active');\ntry {\n  const cancelled = pool.submit([99], { delayMs: 1000, signal: controller.signal }).catch(error => ({ message: error.message, same: error === reason }));\n  controller.abort(reason);\n  const next = pool.submit([3, 4]);\n  const values = await Promise.all([cancelled, next]);\n  await pool.close();\n  observe({ values, created: observed.created, peak: observed.peak, live: observed.live, terminations: observed.terminations });\n} finally { await pool.close(); }",
+      "expected": {
+        "values": [
+          {
+            "message": "stop-active",
+            "same": true
+          },
+          7
+        ],
+        "created": 2,
+        "peak": 1,
+        "live": 0,
+        "terminations": 2
+      }
+    },
+    {
+      "id": "timeout-and-recovery",
+      "label": "deadline을 넘긴 실제 작업자를 종료하고 뒤 작업을 처리한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 300, makeWorker });\ntry {\n  const timed = pool.submit([999], { delayMs: 1500 }).catch(error => error.code);\n  const next = pool.submit([8, 9]);\n  const values = await Promise.all([timed, next]);\n  await pool.close();\n  observe({ values, created: observed.created, peak: observed.peak, live: observed.live });\n} finally { await pool.close(); }",
+      "expected": {
+        "values": [
+          "TIMEOUT",
+          17
+        ],
+        "created": 2,
+        "peak": 1,
+        "live": 0
+      }
+    },
+    {
+      "id": "stale-duplicate-message",
+      "label": "재사용 Worker가 늦게 보낸 이전 request id 응답을 무시한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\ntry {\n  const first = await pool.submit([1], { duplicateAfterMs: 20 });\n  const second = await pool.submit([8], { delayMs: 80 });\n  await pool.close();\n  observe({ first, second, created: observed.created, live: observed.live });\n} finally { await pool.close(); }",
+      "expected": {
+        "first": 1,
+        "second": 8,
+        "created": 1,
+        "live": 0
+      }
+    },
+    {
+      "id": "worker-crash",
+      "label": "실제 Worker error/exit를 관찰하고 다음 작업에 새 작업자를 배정한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\ntry {\n  const broken = pool.submit([1], { fail: true }).catch(error => error.code);\n  const next = pool.submit([2, 3]);\n  const values = await Promise.all([broken, next]);\n  await pool.close();\n  observe({ values, created: observed.created, peak: observed.peak, live: observed.live });\n} finally { await pool.close(); }",
+      "expected": {
+        "values": [
+          "WORKER_FAILURE",
+          5
+        ],
+        "created": 2,
+        "peak": 1,
+        "live": 0
+      }
+    },
+    {
+      "id": "close-and-reject",
+      "label": "반복 close는 같은 Promise이며 active·queued·신규 작업을 모두 정착시킨다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\nconst a = pool.submit([1], { delayMs: 1000 }).catch(error => error.code);\nconst b = pool.submit([2]).catch(error => error.code);\nconst closing = pool.close();\nconst repeated = pool.close();\nconst c = pool.submit([3]).catch(error => error.code);\nawait closing;\nobserve({ sameClose: closing === repeated, values: await Promise.all([a, b, c]), created: observed.created, live: observed.live, final: pool.stats() });",
+      "expected": {
+        "sameClose": true,
+        "values": [
+          "POOL_CLOSED",
+          "POOL_CLOSED",
+          "POOL_CLOSED"
+        ],
+        "created": 1,
+        "live": 0,
+        "final": {
+          "state": "closed",
+          "active": 0,
+          "queued": 0,
+          "workers": 0
+        }
+      }
+    },
+    {
+      "id": "input-and-snapshot",
+      "label": "입력의 희소·비정상 정수를 거부하고 승인한 배열은 복사한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst pool = submission.createSumPool({ size: 1, maxQueued: 1, timeoutMs: 2000, makeWorker });\ntry {\n  const errors = [];\n  for (const values of [[NaN], [1.5], [1000001], Array(1), '12']) {\n    errors.push(await pool.submit(values).then(() => 'accepted', error => error.name));\n  }\n  const original = [2, 4];\n  const first = pool.submit([0], { delayMs: 20 });\n  const queued = pool.submit(original);\n  original[0] = 900;\n  const results = await Promise.all([first, queued]);\n  await pool.close();\n  observe({ errors, results, created: observed.created, live: observed.live });\n} finally { await pool.close(); }",
+      "expected": {
+        "errors": [
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError",
+          "TypeError"
+        ],
+        "results": [
+          0,
+          6
+        ],
+        "created": 1,
+        "live": 0
+      }
+    },
+    {
+      "id": "pre-abort-no-worker",
+      "label": "이미 취소된 작업과 잘못된 풀 설정은 Worker 생성 전에 거부한다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nconst observed = { created: 0, live: 0, peak: 0, terminations: 0, limits: [] };\nconst makeWorker = (url, options) => {\n  const worker = new Worker(url, options);\n  observed.created += 1;\n  observed.live += 1;\n  observed.peak = Math.max(observed.peak, observed.live);\n  observed.limits.push({ oldGenerationMb: options?.resourceLimits?.maxOldGenerationSizeMb, stackMb: options?.resourceLimits?.stackSizeMb, execArgvPresent: Object.hasOwn(options, 'execArgv') });\n  worker.once('exit', () => { observed.live -= 1; });\n  const terminate = worker.terminate.bind(worker);\n  worker.terminate = () => { observed.terminations += 1; return terminate(); };\n  return worker;\n};\nconst errors = [];\nfor (const options of [{ size: 0 }, { size: 5 }, { maxQueued: -1 }, { timeoutMs: 0 }]) {\n  let invalid;\n  try { invalid = submission.createSumPool({ ...options, makeWorker }); errors.push('accepted'); }\n  catch (error) { errors.push(error.name); }\n  finally { if (invalid) await invalid.close(); }\n}\nconst pool = submission.createSumPool({ makeWorker });\ntry {\n  const reason = { code: 'ALREADY_CANCELLED' };\n  const failure = await pool.submit([1], { signal: AbortSignal.abort(reason) }).catch(error => ({ code: error.code, same: error === reason }));\n  await pool.close();\n  observe({ errors, failure, created: observed.created, final: pool.stats() });\n} finally { await pool.close(); }",
+      "expected": {
+        "errors": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "failure": {
+          "code": "ALREADY_CANCELLED",
+          "same": true
+        },
+        "created": 0,
+        "final": {
+          "state": "closed",
+          "active": 0,
+          "queued": 0,
+          "workers": 0
+        }
+      }
+    },
+    {
+      "id": "inherited-index-rejected",
+      "label": "프로토타입의 숫자 프로퍼티를 dense own 원소로 인정하지 않는다",
+      "probe": "const { Worker } = await import('node:worker_threads');\nlet created = 0;\nconst pool = submission.createSumPool({ makeWorker(url, options) { created += 1; return new Worker(url, options); } });\nconst inherited = Array(1);\nconst prototype = Object.create(Array.prototype);\nObject.defineProperty(prototype, '0', { value: 7, writable: true, configurable: true });\nObject.setPrototypeOf(inherited, prototype);\ntry {\n  const result = await pool.submit(inherited).then(value => ({ value }), error => ({ error: error.name }));\n  await pool.close();\n  observe({ result, created, ownIndex: Object.hasOwn(inherited, 0) });\n} finally { await pool.close(); }",
+      "expected": {
+        "result": {
+          "error": "TypeError"
+        },
+        "created": 0,
+        "ownIndex": false
+      }
+    }
+  ]
+}

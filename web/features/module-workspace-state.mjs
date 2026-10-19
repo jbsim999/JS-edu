@@ -1,4 +1,11 @@
 import { serializeModuleSource, validateModuleSnapshot } from "../execution/module-runner.mjs";
+import { serializeNodeSource, validateNodeSnapshot } from "../../runtime/node-contract.mjs";
+
+export function moduleSourceContract(exercise) {
+  return exercise?.profileId === "node-native"
+    ? { serialize: serializeNodeSource, validate: validateNodeSnapshot }
+    : { serialize: serializeModuleSource, validate: validateModuleSnapshot };
+}
 
 // The shared draft adapter owns persistence and its failure states. This wrapper
 // adds a fixed, revision-bound file manifest; read-only sources never read drafts.
@@ -11,9 +18,10 @@ export function createModuleWorkspaceState({ exercise, workspaceState, lessonId,
     throw new TypeError("파일별 초안을 저장할 작업 공간이 필요합니다.");
   }
   const definition = structuredClone(exercise);
-  const initialSource = serializeModuleSource({ entry: definition.workspace?.entry,
+  const sourceContract = moduleSourceContract(definition);
+  const initialSource = sourceContract.serialize({ entry: definition.workspace?.entry,
     files: Object.fromEntries((definition.workspace?.files || []).map(file => [file.path, file.source])) });
-  validateModuleSnapshot(definition, initialSource);
+  sourceContract.validate(definition, initialSource);
   const files = Object.freeze(definition.workspace.files.map(file => Object.freeze({
     path: file.path, source: file.source, editable: file.editable, entry: file.path === definition.workspace.entry,
   })));
@@ -48,11 +56,11 @@ export function createModuleWorkspaceState({ exercise, workspaceState, lessonId,
     return identity(path);
   };
   const snapshot = () => {
-    const source = serializeModuleSource({ entry: definition.workspace.entry,
+    const source = sourceContract.serialize({ entry: definition.workspace.entry,
       files: Object.fromEntries(files.map(file => [file.path, record(file.path).value])) });
     // Byte limits apply to execution. An oversized edit stays in the draft so it
     // can be shortened or copied instead of being silently lost on submission.
-    validateModuleSnapshot(definition, source);
+    sourceContract.validate(definition, source);
     return source;
   };
 

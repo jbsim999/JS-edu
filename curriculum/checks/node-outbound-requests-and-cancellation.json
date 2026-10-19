@@ -1,0 +1,180 @@
+{
+  "exerciseId": "node-outbound-requests-and-cancellation-exercise",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-outbound-requests-and-cancellation-checks-v1",
+  "observationMode": "callback",
+  "cases": [
+    {
+      "id": "success-bytes",
+      "label": "실제 응답 chunk를 합쳐 UTF-8 레코드를 정규화한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.setHeader('content-type', 'application/json');\nconst bytes = Buffer.from(JSON.stringify({ id: '한글', score: 81, secret: 'discard' }));\nres.write(bytes.subarray(0, 9));\ntimers.add(setTimeout(() => res.end(bytes.subarray(9)), 5));\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst result = await submission.fetchRecord(url);\nobserve({ result, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "result": {
+          "record": {
+            "id": "한글",
+            "score": 81
+          },
+          "attempts": 1
+        },
+        "requests": 1
+      }
+    },
+    {
+      "id": "bounded-retry",
+      "label": "502/503/504만 제한적으로 재시도하며 최종 시도 수를 반환한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.statusCode = requests < 3 ? 503 : 200;\nres.end(JSON.stringify({ id: 'retry', score: 10 }));\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst result = await submission.fetchRecord(url, { maxAttempts: 3, backoffMs: 0 });\nobserve({ result, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "result": {
+          "record": {
+            "id": "retry",
+            "score": 10
+          },
+          "attempts": 3
+        },
+        "requests": 3
+      }
+    },
+    {
+      "id": "client-error",
+      "label": "404는 본문을 해제하고 한 번에 실패한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.statusCode = 404;\nres.end('not found');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nlet failure;\ntry { await submission.fetchRecord(url); } catch (error) { failure = { code: error.code, status: error.status, attempts: error.attempts }; }\nobserve({ failure, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "failure": {
+          "code": "HTTP_STATUS",
+          "status": 404,
+          "attempts": 1
+        },
+        "requests": 1
+      }
+    },
+    {
+      "id": "exhaustion",
+      "label": "재시도 가능한 503도 최대 시도 횟수에서 멈춘다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.statusCode = 503;\nres.end('unavailable');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nlet failure;\ntry { await submission.fetchRecord(url, { maxAttempts: 2, backoffMs: 0 }); } catch (error) { failure = [error.code, error.status, error.attempts]; }\nobserve({ failure, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "failure": [
+          "HTTP_STATUS",
+          503,
+          2
+        ],
+        "requests": 2
+      }
+    },
+    {
+      "id": "network-before-headers",
+      "label": "헤더 전 연결 실패를 제한 안에서 재시도한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nif (requests === 1) req.socket.destroy();\nelse res.end('{\"id\":\"recovered\",\"score\":9}');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst result = await submission.fetchRecord(url, { maxAttempts: 2, backoffMs: 0 });\nobserve({ result, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "result": {
+          "record": {
+            "id": "recovered",
+            "score": 9
+          },
+          "attempts": 2
+        },
+        "requests": 2
+      }
+    },
+    {
+      "id": "parse-schema",
+      "label": "JSON 문법 오류와 도메인 스키마 오류를 재시도 없이 구분한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.end(requests === 1 ? '{broken' : '{\"id\":\"bad\",\"score\":101}');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst errors = [];\nfor (let index = 0; index < 2; index += 1) {\n  try { await submission.fetchRecord(url); } catch (error) { errors.push([error.code, error.attempts]); }\n}\nobserve({ errors, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "errors": [
+          [
+            "PARSE",
+            1
+          ],
+          [
+            "SCHEMA",
+            1
+          ]
+        ],
+        "requests": 2
+      }
+    },
+    {
+      "id": "actual-byte-limit",
+      "label": "Content-Length 없이 전달된 실제 바이트 수에 상한을 적용한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.write('{\"id\":\"');\nres.end('가'.repeat(20) + '\",\"score\":1}');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nlet code;\ntry { await submission.fetchRecord(url, { maxBytes: 40 }); } catch (error) { code = error.code; }\nobserve({ code, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "code": "BODY_LIMIT",
+        "requests": 1
+      }
+    },
+    {
+      "id": "pre-abort",
+      "label": "이미 취소된 요청은 송신하지 않고 원래 취소 원인을 전달한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.end('{\"id\":\"unused\",\"score\":0}');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst reason = { code: 'USER_CANCEL', token: 7 };\nconst signal = AbortSignal.abort(reason);\nlet caught;\ntry { await submission.fetchRecord(url, { signal }); } catch (error) { caught = error; }\nobserve({ reason: caught, sameReason: caught === reason, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "reason": {
+          "code": "USER_CANCEL",
+          "token": 7
+        },
+        "sameReason": true,
+        "requests": 0
+      }
+    },
+    {
+      "id": "active-abort",
+      "label": "진행 중 body 읽기 취소는 재시도하지 않는다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.write('{\"id\":\"');\ntimers.add(setTimeout(() => res.end('late\",\"score\":1}'), 150));\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst controller = new AbortController();\nconst reason = new Error('caller cancelled');\nconst abortTimer = setTimeout(() => controller.abort(reason), 700);\nserver.once('request', () => timers.add(setTimeout(() => controller.abort(reason), 20)));\nlet result;\ntry { await submission.fetchRecord(url, { signal: controller.signal, timeoutMs: 1000 }); }\ncatch (error) { result = { message: error.message, sameReason: error === reason }; }\nfinally { clearTimeout(abortTimer); }\nobserve({ result, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "result": {
+          "message": "caller cancelled",
+          "sameReason": true
+        },
+        "requests": 1
+      }
+    },
+    {
+      "id": "total-deadline",
+      "label": "재시도 대기까지 포함한 하나의 deadline을 지킨다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.statusCode = 503;\nres.end('retry later');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nlet code;\ntry { await submission.fetchRecord(url, { timeoutMs: 120, maxAttempts: 3, backoffMs: 500 }); }\ncatch (error) { code = error.code; }\nobserve({ code, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "code": "TIMEOUT",
+        "requests": 1
+      }
+    },
+    {
+      "id": "body-deadline",
+      "label": "헤더 수신 뒤 멈춘 body에도 deadline이 남아 있다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.write('{\"id\":\"');\ntimers.add(setTimeout(() => res.end('late\",\"score\":1}'), 400));\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nlet code;\ntry { await submission.fetchRecord(url, { timeoutMs: 150 }); } catch (error) { code = error.code; }\nobserve({ code, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "code": "TIMEOUT",
+        "requests": 1
+      }
+    },
+    {
+      "id": "invalid-limits",
+      "label": "잘못된 제한값은 요청 전 거부한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nres.end('{\"id\":\"unused\",\"score\":0}');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nconst failures = [];\nfor (const options of [{ maxAttempts: 0 }, { maxAttempts: 4 }, { maxBytes: 0 }, { timeoutMs: 0 }, { backoffMs: -1 }]) {\n  try { await submission.fetchRecord(url, options); failures.push('resolved'); } catch (error) { failures.push(error.name); }\n}\nobserve({ failures, requests });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "failures": [
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError",
+          "RangeError"
+        ],
+        "requests": 0
+      }
+    },
+    {
+      "id": "release-unused-body",
+      "label": "재시도 전 아직 끝나지 않은 오류 body를 실제로 취소한다",
+      "probe": "const { createServer } = await import('node:http');\nconst timers = new Set();\nlet requests = 0;\nconst server = createServer((req, res) => { requests += 1;\nif (requests === 1) { res.statusCode = 503; res.write('discard'); }\nelse res.end('{\"id\":\"after-cancel\",\"score\":6}');\n});\nawait new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });\nconst url = 'http://127.0.0.1:' + server.address().port + '/record';\ntry {\nlet cancelledBodies = 0;\nlet resolveClosed;\nconst closed = new Promise(resolve => { resolveClosed = resolve; });\nserver.on('request', (_request, response) => {\n  if (response.statusCode === 503) response.once('close', () => { cancelledBodies += 1; resolveClosed(); });\n});\nconst result = await submission.fetchRecord(url, { timeoutMs: 1200, backoffMs: 0 });\nlet guard;\ntry { await Promise.race([closed, new Promise(resolve => { guard = setTimeout(resolve, 400); })]); }\nfinally { clearTimeout(guard); }\nobserve({ result, requests, cancelledBodies });\n} finally {\n  for (const timer of timers) clearTimeout(timer);\n  server.closeAllConnections();\n  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n}",
+      "expected": {
+        "result": {
+          "record": {
+            "id": "after-cancel",
+            "score": 6
+          },
+          "attempts": 2
+        },
+        "requests": 2,
+        "cancelledBodies": 1
+      }
+    }
+  ]
+}

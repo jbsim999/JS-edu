@@ -4,16 +4,18 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createModuleWorkspace } from './server/module-workspace.mjs';
 import { createBrowserHostServer } from './server/browser-host.mjs';
+import { createNodeExecution } from './server/node-execution.mjs';
 
 const projectRoot = new URL('../', import.meta.url);
 const routes = new Map([
   ['/', ['web/index.html', 'text/html; charset=utf-8']],
   ...['index.html', 'styles.css', 'app.mjs', 'glossary-data.mjs', 'glossary-expanded.mjs', 'adapters/storage.mjs', 'adapters/runner.mjs', 'features/workspace-state.mjs',
     'features/learning-data.mjs', 'features/execution-state.mjs', 'features/learning-progress.mjs',
-    'features/module-workspace-state.mjs', 'execution/module-runner.mjs', 'execution/dom-runner.mjs',
+    'features/module-workspace-state.mjs', 'execution/module-runner.mjs', 'execution/dom-runner.mjs', 'execution/node-runner.mjs',
     'execution/browser-runner.mjs', 'execution/protocol.mjs', 'execution/worker.js'].map(file => [
     `/${file}`, [`web/${file}`, file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8'],
   ]),
+  ['/runtime/node-contract.mjs', ['runtime/node-contract.mjs', 'text/javascript; charset=utf-8']],
   ...['education.config.json', 'curriculum/catalog.json', 'curriculum/lessons/bindings-and-closures.json', 'curriculum/exercises.json', 'runtime/profiles.json'].map(file => [
     `/${file}`, [file, 'application/json; charset=utf-8'],
   ]),
@@ -42,7 +44,7 @@ async function addLearningRoutes(publicRoutes, qualification) {
   };
   for (const lesson of catalog.lessons) add(lesson.file, 'curriculum/lessons', 'json');
   for (const exercise of exercises.exercises) {
-    if (exercise.graderFile) add(exercise.graderFile, 'curriculum/checks', 'json');
+    if (exercise.graderFile && exercise.profileId !== 'node-native') add(exercise.graderFile, 'curriculum/checks', 'json');
     if (exercise.exampleFile) add(exercise.exampleFile, 'curriculum/examples', 'mjs');
     for (const source of exercise.files ?? []) {
       if (source.editable === true) add(source.path, 'starter', 'mjs');
@@ -56,14 +58,16 @@ async function addLearningRoutes(publicRoutes, qualification) {
       }
     }
   }
+  return exercises.exercises.filter(exercise => exercise.profileId === 'node-native');
 }
 
 // Only these public learning resources are served, never the repository directory.
-export function createLearningServer({ qualification = false } = {}) {
+export function createLearningServer({ qualification = false, nodeExecutable = process.env.JS_EDU_NODE_EXECUTABLE || process.execPath } = {}) {
   let closed = false;
   let browserHost;
   let browserHostConfig = null;
   let browserHostReady = Promise.resolve(null);
+  let nodeExecutionReady = Promise.resolve(null);
   let shutdown;
   const moduleWorkspace = readFile(new URL('web/execution/module-bootstrap.mjs', projectRoot), 'utf8')
     .then(bootstrap => { const workspace = createModuleWorkspace({ bootstrap, headers: securityHeaders }); if (closed) workspace.close(); return workspace; })
@@ -86,6 +90,17 @@ export function createLearningServer({ qualification = false } = {}) {
       response.end(request.method === 'HEAD' ? undefined : body);
     };
     if (!allowedHosts.has(request.headers.host)) return send(403, 'Local access only');
+    if (request.url?.startsWith('/_node/')) {
+      const nodeExecution = await nodeExecutionReady;
+      if (!nodeExecution || closed) return send(503, 'Node 실행 서버를 연결하지 못했습니다.');
+      try {
+        if (!await nodeExecution.handle(request, response, `http://127.0.0.1:${port}`)) send(404, 'Not found');
+      } catch {
+        if (!response.headersSent) send(500, 'Node 실행 요청을 처리하지 못했습니다.');
+        else response.end();
+      }
+      return;
+    }
     if (request.url?.split('?')[0] === '/_browser/config') {
       const parentOrigin = `http://127.0.0.1:${port}`;
       const json = (status, body) => send(status, JSON.stringify(body), { 'Content-Type': 'application/json; charset=utf-8' });
@@ -141,21 +156,34 @@ export function createLearningServer({ qualification = false } = {}) {
         });
       } catch { resolve(null); }
     });
+    nodeExecutionReady = Promise.all([learningReady, browserHostReady]).then(([exercises, config]) => {
+      if (closed || !Array.isArray(exercises) || !config) return null;
+      return createNodeExecution({ executable: path.resolve(fileURLToPath(projectRoot), nodeExecutable),
+        expectedVersion: '24.22.0', exercises, httpBase: `${config.origin}/_fixtures/http/` });
+    }).catch(() => null);
   });
   const closeMain = server.close.bind(server);
   server.close = callback => {
     if (!shutdown) {
       closed = true;
-      shutdown = new Promise(resolve => closeMain(error => resolve(error))).then(async error => {
-        await browserHostReady;
-        await new Promise(resolve => {
-          if (!browserHost?.listening) { resolve(); return; }
-          browserHost.close(resolve);
-          browserHost.closeAllConnections();
+      const mainClosed = new Promise(resolve => closeMain(error => resolve(error)));
+      shutdown = (async () => {
+        const errors = [];
+        const cleanup = async action => { try { await action(); } catch (error) { errors.push(error); } };
+        await cleanup(async () => (await nodeExecutionReady)?.close());
+        await cleanup(async () => {
+          await browserHostReady;
+          await new Promise((resolve, reject) => {
+            if (!browserHost?.listening) { resolve(); return; }
+            browserHost.close(error => error ? reject(error) : resolve());
+            browserHost.closeAllConnections();
+          });
         });
-        (await moduleWorkspace)?.close();
-        return error;
-      });
+        await cleanup(async () => (await moduleWorkspace)?.close());
+        const mainError = await mainClosed;
+        if (mainError) errors.push(mainError);
+        return errors.length > 1 ? new AggregateError(errors, '학습 서버 정리 중 오류가 발생했습니다.') : errors[0];
+      })();
     }
     if (typeof callback === 'function') void shutdown.then(error => callback(error));
     return server;

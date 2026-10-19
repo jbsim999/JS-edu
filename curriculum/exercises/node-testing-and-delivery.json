@@ -1,0 +1,85 @@
+{
+  "id": "node-testing-and-delivery-exercise",
+  "lessonId": "node-testing-and-delivery",
+  "contentRevision": "draft-1",
+  "graderRevision": "node-testing-and-delivery-checks-v2",
+  "mode": "files",
+  "instructions": [
+    "main.mjs에서 lookupRecords(options), runLookupCli(argv,options), createLookupServer(options)를 export한다. 읽기 전용 delivery-contract.mjs의 LIMITS/parseMinScore/deliveryError를 사용할 수 있다. options={workspaceRoot,fileName:'records.ndjson',minScore:0,clock:()=>new Date(),sourceRevision:'local'}다. workspaceRoot는 제공자가 허용한 data 폴더이고, fileName은 ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}\\.ndjson$만 허용한다. realpath 후 폴더 밖으로 나가는 파일도 거부한다. minScore는 0..100 정수, sourceRevision은 [A-Za-z0-9._-] 1..64자, clock은 유효 Date를 반환한다. 위반 code는 ARGS, 파일 읽기 실패는 FILE이다.\n\n입력은 UTF-8 NDJSON, 최대 32768바이트·빈 줄을 제외한 최대 100행이다. 잘못된 UTF-8/JSON/레코드는 DATA(1부터 물리 line 포함), 상한 초과는 LIMIT다. 레코드는 id 1..32자 문자열과 score 0..100 정수이며 다른 필드를 버린다. 중복 id는 첫 행을 유지하되 모든 비어 있지 않은 행을 상한에 센다. minScore 이상만 남기고 score 내림차순, 동점 id 코드 단위 오름차순으로 정렬한다. 결과는 {records,total,source:{file,revision,runtime:process.version,language:'ES2026'},generatedAt:clock().toISOString()}다. 각 호출은 새 결과 객체·records 배열·레코드 객체를 반환한다. 이 값들을 freeze해도 되며 검사도 변경 불가능한 결과를 허용한다. 내부 경로나 원문 오류 메시지를 결과에 넣지 않는다.\n\nCLI는 argv=[fileName] 또는 [fileName,'--min-score',정규형0..100문자열]이다. 주입 writeOut/writeError는 문자열을 받는 함수다. 성공은 writeOut(JSON.stringify(result)+'\\n') 한 번과 반환 0, 실패는 stdout 없이 writeError({error:code,line?} JSON 한 줄)와 반환 2다. process.exit를 호출하지 않는다. HTTP는 createServer 결과만 반환하고 자체 listen하지 않는다. GET /records?minScore=...만 지원하며 성공 200, 경로 404, 메서드 405(Allow:GET), 잘못된 query/입력 400, 파일·데이터·상한 실패 500이다. query 중복·알 수 없는 key도 400이다. 반환 전 파일 스트림을 정리하고 서버 포트는 생성한 호출자가 finally에서 닫는다. 읽기 전용 예제 테스트 helper는 학습 예제의 별도 인수 검사이며 제출 정답을 담지 않는다."
+  ],
+  "template": "import { LIMITS, deliveryError, parseMinScore } from './delivery-contract.mjs';\n\nexport async function lookupRecords(options = {}) {\n  // TODO: actual bounded NDJSON input and deterministic result.\n}\n\nexport async function runLookupCli(argv, options = {}) {\n  // TODO: CLI JSON output and exit value without process.exit().\n}\n\nexport function createLookupServer(options = {}) {\n  // TODO: actual node:http server, with listen/close owned by its caller.\n}\n",
+  "profileId": "node-native",
+  "profileByVersion": {
+    "ES2026": "node-native"
+  },
+  "hostRequirements": [
+    "node-native"
+  ],
+  "files": [
+    {
+      "id": "main",
+      "path": "starter/node-testing-and-delivery.mjs",
+      "editable": true
+    }
+  ],
+  "testFiles": [],
+  "behaviorCriteria": [
+    "실제 파일의 UTF-8 chunk 경계·중복·빈 줄·동점 정렬을 처리한다",
+    "CLI의 종료 값·한 줄 JSON·시계·실행 버전을 결정적으로 기록한다",
+    "잘못된 인자와 경로를 stdout 출력 없이 거부한다",
+    "뒤쪽 잘못된 행이 발견되면 부분 결과를 내보내지 않는다",
+    "잘못된 JSON 및 UTF-8 입력을 DATA로 분류한다",
+    "파일 실제 바이트와 중복을 포함한 행 수 상한을 적용한다",
+    "파일 오류가 호스트 절대 경로나 내부 메시지를 공개하지 않는다",
+    "실제 loopback HTTP에서 CLI와 같은 결과 및 상태 정책을 제공한다",
+    "손상된 원본 데이터는 HTTP 500으로 처리하고 부분 결과를 보내지 않는다",
+    "빈 결과와 반복 조회가 호출 간 상태·배열 참조를 공유하지 않는다",
+    "잘못된 시계·버전 표기 입력을 성공 산출물로 포장하지 않는다",
+    "같은 chunk 및 다음 chunk의 잘못된 UTF-8에도 물리 행 번호를 정확히 보고한다"
+  ],
+  "rubric": [
+    "node:test·assert·주입 시계·대역을 사용하면서 실제 파일과 loopback HTTP 경계도 검증한다.",
+    "NDJSON 조회의 검증·정렬·오류 계약을 CLI/HTTP에서 동일하게 제공한다.",
+    "실행 버전·소스 식별자·입력 상한을 전달하고 비동기 자원과 fixture를 정리한다."
+  ],
+  "executionVerified": true,
+  "runner": {
+    "kind": "module-files",
+    "entry": "main.mjs",
+    "runProbe": "const { mkdtemp, writeFile, rm, realpath } = await import('node:fs/promises');\nconst { join, sep } = await import('node:path');\nconst root = await realpath(context.workspaceRoot);\nconst dir = await mkdtemp(join(root, 'n08-check-'));\nconst options = { workspaceRoot: dir, clock: () => new Date('2026-10-15T00:00:00.000Z'), sourceRevision: 'lesson-draft-1' };\ntry {\n  await writeFile(join(dir, 'records.ndjson'), JSON.stringify({ id: '한글', score: 91, padding: 'x'.repeat(1010) }) + '\\r\\n\\n' + '{\"id\":\"b\",\"score\":80}\\n{\"id\":\"a\",\"score\":80}\\n{\"id\":\"a\",\"score\":99}\\n{\"id\":\"low\",\"score\":1}');\nconst value = await submission.lookupRecords({ ...options, minScore: 50 });\nobserve(value);\n} finally {\n  if (!dir.startsWith(root + sep)) throw new Error('Fixture escaped data root');\n  await rm(dir, { recursive: true, force: true });\n}"
+  },
+  "workspace": {
+    "entry": "main.mjs",
+    "files": [
+      {
+        "path": "main.mjs",
+        "source": "import { LIMITS, deliveryError, parseMinScore } from './delivery-contract.mjs';\n\nexport async function lookupRecords(options = {}) {\n  // TODO: actual bounded NDJSON input and deterministic result.\n}\n\nexport async function runLookupCli(argv, options = {}) {\n  // TODO: CLI JSON output and exit value without process.exit().\n}\n\nexport function createLookupServer(options = {}) {\n  // TODO: actual node:http server, with listen/close owned by its caller.\n}\n",
+        "editable": true
+      },
+      {
+        "path": "delivery-contract.mjs",
+        "source": "export const LIMITS = Object.freeze({ maxBytes: 32768, maxRecords: 100 });\n\nexport function deliveryError(code, details = {}) {\n  return Object.assign(new Error(code), { code, ...details });\n}\n\nexport function parseMinScore(value) {\n  if (typeof value !== 'string' || !/^(0|[1-9]\\d?|100)$/.test(value)) throw deliveryError('ARGS');\n  return Number(value);\n}\n",
+        "editable": false
+      },
+      {
+        "path": "node-testing-and-delivery-example-app.mjs",
+        "source": "import { readFile } from 'node:fs/promises';\nimport { createServer } from 'node:http';\n\n// Small, valid-fixture example only. The exercise adds limits and failure contracts.\nexport async function exampleLookup(file, minimum, { clock, revision }) {\n  const text = await readFile(file, 'utf8');\n  const records = text.trim().split('\\n').map(line => JSON.parse(line))\n    .filter(record => record.score >= minimum)\n    .sort((left, right) => right.score - left.score || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));\n  return { records, runtime: process.version, revision, generatedAt: clock().toISOString() };\n}\nexport async function exampleCli(file, minimum, options, writeOut) {\n  writeOut(JSON.stringify(await exampleLookup(file, minimum, options)) + '\\n');\n  return 0;\n}\nexport function exampleHttp(file, options) {\n  return createServer(async (request, response) => {\n    try {\n      const minimum = Number(new URL(request.url, 'http://127.0.0.1').searchParams.get('minScore') ?? 0);\n      response.setHeader('content-type', 'application/json; charset=utf-8');\n      response.end(JSON.stringify(await exampleLookup(file, minimum, options)));\n    } catch {\n      response.statusCode = 500;\n      response.end('{\"error\":\"FILE\"}');\n    }\n  });\n}\n",
+        "editable": false
+      },
+      {
+        "path": "node-testing-and-delivery-acceptance.test.mjs",
+        "source": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { mkdtemp, writeFile, readdir, rm, realpath } from 'node:fs/promises';\nimport { join, sep } from 'node:path';\nimport { exampleLookup, exampleCli, exampleHttp } from './node-testing-and-delivery-example-app.mjs';\n\nconst context = globalThis.__javascriptEduExampleContext;\nif (!context?.workspaceRoot) throw new Error('ENVIRONMENT_UNSUPPORTED: Node example data workspace is required');\nconst options = { clock: () => new Date('2026-10-15T00:00:00.000Z'), revision: 'example-draft-1' };\nconst rows = [{ id: 'b', score: 80 }, { id: 'a', score: 80 }, { id: 'c', score: 10 }];\nconst expected = { records: [{ id: 'a', score: 80 }, { id: 'b', score: 80 }], runtime: process.version, revision: 'example-draft-1', generatedAt: '2026-10-15T00:00:00.000Z' };\nasync function fixture(action) {\n  const root = await realpath(context.workspaceRoot);\n  const dir = await mkdtemp(join(root, 'n08-example-'));\n  const file = join(dir, 'records.ndjson');\n  try {\n    await writeFile(file, rows.map(row => JSON.stringify(row)).join('\\n') + '\\n');\n    return await action(file, dir);\n  } finally {\n    if (!dir.startsWith(root + sep)) throw new Error('Fixture escaped data root');\n    await rm(dir, { recursive: true, force: true });\n  }\n}\n\ntest('real NDJSON and deterministic clock', async () => {\n  await fixture(async file => assert.deepEqual(await exampleLookup(file, 50, options), expected));\n});\n\ntest('CLI output with a scoped mock', async t => {\n  await fixture(async file => {\n    const output = t.mock.fn();\n    assert.equal(await exampleCli(file, 50, options, output), 0);\n    assert.equal(output.mock.callCount(), 1);\n    assert.deepEqual(JSON.parse(output.mock.calls[0].arguments[0]), expected);\n  });\n});\n\ntest('loopback HTTP closes its port', async () => {\n  await fixture(async file => {\n    const server = exampleHttp(file, options);\n    await new Promise((resolve, reject) => {\n      server.once('error', reject);\n      server.listen(0, '127.0.0.1', resolve);\n    });\n    try {\n      const response = await fetch('http://127.0.0.1:' + server.address().port + '/records?minScore=50', { signal: AbortSignal.timeout(2000) });\n      assert.equal(response.status, 200);\n      assert.deepEqual(await response.json(), expected);\n    } finally {\n      server.closeAllConnections();\n      await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));\n    }\n    assert.equal(server.listening, false);\n  });\n});\n\ntest('a representative wrong result is rejected and fixture files are removed', async () => {\n  const root = await realpath(context.workspaceRoot);\n  const before = await readdir(root);\n  await fixture(async file => {\n    const correct = await exampleLookup(file, 50, options);\n    const wrong = { ...correct, records: [...correct.records].reverse() };\n    assert.throws(() => assert.deepEqual(wrong, expected), { code: 'ERR_ASSERTION' });\n  });\n  assert.deepEqual(await readdir(root), before);\n});\n",
+        "editable": false
+      }
+    ]
+  },
+  "graderFile": "curriculum/checks/node-testing-and-delivery.json",
+  "referenceFile": "reference/node-testing-and-delivery.mjs",
+  "incorrectFile": "reference/incorrect/node-testing-and-delivery.mjs",
+  "exampleFile": "curriculum/examples/node-testing-and-delivery.mjs",
+  "exampleExpectedLogs": [
+    "{\"mode\":\"node:test isolation=none\",\"passed\":4,\"failed\":0,\"runtime\":\"v24.22.0\"}"
+  ],
+  "available": true,
+  "verificationRecord": "docs/execution/node-testing-and-delivery-exercise.json"
+}
