@@ -1,5 +1,11 @@
 # 검증 기록
 
+## 2026-10-19 최종 원격 검사6/6 PASS
+
+검증 코드 `646c0e1595dbe562889815eeecaffee1f0ef25f0`의 [일반 CI39191939724](https://github.com/jbsim999/JS-edu/actions/runs/39191939724) Windows/Ubuntu×Node22/24 네 job, [고정 Node CI39191939830](https://github.com/jbsim999/JS-edu/actions/runs/39191939830) Windows/Ubuntu×정확한24.22.0 두 job을 모두 success로 확인했다. 첫 실패를 재현·수정한 뒤의 결과이며 일반 CI의 조건부 host skip과 실제 고정 Node 전수 검사는 구분한다. 문서 후속 커밋은 이 결과를 기록하며 제품 코드를 바꾸지 않는다.
+
+로컬 전체281회귀·별칭TEMP 서버5회귀 및 실제 브라우저44과제361조건·Node11과제110조건의 범위와 지문은 아래 및 [CI 보완 기록](runtime-ci-verification.md)을 따른다. 설치형/실제기기/실제200% 확대의 미검증 범위와 패키징 보류는 유지한다.
+
 ## 2026-10-19 M5 원격 CI 후속 보완
 
 제품 보완16b4a45의 [고정Node Windows/Ubuntu CI](https://github.com/jbsim999/JS-edu/actions/runs/39191401477) success를 확인했다. 일반Ubuntu22/24도 success다. Windows 일반검사에서 남은 테스트 후처리의 별칭/실제경로 assertion을 동일 별칭TEMP의 FAIL로 재현하고 parent/target realpath 뒤 기존 삭제 경계 검사를 유지하도록 수정했다. 같은환경의 학습서버5/5·skip0 PASS. 제품 실행 소스 변경은 없으며 최종 일반검사는 후속 커밋의 Actions 결과를 따른다.

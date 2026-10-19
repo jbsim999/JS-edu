@@ -1,5 +1,7 @@
 # 원격 CI 실행 경계 보완 검증
 
+최종 판정 PASS. 검증 코드 `646c0e1595dbe562889815eeecaffee1f0ef25f0`의 [일반 CI39191939724](https://github.com/jbsim999/JS-edu/actions/runs/39191939724) 네 job과 [고정 Node CI39191939830](https://github.com/jbsim999/JS-edu/actions/runs/39191939830) 두 job이 모두 success다. 아래는 발견·재현·수정과 로컬 독립 검토 이력이다. 후속 문서는 이 결과를 기록하며 제품 소스는 바꾸지 않는다.
+
 2026-10-19. 기준 커밋은 M5 `5c991e6a19b479d286193c79b012723ccce8c9e2`다. 첫 [일반 CI](https://github.com/jbsim999/JS-edu/actions/runs/39189509471)와 [고정 Node CI](https://github.com/jbsim999/JS-edu/actions/runs/39189509624)의 실패를 원문 로그로 확인했다. Ubuntu 고정 Node110은 통과했지만 Ubuntu/Node22의 직접 stdout, Windows/Node24의 예제는 private 관찰 이전 Worker exit0으로 실패했고 Windows 고정 Node의 canonical 파일 접근은 권한 오류로 실패했다.
 
 ## 재현과 수정

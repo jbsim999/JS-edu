@@ -1,5 +1,13 @@
 # 현재 상태
 
+## 2026-10-19 M5 완료 — 원격 검사6개 통과
+
+최종 검증 코드 기준은 `646c0e1595dbe562889815eeecaffee1f0ef25f0`이며 feat/runtime-and-curriculum에 푸시했다. [일반 CI39191939724](https://github.com/jbsim999/JS-edu/actions/runs/39191939724)의 Windows/Ubuntu×Node22/24 네 job과 [고정 Node CI39191939830](https://github.com/jbsim999/JS-edu/actions/runs/39191939830)의 Windows/Ubuntu×Node24.22.0 두 job이 모두 success다. 이후 문서 변경은 이 검증 결과의 인계 기록이다.
+
+확정52강·55실습·용어82개, 실제 브라우저361+Node110=471행동 조건을 제공한다. 최신 로컬 전체 회귀281/281과 마지막 별칭TEMP의 서버5/5, 제품·테스트 경계 독립 검토 PASS다. 첫 원격 실패와 재현·수정·중간안 폐기 기록은 아래와 [CI 보완 검증](runtime-ci-verification.md)에 보존했다.
+
+기존 http://127.0.0.1:4179/ 에서 최신 소스와 Node24.22.0 실행을 확인했다. 사용자 탭·저장 초안은 초기화하지 않았다. Astra는 일반 작업을 총괄이 직접 처리하고 복잡한 구현/독립 검토를 묶는 기준으로 운영한다. 패키징·main 병합·외부 배포는 미수행이며 패키징은 최종 한 번으로 남긴다. 실제 기기·실제200% 확대·OS IME·스크린리더는 미검증이다. 아래는 당시 상태를 보존한 이력이다.
+
 ## 2026-10-19 M5 원격 CI 보완 최종 로컬 검증
 
 제품 보완 커밋 `16b4a45aaa312c16d746395b3653cd34827625d0`까지 푸시했다. [고정Node CI39191401477](https://github.com/jbsim999/JS-edu/actions/runs/39191401477)는 Windows/Ubuntu 모두 success다. 일반Ubuntu22/24도 success이며 Windows22/24는 테스트 후처리의 tmpdir 별칭/실제경로 비교만 실패했다. 같은 별칭TEMP에서 FAIL 재현 후 parent/target realpath 비교와 기존 삭제 경계 검사를 유지하도록 테스트만 보완했고 학습서버5/5·skip0 PASS를 확인했다. 제품 소스 변경은 없다. 최종 일반 CI는 후속 테스트 보완 커밋의 Actions를 확인한다.
