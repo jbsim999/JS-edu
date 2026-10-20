@@ -149,8 +149,9 @@ pre code { font: inherit; overflow-wrap: normal; }
 .lesson-content .lesson-source { border: 1px solid var(--line); border-radius: 16px; margin: 28px 0 30px; background: var(--code); }
 .lesson-source > summary { display: flex; align-items: center; gap: 12px; padding: 17px 18px; font-weight: 650; list-style: none; }
 .lesson-source > summary::-webkit-details-marker { display: none; }
-.lesson-source > summary::before { content: "+"; display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 26px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line); font-size: 18px; font-weight: 400; }
-.lesson-source[open] > summary::before { content: "−"; }
+.source-toggle-icon { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 26px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line); }
+.source-toggle-icon svg { display: block; width: 14px; height: 14px; stroke-width: 1.8; stroke-linecap: round; }
+.lesson-source[open] .source-toggle-vertical { display: none; }
 .lesson-source summary small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 400; }
 .lesson-source-body { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 18px; padding: 0 18px 18px; }
 .lesson-source-body > section { min-width: 0; padding: 16px; border-radius: 12px; background: var(--paper); }

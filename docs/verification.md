@@ -1,5 +1,13 @@
 # 검증 기록
 
+## 2026-10-20 0.1.3 SVG 아이콘 중앙 정렬 / 네이티브 검사 준비
+
+문자 +/−와 가상 요소를 제거하고26px 정사각형 안에14px SVG를 grid 중앙 배치했다. 대칭 좌표의 두 선 중 열린 상태에서는 세로선만 숨긴다. SVG는 aria-hidden이며 native details의 펼침/접힘 의미와 Enter/Space 동작을 유지한다. 다른 코드/채점/저장 계약은 변경하지 않았다.
+
+실제 Chrome155에서 light/dark ×320/360/390/768/1440/1920/1280×420 ×닫힘/열림 총28상태의 각 선 중심을 실제 DOM 좌표로 측정했다. 박스 중심과 최대 오차0px, 문서 가로 넘침 없음. 키보드·forced-colors·CSS200% 대체와 PNG 직접 검토 PASS. 원시 근거는 artifacts/qa-source-toggle-013.mjs, source-toggle-013/report.json·PNG다. 기존 디자인 동작10그룹 회귀 PASS. 독립 검토자는 실제diff와 light/dark·320px·1920px·CSS200%·forced-colors PNG를 읽고 코드/웹 범위 PASS로 판정했다.
+
+Windows 고정 Node24.22 `npm run check` exit0: 구문318, 테스트327 중322PASS/5skip/0fail, 기본33실습271조건·예제33PASS/호스트22skip. artifacts/source-toggle-013-full-check.log를 따른다. scripts/desktop-smoke-main.mjs에는 실제 최종ZIP의 앱 모듈/동일 vendor Electron에서 dark100/200%, light200%의 +/− 중심을 검사·캡처하는 항목을 추가했다. 이번 준비 시점에는 네이티브 검사 실행 전이며, 세CPU의 실제 결과는 후속 기록으로 구분한다. 웹 CSS200%를 실제 앱200% 검사로 대신하지 않는다.
+
 ## 2026-10-20 오답 강조·자료 카드·넓은 화면 목차 개선
 
 세 디자인 피드백은 모두 반영하되 창 크기에 비례한 무제한 확대는 적용하지 않았다. 전체 폭은 최대1880px, 목차는224~300px, 본문 문단은100ch로 제한한다. 태블릿/모바일의 기존 목차 팝업·스크롤 구조는 유지한다. 학습 목표와 공식 자료는 native details 카드 내부의 두 영역으로 구분하고 좁은 화면에서는 세로 배치한다. 설계 메모 위의 연속 구분선은 제거했다. 오답·미응답은 구분되는 배경/테두리와 판정 문구를 제공하며 실패한 코드 검사에도 같은 시각 언어를 적용했다. 강의·문항/정답·실행/채점·저장 키는 바꾸지 않았다.

@@ -58,6 +58,23 @@ async function input(selector, value) {
   await evaluate(`(() => { const element=document.querySelector(${JSON.stringify(selector)}); element.focus(); element.value=${JSON.stringify(value)}; element.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'})); })()`);
 }
 async function click(selector) { await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`); }
+async function checkSourceToggle(label) {
+  for (const open of [false, true]) {
+    await evaluate(`document.querySelector('.lesson-source').open=${open}`);
+    await frames();
+    const result = await evaluate(`(() => {
+      const icon=document.querySelector('.source-toggle-icon');
+      const box=icon.getBoundingClientRect();
+      const paths=[...icon.querySelectorAll('path')].filter(p=>getComputedStyle(p).display!=='none');
+      return { open:document.querySelector('.lesson-source').open, hidden:icon.getAttribute('aria-hidden'),
+        offsets:paths.map(p=>{const r=p.getBoundingClientRect();return {x:r.left+r.width/2-box.left-box.width/2,y:r.top+r.height/2-box.top-box.height/2};}) };
+    })()`);
+    check(`${label}: ${open ? 'minus' : 'plus'} centered in actual app`, result.open === open && result.hidden === 'true'
+      && result.offsets.length === (open ? 1 : 2) && result.offsets.every(p => Math.abs(p.x) < .6 && Math.abs(p.y) < .6), result);
+    await capture(`${label}-${open ? 'minus' : 'plus'}`, '.lesson-source');
+  }
+  await evaluate("document.querySelector('.lesson-source').open=false; scrollTo(0,0)");
+}
 async function execute(mode, wanted) {
   await click(`[data-execute=${mode}]`);
   const value = await waitFor(`document.querySelector('.execution-outcome[data-status]')?.dataset.status`, 30000);
@@ -145,12 +162,15 @@ try {
       const privateRoutes = await Promise.all(['/_qualification/reference/independent-counter', '/reference/independent-counter.mjs', '/execution/qualification.html', '/desktop/main.mjs'].map(async url => (await fetch(controller.origin + url)).status));
       check('Production does not expose references, qualification or main-process source', privateRoutes.every(status => status === 404), privateRoutes);
       await navigate('bindings-and-closures', 'theory');
+      await checkSourceToggle('source-toggle-dark-100');
       const normal = await capture('desktop-dark-100');
       controller.window.webContents.setZoomFactor(2);
       await frames();
       const zoomed = await capture('desktop-dark-200');
       check('Actual page zoom is 200 percent', controller.window.webContents.getZoomFactor() === 2 && Math.abs(zoomed.dpr / normal.dpr - 2) < 0.02 && Math.abs(zoomed.innerWidth / normal.innerWidth - 0.5) < 0.03, { normal, zoomed });
+      await checkSourceToggle('source-toggle-dark-200');
       await click('#theme-toggle');
+      await checkSourceToggle('source-toggle-light-200');
       await capture('desktop-light-200');
       await click('#open-glossary');
       await input('#glossary-search', '클로저');
