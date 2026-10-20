@@ -1,5 +1,13 @@
 # 데스크톱 패키징
 
+## 0.1.3 최종ZIP·실제 앱 검증 완료
+
+[v0.1.3 다운로드](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.3)를 제공한다. Windows x64·Mac Intel x64·Apple Silicon arm64 모두 소스9cfdc226be2c44815d8307d99299c09f01a07c96에서 생성했다. 이번 버전에는 오답 강조·자료 카드·넓은 화면 목차와 SVG 아이콘 중앙 정렬을 포함한다. 이전0.1.2의 build-only 옵션을 사용하지 않았으며 세CPU의 최종ZIP 전수대조·실제 앱 검사와 +/−100/200% 정렬18검사를 통과했다.
+
+공급자 배포본 전체 보존과 최종ZIP→실제 앱→공개 파일 연결은 [파일·검증 증거](desktop-0.1.3-evidence.json), [검증 기록](verification.md)을 따른다. 앱ZIP3개와 source-context·소스출처·검증JSON·SHA256SUMS를 공개한다. 대응 런타임 소스와 고정 버전은 그대로 유지했다. 로컬 dist/에도 세ZIP을 보관한다. 기존0.1.1/0.1.2 파일·태그는 교체하지 않았다.
+
+네이티브 검사는 일회용 타깃CI의 분리 프로필에서 수행했다. wrapper는 미서명·미공증이며 인터넷 다운로드 후 Gatekeeper 승인 검사는 수행하지 않았다. 아래0.1.2 생략 및 과거 미게시 안내는 해당 버전/이전 시점의 이력이다.
+
 ## 0.1.2 생성과 요청된 검수 생략
 
 [v0.1.2 다운로드](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.2)를 공개했다. Windows x64·Mac Intel·Apple Silicon 모두 소스4478e391d76c94a44a84e58db148eba826956e44에서 생성했으며, [생성/생략/전송 기록](desktop-0.1.2-evidence.json)을 제공한다. 이번 결과는 생성 성공이고 패키지 검수는 생략했다.

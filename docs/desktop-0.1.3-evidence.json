@@ -1,0 +1,617 @@
+{
+  "status": "PASS",
+  "version": "0.1.3",
+  "sourceCommit": "9cfdc226be2c44815d8307d99299c09f01a07c96",
+  "createdAt": "2026-10-20T09:04:07.422Z",
+  "release": "https://github.com/jbsim999/JS-edu/releases/tag/v0.1.3",
+  "workflows": [
+    {
+      "name": "desktop-package-check",
+      "id": 39396286738,
+      "url": "https://github.com/jbsim999/JS-edu/actions/runs/39396286738",
+      "attempt": 1,
+      "status": "PASS",
+      "jobs": [
+        {
+          "name": "desktop package (Windows x64)",
+          "conclusion": "success"
+        },
+        {
+          "name": "desktop package (macOS arm64)",
+          "conclusion": "success"
+        },
+        {
+          "name": "desktop package (macOS x64)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "scaffold-check",
+      "id": 39396286683,
+      "url": "https://github.com/jbsim999/JS-edu/actions/runs/39396286683",
+      "attempt": 2,
+      "status": "PASS",
+      "jobs": [
+        {
+          "name": "structure-and-adapters (windows-latest, Node 22)",
+          "conclusion": "success"
+        },
+        {
+          "name": "structure-and-adapters (ubuntu-latest, Node 24)",
+          "conclusion": "success"
+        },
+        {
+          "name": "structure-and-adapters (ubuntu-latest, Node 22)",
+          "conclusion": "success"
+        },
+        {
+          "name": "structure-and-adapters (windows-latest, Node 24)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "name": "node-native-check",
+      "id": 39396286676,
+      "url": "https://github.com/jbsim999/JS-edu/actions/runs/39396286676",
+      "attempt": 1,
+      "status": "PASS",
+      "jobs": [
+        {
+          "name": "native curriculum (windows-latest, Node 24.22.0)",
+          "conclusion": "success"
+        },
+        {
+          "name": "native curriculum (ubuntu-latest, Node 24.22.0)",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "target": "win-x64",
+      "name": "JavaScript-edu-0.1.3-win-x64.zip",
+      "bytes": 315358915,
+      "sha256": "e50a12bb114142fdf6e2194c22ea46ec9e2c69c774b341edc65a15d27d548475",
+      "sourceCommit": "9cfdc226be2c44815d8307d99299c09f01a07c96",
+      "sourceDirty": false,
+      "ciArtifact": {
+        "id": 12252331133,
+        "digest": "sha256:8c73f81faade612537e0d1f4badb06e80a422cccf3073725b82cefe0f7dbbeb1"
+      },
+      "native": {
+        "status": "PASS",
+        "host": "win32/x64",
+        "svgAlignment": [
+          {
+            "name": "source-toggle-dark-100: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-100: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-200: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-200: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-light-200: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-light-200: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          }
+        ],
+        "browser": {
+          "exercises": 44,
+          "referenceChecks": 361,
+          "negatives": 88,
+          "examples": 11,
+          "runtime": 16,
+          "sourceSha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786",
+          "fixture": "Original author qualification with HTTP reference reads replaced by fixed in-memory answers; production server routes unchanged."
+        },
+        "node": {
+          "exercises": 11,
+          "referenceChecks": 110
+        },
+        "actualPageZoomPercent": 200,
+        "packageUnchanged": true,
+        "normalShutdown": true,
+        "forcedParentServiceCleanup": true,
+        "relocatedProductionEntry": true,
+        "launchServices": null,
+        "limitations": [
+          "Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.",
+          "Native process execution is tested; no OS security sandbox or universal process-tree guarantee",
+          "A dedicated QA profile is retained; existing user profiles are not touched"
+        ]
+      }
+    },
+    {
+      "target": "mac-x64",
+      "name": "JavaScript-edu-0.1.3-mac-x64.zip",
+      "bytes": 194969183,
+      "sha256": "b1dd827223b0c4518e347420997f05bf5d36dbe0cb212b00ebeaf9913bcf0919",
+      "sourceCommit": "9cfdc226be2c44815d8307d99299c09f01a07c96",
+      "sourceDirty": false,
+      "ciArtifact": {
+        "id": 12251957695,
+        "digest": "sha256:72d7670485fec1ec28a2164db2122c45b5c52a01721091b23b6056ddff9cf31c"
+      },
+      "native": {
+        "status": "PASS",
+        "host": "darwin/x64",
+        "svgAlignment": [
+          {
+            "name": "source-toggle-dark-100: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-100: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-200: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-200: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-light-200: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-light-200: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          }
+        ],
+        "browser": {
+          "exercises": 44,
+          "referenceChecks": 361,
+          "negatives": 88,
+          "examples": 11,
+          "runtime": 16,
+          "sourceSha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786",
+          "fixture": "Original author qualification with HTTP reference reads replaced by fixed in-memory answers; production server routes unchanged."
+        },
+        "node": {
+          "exercises": 11,
+          "referenceChecks": 110
+        },
+        "actualPageZoomPercent": 200,
+        "packageUnchanged": true,
+        "normalShutdown": true,
+        "forcedParentServiceCleanup": true,
+        "relocatedProductionEntry": true,
+        "launchServices": true,
+        "limitations": [
+          "Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.",
+          "Native process execution is tested; no OS security sandbox or universal process-tree guarantee",
+          "A dedicated QA profile is retained; existing user profiles are not touched",
+          "Unsigned wrapper; no Developer ID signing, notarization or downloaded-archive Gatekeeper approval."
+        ]
+      }
+    },
+    {
+      "target": "mac-arm64",
+      "name": "JavaScript-edu-0.1.3-mac-arm64.zip",
+      "bytes": 189821252,
+      "sha256": "fa48538bdd3c10844bda1f368255dc7fb27d5e1a91df68641748981524e90f03",
+      "sourceCommit": "9cfdc226be2c44815d8307d99299c09f01a07c96",
+      "sourceDirty": false,
+      "ciArtifact": {
+        "id": 12252036655,
+        "digest": "sha256:18afeaed95d8298149e122935bdc2ce5f854dec2d762188bd67cf587d1b26971"
+      },
+      "native": {
+        "status": "PASS",
+        "host": "darwin/arm64",
+        "svgAlignment": [
+          {
+            "name": "source-toggle-dark-100: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-100: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-200: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-dark-200: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-light-200: plus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": false,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "source-toggle-light-200: minus centered in actual app",
+            "passed": true,
+            "details": {
+              "open": true,
+              "hidden": "true",
+              "offsets": [
+                {
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          }
+        ],
+        "browser": {
+          "exercises": 44,
+          "referenceChecks": 361,
+          "negatives": 88,
+          "examples": 11,
+          "runtime": 16,
+          "sourceSha256": "90712d71af426fa2203b1b3dd201ab74cf49bcf8370bd0cb113e8890f4453786",
+          "fixture": "Original author qualification with HTTP reference reads replaced by fixed in-memory answers; production server routes unchanged."
+        },
+        "node": {
+          "exercises": 11,
+          "referenceChecks": 110
+        },
+        "actualPageZoomPercent": 200,
+        "packageUnchanged": true,
+        "normalShutdown": true,
+        "forcedParentServiceCleanup": true,
+        "relocatedProductionEntry": true,
+        "launchServices": true,
+        "limitations": [
+          "Forced-parent checks cover the owned Node service PID, both ports and learner temp directories; renderer/GPU/other descendant PID absence is not measured.",
+          "Native process execution is tested; no OS security sandbox or universal process-tree guarantee",
+          "A dedicated QA profile is retained; existing user profiles are not touched",
+          "Unsigned wrapper; no Developer ID signing, notarization or downloaded-archive Gatekeeper approval."
+        ]
+      }
+    }
+  ],
+  "sourceChecks": {
+    "local": {
+      "passed": 322,
+      "skipped": 5,
+      "failed": 0
+    },
+    "webSvgStates": 28,
+    "maximumWebCenterOffsetCssPx": 0,
+    "designRegressionGroups": 10,
+    "independentReview": "Code and composed web screenshots PASS",
+    "ciRetry": {
+      "workflow": 39396286683,
+      "attempt": 2,
+      "initialFailure": "Windows Node22 test after-hook EBUSY removing owned temporary test directory",
+      "resolution": "Same-source failed job rerun; final workflow PASS"
+    }
+  },
+  "delivery": {
+    "scope": "Authenticated CI artifact transfer and exact byte/hash matching; native app verification performed on target CI, not on this Windows host",
+    "files": [
+      {
+        "name": "JavaScript-edu-0.1.3-win-x64.zip",
+        "bytes": 315358915,
+        "sha256": "e50a12bb114142fdf6e2194c22ea46ec9e2c69c774b341edc65a15d27d548475"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-mac-x64.zip",
+        "bytes": 194969183,
+        "sha256": "b1dd827223b0c4518e347420997f05bf5d36dbe0cb212b00ebeaf9913bcf0919"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-mac-arm64.zip",
+        "bytes": 189821252,
+        "sha256": "fa48538bdd3c10844bda1f368255dc7fb27d5e1a91df68641748981524e90f03"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-source-context.zip",
+        "bytes": 1724774,
+        "sha256": "2fd0642c05a808d3800311b51c11f0614cba1d3c7e7fba98cfc03fcd0dad1f38"
+      },
+      {
+        "name": "SOURCE-PROVENANCE-0.1.3.md",
+        "bytes": 8945,
+        "sha256": "c46038cb44e295fabd68c30a35e25103ab4fa609bdc2134dd0accd6d3130e8dc"
+      }
+    ]
+  },
+  "limitations": [
+    "Unsigned app wrapper; no Developer ID signing, notarization or internet-download Gatekeeper approval",
+    "Native test runs use isolated CI profiles, not existing learner data",
+    "Actual OS IME and screen reader testing not performed"
+  ],
+  "runtimeSources": "Unchanged Electron44.9.0/Node24.22.0 corresponding sources on v0.1.1; see SOURCE-PROVENANCE-0.1.3.md",
+  "publication": {
+    "status": "PUBLISHED",
+    "tagSourceCommit": "9cfdc226be2c44815d8307d99299c09f01a07c96",
+    "assets": [
+      {
+        "name": "JavaScript-edu-0.1.3-mac-arm64.zip",
+        "state": "uploaded",
+        "bytes": 189821252,
+        "digest": "sha256:fa48538bdd3c10844bda1f368255dc7fb27d5e1a91df68641748981524e90f03"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-mac-x64.zip",
+        "state": "uploaded",
+        "bytes": 194969183,
+        "digest": "sha256:b1dd827223b0c4518e347420997f05bf5d36dbe0cb212b00ebeaf9913bcf0919"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-source-context.zip",
+        "state": "uploaded",
+        "bytes": 1724774,
+        "digest": "sha256:2fd0642c05a808d3800311b51c11f0614cba1d3c7e7fba98cfc03fcd0dad1f38"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-verification.json",
+        "state": "uploaded",
+        "bytes": 16521,
+        "digest": "sha256:1f044e5f4f4670303e9295788df6381aa7e8c4007c72cc342f53e58705a7e179"
+      },
+      {
+        "name": "JavaScript-edu-0.1.3-win-x64.zip",
+        "state": "uploaded",
+        "bytes": 315358915,
+        "digest": "sha256:e50a12bb114142fdf6e2194c22ea46ec9e2c69c774b341edc65a15d27d548475"
+      },
+      {
+        "name": "SHA256SUMS-0.1.3.txt",
+        "state": "uploaded",
+        "bytes": 603,
+        "digest": "sha256:4a237134dbfc5cee5360f05d108b0ffea9a918813775a7f5950d1fac7e179184"
+      },
+      {
+        "name": "SOURCE-PROVENANCE-0.1.3.md",
+        "state": "uploaded",
+        "bytes": 8945,
+        "digest": "sha256:c46038cb44e295fabd68c30a35e25103ab4fa609bdc2134dd0accd6d3130e8dc"
+      }
+    ],
+    "anonymousDownloads": [
+      {
+        "target": "win-x64",
+        "url": "https://github.com/jbsim999/JS-edu/releases/download/v0.1.3/JavaScript-edu-0.1.3-win-x64.zip",
+        "status": "PASS",
+        "http": 206,
+        "bytes": 1,
+        "authenticated": false
+      },
+      {
+        "target": "mac-arm64",
+        "url": "https://github.com/jbsim999/JS-edu/releases/download/v0.1.3/JavaScript-edu-0.1.3-mac-arm64.zip",
+        "status": "PASS",
+        "http": 206,
+        "bytes": 1,
+        "authenticated": false
+      },
+      {
+        "target": "mac-x64",
+        "url": "https://github.com/jbsim999/JS-edu/releases/download/v0.1.3/JavaScript-edu-0.1.3-mac-x64.zip",
+        "status": "PASS",
+        "http": 206,
+        "bytes": 1,
+        "authenticated": false
+      }
+    ]
+  }
+}

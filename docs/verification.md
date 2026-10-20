@@ -1,5 +1,19 @@
 # 검증 기록
 
+## 2026-10-20 0.1.3 최종ZIP·네이티브 앱·공개 파일 검증
+
+정확한 소스9cfdc226be2c44815d8307d99299c09f01a07c96, [desktop CI39396286738](https://github.com/jbsim999/JS-edu/actions/runs/39396286738)의 Windows x64·macOS Intel x64·Apple Silicon arm64 세 작업 모두 success. 공급자 원본 전체 inventory·빌드복사·최종ZIP 해제/전수대조 후, 각 타깃의 실제 앱 실행으로 브라우저44실습361조건/오답88개·DOM예제11·런타임16검사와 Node11실습110조건/미완성·대표오답 거부를 확인했다. 실행 동의·현재코드 통과·취소/서비스 정리·정상 종료·재시작 초안/진도 복원·한글/공백 경로 이동·Mac LaunchServices 실행과 패키지 불변도 통과했다.
+
+신규 SVG 검사는 각 CPU의 dark100/200%·light200% ×열림/닫힘6개씩 총18개 PASS다. 실제 최종ZIP의 앱 모듈과 바이트가 같은 vendor Electron을 사용하며 각 선의 박스 중심 오차는 모두0px다. 실제 Electron page zoom200%이며 웹 CSS 확대 대체와 구분한다. Windows와 두 Mac의 실제 PNG를 직접 열어 +/−의 중앙 배치·경계·대비를 확인했다. 이 helper의 직접 open 설정을 실제 키보드 조작 검사로 표시하지 않는다. Enter/Space 동작은 별도의 웹 검사에서 확인했다.
+
+[일반 CI39396286683](https://github.com/jbsim999/JS-edu/actions/runs/39396286683)는 Windows Node22 테스트의 after-hook에서 임시폴더 rmdir EBUSY가1회 발생했다. 제품/테스트 소스를 변경하지 않고 실패 작업만 같은 소스로 재실행했으며 attempt2의 최종 결론 success다. 다른3 matrix 작업은 첫 실행에서 success였다. [고정Node CI39396286676](https://github.com/jbsim999/JS-edu/actions/runs/39396286676)도 Windows/Ubuntu 모두 success다. 로컬 소스 검사 결과는 아래 준비 절과 artifacts/source-toggle-013-full-check.log를 따른다.
+
+CI첨부3개의 GitHub artifact digest를 수신 컨테이너와 대조하고 RSA/AES 인증 복호화 후 기대한 소스SHA·플랫폼/CPU·PASS·바이트수·ZIP SHA를 결속했다. 원본 manifest와 native smoke의 소스SHA/ZIP SHA·authorInputs.verifiedUnchanged·packageUnchanged 및18정렬 결과를 기계 대조했다. 수신 패키지를 이 Windows PC에서 새로 기동한 검사는 아니며 네이티브 실행 근거는 타깃CI다. 원시는 artifacts/package-013-*.json, received-013-*.json, work/package-013-received/{target}/artifacts/desktop-ci-smoke/에 보존한다.
+
+[v0.1.3](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.3)는 소스9cfdc22를 직접 가리키는 prerelease다. 세앱·source-context·소스출처·검증JSON·체크섬 총7첨부의 uploaded 상태·크기·서버SHA256을 로컬 파일과 대조했다. 변경 없는 Electron44.9.0/Node24.22.0 대응 소스는 기존v0.1.1 첨부를 제공한다. README는 새 직접 다운로드와 Windows 실제 앱 캡처를 안내한다. 인증 없는 세앱 다운로드 GET range는 재시도 후 HTTP206/1byte 모두 PASS다. 첫 연결 시간 초과와 초안 태그 조회의404는 파일/앱 실패가 아니며 초안 목록 조회·네트워크 재시도로 정상 확인했다. 공개 접근 결과와 파일별 값은 [기계판독 증거](desktop-0.1.3-evidence.json)를 따른다. 다운로드 범위 요청은 링크 접근 확인이며 다운로드 후 Gatekeeper 검사를 뜻하지 않는다.
+
+판정: **소스·세CPU 최종ZIP/명시한 네이티브 검사·전송/공개 파일 PASS**. wrapper는 미서명이며 Developer ID·공증·다운로드 후 Gatekeeper·OS IME/스크린리더는 미검증이다. 이전0.1.2 검수 생략 기록은 이 버전의 검증 근거가 아니다.
+
 ## 2026-10-20 0.1.3 SVG 아이콘 중앙 정렬 / 네이티브 검사 준비
 
 문자 +/−와 가상 요소를 제거하고26px 정사각형 안에14px SVG를 grid 중앙 배치했다. 대칭 좌표의 두 선 중 열린 상태에서는 세로선만 숨긴다. SVG는 aria-hidden이며 native details의 펼침/접힘 의미와 Enter/Space 동작을 유지한다. 다른 코드/채점/저장 계약은 변경하지 않았다.

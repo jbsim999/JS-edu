@@ -1,5 +1,13 @@
 # 현재 상태
 
+## 2026-10-20 0.1.3 세CPU 패키징·실제 앱 검증 완료
+
+패키징 소스는 `9cfdc226be2c44815d8307d99299c09f01a07c96`이다. [네이티브 CI39396286738](https://github.com/jbsim999/JS-edu/actions/runs/39396286738)의 Windows x64·Mac x64/arm64 세 작업이 모두 success이며 최종ZIP 해제/전체대조·실제 앱 실행·종료·복원·이동 실행을 확인했다. SVG +/−는 세CPU의 dark100/200%와 light200% 총18검사에서 모두 중심 오차0px다. 실제 합성 PNG도 직접 확인했다. 브라우저44실습361조건·Node11실습110조건 검사는 각 플랫폼에서 통과했다.
+
+[v0.1.3 프리뷰](https://github.com/jbsim999/JS-edu/releases/tag/v0.1.3)에 세 앱ZIP·제품 source-context·소스출처·검증JSON·체크섬 총7첨부를 공개했다. README의 OS/CPU별 직접 다운로드와 실제 Windows 앱 캡처를 갱신했다. 세앱 링크는 인증 없는 HTTP206/1byte 실제 다운로드로 확인했다. 로컬 파일은 dist/JavaScript-edu-0.1.3-{win-x64,mac-x64,mac-arm64}.zip이다. 이전 버전·사용자 데이터는 보존했다. [소스/패키지/네이티브/공개 파일 증거](desktop-0.1.3-evidence.json)를 따른다. 이 후속 문서 커밋과 패키징 소스9cfdc22를 구분한다.
+
+로컬 전체 검사와 웹28상태/디자인 회귀10그룹, 독립 코드/웹 검토 PASS. 같은 소스의 일반 CI39396286683·고정Node CI39396286676도 최종 success다. 일반 CI의 Windows Node22 첫 실행은 테스트 후 임시폴더 EBUSY 정리 오류였으며 실패 작업을 같은 소스로 재실행해 통과했다. 이를 숨기거나 제품 소스 수정으로 표시하지 않았다. 미서명 wrapper·Developer ID/공증/인터넷 다운로드 후 Gatekeeper·실제 OS IME/스크린리더 미검증 한계는 유지한다. 아래 준비/미완료/검수 생략 문장은 이전 시점 또는 이전 버전의 이력이다.
+
 ## 2026-10-20 0.1.3 SVG 정렬 수정 / 패키징 소스 준비
 
 사용자 승인: 학습 목표·공식 자료의 +/− 정렬 수정, 패키징, main 커밋·푸시. 문자 기반 가상 요소를 aria-hidden SVG로 교체해 글꼴/줄높이와 무관하게 중앙 배치한다. 웹28상태에서 각 선과26px박스의 중심 오차0px이며 light/dark·320~1920·짧은높이·Enter/Space·강제색상·CSS200% 대체를 확인했다. 기존 디자인 회귀10그룹도 PASS다. Node24.22 `npm run check` PASS(구문318, 테스트322PASS/5skip/0fail, 기본33실습271조건·예제33PASS/호스트22skip). 코드·웹 화면 독립 검토에서 주요 결함 없음/PASS다.
