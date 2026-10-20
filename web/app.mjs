@@ -174,11 +174,11 @@ function questionBlock(question) {
 function officialSource() {
   const entry = currentEntry();
   const prerequisites = (entry.lesson.prerequisites || []).map(id => lessons.find(item => item.id === id)).filter(Boolean);
-  return `<details class="lesson-source"><summary>학습 목표와 공식 자료</summary><ul>${entry.lesson.goals.map(goal => `<li>${learningText(goal)}</li>`).join("")}</ul>${prerequisites.length ? `<p>먼저 읽을 강의: ${prerequisites.map(item => `<button type="button" class="inline-term" data-lesson="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`).join(" · ")}</p>` : ""}${entry.lesson.sources.map(source => {
+  return `<details class="lesson-source"><summary><span>학습 목표와 공식 자료<small>이 강의에서 익힐 내용과 더 읽을 문서</small></span></summary><div class="lesson-source-body"><section aria-label="학습 목표"><h3>학습 목표</h3><ul>${entry.lesson.goals.map(goal => `<li>${learningText(goal)}</li>`).join("")}</ul>${prerequisites.length ? `<p class="source-prerequisites">먼저 읽을 강의<br>${prerequisites.map(item => `<button type="button" class="inline-term" data-lesson="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`).join(" · ")}</p>` : ""}</section><section aria-label="공식 자료"><h3>공식 자료</h3>${entry.lesson.sources.map(source => {
     let url;
     try { url = new URL(source.url); } catch { return ""; }
     return url.protocol === "https:" ? `<a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)} ↗ <span class="sr-only">(새 탭)</span></a>` : "";
-  }).join("")}</details>`;
+  }).join("")}</section></div></details>`;
 }
 
 function notesBlock() {
@@ -285,7 +285,7 @@ function quizContent() {
   const questions = currentEntry().lesson.quiz?.questions || [];
   if (!questions.length) return `${textParagraphs(currentEntry().lesson.steps.quiz)}<p class="sample-note">객관식 판정은 준비 중입니다. 읽기만으로 통과하지 않습니다.</p>`;
   const saved = currentQuiz();
-  return `<form id="lesson-quiz"><div class="quiz-questions">${questions.map((question, index) => `<fieldset class="quiz-question"><legend>${index + 1}. ${learningText(question.prompt)}</legend>${question.choices.map(choice => `<label class="quiz-choice"><input type="radio" name="question-${escapeHtml(question.id)}" data-question="${escapeHtml(question.id)}" value="${escapeHtml(choice.id)}"${saved?.answers?.[question.id] === choice.id ? " checked" : ""}><span>${learningText(choice.text)}</span></label>`).join("")}</fieldset>`).join("")}</div><button class="primary-button" type="submit">답안 확인</button><div id="quiz-feedback" class="quiz-feedback" role="status"></div></form>`;
+  return `<form id="lesson-quiz"><div class="quiz-questions">${questions.map((question, index) => `<fieldset class="quiz-question"><legend>${index + 1}. ${learningText(question.prompt)}</legend><p class="quiz-question-status" hidden></p>${question.choices.map(choice => `<label class="quiz-choice"><input type="radio" name="question-${escapeHtml(question.id)}" data-question="${escapeHtml(question.id)}" value="${escapeHtml(choice.id)}"${saved?.answers?.[question.id] === choice.id ? " checked" : ""}><span>${learningText(choice.text)}</span></label>`).join("")}</fieldset>`).join("")}</div><button class="primary-button" type="submit">답안 확인</button><div id="quiz-feedback" class="quiz-feedback" role="status"></div></form>`;
 }
 
 function lessonContent(step) {
@@ -504,6 +504,16 @@ function renderQuizFeedback() {
   if (!output) return;
   const questions = currentEntry().lesson.quiz?.questions || [];
   const quiz = currentQuiz();
+  output.closest("form").querySelectorAll(".quiz-question").forEach((fieldset, index) => {
+    const question = questions[index];
+    const selected = quiz?.answers?.[question.id];
+    const state = !quiz?.assessed ? "" : !selected ? "unanswered" : selected === question.correctChoiceId ? "correct" : "incorrect";
+    if (state) fieldset.dataset.result = state;
+    else delete fieldset.dataset.result;
+    const status = fieldset.querySelector(".quiz-question-status");
+    status.hidden = !state;
+    status.textContent = ({ correct: "✓ 정답입니다", incorrect: "다시 확인 · 선택한 답이 틀렸습니다", unanswered: "미응답 · 답을 선택해 주세요" })[state] || "";
+  });
   if (!quiz?.assessed) { output.textContent = "답안을 선택한 뒤 확인해 주세요."; return; }
   const assessment = assessQuiz(questions, quiz.answers);
   output.innerHTML = `<p><strong>${assessment.passed ? "퀴즈 통과" : "해설을 읽고 다시 생각해 보세요"}</strong> · ${assessment.checks.filter(check => check.passed).length} / ${questions.length}</p><ol>${questions.map(question => {

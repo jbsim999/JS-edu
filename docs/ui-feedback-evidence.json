@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-20",
+  "scope": "Web learning UI: answer feedback, source card, wide navigation",
+  "status": "PASS",
+  "sourceSha256": {
+    "web/app.mjs": "4b403981ea820addfb4d06d1a59fd36181a290f178a722a5187fbe08cef8d5fa",
+    "web/styles.css": "bcd25bb8572fd2fda7f659a10dbf7d297c60bc83de64aeef6d758d418b33599e"
+  },
+  "verification": {
+    "npmRunCheck": { "exitCode": 0, "syntaxFiles": 318, "tests": 327, "passed": 322, "skipped": 5, "failed": 0, "curriculumExercisesPassed": 33, "behaviorChecks": 271, "hostExercisesSkipped": 22 },
+    "browser": "Chrome 155 headless, isolated browser context",
+    "uiGroups": 10,
+    "lessonRoutes": 55,
+    "quizQuestions": 229,
+    "workerFailureCheck": "Actual submission: 7 failed checks and expectation disclosure",
+    "independentReview": "PASS: code, state transitions, scripts, reports and composed screenshots",
+    "rawEvidence": ["artifacts/design-feedback-full-check.log", "artifacts/qa-design-feedback.mjs", "artifacts/design-feedback-qa/report.json", "artifacts/design-feedback-qa/", "artifacts/content-revision-qa/report.json"],
+    "rawEvidenceStorage": "Local ignored artifacts, not bundled or committed"
+  },
+  "limitations": ["Emulated viewports, not physical devices", "CSS 200% substitute, not native browser zoom", "No screen reader or OS IME verification", "No new desktop package, native app test or release; existing v0.1.2 excludes these changes"]
+}
